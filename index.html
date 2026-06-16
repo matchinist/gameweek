@@ -21,7 +21,7 @@ html,body{height:100%;overflow:hidden;}
 body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;}
 
 /* ── APP SHELL ── */
-.app{display:flex;flex-direction:column;height:100vh;max-width:680px;margin:0 auto;width:100%;background:var(--white);position:relative;}
+.app{display:flex;flex-direction:column;height:100vh;max-width:860px;margin:0 auto;width:100%;background:var(--white);position:relative;}
 
 /* ── HEADER ── */
 .app-header{background:var(--white);border-bottom:1px solid var(--border);flex-shrink:0;z-index:50;}
@@ -71,10 +71,12 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 /* ── COMP TABS ── */
 .comp-tabs{display:flex;gap:0;overflow-x:auto;border-bottom:1px solid var(--border);padding:0 16px;-webkit-overflow-scrolling:touch;}
 .comp-tabs::-webkit-scrollbar{display:none;}
-.comp-tab{padding:10px 14px;font-size:12px;font-weight:500;color:var(--text-2);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:all 0.13s;display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.comp-tab{padding:10px 14px;font-size:12px;font-weight:500;color:var(--text-2);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:all 0.13s;display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex-shrink:0;}
 .comp-tab:hover{color:var(--text);}
 .comp-tab.active{color:var(--comp-color);border-bottom-color:var(--comp-color);}
-.mode-pip{font-family:var(--mono);font-size:8px;background:var(--bg);color:var(--text-3);padding:2px 5px;border-radius:3px;font-weight:700;}
+.comp-tab-name{font-size:12px;font-weight:600;}
+.comp-tab-mode{font-family:var(--mono);font-size:9px;color:var(--text-3);font-weight:700;letter-spacing:0.3px;}
+.comp-tab.active .comp-tab-mode{color:var(--comp-color);opacity:0.7;}
 
 /* ── ROUND SELECTOR ── */
 .round-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--white);border-bottom:1px solid var(--border);}
@@ -90,21 +92,27 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .deadline-banner{background:var(--accent-light);border-bottom:1px solid #C7D2FE;padding:8px 16px;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--accent-2);}
 .deadline-banner strong{font-family:var(--mono);font-size:10px;}
 
-/* ── LMS SURVIVAL TRACKER ── */
+/* ── LMS PARTICIPATION BAR ── */
 .survival-tracker{padding:12px 16px;background:var(--bg);border-bottom:1px solid var(--border);}
-.st-label{font-size:10px;font-weight:600;color:var(--text-3);margin-bottom:6px;letter-spacing:0.3px;}
-.st-rounds{display:flex;gap:4px;align-items:center;}
-.st-round{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:700;border:1px solid var(--border);color:var(--text-3);background:var(--white);}
-.st-round.survived{background:var(--green-light);border-color:var(--green);color:var(--green);}
-.st-round.eliminated{background:var(--red-light);border-color:var(--red);color:var(--red);}
-.st-round.current{background:var(--accent);border-color:var(--accent);color:white;}
-.st-round.future{background:var(--bg);border-color:var(--border);color:var(--text-3);}
-.st-alive{margin-left:6px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;}
+.st-label{font-size:10px;font-weight:600;color:var(--text-3);margin-bottom:8px;letter-spacing:0.3px;}
+.st-bar-wrap{display:flex;flex-direction:column;gap:6px;}
+.st-bar-row{display:flex;align-items:center;gap:10px;}
+.st-bar-label{font-size:11px;color:var(--text-2);min-width:80px;}
+.st-bar-track{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden;}
+.st-bar-fill{height:8px;border-radius:4px;transition:width 0.4s ease;}
+.st-bar-fill.participated{background:var(--accent);}
+.st-bar-fill.survived{background:var(--green);}
+.st-bar-count{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);min-width:36px;text-align:right;}
+.st-alive{font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;margin-left:8px;}
 .st-alive.alive{background:var(--green-light);color:var(--green);}
-.st-alive.out{background:var(--red-light);color:var(--red);text-decoration:line-through;}
+.st-alive.out{background:var(--red-light);color:var(--red);}
 
 /* ── EVENT CARDS ── */
 .events-list{display:flex;flex-direction:column;gap:8px;padding:12px 16px;}
+.ev-pred-count{font-size:10px;color:var(--text-3);display:flex;align-items:center;gap:4px;margin-top:6px;padding-top:6px;border-top:1px solid var(--border);}
+.ev-pred-count strong{font-family:var(--mono);color:var(--text-2);font-size:11px;}
+.ev-pred-bar{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.ev-pred-bar-fill{height:3px;background:var(--comp-color);border-radius:2px;opacity:0.4;}
 
 .event-card{background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:border-color 0.13s;}
 .event-card.predicted{border-color:var(--comp-color);}
@@ -575,11 +583,14 @@ function goTab(tab){
 }
 
 // ── COMP TABS ─────────────────────────────────────────────────────────────
+const MODE_LABELS = {lms:'Last Man Standing', score:'Score Predictor', ou:'Over / Under'};
+
 function renderCompTabs(){
   const el = document.getElementById('comp-tabs');
   el.innerHTML = COMPS.map((c,i)=>`
     <button class="comp-tab${i===currentCompIdx?' active':''}" onclick="switchComp(${i})" style="${i===currentCompIdx?`--comp-color:${c.color}`:''}">
-      ${c.name} <span class="mode-pip">${c.short}</span>
+      <span class="comp-tab-name">${c.name}</span>
+      <span class="comp-tab-mode">${MODE_LABELS[c.mode]}</span>
     </button>`).join('');
   document.documentElement.style.setProperty('--comp-color', COMPS[currentCompIdx].color);
 }
@@ -618,19 +629,24 @@ function renderPredict(){
     html += `<div class="deadline-banner">⏱ &nbsp;Deadline <strong>${round.deadline.replace('T',' · ').slice(0,16)}</strong> — predictions lock at first kick-off.</div>`;
   }
 
-  // LMS survival tracker
+  // LMS participation bar (mock data)
   if(isLMS){
-    const userAlive = true; // demo: user is alive
+    const totalUsers = 312;
+    const survived = 187;
+    const survivedPct = Math.round(survived/totalUsers*100);
     html += `<div class="survival-tracker">
-      <div class="st-label">Your survival · ${comp.name}</div>
-      <div class="st-rounds">
-        ${comp.rounds.map((r,i)=>{
-          let cls='future';
-          if(i<ri) cls='survived';
-          else if(i===ri) cls='current';
-          return `<div class="st-round ${cls}" title="${r.label}">${i+1}</div>`;
-        }).join('')}
-        <span class="st-alive alive">ALIVE</span>
+      <div class="st-label">Competition status · ${comp.name} · ${round.label}</div>
+      <div class="st-bar-wrap">
+        <div class="st-bar-row">
+          <span class="st-bar-label">Participated</span>
+          <div class="st-bar-track"><div class="st-bar-fill participated" style="width:100%"></div></div>
+          <span class="st-bar-count">${totalUsers.toLocaleString()}</span>
+        </div>
+        <div class="st-bar-row">
+          <span class="st-bar-label">Still alive</span>
+          <div class="st-bar-track"><div class="st-bar-fill survived" style="width:${survivedPct}%"></div></div>
+          <span class="st-bar-count">${survived}<span class="st-alive alive" style="margin-left:6px;">YOU ✓</span></span>
+        </div>
       </div>
     </div>`;
   }
@@ -696,6 +712,12 @@ function renderEventCard(ev, comp, isOpen){
     }
   }
 
+  // Mock prediction count per event
+  const mockPredCounts = {e107:241,e108:238,e109:219,e110:203,e204:168,e205:171,e206:155,e305:289,e306:274,e307:261,e308:293};
+  const predCount = mockPredCounts[ev.id] || Math.floor(Math.random()*200+100);
+  const totalUsers = 312;
+  const predPct = Math.round(predCount/totalUsers*100);
+
   let cardCls = 'event-card';
   if(isOpen && isPredicted) cardCls += ' predicted';
   if(isCompleted) cardCls += ' locked-pred';
@@ -718,6 +740,10 @@ function renderEventCard(ev, comp, isOpen){
           <div class="ev-badge">${ai}</div>
           <span class="ev-name">${ev.away}</span>
         </div>
+      </div>
+      <div class="ev-pred-count">
+        <div class="ev-pred-bar"><div class="ev-pred-bar-fill" style="width:${predPct}%"></div></div>
+        <strong>${predCount}</strong> predictions
       </div>
     </div>`;
 
