@@ -185,6 +185,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
     <div class="topnav-links">
       <a href="admin.html" class="topnav-link">← Admin</a>
       <a href="index.html" target="_blank" class="topnav-link">View Embed ↗</a>
+      <button class="topnav-link" onclick="if(confirm('Reset all data to defaults?')){localStorage.removeItem('gw_dm_teams');localStorage.removeItem('gw_dm_tournaments');localStorage.removeItem('gw_dm_events');location.reload();}" style="color:#6B7280;">Reset data</button>
     </div>
   </div>
   <div class="body-area">
@@ -326,40 +327,71 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 
 <script>
 const SWATCHES=['#DC2626','#D97706','#16A34A','#0891B2','#4F46E5','#7C3AED','#DB2777','#0F1117','#1D4ED8','#059669','#B45309','#64748B'];
+
+// ── DEFAULT DATA (used only on first load) ────────────────────────────────
+const DEFAULT_TEAMS=[
+  {id:'tm1',name:'Arsenal',short:'ARS',color:'#DC2626'},
+  {id:'tm2',name:'Man City',short:'MCI',color:'#6CABDD'},
+  {id:'tm3',name:'Liverpool',short:'LIV',color:'#C8102E'},
+  {id:'tm4',name:'Chelsea',short:'CHE',color:'#034694'},
+  {id:'tm5',name:'Man Utd',short:'MNU',color:'#DA291C'},
+  {id:'tm6',name:'Spurs',short:'TOT',color:'#132257'},
+  {id:'tm7',name:'Real Madrid',short:'RMA',color:'#FEBE10'},
+  {id:'tm8',name:'Barcelona',short:'BAR',color:'#A50044'},
+  {id:'tm9',name:'Bayern',short:'BAY',color:'#DC052D'},
+  {id:'tm10',name:'PSG',short:'PSG',color:'#004170'},
+  {id:'tm11',name:'Atletico',short:'ATL',color:'#CB3524'},
+  {id:'tm12',name:'Juventus',short:'JUV',color:'#111827'},
+  {id:'tm13',name:'Inter',short:'INT',color:'#010E80'},
+  {id:'tm14',name:'Dortmund',short:'BVB',color:'#FDE100'},
+  {id:'tm15',name:'Everton',short:'EVE',color:'#003399'},
+  {id:'tm16',name:'Brighton',short:'BHA',color:'#0057B8'},
+];
+const DEFAULT_TOURNAMENTS=[
+  {id:'t1',name:'Premier League',country:'England',type:'league',color:'#3D0D73',
+   seasons:{'2025/26':{teamIds:['tm1','tm2','tm3','tm4','tm5','tm6','tm15','tm16'],rounds:[{id:'r1',label:'Gameweek 1',deadline:'',eventIds:['ev1','ev2']},{id:'r2',label:'Gameweek 2',deadline:'',eventIds:['ev3']},{id:'r3',label:'Gameweek 3',deadline:'2025-08-30T14:00',eventIds:[]}]},'2026/27':{teamIds:['tm1','tm2','tm3','tm4','tm5','tm6'],rounds:[]}}},
+  {id:'t2',name:'Champions League',country:'Europe',type:'international',color:'#1D4ED8',
+   seasons:{'2025/26':{teamIds:['tm1','tm2','tm7','tm8','tm9','tm10','tm11','tm12','tm13'],rounds:[]},'2026/27':{teamIds:[],rounds:[]}}},
+  {id:'t3',name:'La Liga',country:'Spain',type:'league',color:'#DC2626',
+   seasons:{'2025/26':{teamIds:['tm7','tm8','tm11'],rounds:[]},'2026/27':{teamIds:[],rounds:[]}}},
+];
+const DEFAULT_EVENTS={
+  ev1:{homeId:'tm1',awayId:'tm6',kickoff:'2025-08-16T15:00',result:null,status:'upcoming',line:2.5},
+  ev2:{homeId:'tm2',awayId:'tm4',kickoff:'2025-08-16T17:30',result:{h:2,a:1},status:'completed',line:2.5},
+  ev3:{homeId:'tm3',awayId:'tm16',kickoff:'2025-08-23T15:00',result:{h:3,a:1},status:'completed',line:2.5},
+};
+
+// ── LOAD FROM LOCALSTORAGE (or fall back to defaults) ─────────────────────
+function loadState(){
+  try {
+    return {
+      teams:       JSON.parse(localStorage.getItem('gw_dm_teams'))       || DEFAULT_TEAMS,
+      tournaments: JSON.parse(localStorage.getItem('gw_dm_tournaments')) || DEFAULT_TOURNAMENTS,
+      events:      JSON.parse(localStorage.getItem('gw_dm_events'))      || DEFAULT_EVENTS,
+    };
+  } catch(e) {
+    return { teams: DEFAULT_TEAMS, tournaments: DEFAULT_TOURNAMENTS, events: DEFAULT_EVENTS };
+  }
+}
+
+const persisted = loadState();
 const S={
   activePage:'teams', activeTournamentId:null, activeSeason:'2026/27', editingTeamId:null, openRounds:new Set(),
-  teams:[
-    {id:'tm1',name:'Arsenal',short:'ARS',color:'#DC2626'},
-    {id:'tm2',name:'Man City',short:'MCI',color:'#6CABDD'},
-    {id:'tm3',name:'Liverpool',short:'LIV',color:'#C8102E'},
-    {id:'tm4',name:'Chelsea',short:'CHE',color:'#034694'},
-    {id:'tm5',name:'Man Utd',short:'MNU',color:'#DA291C'},
-    {id:'tm6',name:'Spurs',short:'TOT',color:'#132257'},
-    {id:'tm7',name:'Real Madrid',short:'RMA',color:'#FEBE10'},
-    {id:'tm8',name:'Barcelona',short:'BAR',color:'#A50044'},
-    {id:'tm9',name:'Bayern',short:'BAY',color:'#DC052D'},
-    {id:'tm10',name:'PSG',short:'PSG',color:'#004170'},
-    {id:'tm11',name:'Atletico',short:'ATL',color:'#CB3524'},
-    {id:'tm12',name:'Juventus',short:'JUV',color:'#111827'},
-    {id:'tm13',name:'Inter',short:'INT',color:'#010E80'},
-    {id:'tm14',name:'Dortmund',short:'BVB',color:'#FDE100'},
-    {id:'tm15',name:'Everton',short:'EVE',color:'#003399'},
-    {id:'tm16',name:'Brighton',short:'BHA',color:'#0057B8'},
-  ],
-  tournaments:[
-    {id:'t1',name:'Premier League',country:'England',type:'league',color:'#3D0D73',
-     seasons:{'2025/26':{teamIds:['tm1','tm2','tm3','tm4','tm5','tm6','tm15','tm16'],rounds:[{id:'r1',label:'Gameweek 1',deadline:'',eventIds:['ev1','ev2']},{id:'r2',label:'Gameweek 2',deadline:'',eventIds:['ev3']},{id:'r3',label:'Gameweek 3',deadline:'2025-08-30T14:00',eventIds:[]}]},'2026/27':{teamIds:['tm1','tm2','tm3','tm4','tm5','tm6'],rounds:[]}}},
-    {id:'t2',name:'Champions League',country:'Europe',type:'international',color:'#1D4ED8',
-     seasons:{'2025/26':{teamIds:['tm1','tm2','tm7','tm8','tm9','tm10','tm11','tm12','tm13'],rounds:[]},'2026/27':{teamIds:[],rounds:[]}}},
-    {id:'t3',name:'La Liga',country:'Spain',type:'league',color:'#DC2626',
-     seasons:{'2025/26':{teamIds:['tm7','tm8','tm11'],rounds:[]},'2026/27':{teamIds:[],rounds:[]}}},
-  ],
-  events:{
-    ev1:{homeId:'tm1',awayId:'tm6',kickoff:'2025-08-16T15:00',result:null,status:'upcoming',line:2.5},
-    ev2:{homeId:'tm2',awayId:'tm4',kickoff:'2025-08-16T17:30',result:{h:2,a:1},status:'completed',line:2.5},
-    ev3:{homeId:'tm3',awayId:'tm16',kickoff:'2025-08-23T15:00',result:{h:3,a:1},status:'completed',line:2.5},
-  }
+  teams:       persisted.teams,
+  tournaments: persisted.tournaments,
+  events:      persisted.events,
 };
+
+// ── SAVE TO LOCALSTORAGE ──────────────────────────────────────────────────
+function save(){
+  try {
+    localStorage.setItem('gw_dm_teams',       JSON.stringify(S.teams));
+    localStorage.setItem('gw_dm_tournaments', JSON.stringify(S.tournaments));
+    localStorage.setItem('gw_dm_events',      JSON.stringify(S.events));
+  } catch(e) {
+    console.error('Save failed:', e);
+  }
+}
 
 function uid(){return 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
 function getTeam(id){return S.teams.find(t=>t.id===id);}
@@ -418,7 +450,7 @@ function createTeam(){
   closeModal('modal-create-team');
   document.getElementById('ct-name').value='';
   document.getElementById('ct-short').value='';
-  renderTeams();renderTournamentNav();
+  save();renderTeams();renderTournamentNav();
   toast(name+' added');
 }
 
@@ -438,14 +470,14 @@ function saveTeamEdit(){
   t.color=document.getElementById('et-color').value;
   closeModal('modal-edit-team');renderTeams();
   if(S.activePage==='tournament')renderTournamentView();
-  toast('Team updated');
+  save();toast('Team updated');
 }
 
 function deleteTeam(id){
   if(!confirm('Delete '+getTeam(id).name+'? Removed from all seasons.'))return;
   S.teams=S.teams.filter(x=>x.id!==id);
   S.tournaments.forEach(tr=>Object.values(tr.seasons).forEach(s=>{s.teamIds=s.teamIds.filter(x=>x!==id);}));
-  renderTeams();toast('Team deleted');
+  save();renderTeams();toast('Team deleted');
 }
 
 function renderTournamentView(){
@@ -592,13 +624,13 @@ function filterPool(val){renderTeamPools(val);}
 
 function assignTeam(id){
   const season=getSeasonData(S.activeTournamentId,S.activeSeason);
-  if(!season.teamIds.includes(id)){season.teamIds.push(id);renderTeamPools(document.getElementById('pool-search')?.value||'');renderTournamentView();toast(getTeam(id).name+' added to '+S.activeSeason);}
+  if(!season.teamIds.includes(id)){season.teamIds.push(id);save();renderTeamPools(document.getElementById('pool-search')?.value||'');renderTournamentView();toast(getTeam(id).name+' added to '+S.activeSeason);}
 }
 
 function unassignTeam(id){
   const season=getSeasonData(S.activeTournamentId,S.activeSeason);
   season.teamIds=season.teamIds.filter(x=>x!==id);
-  renderTeamPools(document.getElementById('pool-search')?.value||'');
+  save();renderTeamPools(document.getElementById('pool-search')?.value||'');
   renderTournamentView();toast(getTeam(id).name+' removed');
 }
 
@@ -619,7 +651,7 @@ function addSeason(){
   t.seasons[name]={teamIds:[],rounds:[]};
   closeModal('modal-add-season');
   document.getElementById('as-name').value='';
-  S.activeSeason=name;renderTournamentView();toast('Season '+name+' added');
+  S.activeSeason=name;save();renderTournamentView();toast('Season '+name+' added');
 }
 
 function generateRounds(){
@@ -628,7 +660,7 @@ function generateRounds(){
   const season=getSeasonData(S.activeTournamentId,S.activeSeason);
   season.rounds=[];
   for(let i=1;i<=count;i++)season.rounds.push({id:'r'+uid(),label:`${prefix} ${i}`,deadline:'',eventIds:[]});
-  S.openRounds.clear();renderTournamentView();switchTTab('rounds');toast(count+' rounds generated');
+  S.openRounds.clear();save();renderTournamentView();switchTTab('rounds');toast(count+' rounds generated');
 }
 
 function addRound(){
@@ -636,14 +668,14 @@ function addRound(){
   const num=season.rounds.length+1;
   const r={id:'r'+uid(),label:'Round '+num,deadline:'',eventIds:[]};
   season.rounds.push(r);S.openRounds.add(r.id);
-  renderTournamentView();switchTTab('rounds');toast('Round added');
+  save();renderTournamentView();switchTTab('rounds');toast('Round added');
 }
 
 function clearRounds(){
   if(!confirm('Remove all rounds and events for this season?'))return;
   const season=getSeasonData(S.activeTournamentId,S.activeSeason);
   season.rounds.forEach(r=>r.eventIds.forEach(id=>delete S.events[id]));
-  season.rounds=[];S.openRounds.clear();renderTournamentView();switchTTab('rounds');toast('Cleared');
+  season.rounds=[];S.openRounds.clear();save();renderTournamentView();switchTTab('rounds');toast('Cleared');
 }
 
 function toggleRound(id){
@@ -654,12 +686,12 @@ function toggleRound(id){
 
 function updateRoundLabel(id,val){
   const season=getSeasonData(S.activeTournamentId,S.activeSeason);
-  const r=season.rounds.find(x=>x.id===id);if(r)r.label=val;
+  const r=season.rounds.find(x=>x.id===id);if(r){r.label=val;save();}
 }
 
 function updateRoundDeadline(id,val){
   const season=getSeasonData(S.activeTournamentId,S.activeSeason);
-  const r=season.rounds.find(x=>x.id===id);if(r)r.deadline=val;
+  const r=season.rounds.find(x=>x.id===id);if(r){r.deadline=val;save();}
 }
 
 function deleteRound(id){
@@ -667,7 +699,7 @@ function deleteRound(id){
   const r=season.rounds.find(x=>x.id===id);
   if(r)r.eventIds.forEach(eid=>delete S.events[eid]);
   season.rounds=season.rounds.filter(x=>x.id!==id);
-  S.openRounds.delete(id);renderTournamentView();switchTTab('rounds');toast('Round removed');
+  S.openRounds.delete(id);save();renderTournamentView();switchTTab('rounds');toast('Round removed');
 }
 
 function addEventToRound(roundId){
@@ -682,6 +714,7 @@ function addEventToRound(roundId){
   const r=season.rounds.find(x=>x.id===roundId);
   if(r){
     r.eventIds.push(eid);
+    save();
     const listEl=document.getElementById('evlist-'+roundId);
     if(listEl)listEl.innerHTML=r.eventIds.map(id=>renderEventMini(id)).join('');
     document.getElementById('eq-home-'+roundId).value='';
@@ -696,6 +729,7 @@ function updateEventScore(eid,side,val){
   if(!ev.result)ev.result={h:null,a:null};
   ev.result[side]=val===''?null:parseInt(val);
   if(ev.result.h!==null&&ev.result.a!==null){ev.status='completed';}
+  save();
   const input=document.getElementById((side==='h'?'esh-':'esa-')+eid);
   if(input)input.classList.toggle('has',val!=='');
   const badge=document.getElementById('emst-'+eid);
@@ -706,6 +740,7 @@ function removeEventFromRound(eid){
   const season=getSeasonData(S.activeTournamentId,S.activeSeason);
   season.rounds.forEach(r=>{r.eventIds=r.eventIds.filter(x=>x!==eid);});
   delete S.events[eid];
+  save();
   document.getElementById('evmini-'+eid)?.remove();
   toast('Event removed');
 }
@@ -716,13 +751,13 @@ function createTournament(){
   const t={id:'t'+uid(),name,country:document.getElementById('nt-country').value.trim()||'—',type:document.getElementById('nt-type').value,color:document.getElementById('nt-color').value,seasons:{'2026/27':{teamIds:[],rounds:[]}}};
   S.tournaments.push(t);closeModal('modal-create-tournament');
   document.getElementById('nt-name').value='';document.getElementById('nt-country').value='';
-  renderTournamentNav();navTo('tournament',t.id);toast(name+' created');
+  save();renderTournamentNav();navTo('tournament',t.id);toast(name+' created');
 }
 
 function deleteTournament(id){
   if(!confirm('Delete "'+getTournament(id).name+'" and all its seasons?'))return;
   S.tournaments=S.tournaments.filter(x=>x.id!==id);
-  renderTournamentNav();navTo('teams');toast('Tournament deleted');
+  save();renderTournamentNav();navTo('teams');toast('Tournament deleted');
 }
 
 function syncColor(prefix){
