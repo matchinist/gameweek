@@ -648,16 +648,16 @@ tbody tr:hover td{background:var(--bg);}
         <input class="form-input" id="new-comp-name" placeholder="e.g. Premier League 25/26 Score Predictor" />
       </div>
       <div class="form-group">
-        <label class="form-label">League / Tournament</label>
-        <input class="form-input" id="new-comp-league" placeholder="e.g. Premier League" />
-      </div>
-      <div class="form-group">
         <label class="form-label">Game Mode</label>
-        <select class="form-select" id="new-comp-mode">
-          <option value="lms">Last Man Standing — pick a result, wrong = eliminated</option>
-          <option value="score">Score Predictor — predict exact scorelines</option>
-          <option value="ou">Over / Under — goals over or under a line</option>
+        <select class="form-select" id="new-comp-mode" onchange="updateModeDescription()">
+          <option value="lms">Last Man Standing</option>
+          <option value="score">Score Predictor</option>
+          <option value="ou">Over / Under</option>
         </select>
+        <div id="mode-description" style="margin-top:10px;padding:12px;background:var(--bg);border-radius:6px;border-left:3px solid var(--accent);">
+          <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;">Last Man Standing</div>
+          <div style="font-size:12px;color:var(--text-2);line-height:1.6;">Users predict the result (Home / Draw / Away) for each event in the round. A wrong prediction eliminates them from the competition. Events resolve in kick-off order — tension builds with every result. The last survivor wins.</div>
+        </div>
       </div>
       <div class="divider"></div>
       <div class="toggle-row">
@@ -666,19 +666,6 @@ tbody tr:hover td{background:var(--bg);}
           <div class="toggle-sub">Cumulative points across all rounds. Weekly winner still runs by default.</div>
         </div>
         <label class="toggle"><input type="checkbox" id="new-comp-longterm"><span class="toggle-slider"></span></label>
-      </div>
-      <div class="divider"></div>
-      <div class="form-group">
-        <label class="form-label">Primary Colour</label>
-        <div class="color-row">
-          <input type="color" class="color-input" value="#4F46E5" id="new-comp-color" oninput="updateColorPreview()">
-          <input class="form-input" value="#4F46E5" id="new-comp-color-hex" style="font-family:var(--mono);font-size:12px;" oninput="syncColorFromHex()">
-        </div>
-        <div class="brand-preview" id="color-preview">
-          <div class="brand-preview-label">Preview</div>
-          <div class="brand-preview-bar" id="preview-bar" style="background:#4F46E5;"></div>
-          <button class="brand-preview-btn" id="preview-btn" style="background:#4F46E5;">Submit Predictions →</button>
-        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -1118,17 +1105,27 @@ function saveResult(){
 }
 
 // ── CREATE COMP ───────────────────────────────────────────────────────────
+const MODE_DESCRIPTIONS = {
+  lms:  { title:'Last Man Standing', text:'Users predict the result (Home / Draw / Away) for each event in the round. A wrong prediction eliminates them. Events resolve in kick-off order — tension builds with every result. The last survivor wins.' },
+  score:{ title:'Score Predictor',   text:'Users predict the exact scoreline for every match. An exact score earns maximum points; a correct result with a wrong score earns partial credit. Rewards both knowledge and precision.' },
+  ou:   { title:'Over / Under',      text:'Users predict whether total goals will be over or under a set line (e.g. 2.5). Fast to play, casual-friendly, and easy to run across multiple leagues in a single round.' }
+};
+function updateModeDescription(){
+  const mode = document.getElementById('new-comp-mode')?.value;
+  const d = MODE_DESCRIPTIONS[mode];
+  const el = document.getElementById('mode-description');
+  if(el && d) el.innerHTML = `<div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;">${d.title}</div><div style="font-size:12px;color:var(--text-2);line-height:1.6;">${d.text}</div>`;
+}
 function createComp(){
   const name = document.getElementById('new-comp-name').value.trim();
   if(!name){ toast('Enter a competition name'); return; }
   const c = {
     id: 'c'+uid(),
     name,
-    league: document.getElementById('new-comp-league').value.trim()||'—',
     mode: document.getElementById('new-comp-mode').value,
     longTerm: document.getElementById('new-comp-longterm').checked,
     status: 'draft',
-    color: document.getElementById('new-comp-color').value,
+    color: '#4F46E5',
     users: 0, predictions: 0, rounds: []
   };
   state.competitions.push(c);
