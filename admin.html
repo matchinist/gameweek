@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gameweek — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#F7F8FA;--white:#FFFFFF;--border:#E2E4EA;
+  --text:#0F1117;--text-2:#6B7280;--text-3:#9CA3AF;
+  --accent:#4F46E5;--accent-2:#3730A3;--accent-light:#EEF2FF;
+  --green:#16A34A;--green-light:#DCFCE7;
+  --red:#DC2626;--red-light:#FEE2E2;
+  --amber:#D97706;--amber-light:#FEF3C7;
+  --sidebar:#0F1117;--sidebar-2:#1A1B23;--sidebar-border:#262730;
+  --mono:'Space Mono',monospace;--sans:'Inter',sans-serif;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;display:flex;min-height:100vh;-webkit-font-smoothing:antialiased;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:220px;min-width:220px;background:var(--sidebar);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;}
+.sidebar-logo{padding:18px 20px;border-bottom:1px solid var(--sidebar-border);}
+.sidebar-logo .logo{font-family:var(--mono);font-size:14px;font-weight:700;color:white;letter-spacing:-0.5px;}
+.sidebar-logo .logo span{color:var(--accent);}
+.sidebar-logo .logo-tag{font-family:var(--mono);font-size:9px;color:#4B5563;letter-spacing:0.5px;margin-top:2px;}
+.sidebar-section{padding:20px 12px 8px;}
+.sidebar-section-label{font-size:9px;font-weight:700;color:#4B5563;letter-spacing:1px;text-transform:uppercase;padding:0 8px;margin-bottom:4px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:6px;cursor:pointer;transition:all 0.13s;color:#9CA3AF;font-size:12px;font-weight:500;border:none;background:none;width:100%;text-align:left;}
+.nav-item:hover{background:var(--sidebar-2);color:#D1D5DB;}
+.nav-item.active{background:var(--accent);color:white;}
+.nav-item .ni-icon{font-size:14px;width:16px;text-align:center;flex-shrink:0;}
+.sidebar-bottom{margin-top:auto;padding:16px 12px;border-top:1px solid var(--sidebar-border);}
+.plan-badge{background:var(--sidebar-2);border:1px solid var(--sidebar-border);border-radius:6px;padding:10px 12px;}
+.plan-name{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent);margin-bottom:2px;}
+.plan-label{font-size:11px;color:#6B7280;}
+.plan-upgrade{display:block;margin-top:8px;font-size:10px;color:var(--accent);text-decoration:none;font-weight:600;}
+
+/* ── MAIN ── */
+.main{margin-left:220px;flex:1;min-height:100vh;display:flex;flex-direction:column;}
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 28px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.topbar-left{display:flex;align-items:center;gap:6px;}
+.breadcrumb{font-size:12px;color:var(--text-3);}
+.breadcrumb .sep{margin:0 6px;color:var(--border);}
+.breadcrumb .current{color:var(--text);font-weight:600;}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.topbar-avatar{width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;font-weight:700;color:white;}
+.content{padding:28px;flex:1;}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all 0.13s;text-decoration:none;}
+.btn-sm{padding:5px 10px;font-size:11px;}
+.btn-primary{background:var(--accent);color:white;font-family:var(--mono);letter-spacing:0.3px;}
+.btn-primary:hover{background:var(--accent-2);}
+.btn-outline{background:var(--white);color:var(--text-2);border:1px solid var(--border);}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+.btn-danger{background:var(--red-light);color:var(--red);border:1px solid #FECACA;}
+.btn-danger:hover{background:#FEE2E2;}
+.btn-ghost{background:none;color:var(--text-2);border:none;}
+.btn-ghost:hover{color:var(--text);background:var(--bg);}
+
+/* ── PAGE HEADER ── */
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;gap:16px;}
+.page-title{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text);letter-spacing:-0.5px;margin-bottom:3px;}
+.page-sub{font-size:12px;color:var(--text-3);}
+
+/* ── STAT CARDS ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:18px 20px;}
+.stat-card-label{font-size:11px;color:var(--text-3);font-weight:500;margin-bottom:8px;}
+.stat-card-value{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--text);line-height:1;}
+.stat-card-sub{font-size:11px;color:var(--text-3);margin-top:5px;}
+.stat-card-accent .stat-card-value{color:var(--accent);}
+.stat-card-green .stat-card-value{color:var(--green);}
+
+/* ── CARDS ── */
+.card{background:var(--white);border:1px solid var(--border);border-radius:8px;}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);}
+.card-body{padding:18px;}
+
+/* ── TABLES ── */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:8px 14px;text-align:left;border-bottom:1px solid var(--border);}
+td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text);}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:var(--bg);}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:0.3px;}
+.badge-green{background:var(--green-light);color:var(--green);}
+.badge-amber{background:var(--amber-light);color:var(--amber);}
+.badge-gray{background:#F3F4F6;color:#6B7280;}
+.badge-red{background:var(--red-light);color:var(--red);}
+.badge-blue{background:var(--accent-light);color:var(--accent);}
+.mode-chip{font-family:var(--mono);font-size:9px;background:#F3F4F6;color:#6B7280;padding:2px 7px;border-radius:4px;font-weight:700;letter-spacing:0.3px;}
+
+/* ── COMP CARDS ── */
+.comp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+.comp-card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:18px;cursor:pointer;transition:all 0.13s;}
+.comp-card:hover{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);}
+.comp-card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
+.comp-card-name{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.comp-card-meta{font-size:11px;color:var(--text-3);}
+.comp-card-stats{display:flex;gap:16px;padding-top:12px;border-top:1px solid var(--border);}
+.comp-card-stat{font-size:11px;color:var(--text-3);}
+.comp-card-stat strong{font-family:var(--mono);font-size:13px;color:var(--text);display:block;}
+
+/* ── ROUND LIST ── */
+.round-list{display:flex;flex-direction:column;gap:8px;}
+.round-item{background:var(--white);border:1px solid var(--border);border-radius:6px;padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color 0.13s;}
+.round-item:hover{border-color:var(--accent);}
+.round-item-name{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);flex:1;}
+.round-item-meta{font-size:11px;color:var(--text-3);}
+
+/* ── EVENT LIST ── */
+.event-row-result{font-family:var(--mono);font-size:12px;font-weight:700;}
+.result-btn-inline{font-family:var(--mono);font-size:10px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--white);cursor:pointer;color:var(--text-2);transition:all 0.13s;}
+.result-btn-inline:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── EMBED PAGE ── */
+.embed-box{background:var(--sidebar);border-radius:8px;padding:16px 18px;font-family:var(--mono);font-size:12px;color:#A5B4FC;line-height:1.7;position:relative;overflow:hidden;}
+.embed-copy-btn{position:absolute;top:12px;right:12px;}
+.domain-tag{display:inline-flex;align-items:center;gap:6px;background:var(--white);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;color:var(--text);}
+.domain-tag button{background:none;border:none;cursor:pointer;color:var(--text-3);font-size:14px;line-height:1;}
+.domain-tag button:hover{color:var(--red);}
+
+/* ── FORM ── */
+.form-group{margin-bottom:16px;}
+.form-label{font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:5px;display:block;}
+.form-input,.form-select,.form-textarea{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:6px;font-family:var(--sans);font-size:13px;color:var(--text);background:var(--white);outline:none;transition:border-color 0.13s;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent);}
+.form-textarea{resize:vertical;min-height:80px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-hint{font-size:11px;color:var(--text-3);margin-top:4px;}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;}
+.toggle-label{font-size:13px;color:var(--text);font-weight:500;}
+.toggle-sub{font-size:11px;color:var(--text-3);}
+.toggle{position:relative;width:36px;height:20px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;top:0;left:0;right:0;bottom:0;background:#D1D5DB;border-radius:20px;cursor:pointer;transition:0.2s;}
+.toggle-slider::before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:3px;background:white;border-radius:50%;transition:0.2s;}
+.toggle input:checked + .toggle-slider{background:var(--accent);}
+.toggle input:checked + .toggle-slider::before{transform:translateX(16px);}
+.color-row{display:flex;align-items:center;gap:10px;}
+.color-input{width:36px;height:36px;border:1px solid var(--border);border-radius:6px;padding:2px;cursor:pointer;background:none;}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:500;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--white);border-radius:10px;width:520px;max-width:calc(100vw - 40px);max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.15);}
+.modal-header{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text);}
+.modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-3);padding:2px 6px;border-radius:4px;}
+.modal-close:hover{background:var(--bg);color:var(--text);}
+.modal-body{padding:20px;}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+
+/* ── VIEWS ── */
+.view{display:none;}.view.active{display:block;}
+
+/* ── ACTIVITY ── */
+.activity-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+.activity-item:last-child{border-bottom:none;}
+.activity-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;background:var(--bg);}
+.activity-text{font-size:12px;color:var(--text-2);flex:1;}
+.activity-text strong{color:var(--text);font-weight:600;}
+.activity-time{font-size:10px;color:var(--text-3);font-family:var(--mono);}
+
+/* ── DEADLINE LIST ── */
+.deadline-item{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);}
+.deadline-item:last-child{border-bottom:none;}
+.deadline-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+.deadline-dot.soon{background:var(--red);}
+.deadline-name{font-size:12px;font-weight:500;color:var(--text);flex:1;}
+.deadline-time{font-family:var(--mono);font-size:10px;color:var(--text-3);}
+
+/* ── EMPTY ── */
+.empty-state{text-align:center;padding:48px 20px;color:var(--text-3);}
+.empty-icon{font-size:32px;margin-bottom:12px;}
+.empty-title{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text-2);margin-bottom:6px;}
+.empty-sub{font-size:12px;line-height:1.6;}
+
+/* ── BACK LINK ── */
+.back-link{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--text-3);cursor:pointer;margin-bottom:18px;border:none;background:none;padding:0;}
+.back-link:hover{color:var(--accent);}
+
+/* ── BRANDING PREVIEW ── */
+.brand-preview{background:var(--sidebar);border-radius:8px;padding:16px;margin-top:12px;}
+.brand-preview-label{font-family:var(--mono);font-size:9px;color:#4B5563;letter-spacing:0.8px;text-transform:uppercase;margin-bottom:10px;}
+.brand-preview-bar{height:4px;border-radius:2px;margin-bottom:10px;}
+.brand-preview-btn{padding:7px 16px;border-radius:5px;font-family:var(--mono);font-size:10px;font-weight:700;border:none;color:white;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:white;font-family:var(--mono);font-size:12px;padding:10px 18px;border-radius:6px;z-index:999;transform:translateY(80px);transition:transform 0.25s ease;pointer-events:none;}
+#toast.show{transform:translateY(0);}
+
+/* ── DIVIDER ── */
+.divider{height:1px;background:var(--border);margin:20px 0;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:24px;}
+
+/* result inline input */
+.score-inline{display:inline-flex;align-items:center;gap:6px;}
+.score-inline input{width:38px;height:30px;border:1px solid var(--border);border-radius:5px;text-align:center;font-family:var(--mono);font-size:13px;font-weight:700;outline:none;}
+.score-inline input:focus{border-color:var(--accent);}
+.score-inline .sep{font-family:var(--mono);font-size:12px;color:var(--text-3);}
+</style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo">game<span>week</span></div>
+    <div class="logo-tag">ADMIN PANEL</div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Overview</div>
+    <button class="nav-item active" onclick="nav('dashboard')">
+      <span class="ni-icon">▦</span> Dashboard
+    </button>
+    <button class="nav-item" onclick="nav('embed')">
+      <span class="ni-icon">⟨⟩</span> Embed & Integration
+    </button>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Competitions</div>
+    <button class="nav-item" onclick="nav('competitions')">
+      <span class="ni-icon">⚽</span> All Competitions
+    </button>
+    <button class="nav-item" onclick="nav('events')">
+      <span class="ni-icon">📅</span> Event Manager
+    </button>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Account</div>
+    <button class="nav-item" onclick="nav('settings')">
+      <span class="ni-icon">⚙</span> Settings
+    </button>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="plan-badge">
+      <div class="plan-name">GROWTH PLAN</div>
+      <div class="plan-label">€349 / month</div>
+      <a href="#" class="plan-upgrade">Upgrade to Scale →</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="breadcrumb" id="breadcrumb">
+        <span class="current">Dashboard</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <a href="https://matchinist.github.io/gameweek" target="_blank" class="btn btn-outline btn-sm">View Demo ↗</a>
+      <div class="topbar-avatar">EC</div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="view active" id="view-dashboard">
+      <div class="page-header">
+        <div>
+          <div class="page-title">// dashboard</div>
+          <div class="page-sub">Welcome back. Here's what's happening this week.</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-create-comp')">+ New Competition</button>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card stat-card-accent">
+          <div class="stat-card-label">Active Competitions</div>
+          <div class="stat-card-value" id="dash-active-comps">2</div>
+          <div class="stat-card-sub">1 draft</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Total Registered Users</div>
+          <div class="stat-card-value">510</div>
+          <div class="stat-card-sub">across all competitions</div>
+        </div>
+        <div class="stat-card stat-card-green">
+          <div class="stat-card-label">Predictions This Week</div>
+          <div class="stat-card-value">1,847</div>
+          <div class="stat-card-sub">+22% vs last week</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Open Rounds</div>
+          <div class="stat-card-value">2</div>
+          <div class="stat-card-sub">accepting predictions</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Upcoming Deadlines</span>
+          </div>
+          <div class="card-body">
+            <div class="deadline-item">
+              <div class="deadline-dot soon"></div>
+              <div class="deadline-name">PL 25/26 · Gameweek 3</div>
+              <div class="deadline-time">30 Aug · 14:00</div>
+            </div>
+            <div class="deadline-item">
+              <div class="deadline-dot"></div>
+              <div class="deadline-name">UCL 25/26 · Matchday 2</div>
+              <div class="deadline-time">1 Oct · 17:00</div>
+            </div>
+            <div class="deadline-item">
+              <div class="deadline-dot"></div>
+              <div class="deadline-name">Top 5 O/U · Round 3</div>
+              <div class="deadline-time">Not set</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Recent Activity</span>
+          </div>
+          <div class="card-body">
+            <div class="activity-item">
+              <div class="activity-icon">📊</div>
+              <div>
+                <div class="activity-text"><strong>GW2 results confirmed</strong> — PL 25/26</div>
+                <div class="activity-time">2 hours ago</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">👤</div>
+              <div>
+                <div class="activity-text"><strong>12 new users</strong> joined this week</div>
+                <div class="activity-time">Today</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🏆</div>
+              <div>
+                <div class="activity-text"><strong>GW2 winner</strong> — stadyum76 (8 pts)</div>
+                <div class="activity-time">Yesterday</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">⚽</div>
+              <div>
+                <div class="activity-text"><strong>GW3 events assigned</strong> — 4 matches</div>
+                <div class="activity-time">2 days ago</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:20px"></div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Your Competitions</span>
+          <button class="btn btn-outline btn-sm" onclick="nav('competitions')">View all →</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Competition</th>
+                <th>Mode</th>
+                <th>Current Round</th>
+                <th>Users</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="dash-comp-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── COMPETITIONS ── -->
+    <div class="view" id="view-competitions">
+      <div class="page-header">
+        <div>
+          <div class="page-title">// competitions</div>
+          <div class="page-sub">Manage your prediction competitions.</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-create-comp')">+ New Competition</button>
+      </div>
+      <div class="comp-grid" id="comp-grid"></div>
+    </div>
+
+    <!-- ── COMPETITION DETAIL ── -->
+    <div class="view" id="view-comp-detail">
+      <button class="back-link" onclick="nav('competitions')">← Back to competitions</button>
+      <div id="comp-detail-content"></div>
+    </div>
+
+    <!-- ── EVENT MANAGER ── -->
+    <div class="view" id="view-events">
+      <div class="page-header">
+        <div>
+          <div class="page-title">// event manager</div>
+          <div class="page-sub">Create and manage match events, then assign them to rounds.</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-create-event')">+ Add Event</button>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">All Events</span>
+          <select class="form-select" style="width:180px;padding:5px 8px;font-size:11px;" onchange="filterEvents(this.value)">
+            <option value="">All tournaments</option>
+            <option value="Premier League">Premier League</option>
+            <option value="UEFA Champions League">Champions League</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Match</th>
+                <th>Tournament</th>
+                <th>Kick-off</th>
+                <th>Status</th>
+                <th>Result</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="events-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── EMBED ── -->
+    <div class="view" id="view-embed">
+      <div class="page-header">
+        <div>
+          <div class="page-title">// embed & integration</div>
+          <div class="page-sub">Copy the snippet and paste it anywhere on your site.</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <div class="card" style="margin-bottom:14px;">
+            <div class="card-header"><span class="card-title">Your Embed Code</span></div>
+            <div class="card-body">
+              <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">Paste this snippet into any page on your site. The widget loads your competitions automatically.</p>
+              <div class="embed-box" id="embed-code-box">
+&lt;iframe
+  src="https://gameweek.gg/embed?client=<span style="color:#FCD34D">gw_ec_a4f92c</span>"
+  width="100%"
+  height="620"
+  frameborder="0"
+  style="border-radius:10px;"
+&gt;&lt;/iframe&gt;
+                <button class="btn btn-outline btn-sm embed-copy-btn" onclick="copyEmbed()" style="font-family:var(--mono);font-size:10px;background:var(--sidebar-2);border-color:var(--sidebar-border);color:#9CA3AF;" id="copy-btn">Copy</button>
+              </div>
+              <p style="font-size:11px;color:var(--text-3);margin-top:10px;">Your client key: <span style="font-family:var(--mono);color:var(--text)">gw_ec_a4f92c</span></p>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Allowed Domains</span>
+              <button class="btn btn-outline btn-sm" onclick="openModal('modal-add-domain')">+ Add domain</button>
+            </div>
+            <div class="card-body">
+              <p style="font-size:12px;color:var(--text-2);margin-bottom:14px;">The embed only loads on these domains. This prevents unauthorised use of your client key.</p>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;" id="domain-list">
+                <div class="domain-tag">yourdomain.com <button onclick="removeDomain(this)">×</button></div>
+                <div class="domain-tag">app.yourdomain.com <button onclick="removeDomain(this)">×</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card" style="margin-bottom:14px;">
+            <div class="card-header"><span class="card-title">Integration Guide</span></div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:14px;">
+                <div style="display:flex;gap:10px;align-items:flex-start;">
+                  <div style="width:22px;height:22px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:700;color:white;flex-shrink:0;">1</div>
+                  <div>
+                    <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px;">Add allowed domain</div>
+                    <div style="font-size:11px;color:var(--text-3);">Register the domain where the embed will live.</div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:10px;align-items:flex-start;">
+                  <div style="width:22px;height:22px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:700;color:white;flex-shrink:0;">2</div>
+                  <div>
+                    <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px;">Copy the snippet</div>
+                    <div style="font-size:11px;color:var(--text-3);">Paste the iframe code into your CMS, HTML, or template.</div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:10px;align-items:flex-start;">
+                  <div style="width:22px;height:22px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:700;color:white;flex-shrink:0;">3</div>
+                  <div>
+                    <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px;">Go live</div>
+                    <div style="font-size:11px;color:var(--text-3);">Users see your competitions immediately. No page refresh needed after changes.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><span class="card-title">Status</span></div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-size:12px;color:var(--text-2);">Embed status</span>
+                  <span class="badge badge-green">● Active</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-size:12px;color:var(--text-2);">Last loaded</span>
+                  <span style="font-family:var(--mono);font-size:11px;color:var(--text-3);">3 min ago</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-size:12px;color:var(--text-2);">Loads today</span>
+                  <span style="font-family:var(--mono);font-size:11px;color:var(--text);">847</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SETTINGS ── -->
+    <div class="view" id="view-settings">
+      <div class="page-header">
+        <div>
+          <div class="page-title">// settings</div>
+          <div class="page-sub">Manage your account and workspace preferences.</div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div>
+          <div class="card" style="margin-bottom:14px;">
+            <div class="card-header"><span class="card-title">Account</span></div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label">Name</label>
+                <input class="form-input" value="Ercan" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input class="form-input" value="hello@gameweek.gg" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Workspace name</label>
+                <input class="form-input" value="My Operator" />
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="toast('Account saved')">Save changes</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Danger Zone</span></div>
+            <div class="card-body">
+              <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">These actions are permanent and cannot be undone.</p>
+              <button class="btn btn-danger btn-sm">Delete workspace</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:14px;">
+            <div class="card-header"><span class="card-title">Current Plan</span></div>
+            <div class="card-body">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                <div>
+                  <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);">Growth</div>
+                  <div style="font-size:12px;color:var(--text-3);">€349 / month</div>
+                </div>
+                <span class="badge badge-green">Active</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--text-2);">
+                <div>✓ Unlimited competitions</div>
+                <div>✓ All 3 game modes</div>
+                <div>✓ Analytics dashboard</div>
+                <div>✓ Up to 3 allowed domains</div>
+              </div>
+              <div class="divider"></div>
+              <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;">Upgrade to Scale →</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Notifications</span></div>
+            <div class="card-body">
+              <div class="toggle-row">
+                <div>
+                  <div class="toggle-label">Round deadline reminders</div>
+                  <div class="toggle-sub">Email 24h before deadline</div>
+                </div>
+                <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+              </div>
+              <div class="toggle-row">
+                <div>
+                  <div class="toggle-label">New user registrations</div>
+                  <div class="toggle-sub">Weekly digest</div>
+                </div>
+                <label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label>
+              </div>
+              <div class="toggle-row">
+                <div>
+                  <div class="toggle-label">Result entry reminders</div>
+                  <div class="toggle-sub">After match ends</div>
+                </div>
+                <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ══ MODALS ══ -->
+
+<!-- Create Competition -->
+<div class="modal-overlay" id="modal-create-comp">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">New Competition</div>
+      <button class="modal-close" onclick="closeModal('modal-create-comp')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Competition Name</label>
+        <input class="form-input" id="new-comp-name" placeholder="e.g. Premier League 25/26 Score Predictor" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">League / Tournament</label>
+        <input class="form-input" id="new-comp-league" placeholder="e.g. Premier League" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Game Mode</label>
+        <select class="form-select" id="new-comp-mode">
+          <option value="lms">Last Man Standing — pick a result, wrong = eliminated</option>
+          <option value="score">Score Predictor — predict exact scorelines</option>
+          <option value="ou">Over / Under — goals over or under a line</option>
+        </select>
+      </div>
+      <div class="divider"></div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Enable Season-Long Competition</div>
+          <div class="toggle-sub">Cumulative points across all rounds. Weekly winner still runs by default.</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="new-comp-longterm"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="divider"></div>
+      <div class="form-group">
+        <label class="form-label">Primary Colour</label>
+        <div class="color-row">
+          <input type="color" class="color-input" value="#4F46E5" id="new-comp-color" oninput="updateColorPreview()">
+          <input class="form-input" value="#4F46E5" id="new-comp-color-hex" style="font-family:var(--mono);font-size:12px;" oninput="syncColorFromHex()">
+        </div>
+        <div class="brand-preview" id="color-preview">
+          <div class="brand-preview-label">Preview</div>
+          <div class="brand-preview-bar" id="preview-bar" style="background:#4F46E5;"></div>
+          <button class="brand-preview-btn" id="preview-btn" style="background:#4F46E5;">Submit Predictions →</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-create-comp')">Cancel</button>
+      <button class="btn btn-primary" onclick="createComp()">Create Competition</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create Round -->
+<div class="modal-overlay" id="modal-create-round">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">New Round</div>
+      <button class="modal-close" onclick="closeModal('modal-create-round')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Round Name</label>
+        <input class="form-input" id="new-round-name" placeholder="e.g. Gameweek 4" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Opens</label>
+          <input class="form-input" type="datetime-local" id="new-round-open" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Prediction Deadline</label>
+          <input class="form-input" type="datetime-local" id="new-round-deadline" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Assign Events</label>
+        <div id="round-event-picker" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:8px;"></div>
+        <div class="form-hint">Only unassigned events are shown. <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-create-round');openModal('modal-create-event')">+ Add new event</button></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-create-round')">Cancel</button>
+      <button class="btn btn-primary" onclick="createRound()">Create Round</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create Event -->
+<div class="modal-overlay" id="modal-create-event">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add Event</div>
+      <button class="modal-close" onclick="closeModal('modal-create-event')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Home Team</label>
+          <input class="form-input" id="new-ev-home" placeholder="e.g. Arsenal" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Away Team</label>
+          <input class="form-input" id="new-ev-away" placeholder="e.g. Man City" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tournament</label>
+        <input class="form-input" id="new-ev-tournament" placeholder="e.g. Premier League" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kick-off Date & Time</label>
+        <input class="form-input" type="datetime-local" id="new-ev-kickoff" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-create-event')">Cancel</button>
+      <button class="btn btn-primary" onclick="createEvent()">Add Event</button>
+    </div>
+  </div>
+</div>
+
+<!-- Enter Result -->
+<div class="modal-overlay" id="modal-result">
+  <div class="modal" style="width:380px;">
+    <div class="modal-header">
+      <div class="modal-title">Enter Result</div>
+      <button class="modal-close" onclick="closeModal('modal-result')">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">Confirming the result will automatically calculate points for all predictions on this event.</p>
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;padding:16px;background:var(--bg);border-radius:8px;margin-bottom:4px;">
+        <span style="font-family:var(--mono);font-size:13px;font-weight:700;" id="result-home-label">Arsenal</span>
+        <div class="score-inline">
+          <input type="number" min="0" max="20" id="result-h" placeholder="0">
+          <span class="sep">–</span>
+          <input type="number" min="0" max="20" id="result-a" placeholder="0">
+        </div>
+        <span style="font-family:var(--mono);font-size:13px;font-weight:700;" id="result-away-label">Man City</span>
+      </div>
+      <p style="font-size:11px;color:var(--text-3);text-align:center;">Enter the final score</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-result')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveResult()">Confirm Result</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Domain -->
+<div class="modal-overlay" id="modal-add-domain">
+  <div class="modal" style="width:400px;">
+    <div class="modal-header">
+      <div class="modal-title">Add Allowed Domain</div>
+      <button class="modal-close" onclick="closeModal('modal-add-domain')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Domain</label>
+        <input class="form-input" id="new-domain" placeholder="e.g. yourdomain.com" />
+        <div class="form-hint">Do not include https:// or trailing slashes.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-domain')">Cancel</button>
+      <button class="btn btn-primary" onclick="addDomain()">Add Domain</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ══ JS ══ -->
+<script>
+// ── STATE ─────────────────────────────────────────────────────────────────
+const state = {
+  currentComp: null,
+  resultEventId: null,
+  eventFilter: '',
+  competitions: [
+    {
+      id:'c1', name:'Premier League 25/26', league:'Premier League',
+      mode:'lms', longTerm:false, status:'active',
+      color:'#4F46E5', users:312, predictions:1247,
+      rounds:[
+        {id:'r1',label:'Gameweek 1',status:'completed',deadline:'2025-08-16T14:00',eventIds:['e101','e102','e103']},
+        {id:'r2',label:'Gameweek 2',status:'completed',deadline:'2025-08-23T14:00',eventIds:['e104','e105','e106']},
+        {id:'r3',label:'Gameweek 3',status:'open',deadline:'2025-08-30T14:00',eventIds:['e107','e108']},
+      ]
+    },
+    {
+      id:'c2', name:'UCL 25/26', league:'UEFA Champions League',
+      mode:'score', longTerm:true, status:'active',
+      color:'#1D4ED8', users:198, predictions:600,
+      rounds:[
+        {id:'r4',label:'Matchday 1',status:'completed',deadline:'2025-09-16T17:00',eventIds:['e201','e202']},
+        {id:'r5',label:'Matchday 2',status:'open',deadline:'2025-10-01T17:00',eventIds:['e203']},
+      ]
+    },
+    {
+      id:'c3', name:'Top 5 Leagues O/U', league:'Multi-league',
+      mode:'ou', longTerm:false, status:'draft',
+      color:'#059669', users:0, predictions:0,
+      rounds:[]
+    }
+  ],
+  events:[
+    {id:'e101',home:'Arsenal',away:'Wolves',tournament:'Premier League',kickoff:'2025-08-16T15:00',result:{h:3,a:0},status:'completed'},
+    {id:'e102',home:'Man City',away:'Chelsea',tournament:'Premier League',kickoff:'2025-08-16T17:30',result:{h:2,a:1},status:'completed'},
+    {id:'e103',home:'Liverpool',away:'Brentford',tournament:'Premier League',kickoff:'2025-08-17T14:00',result:{h:1,a:1},status:'completed'},
+    {id:'e104',home:'Arsenal',away:'Brighton',tournament:'Premier League',kickoff:'2025-08-23T15:00',result:{h:2,a:2},status:'completed'},
+    {id:'e105',home:'Man Utd',away:'Liverpool',tournament:'Premier League',kickoff:'2025-08-23T17:30',result:{h:0,a:3},status:'completed'},
+    {id:'e106',home:'Spurs',away:'Everton',tournament:'Premier League',kickoff:'2025-08-24T14:00',result:{h:1,a:0},status:'completed'},
+    {id:'e107',home:'Arsenal',away:'Man City',tournament:'Premier League',kickoff:'2025-08-30T15:00',result:null,status:'upcoming'},
+    {id:'e108',home:'Liverpool',away:'Man Utd',tournament:'Premier League',kickoff:'2025-08-30T17:30',result:null,status:'upcoming'},
+    {id:'e201',home:'Real Madrid',away:'Stuttgart',tournament:'UEFA Champions League',kickoff:'2025-09-17T21:00',result:{h:3,a:1},status:'completed'},
+    {id:'e202',home:'Bayern',away:'GNK Dinamo',tournament:'UEFA Champions League',kickoff:'2025-09-17T21:00',result:{h:9,a:2},status:'completed'},
+    {id:'e203',home:'PSG',away:'Arsenal',tournament:'UEFA Champions League',kickoff:'2025-10-01T21:00',result:null,status:'upcoming'},
+  ]
+};
+
+// ── HELPERS ───────────────────────────────────────────────────────────────
+const modeLabel = {lms:'Last Man Standing', score:'Score Predictor', ou:'Over / Under'};
+const modeChip  = {lms:'LMS', score:'SCORE', ou:'O/U'};
+
+function getEvent(id){ return state.events.find(e=>e.id===id); }
+function getComp(id){ return state.competitions.find(c=>c.id===id); }
+function uid(){ return Math.random().toString(36).slice(2,8); }
+
+function fmtDt(dt){
+  if(!dt) return '—';
+  const d = new Date(dt);
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' · '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+}
+
+function statusBadge(s){
+  if(s==='active'||s==='open') return `<span class="badge badge-green">● ${s}</span>`;
+  if(s==='draft') return `<span class="badge badge-gray">Draft</span>`;
+  if(s==='completed') return `<span class="badge badge-gray">✓ Completed</span>`;
+  return `<span class="badge badge-gray">${s}</span>`;
+}
+
+// ── NAV ───────────────────────────────────────────────────────────────────
+function nav(view, subLabel){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+
+  const navMap = {
+    dashboard:'.nav-item:nth-child(1)',
+    embed:'[onclick="nav(\'embed\')"]',
+    competitions:'[onclick="nav(\'competitions\')"]',
+    events:'[onclick="nav(\'events\')"]',
+    settings:'[onclick="nav(\'settings\')"]',
+  };
+
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    const onclick = n.getAttribute('onclick');
+    if(onclick && onclick.includes(`'${view}'`)) n.classList.add('active');
+  });
+
+  // breadcrumb
+  const labels = {dashboard:'Dashboard','comp-detail':'Competitions','competitions':'Competitions',events:'Event Manager',embed:'Embed & Integration',settings:'Settings'};
+  let bc = '';
+  if(view==='comp-detail' && subLabel){
+    bc = `<span>Competitions</span><span class="sep">/</span><span class="current">${subLabel}</span>`;
+  } else {
+    bc = `<span class="current">${labels[view]||view}</span>`;
+  }
+  document.getElementById('breadcrumb').innerHTML = bc;
+
+  if(view==='dashboard') renderDashboard();
+  if(view==='competitions') renderCompList();
+  if(view==='events') renderEvents();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────
+function renderDashboard(){
+  const tbody = document.getElementById('dash-comp-table');
+  tbody.innerHTML = state.competitions.map(c=>{
+    const activeRound = c.rounds.find(r=>r.status==='open');
+    return `<tr>
+      <td><span style="font-weight:600">${c.name}</span></td>
+      <td><span class="mode-chip">${modeChip[c.mode]}</span></td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text-3)">${activeRound?activeRound.label:'—'}</td>
+      <td style="font-family:var(--mono)">${c.users}</td>
+      <td>${statusBadge(c.status)}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="openCompDetail('${c.id}')">Manage →</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── COMP LIST ─────────────────────────────────────────────────────────────
+function renderCompList(){
+  document.getElementById('comp-grid').innerHTML = state.competitions.map(c=>{
+    const openRound = c.rounds.find(r=>r.status==='open');
+    const doneRounds = c.rounds.filter(r=>r.status==='completed').length;
+    return `<div class="comp-card" onclick="openCompDetail('${c.id}')">
+      <div class="comp-card-top">
+        <div>
+          <div class="comp-card-name">${c.name}</div>
+          <div class="comp-card-meta">${c.league} · <span class="mode-chip">${modeChip[c.mode]}</span>${c.longTerm?' · Season-long':''}</div>
+        </div>
+        ${statusBadge(c.status)}
+      </div>
+      <div style="font-size:11px;color:var(--text-3);margin-bottom:12px;">
+        ${openRound?`Current: <strong style="color:var(--text)">${openRound.label}</strong> — deadline ${fmtDt(openRound.deadline)}`:'No active round'}
+      </div>
+      <div class="comp-card-stats">
+        <div class="comp-card-stat"><strong>${c.users}</strong>Users</div>
+        <div class="comp-card-stat"><strong>${c.predictions.toLocaleString()}</strong>Predictions</div>
+        <div class="comp-card-stat"><strong>${doneRounds}/${c.rounds.length}</strong>Rounds done</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── COMP DETAIL ───────────────────────────────────────────────────────────
+function openCompDetail(id){
+  state.currentComp = id;
+  nav('comp-detail', getComp(id).name);
+  renderCompDetail();
+}
+
+function renderCompDetail(){
+  const c = getComp(state.currentComp);
+  const el = document.getElementById('comp-detail-content');
+
+  el.innerHTML = `
+  <div class="page-header">
+    <div>
+      <div class="page-title" style="display:flex;align-items:center;gap:10px;">
+        ${c.name}
+        ${statusBadge(c.status)}
+      </div>
+      <div class="page-sub">${c.league} · ${modeLabel[c.mode]}${c.longTerm?' · Season-long enabled':''}</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-outline" onclick="openModal('modal-create-round')">+ New Round</button>
+    </div>
+  </div>
+
+  <div class="three-col">
+    <div class="stat-card">
+      <div class="stat-card-label">Total Users</div>
+      <div class="stat-card-value">${c.users}</div>
+    </div>
+    <div class="stat-card stat-card-accent">
+      <div class="stat-card-label">Total Predictions</div>
+      <div class="stat-card-value">${c.predictions.toLocaleString()}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Rounds</div>
+      <div class="stat-card-value">${c.rounds.length}</div>
+      <div class="stat-card-sub">${c.rounds.filter(r=>r.status==='completed').length} completed</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Rounds</span>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-create-round')">+ New Round</button>
+        </div>
+        <div class="card-body" style="padding:12px;">
+          ${c.rounds.length===0
+            ? `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No rounds yet</div><div class="empty-sub">Create the first round for this competition.</div></div>`
+            : `<div class="round-list">${c.rounds.map(r=>`
+              <div class="round-item">
+                <div>
+                  <div class="round-item-name">${r.label}</div>
+                  <div class="round-item-meta">${r.eventIds.length} events · deadline ${fmtDt(r.deadline)}</div>
+                </div>
+                ${statusBadge(r.status)}
+                ${r.status==='open'?`<button class="btn btn-outline btn-sm" onclick="confirmRound('${r.id}')">Lock →</button>`:''}
+              </div>`).join('')}</div>`
+          }
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-header"><span class="card-title">Competition Settings</span></div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Name</label>
+            <input class="form-input" value="${c.name}" id="edit-comp-name" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Game Mode</label>
+            <select class="form-select" id="edit-comp-mode">
+              <option value="lms" ${c.mode==='lms'?'selected':''}>Last Man Standing</option>
+              <option value="score" ${c.mode==='score'?'selected':''}>Score Predictor</option>
+              <option value="ou" ${c.mode==='ou'?'selected':''}>Over / Under</option>
+            </select>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Season-Long Competition</div>
+              <div class="toggle-sub">Cumulative points across all rounds</div>
+            </div>
+            <label class="toggle"><input type="checkbox" ${c.longTerm?'checked':''} onchange="toggleLongTerm('${c.id}',this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="divider"></div>
+          <div class="form-group">
+            <label class="form-label">Brand Colour</label>
+            <div class="color-row">
+              <input type="color" class="color-input" value="${c.color}" onchange="updateCompColor('${c.id}',this.value)">
+              <span style="font-family:var(--mono);font-size:12px;color:var(--text-2);">${c.color}</span>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="saveCompSettings()">Save changes</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Status</span></div>
+        <div class="card-body">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${c.status==='draft'
+              ? `<button class="btn btn-primary btn-sm" onclick="setCompStatus('${c.id}','active')">Activate →</button>`
+              : `<button class="btn btn-outline btn-sm" onclick="setCompStatus('${c.id}','draft')">Set to Draft</button>`
+            }
+            <button class="btn btn-danger btn-sm" onclick="if(confirm('Delete this competition?')) deleteComp('${c.id}')">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── EVENTS ────────────────────────────────────────────────────────────────
+function filterEvents(val){ state.eventFilter=val; renderEvents(); }
+
+function renderEvents(){
+  const evs = state.eventFilter
+    ? state.events.filter(e=>e.tournament===state.eventFilter)
+    : state.events;
+
+  document.getElementById('events-table').innerHTML = evs.map(ev=>`
+    <tr>
+      <td><span style="font-weight:600;font-family:var(--mono);font-size:12px;">${ev.home} <span style="color:var(--text-3);font-weight:400">vs</span> ${ev.away}</span></td>
+      <td style="color:var(--text-3);font-size:12px;">${ev.tournament}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text-3);">${fmtDt(ev.kickoff)}</td>
+      <td>${statusBadge(ev.status)}</td>
+      <td>
+        ${ev.result
+          ? `<span class="event-row-result" style="color:var(--text)">${ev.result.h} – ${ev.result.a}</span>`
+          : `<button class="result-btn-inline" onclick="openResultModal('${ev.id}')">Enter result</button>`
+        }
+      </td>
+      <td>
+        <button class="btn btn-ghost btn-sm" style="color:var(--red-light);color:var(--red);" onclick="deleteEvent('${ev.id}')">Remove</button>
+      </td>
+    </tr>`).join('');
+}
+
+// ── RESULT MODAL ──────────────────────────────────────────────────────────
+function openResultModal(id){
+  state.resultEventId = id;
+  const ev = getEvent(id);
+  document.getElementById('result-home-label').textContent = ev.home;
+  document.getElementById('result-away-label').textContent = ev.away;
+  document.getElementById('result-h').value = '';
+  document.getElementById('result-a').value = '';
+  openModal('modal-result');
+}
+
+function saveResult(){
+  const h = parseInt(document.getElementById('result-h').value);
+  const a = parseInt(document.getElementById('result-a').value);
+  if(isNaN(h)||isNaN(a)){ toast('Enter both scores'); return; }
+  const ev = getEvent(state.resultEventId);
+  ev.result = {h,a};
+  ev.status = 'completed';
+  closeModal('modal-result');
+  renderEvents();
+  toast(`Result saved: ${ev.home} ${h}–${a} ${ev.away}`);
+}
+
+// ── CREATE COMP ───────────────────────────────────────────────────────────
+function createComp(){
+  const name = document.getElementById('new-comp-name').value.trim();
+  if(!name){ toast('Enter a competition name'); return; }
+  const c = {
+    id: 'c'+uid(),
+    name,
+    league: document.getElementById('new-comp-league').value.trim()||'—',
+    mode: document.getElementById('new-comp-mode').value,
+    longTerm: document.getElementById('new-comp-longterm').checked,
+    status: 'draft',
+    color: document.getElementById('new-comp-color').value,
+    users: 0, predictions: 0, rounds: []
+  };
+  state.competitions.push(c);
+  closeModal('modal-create-comp');
+  document.getElementById('new-comp-name').value='';
+  renderCompList();
+  nav('competitions');
+  toast('Competition created');
+}
+
+// ── CREATE ROUND ──────────────────────────────────────────────────────────
+function openModal(id){
+  if(id==='modal-create-round') populateRoundEventPicker();
+  document.getElementById(id).classList.add('open');
+}
+
+function populateRoundEventPicker(){
+  const assignedIds = new Set();
+  state.competitions.forEach(c=>c.rounds.forEach(r=>r.eventIds.forEach(id=>assignedIds.add(id))));
+  const avail = state.events.filter(e=>!assignedIds.has(e.id));
+  const el = document.getElementById('round-event-picker');
+  if(avail.length===0){
+    el.innerHTML='<div style="font-size:12px;color:var(--text-3);padding:8px;">No unassigned events. Add new events first.</div>';
+    return;
+  }
+  el.innerHTML = avail.map(ev=>`
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 6px;border-radius:4px;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+      <input type="checkbox" value="${ev.id}" style="accent-color:var(--accent);">
+      <span style="font-family:var(--mono);font-size:11px;font-weight:700;">${ev.home} vs ${ev.away}</span>
+      <span style="font-size:10px;color:var(--text-3);margin-left:auto;">${fmtDt(ev.kickoff)}</span>
+    </label>`).join('');
+}
+
+function createRound(){
+  const name = document.getElementById('new-round-name').value.trim();
+  if(!name){ toast('Enter a round name'); return; }
+  if(!state.currentComp){ toast('Open a competition first'); return; }
+  const checked = [...document.querySelectorAll('#round-event-picker input:checked')].map(i=>i.value);
+  const r = {
+    id: 'r'+uid(),
+    label: name,
+    status: 'open',
+    deadline: document.getElementById('new-round-deadline').value,
+    eventIds: checked
+  };
+  getComp(state.currentComp).rounds.push(r);
+  closeModal('modal-create-round');
+  document.getElementById('new-round-name').value='';
+  renderCompDetail();
+  toast('Round created');
+}
+
+// ── CREATE EVENT ──────────────────────────────────────────────────────────
+function createEvent(){
+  const home = document.getElementById('new-ev-home').value.trim();
+  const away = document.getElementById('new-ev-away').value.trim();
+  if(!home||!away){ toast('Enter both team names'); return; }
+  const ev = {
+    id: 'e'+uid(),
+    home, away,
+    tournament: document.getElementById('new-ev-tournament').value.trim()||'—',
+    kickoff: document.getElementById('new-ev-kickoff').value,
+    result: null,
+    status: 'upcoming'
+  };
+  state.events.push(ev);
+  closeModal('modal-create-event');
+  document.getElementById('new-ev-home').value='';
+  document.getElementById('new-ev-away').value='';
+  renderEvents();
+  toast('Event added');
+}
+
+// ── MISC ACTIONS ──────────────────────────────────────────────────────────
+function toggleLongTerm(id,val){ getComp(id).longTerm=val; }
+
+function updateCompColor(id,val){
+  getComp(id).color=val;
+}
+
+function saveCompSettings(){
+  const c = getComp(state.currentComp);
+  c.name = document.getElementById('edit-comp-name').value;
+  c.mode = document.getElementById('edit-comp-mode').value;
+  renderCompDetail();
+  toast('Changes saved');
+}
+
+function setCompStatus(id,status){
+  getComp(id).status=status;
+  renderCompDetail();
+  toast('Status updated');
+}
+
+function deleteComp(id){
+  state.competitions = state.competitions.filter(c=>c.id!==id);
+  nav('competitions');
+  toast('Competition deleted');
+}
+
+function deleteEvent(id){
+  if(!confirm('Remove this event?')) return;
+  state.events = state.events.filter(e=>e.id!==id);
+  renderEvents();
+  toast('Event removed');
+}
+
+function confirmRound(id){
+  state.competitions.forEach(c=>{
+    const r = c.rounds.find(r=>r.id===id);
+    if(r) r.status='completed';
+  });
+  renderCompDetail();
+  toast('Round locked');
+}
+
+function updateColorPreview(){
+  const val = document.getElementById('new-comp-color').value;
+  document.getElementById('new-comp-color-hex').value=val;
+  document.getElementById('preview-bar').style.background=val;
+  document.getElementById('preview-btn').style.background=val;
+}
+
+function syncColorFromHex(){
+  const val = document.getElementById('new-comp-color-hex').value;
+  if(/^#[0-9A-Fa-f]{6}$/.test(val)){
+    document.getElementById('new-comp-color').value=val;
+    document.getElementById('preview-bar').style.background=val;
+    document.getElementById('preview-btn').style.background=val;
+  }
+}
+
+function copyEmbed(){
+  const code = `<iframe src="https://gameweek.gg/embed?client=gw_ec_a4f92c" width="100%" height="620" frameborder="0" style="border-radius:10px;"></iframe>`;
+  navigator.clipboard.writeText(code).then(()=>toast('Copied to clipboard'));
+}
+
+function addDomain(){
+  const d = document.getElementById('new-domain').value.trim();
+  if(!d){ toast('Enter a domain'); return; }
+  const tag = document.createElement('div');
+  tag.className='domain-tag';
+  tag.innerHTML=`${d} <button onclick="removeDomain(this)">×</button>`;
+  document.getElementById('domain-list').appendChild(tag);
+  closeModal('modal-add-domain');
+  document.getElementById('new-domain').value='';
+  toast('Domain added');
+}
+
+function removeDomain(btn){ btn.parentElement.remove(); toast('Domain removed'); }
+
+// ── MODAL HELPERS ─────────────────────────────────────────────────────────
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); });
+});
+
+// ── TOAST ─────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+renderDashboard();
+</script>
+</body>
+</html>
