@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gameweek — Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #FFFFFF;
+      --surface: #F7F8FA;
+      --surface-2: #EDEEF2;
+      --border: #E2E4EA;
+      --text: #0F1117;
+      --text-2: #6B7280;
+      --text-3: #9CA3AF;
+      --accent: #4F46E5;
+      --accent-light: #EEF2FF;
+      --accent-dark: #3730A3;
+      --green: #16A34A;
+      --green-light: #DCFCE7;
+      --red: #DC2626;
+      --red-light: #FEE2E2;
+      --amber: #D97706;
+      --amber-light: #FEF3C7;
+      --mono: 'Space Mono', monospace;
+      --sans: 'Inter', sans-serif;
+    }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── NAV ── */
+    nav {
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 54px;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 100;
+    }
+
+    .nav-left { display: flex; align-items: center; gap: 28px; }
+
+    .logo {
+      font-family: var(--mono);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.5px;
+    }
+    .logo span { color: var(--accent); }
+
+    .nav-links { display: flex; gap: 2px; }
+
+    .nav-link {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-2);
+      padding: 5px 11px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.13s;
+      border: none;
+      background: none;
+    }
+    .nav-link:hover { color: var(--text); background: var(--surface); }
+    .nav-link.active { color: var(--accent); background: var(--accent-light); }
+
+    .nav-right { display: flex; align-items: center; gap: 8px; }
+
+    .demo-badge {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--amber);
+      background: var(--amber-light);
+      padding: 3px 7px;
+      border-radius: 4px;
+      letter-spacing: 0.8px;
+    }
+
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-2);
+    }
+
+    .user-avatar {
+      width: 20px; height: 20px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono);
+      font-size: 8px;
+      color: white;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* ── MAIN ── */
+    main {
+      max-width: 740px;
+      margin: 0 auto;
+      padding: 28px 24px 60px;
+    }
+
+    .page-header { margin-bottom: 20px; }
+
+    .page-title {
+      font-family: var(--mono);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+
+    .page-subtitle { font-size: 12px; color: var(--text-3); }
+
+    /* ── COMP TABS ── */
+    .comp-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+      overflow-x: auto;
+      gap: 0;
+    }
+
+    .comp-tab {
+      padding: 9px 15px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-2);
+      cursor: pointer;
+      border: none;
+      background: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      white-space: nowrap;
+      transition: all 0.13s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .comp-tab:hover { color: var(--text); }
+    .comp-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .mode-tag {
+      font-family: var(--mono);
+      font-size: 8px;
+      background: var(--surface-2);
+      color: var(--text-3);
+      padding: 2px 5px;
+      border-radius: 3px;
+      letter-spacing: 0.3px;
+    }
+
+    /* ── ROUND BAR ── */
+    .round-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .round-info { display: flex; align-items: center; gap: 8px; }
+
+    .round-label {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .round-status {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    .round-status.open { background: var(--green-light); color: var(--green); }
+    .round-status.completed { background: var(--surface-2); color: var(--text-3); }
+
+    .round-select {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text);
+      border: 1px solid var(--border);
+      background: var(--bg);
+      padding: 5px 9px;
+      border-radius: 6px;
+      cursor: pointer;
+      outline: none;
+    }
+    .round-select:focus { border-color: var(--accent); }
+
+    /* ── DEADLINE ── */
+    .deadline-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent-light);
+      border: 1px solid #C7D2FE;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 14px;
+      font-size: 12px;
+      color: var(--accent-dark);
+    }
+    .deadline-bar strong { font-family: var(--mono); font-size: 11px; }
+
+    /* ── EVENT CARDS ── */
+    .events-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .event-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 13px 15px;
+      background: var(--bg);
+      transition: border-color 0.13s;
+    }
+    .event-card:hover { border-color: #C4C8D8; }
+    .event-card.predicted {
+      border-color: var(--accent);
+      background: #FAFBFF;
+    }
+
+    .event-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 9px;
+    }
+
+    .event-league {
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text-3);
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+
+    .event-time { font-family: var(--mono); font-size: 10px; color: var(--text-3); }
+
+    .event-teams {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .team { display: flex; align-items: center; gap: 7px; flex: 1; }
+    .team.away { flex-direction: row-reverse; }
+
+    .team-badge {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono);
+      font-size: 7px;
+      font-weight: 700;
+      color: var(--text-2);
+      flex-shrink: 0;
+    }
+
+    .team-name {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .vs-sep {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-3);
+      flex-shrink: 0;
+      min-width: 20px;
+      text-align: center;
+    }
+
+    /* ── PREDICTION AREA ── */
+    .prediction-area {
+      margin-top: 11px;
+      padding-top: 11px;
+      border-top: 1px solid var(--border);
+    }
+
+    .pred-label {
+      font-size: 10px;
+      color: var(--text-3);
+      font-weight: 500;
+      margin-bottom: 7px;
+    }
+
+    /* 1X2 */
+    .result-btns { display: flex; gap: 5px; }
+
+    .result-btn {
+      flex: 1;
+      padding: 7px 4px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-2);
+      cursor: pointer;
+      transition: all 0.13s;
+      text-align: center;
+      line-height: 1.2;
+    }
+    .result-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+    .result-btn.selected { border-color: var(--accent); background: var(--accent); color: white; }
+    .result-btn .btn-sub { display: block; font-size: 8px; font-weight: 400; opacity: 0.65; margin-top: 2px; }
+
+    /* Score */
+    .score-inputs { display: flex; align-items: center; gap: 8px; }
+
+    .score-group { display: flex; align-items: center; gap: 7px; flex: 1; }
+    .score-group.right { flex-direction: row-reverse; }
+
+    .score-team-lbl {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-2);
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 70px;
+    }
+
+    .score-input {
+      width: 42px; height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      text-align: center;
+      font-family: var(--mono);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.13s;
+      flex-shrink: 0;
+      -moz-appearance: textfield;
+    }
+    .score-input::-webkit-inner-spin-button,
+    .score-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .score-input:focus { border-color: var(--accent); }
+    .score-input.has-val { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
+
+    .score-dash { font-family: var(--mono); font-size: 14px; color: var(--text-3); font-weight: 700; }
+
+    /* Over/Under */
+    .ou-btns { display: flex; gap: 6px; }
+
+    .ou-btn {
+      flex: 1;
+      padding: 8px 4px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.13s;
+      text-align: center;
+      line-height: 1.2;
+    }
+    .ou-btn .ou-sub { display: block; font-size: 8px; font-weight: 400; opacity: 0.6; margin-top: 2px; }
+    .ou-btn.over:hover, .ou-btn.over.selected { border-color: var(--green); background: var(--green-light); color: var(--green); }
+    .ou-btn.under:hover, .ou-btn.under.selected { border-color: var(--red); background: var(--red-light); color: var(--red); }
+
+    /* Completed card result */
+    .result-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-2);
+    }
+    .result-row strong { font-family: var(--mono); color: var(--text); }
+
+    /* ── PROGRESS ── */
+    .progress-wrap { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-2);
+      margin-bottom: 6px;
+    }
+    .progress-meta span:last-child { font-family: var(--mono); font-size: 11px; color: var(--accent); }
+
+    .progress-track { height: 3px; background: var(--surface-2); border-radius: 2px; }
+    .progress-fill { height: 3px; background: var(--accent); border-radius: 2px; transition: width 0.3s ease; }
+
+    .submit-row {
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .submit-hint { font-size: 11px; color: var(--text-3); }
+
+    .submit-btn {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 9px 22px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.13s;
+      letter-spacing: 0.3px;
+    }
+    .submit-btn:hover { background: var(--accent-dark); }
+    .submit-btn:disabled { background: var(--surface-2); color: var(--text-3); cursor: not-allowed; }
+
+    /* ── LEADERBOARD ── */
+    .lb-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .toggle-group {
+      display: flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px;
+    }
+
+    .toggle-btn {
+      padding: 5px 13px;
+      font-size: 12px;
+      font-weight: 500;
+      border: none;
+      background: none;
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--text-2);
+      transition: all 0.13s;
+    }
+    .toggle-btn.active {
+      background: var(--bg);
+      color: var(--text);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    }
+
+    .lb-comp-select {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text);
+      border: 1px solid var(--border);
+      background: var(--bg);
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      outline: none;
+      flex: 1;
+      max-width: 340px;
+    }
+    .lb-comp-select:focus { border-color: var(--accent); }
+
+    .lb-wrap { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+
+    .lb-head {
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .lb-head-title { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--text); }
+    .lb-head-sub { font-size: 11px; color: var(--text-3); }
+
+    .lb-table { width: 100%; border-collapse: collapse; }
+
+    .lb-table th {
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      padding: 8px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .lb-table th.r { text-align: right; }
+
+    .lb-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .lb-table tbody tr:last-child td { border-bottom: none; }
+    .lb-table tbody tr:hover td { background: var(--surface); }
+    .lb-table tbody tr.me td { background: var(--accent-light); }
+
+    .rank-cell {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-3);
+      text-align: center;
+      width: 36px;
+    }
+    .rank-cell.top { color: var(--amber); font-weight: 700; font-size: 14px; }
+
+    .user-cell { display: flex; align-items: center; gap: 8px; }
+
+    .lb-av {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--surface-2);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono);
+      font-size: 8px;
+      font-weight: 700;
+      color: var(--text-2);
+      flex-shrink: 0;
+    }
+    .lb-av.me { background: var(--accent); color: white; }
+
+    .lb-name { font-weight: 500; font-size: 13px; }
+    .lb-name.me { color: var(--accent); }
+
+    .you-tag {
+      font-size: 8px;
+      background: var(--accent);
+      color: white;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-weight: 700;
+      margin-left: 5px;
+      vertical-align: middle;
+    }
+
+    .pts-cell {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      text-align: right;
+    }
+
+    .num-cell {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-2);
+      text-align: right;
+    }
+
+    .alive-badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+      letter-spacing: 0.3px;
+    }
+    .alive-badge.alive { background: var(--green-light); color: var(--green); }
+    .alive-badge.out { background: var(--red-light); color: var(--red); }
+
+    /* ── PAGE TOGGLE ── */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ── SAVED TOAST ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--text);
+      color: white;
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 10px 20px;
+      border-radius: 6px;
+      z-index: 999;
+      transition: transform 0.25s ease;
+      pointer-events: none;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 540px) {
+      nav { padding: 0 14px; }
+      main { padding: 18px 14px 60px; }
+      .comp-tab { padding: 8px 10px; font-size: 11px; }
+      .team-name { font-size: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <div class="logo">game<span>week</span></div>
+    <div class="nav-links">
+      <button class="nav-link active" onclick="showPage('predictions', this)">Predictions</button>
+      <button class="nav-link" onclick="showPage('leaderboard', this)">Leaderboard</button>
+    </div>
+  </div>
+  <div class="nav-right">
+    <div class="demo-badge">DEMO</div>
+    <div class="user-chip">
+      <div class="user-avatar">DU</div>
+      demo_user
+    </div>
+  </div>
+</nav>
+
+<main>
+
+  <!-- ── PREDICTIONS PAGE ── -->
+  <div id="page-predictions" class="page active">
+    <div class="page-header">
+      <div class="page-title">// predictions</div>
+      <div class="page-subtitle">Make your picks before the deadline locks.</div>
+    </div>
+
+    <div class="comp-tabs" id="comp-tabs">
+      <button class="comp-tab active" onclick="switchComp(0, this)">
+        Premier League <span class="mode-tag">LMS</span>
+      </button>
+      <button class="comp-tab" onclick="switchComp(1, this)">
+        Champions League <span class="mode-tag">SCORE</span>
+      </button>
+      <button class="comp-tab" onclick="switchComp(2, this)">
+        Top 5 Leagues <span class="mode-tag">O/U</span>
+      </button>
+    </div>
+
+    <div id="comp-content"></div>
+  </div>
+
+  <!-- ── LEADERBOARD PAGE ── -->
+  <div id="page-leaderboard" class="page">
+    <div class="page-header">
+      <div class="page-title">// leaderboard</div>
+      <div class="page-subtitle">Rankings updated after each round completes.</div>
+    </div>
+
+    <div class="lb-controls">
+      <select class="lb-comp-select" id="lb-comp-select" onchange="renderLB()">
+        <option value="0">Premier League — Last Man Standing</option>
+        <option value="1">Champions League — Score Predictor</option>
+        <option value="2">Top 5 Leagues — Over / Under</option>
+      </select>
+      <div class="toggle-group">
+        <button class="toggle-btn active" onclick="switchLbView('weekly', this)">Weekly</button>
+        <button class="toggle-btn" onclick="switchLbView('overall', this)">Overall</button>
+      </div>
+    </div>
+
+    <div id="lb-content"></div>
+  </div>
+
+</main>
+
+<div id="toast">✓ Predictions saved</div>
+
+<script>
+// ── DATA ────────────────────────────────────────────────────────────────────
+
+const comps = [
+  {
+    id: 0, name: 'Premier League', shortName: 'PL', mode: 'lms',
+    rounds: [
+      { id: 1, label: 'Gameweek 1', status: 'completed', deadline: 'Aug 16 · 14:00' },
+      { id: 2, label: 'Gameweek 2', status: 'completed', deadline: 'Aug 23 · 14:00' },
+      { id: 3, label: 'Gameweek 3', status: 'open',      deadline: 'Aug 30 · 14:00' },
+    ],
+    defRound: 2,
+    events: {
+      1: [
+        { id:'e101', home:'Arsenal',   away:'Wolves',    time:'Aug 16 · 15:00', res:{h:3,a:0} },
+        { id:'e102', home:'Man City',  away:'Chelsea',   time:'Aug 16 · 17:30', res:{h:2,a:1} },
+        { id:'e103', home:'Liverpool', away:'Brentford', time:'Aug 17 · 14:00', res:{h:1,a:1} },
+      ],
+      2: [
+        { id:'e104', home:'Arsenal',  away:'Brighton',  time:'Aug 23 · 15:00', res:{h:2,a:2} },
+        { id:'e105', home:'Man Utd',  away:'Liverpool', time:'Aug 23 · 17:30', res:{h:0,a:3} },
+        { id:'e106', home:'Spurs',    away:'Everton',   time:'Aug 24 · 14:00', res:{h:1,a:0} },
+      ],
+      3: [
+        { id:'e107', home:'Arsenal',   away:'Man City', time:'Aug 30 · 15:00' },
+        { id:'e108', home:'Liverpool', away:'Man Utd',  time:'Aug 30 · 17:30' },
+        { id:'e109', home:'Chelsea',   away:'Spurs',    time:'Aug 31 · 14:00' },
+        { id:'e110', home:'Wolves',    away:'Everton',  time:'Aug 31 · 14:00' },
+      ],
+    }
+  },
+  {
+    id: 1, name: 'Champions League', shortName: 'UCL', mode: 'score',
+    rounds: [
+      { id: 1, label: 'Matchday 1', status: 'completed', deadline: 'Sep 16 · 17:00' },
+      { id: 2, label: 'Matchday 2', status: 'open',      deadline: 'Oct 1 · 17:00' },
+    ],
+    defRound: 1,
+    events: {
+      1: [
+        { id:'e201', home:'Real Madrid', away:'Stuttgart',  time:'Sep 17 · 21:00', res:{h:3,a:1} },
+        { id:'e202', home:'Bayern',      away:'GNK Dinamo', time:'Sep 17 · 21:00', res:{h:9,a:2} },
+        { id:'e203', home:'Man City',    away:'Inter',      time:'Sep 18 · 21:00', res:{h:0,a:0} },
+      ],
+      2: [
+        { id:'e204', home:'Barcelona', away:'Young Boys', time:'Oct 2 · 21:00' },
+        { id:'e205', home:'PSG',       away:'Arsenal',    time:'Oct 1 · 21:00' },
+        { id:'e206', home:'Atletico',  away:'Lille',      time:'Oct 2 · 21:00' },
+      ],
+    }
+  },
+  {
+    id: 2, name: 'Top 5 Leagues', shortName: 'T5', mode: 'ou',
+    rounds: [
+      { id: 1, label: 'Round 1', status: 'completed', deadline: 'Aug 16 · 17:00' },
+      { id: 2, label: 'Round 2', status: 'completed', deadline: 'Aug 23 · 17:00' },
+      { id: 3, label: 'Round 3', status: 'open',      deadline: 'Aug 30 · 17:00' },
+    ],
+    defRound: 2,
+    events: {
+      1: [
+        { id:'e301', home:'PSG',   away:'Le Havre', lg:'Ligue 1',    time:'Aug 16 · 21:00', line:2.5, res:{h:4,a:0} },
+        { id:'e302', home:'Inter', away:'Genoa',    lg:'Serie A',    time:'Aug 17 · 18:00', line:2.5, res:{h:2,a:2} },
+      ],
+      2: [
+        { id:'e303', home:'Real Madrid', away:'Valladolid', lg:'La Liga',    time:'Aug 25 · 21:00', line:2.5, res:{h:3,a:0} },
+        { id:'e304', home:'Bayern',      away:'Wolfsburg',  lg:'Bundesliga', time:'Aug 24 · 15:30', line:2.5, res:{h:3,a:2} },
+      ],
+      3: [
+        { id:'e305', home:'Inter',      away:'Juventus',  lg:'Serie A',    time:'Aug 30 · 20:45', line:2.5 },
+        { id:'e306', home:'Atletico',   away:'Sevilla',   lg:'La Liga',    time:'Aug 30 · 18:30', line:2.5 },
+        { id:'e307', home:'Leverkusen', away:'Frankfurt', lg:'Bundesliga', time:'Aug 31 · 15:30', line:2.5 },
+        { id:'e308', home:'PSG',        away:'Marseille', lg:'Ligue 1',    time:'Aug 30 · 20:45', line:2.5 },
+      ],
+    }
+  }
+];
+
+const lbData = {
+  0: {
+    weekly: [
+      { r:1, u:'stadyum76',     pts:8,  c:4, alive:true },
+      { r:2, u:'bvb_predictor', pts:7,  c:3, alive:true },
+      { r:3, u:'footy_oracle',  pts:6,  c:3, alive:true },
+      { r:4, u:'demo_user',     pts:5,  c:2, alive:true, me:true },
+      { r:5, u:'xavi_8',        pts:5,  c:2, alive:true },
+      { r:6, u:'gegenpresser',  pts:4,  c:2, alive:true },
+      { r:7, u:'tiki_taka_fan', pts:0,  c:0, alive:false },
+      { r:8, u:'tiebreak_king', pts:0,  c:0, alive:false },
+    ],
+    overall: [
+      { r:1, u:'footy_oracle',  pts:18, c:9, alive:true },
+      { r:2, u:'stadyum76',     pts:16, c:8, alive:true },
+      { r:3, u:'bvb_predictor', pts:15, c:7, alive:true },
+      { r:4, u:'gegenpresser',  pts:12, c:6, alive:true },
+      { r:5, u:'demo_user',     pts:11, c:5, alive:true, me:true },
+      { r:6, u:'xavi_8',        pts:10, c:5, alive:true },
+      { r:7, u:'tiki_taka_fan', pts:7,  c:3, alive:false },
+      { r:8, u:'tiebreak_king', pts:5,  c:2, alive:false },
+    ]
+  },
+  1: {
+    weekly: [
+      { r:1, u:'footy_oracle',  pts:12, c:2 },
+      { r:2, u:'bvb_predictor', pts:9,  c:1 },
+      { r:3, u:'demo_user',     pts:9,  c:1, me:true },
+      { r:4, u:'stadyum76',     pts:6,  c:0 },
+      { r:5, u:'gegenpresser',  pts:6,  c:0 },
+      { r:6, u:'xavi_8',        pts:3,  c:0 },
+    ],
+    overall: [
+      { r:1, u:'bvb_predictor', pts:27, c:3 },
+      { r:2, u:'footy_oracle',  pts:21, c:3 },
+      { r:3, u:'stadyum76',     pts:18, c:2 },
+      { r:4, u:'demo_user',     pts:15, c:1, me:true },
+      { r:5, u:'xavi_8',        pts:12, c:1 },
+      { r:6, u:'gegenpresser',  pts:9,  c:0 },
+    ]
+  },
+  2: {
+    weekly: [
+      { r:1, u:'xavi_8',        pts:8,  c:4 },
+      { r:2, u:'demo_user',     pts:6,  c:3, me:true },
+      { r:3, u:'stadyum76',     pts:6,  c:3 },
+      { r:4, u:'footy_oracle',  pts:4,  c:2 },
+      { r:5, u:'bvb_predictor', pts:4,  c:2 },
+      { r:6, u:'gegenpresser',  pts:2,  c:1 },
+      { r:7, u:'tiki_taka_fan', pts:0,  c:0 },
+    ],
+    overall: [
+      { r:1, u:'stadyum76',     pts:22, c:11 },
+      { r:2, u:'xavi_8',        pts:20, c:10 },
+      { r:3, u:'demo_user',     pts:18, c:9,  me:true },
+      { r:4, u:'footy_oracle',  pts:16, c:8 },
+      { r:5, u:'bvb_predictor', pts:14, c:7 },
+      { r:6, u:'gegenpresser',  pts:10, c:5 },
+      { r:7, u:'tiki_taka_fan', pts:6,  c:3 },
+    ]
+  }
+};
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+let currentComp = 0;
+let selectedRound = { 0: 2, 1: 1, 2: 2 };
+let preds = {}; // { eventId: { mode, value } }
+let lbView = 'weekly';
+
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+function initials(name) {
+  return name.split(' ').map(w => w[0]).join('').slice(0,3).toUpperCase();
+}
+
+function getResult(event, mode, pred) {
+  if (!event.res || !pred) return null;
+  if (mode === 'lms' || mode === 'result') {
+    const actual = event.res.h > event.res.a ? 'H' : event.res.h < event.res.a ? 'A' : 'D';
+    return pred.value === actual;
+  }
+  if (mode === 'score') {
+    return pred.value && pred.value.h == event.res.h && pred.value.a == event.res.a;
+  }
+  if (mode === 'ou') {
+    const total = event.res.h + event.res.a;
+    return (pred.value === 'O' && total > event.line) || (pred.value === 'U' && total <= event.line);
+  }
+  return null;
+}
+
+// ── PAGE NAV ─────────────────────────────────────────────────────────────────
+function showPage(page, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  btn.classList.add('active');
+  if (page === 'leaderboard') renderLB();
+}
+
+// ── COMP SWITCH ───────────────────────────────────────────────────────────────
+function switchComp(idx, el) {
+  document.querySelectorAll('.comp-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentComp = idx;
+  renderComp();
+}
+
+// ── MAIN RENDER ───────────────────────────────────────────────────────────────
+function renderComp() {
+  const comp = comps[currentComp];
+  const ri = selectedRound[currentComp];
+  const round = comp.rounds[ri];
+  const events = comp.events[round.id] || [];
+  const isOpen = round.status === 'open';
+
+  const predCount = events.filter(e => {
+    const p = preds[e.id];
+    if (!p) return false;
+    if (comp.mode === 'score') return p.value && p.value.h !== undefined && p.value.a !== undefined;
+    return !!p.value;
+  }).length;
+  const pct = events.length ? Math.round(predCount / events.length * 100) : 0;
+
+  let h = '';
+
+  // Round bar
+  h += `<div class="round-bar">
+    <div class="round-info">
+      <span class="round-label">${round.label}</span>
+      <span class="round-status ${round.status}">${isOpen ? '● Open' : '✓ Completed'}</span>
+    </div>
+    <select class="round-select" onchange="changeRound(this.value)">`;
+  comp.rounds.forEach((r, i) => {
+    h += `<option value="${i}"${i===ri?' selected':''}>${r.label}${r.status==='open'?' (Current)':''}</option>`;
+  });
+  h += `</select></div>`;
+
+  // Deadline
+  if (isOpen) {
+    h += `<div class="deadline-bar">
+      ⏱ &nbsp;Deadline locks at <strong>${round.deadline}</strong> — after kick-off predictions are closed.
+    </div>`;
+  }
+
+  // Events
+  h += `<div class="events-list">`;
+  events.forEach(ev => { h += renderCard(ev, comp.mode, isOpen); });
+  h += `</div>`;
+
+  // Progress + submit
+  if (isOpen) {
+    h += `<div class="progress-wrap">
+      <div class="progress-meta">
+        <span>${predCount} of ${events.length} predictions made</span>
+        <span>${pct}%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+    </div>
+    <div class="submit-row">
+      <span class="submit-hint">${events.length - predCount} remaining</span>
+      <button class="submit-btn"${predCount===0?' disabled':''} onclick="submitPreds()">Submit Predictions →</button>
+    </div>`;
+  }
+
+  document.getElementById('comp-content').innerHTML = h;
+}
+
+function renderCard(ev, mode, isOpen) {
+  const pred = preds[ev.id];
+  const isComplete = pred && (mode === 'score'
+    ? pred.value && pred.value.h !== undefined && pred.value.a !== undefined
+    : !!pred.value);
+
+  const hi = initials(ev.home);
+  const ai = initials(ev.away);
+  const correct = getResult(ev, mode, pred);
+
+  let cls = 'event-card';
+  if (isOpen && isComplete) cls += ' predicted';
+
+  let h = `<div class="${cls}">
+    <div class="event-meta">
+      <span class="event-league">${ev.lg || ''}</span>
+      <span class="event-time">${ev.time}${ev.res ? ` · FT: ${ev.res.h}–${ev.res.a}` : ''}</span>
+    </div>
+    <div class="event-teams">
+      <div class="team">
+        <div class="team-badge">${hi}</div>
+        <span class="team-name">${ev.home}</span>
+      </div>
+      <div class="vs-sep">vs</div>
+      <div class="team away">
+        <div class="team-badge">${ai}</div>
+        <span class="team-name">${ev.away}</span>
+      </div>
+    </div>`;
+
+  if (isOpen) {
+    h += `<div class="prediction-area"><div class="pred-label">`;
+
+    if (mode === 'lms' || mode === 'result') {
+      h += `Your pick</div>
+        <div class="result-btns">
+          <button class="result-btn${pred?.value==='H'?' selected':''}" onclick="pick('${ev.id}','${mode}','H')">
+            ${ev.home.split(' ')[0]}<span class="btn-sub">Home Win</span>
+          </button>
+          <button class="result-btn${pred?.value==='D'?' selected':''}" onclick="pick('${ev.id}','${mode}','D')">
+            X<span class="btn-sub">Draw</span>
+          </button>
+          <button class="result-btn${pred?.value==='A'?' selected':''}" onclick="pick('${ev.id}','${mode}','A')">
+            ${ev.away.split(' ').pop()}<span class="btn-sub">Away Win</span>
+          </button>
+        </div>`;
+    }
+
+    if (mode === 'score') {
+      const hv = pred?.value?.h ?? '';
+      const av = pred?.value?.a ?? '';
+      h += `Exact score</div>
+        <div class="score-inputs">
+          <div class="score-group">
+            <span class="score-team-lbl">${ev.home}</span>
+            <input class="score-input${hv!==''?' has-val':''}" type="number" min="0" max="20"
+              placeholder="0" value="${hv}" id="sh-${ev.id}"
+              oninput="pickScore('${ev.id}','h',this.value)">
+          </div>
+          <span class="score-dash">–</span>
+          <div class="score-group right">
+            <span class="score-team-lbl">${ev.away}</span>
+            <input class="score-input${av!==''?' has-val':''}" type="number" min="0" max="20"
+              placeholder="0" value="${av}" id="sa-${ev.id}"
+              oninput="pickScore('${ev.id}','a',this.value)">
+          </div>
+        </div>`;
+    }
+
+    if (mode === 'ou') {
+      h += `Over / Under ${ev.line} goals</div>
+        <div class="ou-btns">
+          <button class="ou-btn over${pred?.value==='O'?' selected':''}" onclick="pick('${ev.id}','ou','O')">
+            OVER <span class="ou-sub">${ev.line}+ goals</span>
+          </button>
+          <button class="ou-btn under${pred?.value==='U'?' selected':''}" onclick="pick('${ev.id}','ou','U')">
+            UNDER <span class="ou-sub">${ev.line} or less</span>
+          </button>
+        </div>`;
+    }
+
+    h += `</div>`;
+
+  } else {
+    // completed round
+    if (pred) {
+      let lbl = '';
+      if (mode === 'lms' || mode === 'result') {
+        lbl = pred.value === 'H' ? `${ev.home} (Home)` : pred.value === 'D' ? 'Draw' : `${ev.away} (Away)`;
+      } else if (mode === 'score') {
+        lbl = `${pred.value?.h ?? '-'} – ${pred.value?.a ?? '-'}`;
+      } else if (mode === 'ou') {
+        lbl = pred.value === 'O' ? `Over ${ev.line}` : `Under ${ev.line}`;
+      }
+
+      h += `<div class="prediction-area">
+        <div class="result-row">
+          <span>Your pick: <strong>${lbl}</strong></span>
+          ${ev.res ? `<span style="font-size:11px;font-weight:700;color:${correct?'var(--green)':'var(--red)'}">${correct?'✓ Correct':'✗ Wrong'}</span>` : ''}
+        </div>
+      </div>`;
+    }
+  }
+
+  h += `</div>`;
+  return h;
+}
+
+// ── PREDICTION ACTIONS ───────────────────────────────────────────────────────
+function pick(id, mode, value) {
+  preds[id] = { mode, value };
+  renderComp();
+}
+
+function pickScore(id, side, val) {
+  if (!preds[id]) preds[id] = { mode: 'score', value: {} };
+  if (!preds[id].value) preds[id].value = {};
+  preds[id].value[side] = val === '' ? undefined : parseInt(val);
+  // Rerender progress only (avoid losing focus)
+  const comp = comps[currentComp];
+  const ri = selectedRound[currentComp];
+  const round = comp.rounds[ri];
+  const events = comp.events[round.id] || [];
+  const predCount = events.filter(e => {
+    const p = preds[e.id];
+    if (!p) return false;
+    if (comp.mode === 'score') return p.value && p.value.h !== undefined && p.value.a !== undefined;
+    return !!p.value;
+  }).length;
+  const pct = events.length ? Math.round(predCount / events.length * 100) : 0;
+  const fill = document.querySelector('.progress-fill');
+  const meta = document.querySelector('.progress-meta span:first-child');
+  const pctSpan = document.querySelector('.progress-meta span:last-child');
+  const btn = document.querySelector('.submit-btn');
+  if (fill) fill.style.width = pct + '%';
+  if (meta) meta.textContent = `${predCount} of ${events.length} predictions made`;
+  if (pctSpan) pctSpan.textContent = pct + '%';
+  if (btn) btn.disabled = predCount === 0;
+}
+
+function changeRound(idx) {
+  selectedRound[currentComp] = parseInt(idx);
+  renderComp();
+}
+
+function submitPreds() {
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── LEADERBOARD ──────────────────────────────────────────────────────────────
+function switchLbView(view, el) {
+  lbView = view;
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderLB();
+}
+
+function renderLB() {
+  const ci = parseInt(document.getElementById('lb-comp-select').value);
+  const comp = comps[ci];
+  const rows = lbData[ci][lbView];
+  const isLMS = comp.mode === 'lms';
+
+  const roundLabel = lbView === 'weekly' ? 'Gameweek 3 · this week' : 'Season 2025/26 · overall';
+  const medals = ['🥇','🥈','🥉'];
+
+  let h = `<div class="lb-wrap">
+    <div class="lb-head">
+      <span class="lb-head-title">${comp.name}</span>
+      <span class="lb-head-sub">${roundLabel}</span>
+    </div>
+    <table class="lb-table">
+      <thead>
+        <tr>
+          <th style="text-align:center">#</th>
+          <th>Player</th>
+          <th class="r">${isLMS ? 'Survived' : 'Correct'}</th>
+          <th class="r">Pts</th>
+          ${isLMS ? '<th style="text-align:center">Status</th>' : ''}
+        </tr>
+      </thead>
+      <tbody>`;
+
+  rows.forEach(row => {
+    const ini = row.u.slice(0,2).toUpperCase();
+    h += `<tr class="${row.me ? 'me' : ''}">
+      <td class="rank-cell${row.r<=3?' top':''}">${row.r<=3 ? medals[row.r-1] : row.r}</td>
+      <td>
+        <div class="user-cell">
+          <div class="lb-av${row.me?' me':''}">${ini}</div>
+          <span class="lb-name${row.me?' me':''}">${row.u}${row.me?'<span class="you-tag">YOU</span>':''}</span>
+        </div>
+      </td>
+      <td class="num-cell">${row.c}</td>
+      <td class="pts-cell">${row.pts}</td>
+      ${isLMS ? `<td style="text-align:center"><span class="alive-badge ${row.alive?'alive':'out'}">${row.alive?'ALIVE':'OUT'}</span></td>` : ''}
+    </tr>`;
+  });
+
+  h += `</tbody></table></div>`;
+  document.getElementById('lb-content').innerHTML = h;
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+renderComp();
+</script>
+</body>
+</html>
