@@ -173,10 +173,39 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 #toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:white;font-family:var(--mono);font-size:11px;padding:9px 16px;border-radius:6px;z-index:999;transform:translateY(60px);transition:transform 0.2s;pointer-events:none;}
 #toast.show{transform:translateY(0);}
 .divider{height:1px;background:var(--border);margin:14px 0;}
+
+/* ── AUTH SCREEN ── */
+.auth-overlay{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;}
+.auth-card{width:100%;max-width:340px;padding:32px 28px;background:var(--white);border:1px solid var(--border);border-radius:12px;}
+.auth-logo{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--text);text-align:center;margin-bottom:4px;}
+.auth-logo span{color:var(--accent);}
+.auth-tagline{font-size:12px;color:var(--text-3);text-align:center;margin-bottom:26px;}
+.auth-btn{width:100%;padding:10px;background:var(--accent);color:white;border:none;border-radius:7px;font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;transition:background 0.13s;margin-top:6px;letter-spacing:0.3px;}
+.auth-btn:hover{background:var(--accent-2);}
+.auth-error{font-size:11px;color:var(--red);text-align:center;margin-top:10px;min-height:14px;}
 </style>
 </head>
 <body>
-<div class="shell">
+
+<!-- ── AUTH SCREEN ── -->
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-logo">game<span>week</span></div>
+    <div class="auth-tagline">DATA MANAGER · Sign in to continue</div>
+    <div class="form-group">
+      <label class="form-label">Username</label>
+      <input class="form-input" id="auth-username" placeholder="Username" autocomplete="username" onkeydown="if(event.key==='Enter')doAuthLogin()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input class="form-input" type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doAuthLogin()">
+    </div>
+    <button class="auth-btn" onclick="doAuthLogin()">Sign in →</button>
+    <div class="auth-error" id="auth-error"></div>
+  </div>
+</div>
+
+<div class="shell" id="main-shell" style="display:none;">
   <div class="topnav">
     <div style="display:flex;align-items:center;gap:14px;">
       <div class="topnav-logo">game<span>week</span></div>
@@ -186,6 +215,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
       <a href="admin.html" class="topnav-link">← Admin</a>
       <a href="index.html" target="_blank" class="topnav-link">View Embed ↗</a>
       <button class="topnav-link" onclick="if(confirm('Reset all data to defaults?')){localStorage.removeItem('gw_dm_teams');localStorage.removeItem('gw_dm_tournaments');localStorage.removeItem('gw_dm_events');location.reload();}" style="color:#6B7280;">Reset data</button>
+      <button class="topnav-link" onclick="doAuthLogout()" style="color:#6B7280;">Sign out</button>
     </div>
   </div>
   <div class="body-area">
@@ -430,7 +460,8 @@ function renderTeams(){
   document.getElementById('nav-teams-count').textContent=S.teams.length;
   const el=document.getElementById('teams-grid');
   if(!S.teams.length){el.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-icon">👕</div><div class="empty-title">No teams yet</div><div class="empty-sub">Add teams to the global pool.</div></div>';return;}
-  el.innerHTML=S.teams.map(t=>`
+  const sorted=[...S.teams].sort((a,b)=>a.name.localeCompare(b.name));
+  el.innerHTML=sorted.map(t=>`
     <div class="team-card">
       <div class="team-badge" style="background:${t.color}">${t.short}</div>
       <div class="team-info"><div class="team-name">${t.name}</div><div class="team-short">${t.short}</div></div>
@@ -606,7 +637,8 @@ function renderTeamPools(filter=''){
   const poolEl=document.getElementById('pool-body');
   const assignEl=document.getElementById('assigned-body');
   if(!poolEl||!assignEl)return;
-  const filtered=filter?S.teams.filter(t=>t.name.toLowerCase().includes(filter.toLowerCase())||t.short.toLowerCase().includes(filter.toLowerCase())):S.teams;
+  const base=[...S.teams].sort((a,b)=>a.name.localeCompare(b.name));
+  const filtered=filter?base.filter(t=>t.name.toLowerCase().includes(filter.toLowerCase())||t.short.toLowerCase().includes(filter.toLowerCase())):base;
   poolEl.innerHTML=filtered.map(t=>{
     const isAssigned=assignedIds.has(t.id);
     return `<div class="team-pool-item${isAssigned?' assigned':''}" onclick="${isAssigned?'':` assignTeam('${t.id}')`}">
@@ -615,9 +647,10 @@ function renderTeamPools(filter=''){
       <span class="tpi-action">${isAssigned?'✓':'+'}</span>
     </div>`;
   }).join('')||'<div class="empty"><div class="empty-sub">No teams found.</div></div>';
-  assignEl.innerHTML=season.teamIds.length===0
+  const assignedTeams=season.teamIds.map(id=>getTeam(id)).filter(Boolean).sort((a,b)=>a.name.localeCompare(b.name));
+  assignEl.innerHTML=assignedTeams.length===0
     ?'<div class="empty"><div class="empty-icon">👕</div><div class="empty-title" style="font-size:11px;">No teams assigned</div><div class="empty-sub">Click from the pool to add.</div></div>'
-    :season.teamIds.map(id=>{const t=getTeam(id);if(!t)return '';return `<div class="team-pool-item" onclick="unassignTeam('${id}')"><div class="tpi-badge" style="background:${t.color}">${t.short}</div><span class="tpi-name">${t.name}</span><span class="tpi-action" style="color:var(--red)">−</span></div>`;}).join('');
+    :assignedTeams.map(t=>`<div class="team-pool-item" onclick="unassignTeam('${t.id}')"><div class="tpi-badge" style="background:${t.color}">${t.short}</div><span class="tpi-name">${t.name}</span><span class="tpi-action" style="color:var(--red)">−</span></div>`).join('');
 }
 
 function filterPool(val){renderTeamPools(val);}
@@ -781,7 +814,39 @@ document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click
 let tt;
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2200);}
 
-renderTournamentNav();renderTeams();
+// ── AUTH ──────────────────────────────────────────────────────────────────
+// Demo credentials — replace with real auth before production use.
+const AUTH_CREDENTIALS = { username: 'admin', password: 'gameweek2026' };
+
+function doAuthLogin(){
+  const u = document.getElementById('auth-username').value.trim();
+  const p = document.getElementById('auth-password').value;
+  if(u===AUTH_CREDENTIALS.username && p===AUTH_CREDENTIALS.password){
+    localStorage.setItem('gw_dm_session','authenticated');
+    showShell();
+  } else {
+    document.getElementById('auth-error').textContent='Incorrect username or password.';
+  }
+}
+
+function doAuthLogout(){
+  if(!confirm('Sign out of the Data Manager?'))return;
+  localStorage.removeItem('gw_dm_session');
+  location.reload();
+}
+
+function showShell(){
+  document.getElementById('auth-overlay').style.display='none';
+  document.getElementById('main-shell').style.display='grid';
+  renderTournamentNav();renderTeams();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+if(localStorage.getItem('gw_dm_session')==='authenticated'){
+  showShell();
+} else {
+  document.getElementById('auth-overlay').style.display='flex';
+}
 </script>
 </body>
 </html>
