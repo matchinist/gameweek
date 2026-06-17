@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SportZone — Football News, Tips & Predictions</title>
+<title>Predict & Win — SportZone</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -11,12 +11,11 @@
   --bg:#FFFFFF;--surface:#F6F7F9;--border:#E5E7EB;
   --text:#111827;--text-2:#4B5563;--text-3:#9CA3AF;
   --brand:#0F766E;--brand-dark:#0B5950;--brand-light:#ECFDF9;
-  --accent:#4F46E5;--accent-light:#EEF2FF;
   --mono:'Space Mono',monospace;--sans:'Inter',sans-serif;
 }
 body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;}
 
-/* ── NOTICE RIBBON (for Ercan's pitch use, not part of the operator site) ── */
+/* ── PITCH RIBBON (for Ercan's use only) ── */
 .pitch-ribbon{background:#111827;color:#9CA3AF;font-family:var(--mono);font-size:11px;text-align:center;padding:7px 16px;letter-spacing:0.3px;}
 .pitch-ribbon strong{color:#A5B4FC;}
 
@@ -28,98 +27,64 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:15
 .site-nav{display:flex;gap:28px;}
 .site-nav a{font-size:14px;font-weight:600;color:var(--text-2);text-decoration:none;transition:color 0.13s;}
 .site-nav a:hover,.site-nav a.active{color:var(--brand);}
+.site-nav a.active{color:var(--brand);}
 .site-header-right{display:flex;align-items:center;gap:12px;}
 .site-btn{font-size:13px;font-weight:600;padding:8px 16px;border-radius:7px;border:1px solid var(--border);color:var(--text-2);text-decoration:none;}
 .site-btn.primary{background:var(--brand);color:white;border:none;}
 
-/* ── BREAKING BAR ── */
-.breaking-bar{background:var(--brand-light);border-bottom:1px solid #BFEDE5;padding:8px 24px;display:flex;align-items:center;gap:10px;}
-.breaking-tag{background:var(--brand);color:white;font-size:10px;font-weight:800;padding:3px 8px;border-radius:4px;letter-spacing:0.5px;flex-shrink:0;}
-.breaking-text{font-size:13px;color:var(--brand-dark);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* ── PAGE HEADER STRIP ── */
+.page-strip{background:linear-gradient(135deg,#0F766E 0%,#134E4A 100%);padding:36px 24px;text-align:center;position:relative;overflow:hidden;}
+.page-strip::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 25% 20%, rgba(255,255,255,0.08), transparent 50%);}
+.page-strip-inner{max-width:1180px;margin:0 auto;position:relative;}
+.page-strip-eyebrow{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,0.7);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
+.page-strip-title{font-size:28px;font-weight:800;color:white;letter-spacing:-0.5px;margin-bottom:8px;}
+.page-strip-sub{font-size:14px;color:rgba(255,255,255,0.75);max-width:520px;margin:0 auto;}
 
-/* ── LAYOUT ── */
-.layout{max-width:1180px;margin:0 auto;padding:28px 24px 60px;display:grid;grid-template-columns:1fr 360px;gap:32px;}
+/* ── BREADCRUMB ── */
+.breadcrumb-bar{max-width:1180px;margin:0 auto;padding:14px 24px 0;font-size:12px;color:var(--text-3);}
+.breadcrumb-bar a{color:var(--text-3);text-decoration:none;}
+.breadcrumb-bar .current{color:var(--text-2);font-weight:600;}
 
-/* ── MAIN COLUMN ── */
-.section-label{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text-3);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--border);}
-
-.hero-article{display:grid;grid-template-columns:1fr;gap:0;margin-bottom:32px;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
-.hero-image{height:280px;background:linear-gradient(135deg,#0F766E 0%,#134E4A 100%);position:relative;display:flex;align-items:flex-end;padding:24px;}
-.hero-image::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 30% 20%, rgba(255,255,255,0.08), transparent 50%);}
-.hero-tag{position:absolute;top:18px;left:18px;background:rgba(255,255,255,0.15);color:white;font-size:10px;font-weight:700;padding:4px 10px;border-radius:5px;letter-spacing:0.5px;backdrop-filter:blur(4px);}
-.hero-title-overlay{position:relative;color:white;font-size:26px;font-weight:800;line-height:1.25;letter-spacing:-0.5px;max-width:520px;}
-.hero-meta{padding:16px 20px;display:flex;align-items:center;gap:14px;font-size:12px;color:var(--text-3);}
-.hero-meta .author{font-weight:600;color:var(--text-2);}
-
-.article-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:36px;}
-.article-card{border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:box-shadow 0.13s;}
-.article-card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.06);}
-.article-thumb{height:140px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;letter-spacing:0.3px;position:relative;}
-.article-thumb.t1{background:linear-gradient(135deg,#4F46E5,#3730A3);}
-.article-thumb.t2{background:linear-gradient(135deg,#DC2626,#991B1B);}
-.article-thumb.t3{background:linear-gradient(135deg,#D97706,#92400E);}
-.article-thumb.t4{background:linear-gradient(135deg,#0F766E,#134E4A);}
-.article-thumb-label{position:absolute;bottom:10px;left:12px;font-family:var(--mono);font-size:9px;background:rgba(0,0,0,0.3);padding:3px 7px;border-radius:4px;letter-spacing:0.5px;}
-.article-body{padding:14px 16px;}
-.article-cat{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--brand);letter-spacing:0.6px;text-transform:uppercase;margin-bottom:6px;}
-.article-title{font-size:14px;font-weight:700;color:var(--text);line-height:1.4;margin-bottom:6px;}
-.article-excerpt{font-size:12px;color:var(--text-3);line-height:1.5;}
-
-.standings-table{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:8px;}
-.standings-head{padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border);font-weight:700;font-size:13px;}
-table.std{width:100%;border-collapse:collapse;}
-table.std th{font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.4px;padding:8px 14px;text-align:left;border-bottom:1px solid var(--border);font-weight:700;}
-table.std th.c{text-align:center;}
-table.std td{padding:9px 14px;border-bottom:1px solid var(--border);font-size:13px;}
-table.std td.c{text-align:center;font-family:var(--mono);font-size:12px;color:var(--text-2);}
-table.std tr:last-child td{border-bottom:none;}
-table.std .pos{font-family:var(--mono);font-weight:700;color:var(--text-3);width:24px;}
-table.std .team{font-weight:600;}
-table.std .pts{font-family:var(--mono);font-weight:800;color:var(--text);}
-
-/* ── SIDEBAR ── */
-.sidebar-block{margin-bottom:24px;}
-.widget-frame{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface);}
-.widget-frame-header{padding:14px 16px;background:linear-gradient(135deg,#4F46E5,#3730A3);color:white;}
-.widget-frame-title{font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:-0.2px;margin-bottom:3px;}
-.widget-frame-sub{font-size:11px;opacity:0.85;}
+/* ── WIDGET CONTAINER — full width ── */
+.widget-section{max-width:1180px;margin:0 auto;padding:20px 24px 60px;}
+.widget-frame{border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,0.04);}
 .widget-frame-body{background:white;}
 
-.promo-card{border:1px solid var(--border);border-radius:10px;padding:18px;background:var(--surface);text-align:center;}
-.promo-card-title{font-weight:700;font-size:14px;margin-bottom:6px;}
-.promo-card-sub{font-size:12px;color:var(--text-3);margin-bottom:14px;line-height:1.5;}
-
-.tag-list{display:flex;flex-wrap:wrap;gap:6px;}
-.tag-pill{font-size:11px;font-weight:600;background:var(--surface);border:1px solid var(--border);padding:5px 11px;border-radius:20px;color:var(--text-2);}
-
-/* ── PITCH NOTE (annotation for Ercan, styled distinctly) ── */
-.pitch-note{margin-top:8px;padding:10px 12px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;font-size:11px;color:#92400E;line-height:1.5;}
+.pitch-note{margin-top:14px;padding:11px 14px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;font-size:11px;color:#92400E;line-height:1.55;max-width:1180px;margin-left:auto;margin-right:auto;}
 .pitch-note strong{font-weight:700;}
+
+/* ── BELOW-WIDGET CONTENT (keeps page feeling native, not orphaned) ── */
+.below-section{max-width:1180px;margin:0 auto;padding:0 24px 60px;}
+.below-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.info-card{border:1px solid var(--border);border-radius:10px;padding:20px;background:var(--surface);}
+.info-card-icon{font-size:22px;margin-bottom:10px;}
+.info-card-title{font-weight:700;font-size:14px;margin-bottom:6px;}
+.info-card-sub{font-size:12px;color:var(--text-3);line-height:1.6;}
 
 /* ── FOOTER ── */
 .site-footer{border-top:1px solid var(--border);background:var(--surface);padding:32px 24px;text-align:center;}
 .site-footer-text{font-size:12px;color:var(--text-3);}
 
 @media (max-width:900px){
-  .layout{grid-template-columns:1fr;}
-  .article-grid{grid-template-columns:1fr;}
   .site-nav{display:none;}
+  .below-grid{grid-template-columns:1fr;}
+  .page-strip-title{font-size:22px;}
 }
 </style>
 </head>
 <body>
 
-<!-- Ribbon only visible to Ercan when presenting — clarifies this is a mockup -->
-<div class="pitch-ribbon">PITCH DEMO — fictional operator site <strong>"SportZone"</strong> showing how the Gameweek widget looks embedded in a real layout</div>
+<!-- Visible only to Ercan when presenting — clarifies this is a mockup -->
+<div class="pitch-ribbon">PITCH DEMO — fictional operator site <strong>"SportZone"</strong> showing Gameweek as a full dedicated page</div>
 
 <!-- ── SITE HEADER (fictional operator) ── -->
 <header class="site-header">
   <div class="site-header-inner">
     <div class="site-logo"><span class="dot"></span>SportZone</div>
     <nav class="site-nav">
-      <a href="#" class="active">Home</a>
+      <a href="#">Home</a>
       <a href="#">News</a>
-      <a href="#">Tips & Predictions</a>
+      <a href="#" class="active">Predict & Win</a>
       <a href="#">Live Scores</a>
       <a href="#">Transfers</a>
     </nav>
@@ -130,124 +95,51 @@ table.std .pts{font-family:var(--mono);font-weight:800;color:var(--text);}
   </div>
 </header>
 
-<!-- ── BREAKING BAR ── -->
-<div class="breaking-bar">
-  <span class="breaking-tag">LIVE</span>
-  <span class="breaking-text">Arsenal vs Man City kicks off Saturday 15:00 — make your Gameweek prediction before the deadline →</span>
+<!-- ── BREADCRUMB ── -->
+<div class="breadcrumb-bar">
+  <a href="#">Home</a> / <span class="current">Predict & Win</span>
 </div>
 
-<!-- ── LAYOUT ── -->
-<div class="layout">
+<!-- ── PAGE STRIP ── -->
+<div class="page-strip">
+  <div class="page-strip-inner">
+    <div class="page-strip-eyebrow">Free to Play</div>
+    <div class="page-strip-title">Predict & Win</div>
+    <div class="page-strip-sub">Make your picks every gameweek, climb the leaderboard, and compete with thousands of other SportZone members. Completely free.</div>
+  </div>
+</div>
 
-  <!-- MAIN COLUMN -->
-  <main>
-    <div class="section-label">Top Stories</div>
-
-    <div class="hero-article">
-      <div class="hero-image">
-        <span class="hero-tag">PREMIER LEAGUE</span>
-        <div class="hero-title-overlay">Arsenal's title charge: can they finally go all the way this season?</div>
-      </div>
-      <div class="hero-meta">
-        <span class="author">James Whitfield</span>
-        <span>·</span>
-        <span>4 min read</span>
-        <span>·</span>
-        <span>Updated 2 hours ago</span>
-      </div>
+<!-- ── WIDGET — full width ── -->
+<div class="widget-section">
+  <div class="widget-frame">
+    <div class="widget-frame-body">
+      <iframe src="https://matchinist.github.io/gameweek/" width="100%" height="760" frameborder="0" style="display:block;border:none;"></iframe>
     </div>
+  </div>
+  <div class="pitch-note">
+    <strong>Note for demo purposes:</strong> this iframe points to the live Gameweek embed (<span style="font-family:var(--mono)">matchinist.github.io/gameweek</span>) since the <span style="font-family:var(--mono)">gameweek.gg</span> domain isn't live yet. Once domain + client keys are set up, this becomes <span style="font-family:var(--mono)">gameweek.gg/embed?client=gw_ec_a4f92c</span> exactly as in the integration snippet.
+  </div>
+</div>
 
-    <div class="section-label">Latest News</div>
-    <div class="article-grid">
-      <div class="article-card">
-        <div class="article-thumb t1"><span class="article-thumb-label">CHAMPIONS LEAGUE</span></div>
-        <div class="article-body">
-          <div class="article-cat">UCL · Matchday 2</div>
-          <div class="article-title">City face tough away test against Inter on Tuesday</div>
-          <div class="article-excerpt">Pep Guardiola's side travel to Italy looking to bounce back...</div>
-        </div>
-      </div>
-      <div class="article-card">
-        <div class="article-thumb t2"><span class="article-thumb-label">TRANSFERS</span></div>
-        <div class="article-body">
-          <div class="article-cat">Transfer News</div>
-          <div class="article-title">Chelsea eye January move for Serie A midfielder</div>
-          <div class="article-excerpt">Sources close to the club suggest a deal could be struck...</div>
-        </div>
-      </div>
-      <div class="article-card">
-        <div class="article-thumb t3"><span class="article-thumb-label">LA LIGA</span></div>
-        <div class="article-body">
-          <div class="article-cat">La Liga · Round 3</div>
-          <div class="article-title">Real Madrid's young stars shine in derby victory</div>
-          <div class="article-excerpt">A second-half masterclass sealed the win at the Bernabéu...</div>
-        </div>
-      </div>
-      <div class="article-card">
-        <div class="article-thumb t4"><span class="article-thumb-label">ANALYSIS</span></div>
-        <div class="article-body">
-          <div class="article-cat">Tactical Analysis</div>
-          <div class="article-title">Why low blocks are making a comeback in the Premier League</div>
-          <div class="article-excerpt">Our analysts break down the tactical trend shaping results...</div>
-        </div>
-      </div>
+<!-- ── SUPPORTING CONTENT BELOW — keeps the page feeling native to the site ── -->
+<div class="below-section">
+  <div class="below-grid">
+    <div class="info-card">
+      <div class="info-card-icon">⚡</div>
+      <div class="info-card-title">New round every week</div>
+      <div class="info-card-sub">Fresh predictions open as soon as the previous gameweek locks. Jump in any time — no need to have played from week one.</div>
     </div>
-
-    <div class="section-label">Premier League Table</div>
-    <div class="standings-table">
-      <table class="std">
-        <thead><tr><th class="c">#</th><th>Team</th><th class="c">P</th><th class="c">GD</th><th class="c">Pts</th></tr></thead>
-        <tbody>
-          <tr><td class="pos">1</td><td class="team">Arsenal</td><td class="c">3</td><td class="c">+6</td><td class="pts">7</td></tr>
-          <tr><td class="pos">2</td><td class="team">Man City</td><td class="c">3</td><td class="c">+5</td><td class="pts">7</td></tr>
-          <tr><td class="pos">3</td><td class="team">Liverpool</td><td class="c">3</td><td class="c">+4</td><td class="pts">6</td></tr>
-          <tr><td class="pos">4</td><td class="team">Chelsea</td><td class="c">3</td><td class="c">+2</td><td class="pts">5</td></tr>
-          <tr><td class="pos">5</td><td class="team">Spurs</td><td class="c">3</td><td class="c">+1</td><td class="pts">5</td></tr>
-        </tbody>
-      </table>
+    <div class="info-card">
+      <div class="info-card-icon">🏆</div>
+      <div class="info-card-title">Weekly & season prizes</div>
+      <div class="info-card-sub">Win your gameweek outright, or chase the season-long leaderboard for bragging rights across the whole campaign.</div>
     </div>
-  </main>
-
-  <!-- SIDEBAR -->
-  <aside>
-
-    <!-- ── GAMEWEEK WIDGET — the actual embed ── -->
-    <div class="sidebar-block">
-      <div class="widget-frame">
-        <div class="widget-frame-header">
-          <div class="widget-frame-title">⚽ Predict & Win</div>
-          <div class="widget-frame-sub">Free to play · New round every week</div>
-        </div>
-        <div class="widget-frame-body">
-          <iframe src="https://matchinist.github.io/gameweek/" width="100%" height="620" frameborder="0" style="display:block;border:none;"></iframe>
-        </div>
-      </div>
-      <div class="pitch-note">
-        <strong>Note for demo purposes:</strong> this iframe points to the live Gameweek embed (<span style="font-family:var(--mono)">matchinist.github.io/gameweek</span>) since the <span style="font-family:var(--mono)">gameweek.gg</span> domain isn't live yet. Once domain + client keys are set up, this becomes <span style="font-family:var(--mono)">gameweek.gg/embed?client=gw_ec_a4f92c</span> exactly as in the integration snippet.
-      </div>
+    <div class="info-card">
+      <div class="info-card-icon">🎯</div>
+      <div class="info-card-title">100% free to play</div>
+      <div class="info-card-sub">No deposit, no entry fee. Just create a free account and start predicting — it only takes a few seconds.</div>
     </div>
-
-    <div class="sidebar-block">
-      <div class="promo-card">
-        <div class="promo-card-title">Never miss a Gameweek</div>
-        <div class="promo-card-sub">Get reminders before each deadline and see how your picks compare to other SportZone members.</div>
-        <a href="#" class="site-btn primary" style="display:inline-block;">Create free account</a>
-      </div>
-    </div>
-
-    <div class="sidebar-block">
-      <div class="section-label" style="margin-bottom:10px;">Popular Tags</div>
-      <div class="tag-list">
-        <span class="tag-pill">#Arsenal</span>
-        <span class="tag-pill">#TransferNews</span>
-        <span class="tag-pill">#ChampionsLeague</span>
-        <span class="tag-pill">#FantasyFootball</span>
-        <span class="tag-pill">#MatchPreview</span>
-        <span class="tag-pill">#PremierLeague</span>
-      </div>
-    </div>
-
-  </aside>
+  </div>
 </div>
 
 <!-- ── FOOTER ── -->
