@@ -175,47 +175,23 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .divider{height:1px;background:var(--border);margin:14px 0;}
 
 /* ── AUTH SCREEN ── */
-.auth-overlay{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;}
-.auth-card{width:100%;max-width:340px;padding:32px 28px;background:var(--white);border:1px solid var(--border);border-radius:12px;}
-.auth-logo{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--text);text-align:center;margin-bottom:4px;}
-.auth-logo span{color:var(--accent);}
-.auth-tagline{font-size:12px;color:var(--text-3);text-align:center;margin-bottom:26px;}
-.auth-btn{width:100%;padding:10px;background:var(--accent);color:white;border:none;border-radius:7px;font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;transition:background 0.13s;margin-top:6px;letter-spacing:0.3px;}
-.auth-btn:hover{background:var(--accent-2);}
-.auth-error{font-size:11px;color:var(--red);text-align:center;margin-top:10px;min-height:14px;}
+
 </style>
 </head>
 <body>
 
-<!-- ── AUTH SCREEN ── -->
-<div class="auth-overlay" id="auth-overlay">
-  <div class="auth-card">
-    <div class="auth-logo">game<span>week</span></div>
-    <div class="auth-tagline">DATA MANAGER · Sign in to continue</div>
-    <div class="form-group">
-      <label class="form-label">Username</label>
-      <input class="form-input" id="auth-username" placeholder="Username" autocomplete="username" onkeydown="if(event.key==='Enter')doAuthLogin()">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Password</label>
-      <input class="form-input" type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doAuthLogin()">
-    </div>
-    <button class="auth-btn" onclick="doAuthLogin()">Sign in →</button>
-    <div class="auth-error" id="auth-error"></div>
-  </div>
-</div>
-
-<div class="shell" id="main-shell" style="display:none;">
+<div class="shell" id="main-shell">
   <div class="topnav">
     <div style="display:flex;align-items:center;gap:14px;">
       <div class="topnav-logo">game<span>week</span></div>
       <div class="topnav-label">DATA MANAGER</div>
+      <div class="topnav-label" id="topnav-operator" style="color:#6B7280;font-weight:400;"></div>
     </div>
     <div class="topnav-links">
       <a href="admin.html" class="topnav-link">← Admin</a>
-      <a href="index.html" target="_blank" class="topnav-link">View Embed ↗</a>
-      <button class="topnav-link" onclick="if(confirm('Reset all data to defaults?')){localStorage.removeItem('gw_dm_teams');localStorage.removeItem('gw_dm_tournaments');localStorage.removeItem('gw_dm_events');location.reload();}" style="color:#6B7280;">Reset data</button>
-      <button class="topnav-link" onclick="doAuthLogout()" style="color:#6B7280;">Sign out</button>
+      <a href="#" id="topnav-view-embed" target="_blank" class="topnav-link">View Embed ↗</a>
+      <button class="topnav-link" onclick="resetClientData()" style="color:#6B7280;">Reset data</button>
+      <button class="topnav-link" onclick="signOutOperator()" style="color:#6B7280;">Sign out</button>
     </div>
   </div>
   <div class="body-area">
@@ -356,9 +332,29 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 <div id="toast"></div>
 
 <script>
+// ── OPERATOR AUTH GUARD ──────────────────────────────────────────────────
+const opSession = localStorage.getItem('gw_op_session');
+if(!opSession){
+  window.location.href = 'landing.html';
+  throw new Error('Redirecting to landing — not signed in');
+}
+const operators = JSON.parse(localStorage.getItem('gw_operators')||'{}');
+const currentOperator = operators[opSession];
+if(!currentOperator){
+  localStorage.removeItem('gw_op_session');
+  window.location.href = 'landing.html';
+  throw new Error('Redirecting to landing — operator record missing');
+}
+const CLIENT_KEY = currentOperator.clientKey;
+
+function signOutOperator(){
+  localStorage.removeItem('gw_op_session');
+  window.location.href = 'landing.html';
+}
+
 const SWATCHES=['#DC2626','#D97706','#16A34A','#0891B2','#4F46E5','#7C3AED','#DB2777','#0F1117','#1D4ED8','#059669','#B45309','#64748B'];
 
-// ── DEFAULT DATA (used only on first load) ────────────────────────────────
+// ── DEFAULT DATA (used only on first load for a new client) ────────────────
 const DEFAULT_TEAMS=[
   {id:'tm1',name:'Arsenal',short:'ARS',color:'#DC2626'},
   {id:'tm2',name:'Man City',short:'MCI',color:'#6CABDD'},
@@ -391,13 +387,13 @@ const DEFAULT_EVENTS={
   ev3:{homeId:'tm3',awayId:'tm16',kickoff:'2025-08-23T15:00',result:{h:3,a:1},status:'completed',line:2.5},
 };
 
-// ── LOAD FROM LOCALSTORAGE (or fall back to defaults) ─────────────────────
+// ── LOAD FROM LOCALSTORAGE, SCOPED PER CLIENT (or seed defaults on first load) ─
 function loadState(){
   try {
     return {
-      teams:       JSON.parse(localStorage.getItem('gw_dm_teams'))       || DEFAULT_TEAMS,
-      tournaments: JSON.parse(localStorage.getItem('gw_dm_tournaments')) || DEFAULT_TOURNAMENTS,
-      events:      JSON.parse(localStorage.getItem('gw_dm_events'))      || DEFAULT_EVENTS,
+      teams:       JSON.parse(localStorage.getItem('gw_dm_teams_'+CLIENT_KEY))       || DEFAULT_TEAMS,
+      tournaments: JSON.parse(localStorage.getItem('gw_dm_tournaments_'+CLIENT_KEY)) || DEFAULT_TOURNAMENTS,
+      events:      JSON.parse(localStorage.getItem('gw_dm_events_'+CLIENT_KEY))      || DEFAULT_EVENTS,
     };
   } catch(e) {
     return { teams: DEFAULT_TEAMS, tournaments: DEFAULT_TOURNAMENTS, events: DEFAULT_EVENTS };
@@ -412,15 +408,23 @@ const S={
   events:      persisted.events,
 };
 
-// ── SAVE TO LOCALSTORAGE ──────────────────────────────────────────────────
+// ── SAVE TO LOCALSTORAGE, SCOPED PER CLIENT ─────────────────────────────────
 function save(){
   try {
-    localStorage.setItem('gw_dm_teams',       JSON.stringify(S.teams));
-    localStorage.setItem('gw_dm_tournaments', JSON.stringify(S.tournaments));
-    localStorage.setItem('gw_dm_events',      JSON.stringify(S.events));
+    localStorage.setItem('gw_dm_teams_'+CLIENT_KEY,       JSON.stringify(S.teams));
+    localStorage.setItem('gw_dm_tournaments_'+CLIENT_KEY, JSON.stringify(S.tournaments));
+    localStorage.setItem('gw_dm_events_'+CLIENT_KEY,      JSON.stringify(S.events));
   } catch(e) {
     console.error('Save failed:', e);
   }
+}
+
+function resetClientData(){
+  if(!confirm('Reset all data to defaults? This only affects your workspace.')) return;
+  localStorage.removeItem('gw_dm_teams_'+CLIENT_KEY);
+  localStorage.removeItem('gw_dm_tournaments_'+CLIENT_KEY);
+  localStorage.removeItem('gw_dm_events_'+CLIENT_KEY);
+  location.reload();
 }
 
 function uid(){return 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
@@ -814,39 +818,10 @@ document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click
 let tt;
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2200);}
 
-// ── AUTH ──────────────────────────────────────────────────────────────────
-// Demo credentials — replace with real auth before production use.
-const AUTH_CREDENTIALS = { username: 'admin', password: 'gameweek2026' };
-
-function doAuthLogin(){
-  const u = document.getElementById('auth-username').value.trim();
-  const p = document.getElementById('auth-password').value;
-  if(u===AUTH_CREDENTIALS.username && p===AUTH_CREDENTIALS.password){
-    localStorage.setItem('gw_dm_session','authenticated');
-    showShell();
-  } else {
-    document.getElementById('auth-error').textContent='Incorrect username or password.';
-  }
-}
-
-function doAuthLogout(){
-  if(!confirm('Sign out of the Data Manager?'))return;
-  localStorage.removeItem('gw_dm_session');
-  location.reload();
-}
-
-function showShell(){
-  document.getElementById('auth-overlay').style.display='none';
-  document.getElementById('main-shell').style.display='grid';
-  renderTournamentNav();renderTeams();
-}
-
 // ── INIT ──────────────────────────────────────────────────────────────────
-if(localStorage.getItem('gw_dm_session')==='authenticated'){
-  showShell();
-} else {
-  document.getElementById('auth-overlay').style.display='flex';
-}
+document.getElementById('topnav-operator').textContent = '· ' + currentOperator.companyName;
+document.getElementById('topnav-view-embed').href = `https://matchinist.github.io/gameweek/live.html?client=${CLIENT_KEY}`;
+renderTournamentNav();renderTeams();
 </script>
 </body>
 </html>

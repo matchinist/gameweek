@@ -841,6 +841,56 @@
       .hero-title { font-size: 26px; }
       .cta-title { font-size: 22px; }
     }
+    /* ── AUTH MODAL ── */
+    .auth-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,17,23,0.55);
+      backdrop-filter: blur(2px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .auth-overlay.open { display: flex; }
+    .auth-modal {
+      background: var(--white);
+      border-radius: 14px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+    .auth-modal-header {
+      padding: 20px 24px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .auth-modal-logo { font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--text); }
+    .auth-modal-logo span { color: var(--accent); }
+    .auth-modal-close { background: none; border: none; font-size: 20px; color: var(--text-3); cursor: pointer; padding: 4px 8px; border-radius: 6px; }
+    .auth-modal-close:hover { background: var(--surface); color: var(--text); }
+    .auth-modal-body { padding: 20px 24px 26px; }
+    .auth-modal-tabs { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 3px; margin-bottom: 18px; }
+    .auth-modal-tab { flex: 1; padding: 7px; text-align: center; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; color: var(--text-2); border: none; background: none; transition: all 0.13s; }
+    .auth-modal-tab.active { background: var(--white); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .auth-field { margin-bottom: 13px; }
+    .auth-field label { font-size: 11px; font-weight: 600; color: var(--text-2); display: block; margin-bottom: 5px; }
+    .auth-field input {
+      width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
+      font-family: var(--sans); font-size: 13px; color: var(--text); outline: none; transition: border-color 0.13s;
+    }
+    .auth-field input:focus { border-color: var(--accent); }
+    .auth-submit-btn {
+      width: 100%; padding: 11px; background: var(--accent); color: white; border: none; border-radius: 8px;
+      font-family: var(--mono); font-size: 12px; font-weight: 700; cursor: pointer; margin-top: 4px; letter-spacing: 0.3px; transition: background 0.13s;
+    }
+    .auth-submit-btn:hover { background: var(--accent-2); }
+    .auth-modal-error { font-size: 11px; color: var(--red); text-align: center; margin-top: 10px; min-height: 14px; }
+    .auth-modal-note { font-size: 11px; color: var(--text-3); text-align: center; margin-top: 14px; line-height: 1.6; }
+
   </style>
 </head>
 <body>
@@ -852,7 +902,10 @@
     <a href="#how" class="btn-ghost">How it works</a>
     <a href="#pricing" class="btn-ghost">Pricing</a>
     <a href="https://matchinist.github.io/gameweek" target="_blank" class="btn-ghost">Demo</a>
-    <a href="mailto:hello@gameweek.gg" class="btn-primary">Get in touch →</a>
+    <span id="nav-auth-actions">
+      <a href="#" class="btn-ghost" onclick="openAuthModal('login');return false;">Log in</a>
+      <a href="#" class="btn-primary" onclick="openAuthModal('signup');return false;">Sign up →</a>
+    </span>
   </div>
 </nav>
 
@@ -868,8 +921,8 @@
       Your users predict, compete, and return — week after week, across every competition you cover.
     </p>
     <div class="hero-actions">
-      <a href="https://matchinist.github.io/gameweek" target="_blank" class="btn-hero-primary">Try the demo →</a>
-      <a href="mailto:hello@gameweek.gg" class="btn-hero-ghost">Talk to us</a>
+      <a href="#" class="btn-hero-primary" onclick="openAuthModal('signup');return false;">Sign up free →</a>
+      <a href="https://matchinist.github.io/gameweek" target="_blank" class="btn-hero-ghost">Try the demo</a>
     </div>
   </div>
 
@@ -1068,7 +1121,7 @@
           <li class="pricing-feature muted">Priority support</li>
         </ul>
         <div class="pricing-cta">
-          <a href="mailto:hello@gameweek.gg?subject=Starter plan" class="btn-pricing outline">Get started →</a>
+          <a href="#" class="btn-pricing outline" onclick="openAuthModal('signup');return false;">Get started →</a>
         </div>
       </div>
 
@@ -1092,7 +1145,7 @@
           <li class="pricing-feature muted">Priority support</li>
         </ul>
         <div class="pricing-cta">
-          <a href="mailto:hello@gameweek.gg?subject=Growth plan" class="btn-pricing filled">Get started →</a>
+          <a href="#" class="btn-pricing filled" onclick="openAuthModal('signup');return false;">Get started →</a>
         </div>
       </div>
 
@@ -1115,7 +1168,7 @@
           <li class="pricing-feature">Priority support + SLA</li>
         </ul>
         <div class="pricing-cta">
-          <a href="mailto:hello@gameweek.gg?subject=Scale plan" class="btn-pricing outline">Get started →</a>
+          <a href="#" class="btn-pricing outline" onclick="openAuthModal('signup');return false;">Get started →</a>
         </div>
       </div>
 
@@ -1130,8 +1183,57 @@
     <h2 class="cta-title">Ready before the<br><span class="accent">season starts?</span></h2>
     <p class="cta-sub">The 2025/26 season kicks off in August. Setup takes less than a day. Try the demo, then get in touch and we'll have you live before Gameweek 1.</p>
     <div class="cta-actions">
-      <a href="https://matchinist.github.io/gameweek" target="_blank" class="btn-cta-primary">Try the demo →</a>
+      <a href="#" class="btn-cta-primary" onclick="openAuthModal('signup');return false;">Sign up free →</a>
       <a href="mailto:hello@gameweek.gg" class="btn-cta-ghost">hello@gameweek.gg</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── AUTH MODAL ── -->
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-modal">
+    <div class="auth-modal-header">
+      <div class="auth-modal-logo">game<span>week</span></div>
+      <button class="auth-modal-close" onclick="closeAuthModal()">×</button>
+    </div>
+    <div class="auth-modal-body">
+      <div class="auth-modal-tabs">
+        <button class="auth-modal-tab active" id="auth-tab-signup" onclick="switchAuthTab('signup')">Sign up</button>
+        <button class="auth-modal-tab" id="auth-tab-login" onclick="switchAuthTab('login')">Log in</button>
+      </div>
+
+      <!-- Sign up form -->
+      <div id="auth-form-signup">
+        <div class="auth-field">
+          <label>Company / Site name</label>
+          <input type="text" id="su-company" placeholder="e.g. SportZone" />
+        </div>
+        <div class="auth-field">
+          <label>Work email</label>
+          <input type="email" id="su-email" placeholder="you@company.com" />
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="su-password" placeholder="min 6 characters" onkeydown="if(event.key==='Enter')doSignup()" />
+        </div>
+        <button class="auth-submit-btn" onclick="doSignup()">Create account →</button>
+        <div class="auth-modal-error" id="signup-error"></div>
+        <div class="auth-modal-note">Free to start. No card required. You'll get a dedicated dashboard and a unique embed key right away.</div>
+      </div>
+
+      <!-- Log in form -->
+      <div id="auth-form-login" style="display:none;">
+        <div class="auth-field">
+          <label>Work email</label>
+          <input type="email" id="li-email" placeholder="you@company.com" />
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="li-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doOperatorLogin()" />
+        </div>
+        <button class="auth-submit-btn" onclick="doOperatorLogin()">Sign in →</button>
+        <div class="auth-modal-error" id="login-error"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1210,6 +1312,75 @@
     pickIdx = (pickIdx + 1) % picks.length;
   }
   setInterval(cyclePick, 3000);
+
+  // ── OPERATOR AUTH (sign up / log in) ──────────────────────────────────────
+  function genClientKey(company){
+    const slug = (company||'op').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,3) || 'gw';
+    const rand = Math.random().toString(36).slice(2,8);
+    return 'gw_' + slug + '_' + rand;
+  }
+
+  function openAuthModal(tab){
+    switchAuthTab(tab || 'signup');
+    document.getElementById('auth-overlay').classList.add('open');
+  }
+  function closeAuthModal(){
+    document.getElementById('auth-overlay').classList.remove('open');
+  }
+  function switchAuthTab(tab){
+    document.getElementById('auth-tab-signup').classList.toggle('active', tab==='signup');
+    document.getElementById('auth-tab-login').classList.toggle('active', tab==='login');
+    document.getElementById('auth-form-signup').style.display = tab==='signup' ? 'block' : 'none';
+    document.getElementById('auth-form-login').style.display = tab==='login' ? 'block' : 'none';
+    document.getElementById('signup-error').textContent='';
+    document.getElementById('login-error').textContent='';
+  }
+
+  function doSignup(){
+    const company = document.getElementById('su-company').value.trim();
+    const email = document.getElementById('su-email').value.trim().toLowerCase();
+    const password = document.getElementById('su-password').value;
+    const errEl = document.getElementById('signup-error');
+
+    if(!company || !email || !password){ errEl.textContent = 'All fields are required.'; return; }
+    if(password.length < 6){ errEl.textContent = 'Password must be at least 6 characters.'; return; }
+
+    const operators = JSON.parse(localStorage.getItem('gw_operators')||'{}');
+    if(operators[email]){ errEl.textContent = 'An account with this email already exists.'; return; }
+
+    const clientKey = genClientKey(company);
+    operators[email] = {
+      password, companyName: company, clientKey,
+      plan: null, createdAt: new Date().toISOString()
+    };
+    localStorage.setItem('gw_operators', JSON.stringify(operators));
+    localStorage.setItem('gw_op_session', email);
+    window.location.href = 'admin.html';
+  }
+
+  function doOperatorLogin(){
+    const email = document.getElementById('li-email').value.trim().toLowerCase();
+    const password = document.getElementById('li-password').value;
+    const errEl = document.getElementById('login-error');
+
+    if(!email || !password){ errEl.textContent = 'Enter your email and password.'; return; }
+
+    const operators = JSON.parse(localStorage.getItem('gw_operators')||'{}');
+    if(!operators[email] || operators[email].password !== password){
+      errEl.textContent = 'Incorrect email or password.'; return;
+    }
+    localStorage.setItem('gw_op_session', email);
+    window.location.href = 'admin.html';
+  }
+
+  // If already signed in, swap nav CTA to a direct Dashboard link
+  (function(){
+    const session = localStorage.getItem('gw_op_session');
+    if(session){
+      const navEl = document.getElementById('nav-auth-actions');
+      if(navEl) navEl.innerHTML = '<a href="admin.html" class="btn-primary">Go to dashboard →</a>';
+    }
+  })();
 </script>
 
 </body>

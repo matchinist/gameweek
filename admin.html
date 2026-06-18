@@ -247,9 +247,9 @@ tbody tr:hover td{background:var(--bg);}
 
   <div class="sidebar-bottom">
     <div class="plan-badge">
-      <div class="plan-name">GROWTH PLAN</div>
-      <div class="plan-label">€349 / month</div>
-      <a href="#" class="plan-upgrade">Upgrade to Scale →</a>
+      <div class="plan-name" id="sidebar-company">—</div>
+      <div class="plan-label" id="sidebar-plan-label">Free trial · no plan selected</div>
+      <a href="#" class="plan-upgrade" onclick="toast('Plan selection is coming soon');return false;">Choose a plan →</a>
     </div>
   </div>
 </nav>
@@ -265,8 +265,9 @@ tbody tr:hover td{background:var(--bg);}
       </div>
     </div>
     <div class="topbar-right">
-      <a href="https://matchinist.github.io/gameweek" target="_blank" class="btn btn-outline btn-sm">View Demo ↗</a>
-      <div class="topbar-avatar">EC</div>
+      <a href="https://matchinist.github.io/gameweek/live.html" target="_blank" class="btn btn-outline btn-sm" id="topbar-view-demo">View Demo ↗</a>
+      <a href="#" class="btn btn-outline btn-sm" onclick="signOutOperator();return false;" style="color:var(--text-3);">Sign out</a>
+      <div class="topbar-avatar" id="topbar-avatar">—</div>
     </div>
   </div>
 
@@ -463,7 +464,7 @@ tbody tr:hover td{background:var(--bg);}
               <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">Paste this snippet into any page on your site. The widget loads your competitions automatically.</p>
               <div class="embed-box" id="embed-code-box">
 &lt;iframe
-  src="https://gameweek.gg/embed?client=<span style="color:#FCD34D">gw_ec_a4f92c</span>"
+  src="https://gameweek.gg/embed?client=<span style="color:#FCD34D" id="embed-client-key">gw_ec_a4f92c</span>"
   width="100%"
   height="620"
   frameborder="0"
@@ -471,7 +472,8 @@ tbody tr:hover td{background:var(--bg);}
 &gt;&lt;/iframe&gt;
                 <button class="btn btn-outline btn-sm embed-copy-btn" onclick="copyEmbed()" style="font-family:var(--mono);font-size:10px;background:var(--sidebar-2);border-color:var(--sidebar-border);color:#9CA3AF;" id="copy-btn">Copy</button>
               </div>
-              <p style="font-size:11px;color:var(--text-3);margin-top:10px;">Your client key: <span style="font-family:var(--mono);color:var(--text)">gw_ec_a4f92c</span></p>
+              <p style="font-size:11px;color:var(--text-3);margin-top:10px;">Your client key: <span style="font-family:var(--mono);color:var(--text)" id="embed-client-key-label">gw_ec_a4f92c</span></p>
+              <p style="font-size:11px;color:var(--text-3);margin-top:4px;">Domain not live yet? <a href="#" id="embed-test-link" target="_blank" style="color:var(--accent);text-decoration:none;">Test your live embed →</a></p>
             </div>
           </div>
 
@@ -482,10 +484,7 @@ tbody tr:hover td{background:var(--bg);}
             </div>
             <div class="card-body">
               <p style="font-size:12px;color:var(--text-2);margin-bottom:14px;">The embed only loads on these domains. This prevents unauthorised use of your client key.</p>
-              <div style="display:flex;flex-wrap:wrap;gap:8px;" id="domain-list">
-                <div class="domain-tag">yourdomain.com <button onclick="removeDomain(this)">×</button></div>
-                <div class="domain-tag">app.yourdomain.com <button onclick="removeDomain(this)">×</button></div>
-              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;" id="domain-list"></div>
             </div>
           </div>
         </div>
@@ -557,18 +556,14 @@ tbody tr:hover td{background:var(--bg);}
             <div class="card-header"><span class="card-title">Account</span></div>
             <div class="card-body">
               <div class="form-group">
-                <label class="form-label">Name</label>
-                <input class="form-input" value="Ercan" />
-              </div>
-              <div class="form-group">
                 <label class="form-label">Email</label>
-                <input class="form-input" value="hello@gameweek.gg" />
+                <input class="form-input" id="settings-email" value="" disabled />
               </div>
               <div class="form-group">
-                <label class="form-label">Workspace name</label>
-                <input class="form-input" value="My Operator" />
+                <label class="form-label">Workspace / Company name</label>
+                <input class="form-input" id="settings-company" value="" />
               </div>
-              <button class="btn btn-primary btn-sm" onclick="toast('Account saved')">Save changes</button>
+              <button class="btn btn-primary btn-sm" onclick="saveSettingsAccount()">Save changes</button>
             </div>
           </div>
           <div class="card">
@@ -585,10 +580,10 @@ tbody tr:hover td{background:var(--bg);}
             <div class="card-body">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
                 <div>
-                  <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);">Growth</div>
-                  <div style="font-size:12px;color:var(--text-3);">€349 / month</div>
+                  <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);">No plan selected</div>
+                  <div style="font-size:12px;color:var(--text-3);">Free trial — full access while we set up billing</div>
                 </div>
-                <span class="badge badge-green">Active</span>
+                <span class="badge badge-amber">Trial</span>
               </div>
               <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--text-2);">
                 <div>✓ Unlimited competitions</div>
@@ -597,7 +592,7 @@ tbody tr:hover td{background:var(--bg);}
                 <div>✓ Up to 3 allowed domains</div>
               </div>
               <div class="divider"></div>
-              <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;">Upgrade to Scale →</button>
+              <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;" onclick="toast('Plan selection is coming soon')">Choose a plan →</button>
             </div>
           </div>
           <div class="card">
@@ -796,11 +791,28 @@ tbody tr:hover td{background:var(--bg);}
 
 <!-- ══ JS ══ -->
 <script>
-// ── STATE ─────────────────────────────────────────────────────────────────
-const state = {
-  currentComp: null,
-  resultEventId: null,
-  eventFilter: '',
+// ── OPERATOR AUTH GUARD ──────────────────────────────────────────────────
+const opSession = localStorage.getItem('gw_op_session');
+if(!opSession){
+  window.location.href = 'landing.html';
+  throw new Error('Redirecting to landing — not signed in');
+}
+const operators = JSON.parse(localStorage.getItem('gw_operators')||'{}');
+const currentOperator = operators[opSession];
+if(!currentOperator){
+  localStorage.removeItem('gw_op_session');
+  window.location.href = 'landing.html';
+  throw new Error('Redirecting to landing — operator record missing');
+}
+const CLIENT_KEY = currentOperator.clientKey;
+
+function signOutOperator(){
+  localStorage.removeItem('gw_op_session');
+  window.location.href = 'landing.html';
+}
+
+// ── STATE (persisted per-operator) ──────────────────────────────────────────
+const DEFAULT_ADMIN_STATE = {
   competitions: [
     {
       id:'c1', name:'Premier League 25/26', league:'Premier League',
@@ -840,7 +852,36 @@ const state = {
     {id:'e201',home:'Real Madrid',away:'Stuttgart',tournament:'UEFA Champions League',kickoff:'2025-09-17T21:00',result:{h:3,a:1},status:'completed'},
     {id:'e202',home:'Bayern',away:'GNK Dinamo',tournament:'UEFA Champions League',kickoff:'2025-09-17T21:00',result:{h:9,a:2},status:'completed'},
     {id:'e203',home:'PSG',away:'Arsenal',tournament:'UEFA Champions League',kickoff:'2025-10-01T21:00',result:null,status:'upcoming'},
-  ]
+  ],
+  domains: ['yourdomain.com','app.yourdomain.com']
+};
+
+function loadAdminState(){
+  try{
+    const raw = localStorage.getItem('gw_admin_state_'+CLIENT_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_ADMIN_STATE));
+}
+
+function saveAdminState(){
+  try{
+    localStorage.setItem('gw_admin_state_'+CLIENT_KEY, JSON.stringify({
+      competitions: state.competitions,
+      events: state.events,
+      domains: state.domains
+    }));
+  }catch(e){ console.error('Save failed', e); }
+}
+
+const _persisted = loadAdminState();
+const state = {
+  currentComp: null,
+  resultEventId: null,
+  eventFilter: '',
+  competitions: _persisted.competitions,
+  events: _persisted.events,
+  domains: _persisted.domains
 };
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
@@ -896,6 +937,8 @@ function nav(view, subLabel){
   if(view==='dashboard') renderDashboard();
   if(view==='competitions') renderCompList();
   if(view==='events') renderEvents();
+  if(view==='embed') renderEmbedInfo();
+  if(view==='settings') renderSettings();
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────
@@ -1100,6 +1143,7 @@ function saveResult(){
   ev.result = {h,a};
   ev.status = 'completed';
   closeModal('modal-result');
+  saveAdminState();
   renderEvents();
   toast(`Result saved: ${ev.home} ${h}–${a} ${ev.away}`);
 }
@@ -1131,6 +1175,7 @@ function createComp(){
   state.competitions.push(c);
   closeModal('modal-create-comp');
   document.getElementById('new-comp-name').value='';
+  saveAdminState();
   renderCompList();
   nav('competitions');
   toast('Competition created');
@@ -1174,6 +1219,7 @@ function createRound(){
   getComp(state.currentComp).rounds.push(r);
   closeModal('modal-create-round');
   document.getElementById('new-round-name').value='';
+  saveAdminState();
   renderCompDetail();
   toast('Round created');
 }
@@ -1195,33 +1241,38 @@ function createEvent(){
   closeModal('modal-create-event');
   document.getElementById('new-ev-home').value='';
   document.getElementById('new-ev-away').value='';
+  saveAdminState();
   renderEvents();
   toast('Event added');
 }
 
 // ── MISC ACTIONS ──────────────────────────────────────────────────────────
-function toggleLongTerm(id,val){ getComp(id).longTerm=val; }
+function toggleLongTerm(id,val){ getComp(id).longTerm=val; saveAdminState(); }
 
 function updateCompColor(id,val){
   getComp(id).color=val;
+  saveAdminState();
 }
 
 function saveCompSettings(){
   const c = getComp(state.currentComp);
   c.name = document.getElementById('edit-comp-name').value;
   c.mode = document.getElementById('edit-comp-mode').value;
+  saveAdminState();
   renderCompDetail();
   toast('Changes saved');
 }
 
 function setCompStatus(id,status){
   getComp(id).status=status;
+  saveAdminState();
   renderCompDetail();
   toast('Status updated');
 }
 
 function deleteComp(id){
   state.competitions = state.competitions.filter(c=>c.id!==id);
+  saveAdminState();
   nav('competitions');
   toast('Competition deleted');
 }
@@ -1229,6 +1280,7 @@ function deleteComp(id){
 function deleteEvent(id){
   if(!confirm('Remove this event?')) return;
   state.events = state.events.filter(e=>e.id!==id);
+  saveAdminState();
   renderEvents();
   toast('Event removed');
 }
@@ -1238,6 +1290,7 @@ function confirmRound(id){
     const r = c.rounds.find(r=>r.id===id);
     if(r) r.status='completed';
   });
+  saveAdminState();
   renderCompDetail();
   toast('Round locked');
 }
@@ -1259,23 +1312,45 @@ function syncColorFromHex(){
 }
 
 function copyEmbed(){
-  const code = `<iframe src="https://gameweek.gg/embed?client=gw_ec_a4f92c" width="100%" height="620" frameborder="0" style="border-radius:10px;"></iframe>`;
+  const code = `<iframe src="https://gameweek.gg/embed?client=${CLIENT_KEY}" width="100%" height="620" frameborder="0" style="border-radius:10px;"></iframe>`;
   navigator.clipboard.writeText(code).then(()=>toast('Copied to clipboard'));
+}
+
+function renderDomains(){
+  const el = document.getElementById('domain-list');
+  if(!el) return;
+  if(state.domains.length===0){
+    el.innerHTML = '<span style="font-size:12px;color:var(--text-3);">No domains added yet.</span>';
+    return;
+  }
+  el.innerHTML = state.domains.map(d=>`<div class="domain-tag">${d} <button onclick="removeDomain('${d}')">×</button></div>`).join('');
+}
+
+function renderEmbedInfo(){
+  document.getElementById('embed-client-key').textContent = CLIENT_KEY;
+  document.getElementById('embed-client-key-label').textContent = CLIENT_KEY;
+  const testLink = document.getElementById('embed-test-link');
+  if(testLink) testLink.href = `https://matchinist.github.io/gameweek/live.html?client=${CLIENT_KEY}`;
+  renderDomains();
 }
 
 function addDomain(){
   const d = document.getElementById('new-domain').value.trim();
   if(!d){ toast('Enter a domain'); return; }
-  const tag = document.createElement('div');
-  tag.className='domain-tag';
-  tag.innerHTML=`${d} <button onclick="removeDomain(this)">×</button>`;
-  document.getElementById('domain-list').appendChild(tag);
+  state.domains.push(d);
+  saveAdminState();
+  renderDomains();
   closeModal('modal-add-domain');
   document.getElementById('new-domain').value='';
   toast('Domain added');
 }
 
-function removeDomain(btn){ btn.parentElement.remove(); toast('Domain removed'); }
+function removeDomain(d){
+  state.domains = state.domains.filter(x=>x!==d);
+  saveAdminState();
+  renderDomains();
+  toast('Domain removed');
+}
 
 // ── MODAL HELPERS ─────────────────────────────────────────────────────────
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
@@ -1294,7 +1369,29 @@ function toast(msg){
   toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
 }
 
+function renderSettings(){
+  document.getElementById('settings-email').value = opSession;
+  document.getElementById('settings-company').value = currentOperator.companyName;
+}
+
+function saveSettingsAccount(){
+  const newCompany = document.getElementById('settings-company').value.trim();
+  if(!newCompany){ toast('Company name cannot be empty'); return; }
+  currentOperator.companyName = newCompany;
+  operators[opSession] = currentOperator;
+  localStorage.setItem('gw_operators', JSON.stringify(operators));
+  initOperatorChrome();
+  toast('Account saved');
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────
+function initOperatorChrome(){
+  document.getElementById('sidebar-company').textContent = currentOperator.companyName;
+  const initials = currentOperator.companyName.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('topbar-avatar').textContent = initials;
+  document.getElementById('topbar-view-demo').href = `https://matchinist.github.io/gameweek/live.html?client=${CLIENT_KEY}`;
+}
+initOperatorChrome();
 renderDashboard();
 </script>
 </body>
