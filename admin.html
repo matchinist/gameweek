@@ -464,7 +464,7 @@ tbody tr:hover td{background:var(--bg);}
               <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">Paste this snippet into any page on your site. The widget loads your competitions automatically.</p>
               <div class="embed-box" id="embed-code-box">
 &lt;iframe
-  src="https://gameweek.gg/embed?client=<span style="color:#FCD34D" id="embed-client-key">gw_ec_a4f92c</span>"
+  src="https://matchinist.github.io/gameweek/live.html?client=<span style="color:#FCD34D" id="embed-client-key">...</span>"
   width="100%"
   height="620"
   frameborder="0"
@@ -472,7 +472,7 @@ tbody tr:hover td{background:var(--bg);}
 &gt;&lt;/iframe&gt;
                 <button class="btn btn-outline btn-sm embed-copy-btn" onclick="copyEmbed()" style="font-family:var(--mono);font-size:10px;background:var(--sidebar-2);border-color:var(--sidebar-border);color:#9CA3AF;" id="copy-btn">Copy</button>
               </div>
-              <p style="font-size:11px;color:var(--text-3);margin-top:10px;">Your client key: <span style="font-family:var(--mono);color:var(--text)" id="embed-client-key-label">gw_ec_a4f92c</span></p>
+              <p style="font-size:11px;color:var(--text-3);margin-top:10px;">Your client key: <span style="font-family:var(--mono);color:var(--text)" id="embed-client-key-label">...</span></p>
               <p style="font-size:11px;color:var(--text-3);margin-top:4px;">Domain not live yet? <a href="#" id="embed-test-link" target="_blank" style="color:var(--accent);text-decoration:none;">Test your live embed →</a></p>
             </div>
           </div>
@@ -1312,7 +1312,7 @@ function syncColorFromHex(){
 }
 
 function copyEmbed(){
-  const code = `<iframe src="https://gameweek.gg/embed?client=${CLIENT_KEY}" width="100%" height="620" frameborder="0" style="border-radius:10px;"></iframe>`;
+  const code = `<iframe src="https://matchinist.github.io/gameweek/live.html?client=${CLIENT_KEY}" width="100%" height="620" frameborder="0" style="border-radius:10px;"></iframe>`;
   navigator.clipboard.writeText(code).then(()=>toast('Copied to clipboard'));
 }
 
@@ -1330,7 +1330,8 @@ function renderEmbedInfo(){
   document.getElementById('embed-client-key').textContent = CLIENT_KEY;
   document.getElementById('embed-client-key-label').textContent = CLIENT_KEY;
   const testLink = document.getElementById('embed-test-link');
-  if(testLink) testLink.href = `https://matchinist.github.io/gameweek/live.html?client=${CLIENT_KEY}`;
+  const liveUrl = `https://matchinist.github.io/gameweek/live.html?client=${CLIENT_KEY}`;
+  if(testLink) testLink.href = liveUrl;
   renderDomains();
 }
 
