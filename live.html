@@ -37,11 +37,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 .screen{display:none;padding:16px;}
 .screen.active{display:block;}
-.auth-wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px 16px;}
-.auth-card{width:100%;max-width:340px;}
-.auth-logo{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--text);text-align:center;margin-bottom:4px;}
-.auth-logo span{color:var(--accent);}
-.auth-tagline{font-size:12px;color:var(--text-3);text-align:center;margin-bottom:28px;}
 .auth-toggle{display:flex;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:3px;margin-bottom:20px;}
 .auth-tab{flex:1;padding:7px;text-align:center;font-size:12px;font-weight:600;border-radius:5px;cursor:pointer;color:var(--text-2);transition:all 0.13s;border:none;background:none;}
 .auth-tab.active{background:var(--white);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.08);}
@@ -169,45 +164,52 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .empty-icon{font-size:28px;margin-bottom:10px;}
 .empty-title{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text-2);margin-bottom:5px;}
 .empty-sub{font-size:11px;line-height:1.6;}
+/* ── AUTH MODAL ── */
+.auth-modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,17,23,0.5);backdrop-filter:blur(2px);z-index:200;align-items:center;justify-content:center;padding:16px;}
+.auth-modal-overlay.open{display:flex;}
+.auth-modal{background:var(--white);border-radius:14px;width:100%;max-width:320px;box-shadow:0 20px 60px rgba(0,0,0,0.2);padding:24px;}
+.auth-modal-logo{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--text);text-align:center;margin-bottom:2px;}
+.auth-modal-logo span{color:var(--accent);}
+.auth-modal-reason{font-size:11px;color:var(--text-3);text-align:center;margin-bottom:18px;}
 </style>
 </head>
 <body>
 <div class="app" id="app">
 
-  <div id="screen-auth" style="flex:1;overflow-y:auto;display:none;">
-    <div class="auth-wrap">
-      <div class="auth-card">
-        <div class="auth-logo">game<span>week</span></div>
-        <div class="auth-tagline">Free-to-play predictions. Every gameweek.</div>
-        <div class="auth-toggle">
-          <button class="auth-tab active" id="tab-login" onclick="switchAuth('login')">Sign in</button>
-          <button class="auth-tab" id="tab-register" onclick="switchAuth('register')">Register</button>
-        </div>
-        <div id="form-login">
-          <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="login-username" placeholder="your username" autocomplete="username" /></div>
-          <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" /></div>
-          <button class="auth-btn" onclick="doLogin()">Sign in →</button>
-          <div class="auth-error" id="login-error"></div>
-        </div>
-        <div id="form-register" style="display:none;">
-          <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="reg-username" placeholder="choose a username" autocomplete="username" /></div>
-          <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="reg-email" placeholder="your@email.com" autocomplete="email" /></div>
-          <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="reg-password" placeholder="min 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()" /></div>
-          <button class="auth-btn" onclick="doRegister()">Create account →</button>
-          <div class="auth-error" id="reg-error"></div>
-          <div class="auth-terms">By registering you agree to our terms.<br>No real money involved. Free to play.</div>
-        </div>
+  <!-- ── AUTH MODAL (overlay) ── -->
+  <div class="auth-modal-overlay" id="auth-modal-overlay" onclick="if(event.target===this)closeAuthModal()">
+    <div class="auth-modal">
+      <div class="auth-modal-logo">game<span>week</span></div>
+      <div class="auth-modal-reason" id="auth-modal-reason">Sign in to make predictions</div>
+      <div class="auth-toggle">
+        <button class="auth-tab active" id="tab-login" onclick="switchAuth('login')">Sign in</button>
+        <button class="auth-tab" id="tab-register" onclick="switchAuth('register')">Register</button>
+      </div>
+      <div id="form-login">
+        <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="login-username" placeholder="your username" autocomplete="username" /></div>
+        <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" /></div>
+        <button class="auth-btn" onclick="doLogin()">Sign in →</button>
+        <div class="auth-error" id="login-error"></div>
+      </div>
+      <div id="form-register" style="display:none;">
+        <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="reg-username" placeholder="choose a username" autocomplete="username" /></div>
+        <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="reg-email" placeholder="your@email.com" autocomplete="email" /></div>
+        <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="reg-password" placeholder="min 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()" /></div>
+        <button class="auth-btn" onclick="doRegister()">Create account →</button>
+        <div class="auth-error" id="reg-error"></div>
+        <div class="auth-terms">Free to play. No deposit required.</div>
       </div>
     </div>
   </div>
 
-  <div id="screen-app" style="display:none;flex:1;min-height:0;display:flex;flex-direction:column;">
+  <!-- ── APP (always visible) ── -->
+  <div id="screen-app" style="flex:1;min-height:0;display:flex;flex-direction:column;">
     <div class="app-header">
       <div class="header-top">
         <div class="header-logo">game<span>week</span><span id="hdr-operator-badge" style="font-family:var(--sans);font-weight:500;color:var(--text-3);font-size:11px;margin-left:6px;"></span></div>
-        <div class="header-user" onclick="goTab('profile')">
+        <div class="header-user" onclick="headerUserClick()">
           <div class="header-avatar" id="hdr-avatar">?</div>
-          <div class="header-username" id="hdr-username">—</div>
+          <div class="header-username" id="hdr-username">Sign in</div>
         </div>
       </div>
       <div id="comp-tabs-wrap">
@@ -353,39 +355,47 @@ function loginUser(u){
   currentUser=u;
   localStorage.setItem(sessionKey(), u);
   preds = JSON.parse(localStorage.getItem(predsKey(u))||'{}');
-  showApp();
+  closeAuthModal();
+  updateHeaderUser();
+  renderPredict();
 }
 
 function doLogout(){
   currentUser=null;
   localStorage.removeItem(sessionKey());
-  showAuth();
+  updateHeaderUser();
+  renderPredict();
 }
 
-function showAuth(){
-  document.getElementById('screen-auth').style.display='flex';
-  document.getElementById('screen-app').style.display='none';
+function openAuthModal(reason){
+  document.getElementById('auth-modal-reason').textContent = reason || 'Sign in to make predictions';
+  switchAuth('login');
+  document.getElementById('auth-modal-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('login-username').focus(), 100);
 }
 
-function showApp(){
-  buildCompsFromRealData();
-  document.getElementById('screen-auth').style.display='none';
-  document.getElementById('screen-app').style.display='flex';
-  document.getElementById('hdr-avatar').textContent=currentUser.slice(0,2).toUpperCase();
-  document.getElementById('hdr-username').textContent=currentUser;
-  if(CLIENT_PARAM){
-    try{
-      const operators = JSON.parse(localStorage.getItem('gw_operators')||'{}');
-      const op = Object.values(operators).find(o=>o.clientKey===CLIENT_PARAM);
-      document.getElementById('hdr-operator-badge').textContent = op ? `· ${op.companyName}` : '';
-    }catch(e){}
+function closeAuthModal(){
+  document.getElementById('auth-modal-overlay').classList.remove('open');
+}
+
+function headerUserClick(){
+  if(currentUser) goTab('profile');
+  else openAuthModal('Sign in or create a free account');
+}
+
+function updateHeaderUser(){
+  if(currentUser){
+    document.getElementById('hdr-avatar').textContent = currentUser.slice(0,2).toUpperCase();
+    document.getElementById('hdr-username').textContent = currentUser;
+  } else {
+    document.getElementById('hdr-avatar').textContent = '?';
+    document.getElementById('hdr-username').textContent = 'Sign in';
   }
-  renderCompTabs();
-  goTab('predict');
 }
 
 // ── TABS ──────────────────────────────────────────────────────────────────
 function goTab(tab){
+  if(tab==='profile' && !currentUser){ openAuthModal('Sign in to view your profile'); return; }
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
@@ -570,7 +580,10 @@ function renderEventCard(ev, comp, isOpen){
   return html;
 }
 
-function pick(id,val){ preds[id]=val; savePreds(); renderPredict(); }
+function pick(id,val){
+  if(!currentUser){ openAuthModal('Sign in to make predictions'); return; }
+  preds[id]=val; savePreds(); renderPredict();
+}
 
 function changeRound(idx){ selectedRound[currentCompIdx]=parseInt(idx); renderPredict(); }
 
@@ -772,14 +785,24 @@ function toast(msg){
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────
+buildCompsFromRealData();
+// Restore session if exists
 const session = localStorage.getItem(sessionKey());
 if(session){
   currentUser=session;
   preds = JSON.parse(localStorage.getItem(predsKey(session))||'{}');
-  showApp();
-} else {
-  showAuth();
 }
+// Populate operator badge
+if(CLIENT_PARAM){
+  try{
+    const operators = JSON.parse(localStorage.getItem('gw_operators')||'{}');
+    const op = Object.values(operators).find(o=>o.clientKey===CLIENT_PARAM);
+    document.getElementById('hdr-operator-badge').textContent = op ? `· ${op.companyName}` : '';
+  }catch(e){}
+}
+updateHeaderUser();
+renderCompTabs();
+goTab('predict');
 </script>
 </body>
 </html>
