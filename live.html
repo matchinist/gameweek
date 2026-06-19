@@ -476,10 +476,18 @@ function renderCompTabs(){
   if(currentCompIdx>=COMPS.length) currentCompIdx=0;
   el.innerHTML = COMPS.map((c,i)=>`
     <button class="comp-tab${i===currentCompIdx?' active':''}" onclick="switchComp(${i})" style="${i===currentCompIdx?`--comp-color:${c.color}`:''}">
-      <span class="comp-tab-name">${c.name}</span>
-      <span class="comp-tab-mode">${MODE_LABELS[c.mode]}</span>
+      <span class="comp-tab-name">${MODE_LABELS[c.mode]||c.mode}</span>
     </button>`).join('');
   document.documentElement.style.setProperty('--comp-color', COMPS[currentCompIdx].color);
+}
+
+function renderTournamentLabels(comp){
+  const src = comp.league || comp.name || '';
+  const labels = src.split(',').map(l=>l.trim()).filter(Boolean);
+  if(!labels.length) return '';
+  return '<div style="display:flex;flex-wrap:wrap;gap:5px;padding:10px 16px 0;">' +
+    labels.map(l=>'<span style="font-size:10px;font-weight:600;background:var(--bg);border:1px solid var(--border);color:var(--text-2);padding:3px 9px;border-radius:12px;">'+l+'</span>').join('') +
+    '</div>';
 }
 
 function switchComp(idx){
@@ -515,7 +523,7 @@ function renderPredict(){
     <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button>
     <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
   </div>`;
-
+  html += renderTournamentLabels(comp);
   html += predictSubTab==='predictions' ? renderPredictionsPane(comp) : renderLeaderboardPane(comp);
   document.getElementById('predict-content').innerHTML = html;
 }
@@ -597,12 +605,25 @@ function renderEventCard(ev, comp, isOpen){
   const ai = ev.away.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();
 
   let correct=null;
+  let earnedPts=null;
   if(!isOpen && hasRes && hasPred){
     if(comp.mode==='lms'||comp.mode==='result'){
       const actual = ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
       correct = pred===actual;
     } else if(comp.mode==='score'){
-      correct = pred && pred.h==ev.res.h && pred.a==ev.res.a;
+      const s = comp.scoring||{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1};
+      const exactH = pred.h==ev.res.h, exactA = pred.a==ev.res.a;
+      if(exactH && exactA){
+        earnedPts = s.exactScore; correct = true;
+      } else if(exactH){
+        earnedPts = s.homeGoals; correct = null; // partial
+      } else if(exactA){
+        earnedPts = s.awayGoals; correct = null;
+      } else if((pred.h+pred.a)==(ev.res.h+ev.res.a)){
+        earnedPts = s.totalGoals; correct = null;
+      } else {
+        earnedPts = 0; correct = false;
+      }
     } else if(comp.mode==='ou'){
       const line = ev.line||2.5;
       correct = (pred==='O'&&(ev.res.h+ev.res.a)>line)||(pred==='U'&&(ev.res.h+ev.res.a)<=line);
@@ -669,9 +690,16 @@ function renderEventCard(ev, comp, isOpen){
     } else if(comp.mode==='ou'){
       predLabel = pred==='O'?`Over ${ev.line||2.5}`:`Under ${ev.line||2.5}`;
     }
+    let resultBadge = '';
+    if(comp.mode==='score' && earnedPts!==null){
+      const cls = earnedPts>0?'yes':'no';
+      resultBadge = `<span class="pred-correct ${cls}">${earnedPts>0?'+'+earnedPts+' pts':'✗ 0 pts'}</span>`;
+    } else if(correct!==null){
+      resultBadge = `<span class="pred-correct ${correct?'yes':'no'}">${correct?'✓ Correct':'✗ Wrong'}</span>`;
+    }
     html += `<div class="pred-result-row">
       <div class="pred-made">Your pick: <strong>${predLabel}</strong></div>
-      ${correct!==null?`<span class="pred-correct ${correct?'yes':'no'}">${correct?'✓ Correct':'✗ Wrong'}</span>`:''}
+      ${resultBadge}
     </div>`;
   } else {
     html += `<div style="font-size:11px;color:var(--text-3);">No prediction made for this match.</div>`;
