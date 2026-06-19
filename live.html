@@ -164,6 +164,22 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .empty-icon{font-size:28px;margin-bottom:10px;}
 .empty-title{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text-2);margin-bottom:5px;}
 .empty-sub{font-size:11px;line-height:1.6;}
+/* ── SCORE ── */
+.score-pred{display:flex;align-items:center;gap:8px;}
+.score-side{display:flex;align-items:center;gap:7px;flex:1;}
+.score-side.right{flex-direction:row-reverse;}
+.score-side-name{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:72px;}
+.score-num{width:44px;height:38px;border:1px solid var(--border);border-radius:6px;text-align:center;font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text);outline:none;-moz-appearance:textfield;transition:border-color 0.13s;flex-shrink:0;}
+.score-num::-webkit-inner-spin-button,.score-num::-webkit-outer-spin-button{-webkit-appearance:none;}
+.score-num:focus{border-color:var(--comp-color);}
+.score-num.has{border-color:var(--comp-color);background:var(--accent-light);color:var(--comp-color);}
+.score-dash{font-family:var(--mono);font-size:14px;color:var(--text-3);font-weight:700;}
+/* ── O/U ── */
+.btns-ou{display:flex;gap:6px;}
+.btn-ou{flex:1;padding:9px 4px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;transition:all 0.13s;text-align:center;line-height:1.3;}
+.btn-ou .sub{display:block;font-size:8px;font-weight:400;opacity:0.6;margin-top:2px;}
+.btn-ou.over:hover,.btn-ou.over.selected{border-color:var(--green);background:var(--green-light);color:var(--green);}
+.btn-ou.under:hover,.btn-ou.under.selected{border-color:var(--red);background:var(--red-light);color:var(--red);}
 /* ── AUTH MODAL ── */
 .auth-modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,17,23,0.5);backdrop-filter:blur(2px);z-index:200;align-items:center;justify-content:center;padding:16px;}
 .auth-modal-overlay.open{display:flex;}
@@ -272,15 +288,60 @@ let EVENTS = {};      // display version: {home,away,kickoff,res}
 let EVENTS_RAW = {};  // raw result version: {h,a}|null per event id
 
 function buildCompsFromRealData(){
-  const {teams, tournaments, events} = loadDMData();
-  const teamById = id => teams.find(t=>t.id===id);
-
   COMPS = [];
   EVENTS = {};
   EVENTS_RAW = {};
 
+  // Primary source: admin panel state (gw_admin_state_<clientKey>)
+  // This is where competitions created in admin.html live.
+  const adminKey = CLIENT_PARAM ? 'gw_admin_state_'+CLIENT_PARAM : null;
+  const adminState = adminKey ? (() => { try{ return JSON.parse(localStorage.getItem(adminKey)); }catch(e){ return null; } })() : null;
+
+  if(adminState && adminState.competitions && adminState.competitions.length > 0){
+    // Build events lookup from admin state events array
+    (adminState.events||[]).forEach(ev=>{
+      const hasResult = ev.result && ev.result.h!==null && ev.result.a!==null;
+      EVENTS[ev.id] = {
+        home: ev.home, away: ev.away,
+        kickoff: fmtKickoff(ev.kickoff),
+        res: hasResult ? ev.result : null
+      };
+      EVENTS_RAW[ev.id] = hasResult ? ev.result : null;
+    });
+
+    // Build comps from admin competitions, only include active/draft ones
+    adminState.competitions.forEach(c=>{
+      if(c.status==='archived') return;
+      const rounds = (c.rounds||[]).map(r=>{
+        const evIds = r.eventIds||[];
+        const allDone = evIds.length>0 && evIds.every(eid=>{
+          const ev = EVENTS[eid];
+          return ev && ev.res!==null;
+        });
+        return {
+          id: r.id,
+          label: r.label,
+          deadline: r.deadline||'',
+          status: r.status==='completed' ? 'completed' : (allDone ? 'completed' : 'open'),
+          eventIds: evIds
+        };
+      });
+      COMPS.push({
+        id: c.id,
+        name: c.name,
+        mode: c.mode || 'lms',
+        color: c.color || '#4F46E5',
+        rounds
+      });
+    });
+    return;
+  }
+
+  // Fallback: data manager format (gw_dm_* keys) for legacy / data.html usage
+  const {teams, tournaments, events} = loadDMData();
+  const teamById = id => teams.find(t=>t.id===id);
+
   tournaments.forEach(t=>{
-    // pick season with most assigned events across its rounds
     let bestSeason=null, bestCount=-1;
     Object.values(t.seasons||{}).forEach(season=>{
       const count = (season.rounds||[]).reduce((sum,r)=>sum+(r.eventIds?.length||0),0);
@@ -530,15 +591,22 @@ function renderPredictionsPane(comp){
 function renderEventCard(ev, comp, isOpen){
   const pred = preds[ev.id] || null;
   const hasRes = !!ev.res;
-  const hasPred = pred!==null && pred!==undefined;
-  const isPredicted = !!pred;
+  const hasPred = comp.mode==='score' ? (pred && pred.h!==undefined && pred.a!==undefined) : (pred!==null && pred!==undefined);
+  const isPredicted = comp.mode==='score' ? (pred && pred.h!==undefined && pred.a!==undefined) : !!pred;
   const hi = ev.home.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();
   const ai = ev.away.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();
 
   let correct=null;
   if(!isOpen && hasRes && hasPred){
-    const actual = ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
-    correct = pred===actual;
+    if(comp.mode==='lms'||comp.mode==='result'){
+      const actual = ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
+      correct = pred===actual;
+    } else if(comp.mode==='score'){
+      correct = pred && pred.h==ev.res.h && pred.a==ev.res.a;
+    } else if(comp.mode==='ou'){
+      const line = ev.line||2.5;
+      correct = (pred==='O'&&(ev.res.h+ev.res.a)>line)||(pred==='U'&&(ev.res.h+ev.res.a)<=line);
+    }
   }
 
   let cls='event-card';
@@ -553,22 +621,54 @@ function renderEventCard(ev, comp, isOpen){
       </div>
       <div class="event-teams">
         <div class="ev-team"><div class="ev-badge">${hi}</div><span class="ev-name">${ev.home}</span></div>
-        <div class="ev-vs">${hasRes?'':'vs'}</div>
         ${hasRes?`<div class="ev-score">${ev.res.h}–${ev.res.a}</div>`:`<div class="ev-vs">vs</div>`}
         <div class="ev-team away"><div class="ev-badge">${ai}</div><span class="ev-name">${ev.away}</span></div>
       </div>
-    </div>`;
+    </div>
+    <div class="pred-area">`;
 
-  html += `<div class="pred-area">`;
   if(isOpen){
-    html += `<div class="pred-label">Your pick</div>
-    <div class="btns-1x2">
-      <button class="btn-1x2${pred==='H'?' selected':''}" onclick="pick('${ev.id}','H')">${ev.home.split(' ')[0]}<span class="sub">Home Win</span></button>
-      <button class="btn-1x2${pred==='D'?' selected':''}" onclick="pick('${ev.id}','D')">X<span class="sub">Draw</span></button>
-      <button class="btn-1x2${pred==='A'?' selected':''}" onclick="pick('${ev.id}','A')">${ev.away.split(' ').pop()}<span class="sub">Away Win</span></button>
-    </div>`;
+    if(comp.mode==='lms'||comp.mode==='result'){
+      html += `<div class="pred-label">Your pick</div>
+      <div class="btns-1x2">
+        <button class="btn-1x2${pred==='H'?' selected':''}" onclick="pick('${ev.id}','H')">${ev.home.split(' ')[0]}<span class="sub">Home Win</span></button>
+        <button class="btn-1x2${pred==='D'?' selected':''}" onclick="pick('${ev.id}','D')">X<span class="sub">Draw</span></button>
+        <button class="btn-1x2${pred==='A'?' selected':''}" onclick="pick('${ev.id}','A')">${ev.away.split(' ').pop()}<span class="sub">Away Win</span></button>
+      </div>`;
+    } else if(comp.mode==='score'){
+      const hv = (pred&&pred.h!==undefined)?pred.h:'';
+      const av = (pred&&pred.a!==undefined)?pred.a:'';
+      html += `<div class="pred-label">Exact score</div>
+      <div class="score-pred">
+        <div class="score-side">
+          <span class="score-side-name">${ev.home}</span>
+          <input class="score-num${hv!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${hv}"
+            id="sh-${ev.id}" oninput="pickScore('${ev.id}','h',this.value)">
+        </div>
+        <span class="score-dash">–</span>
+        <div class="score-side right">
+          <span class="score-side-name">${ev.away}</span>
+          <input class="score-num${av!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${av}"
+            id="sa-${ev.id}" oninput="pickScore('${ev.id}','a',this.value)">
+        </div>
+      </div>`;
+    } else if(comp.mode==='ou'){
+      const line = ev.line||2.5;
+      html += `<div class="pred-label">Over / Under ${line} goals</div>
+      <div class="btns-ou">
+        <button class="btn-ou over${pred==='O'?' selected':''}" onclick="pick('${ev.id}','O')">OVER<span class="sub">${line}+ goals</span></button>
+        <button class="btn-ou under${pred==='U'?' selected':''}" onclick="pick('${ev.id}','U')">UNDER<span class="sub">${line} or less</span></button>
+      </div>`;
+    }
   } else if(hasPred){
-    const predLabel = pred==='H'?`${ev.home} (Home)`:pred==='D'?'Draw':`${ev.away} (Away)`;
+    let predLabel='';
+    if(comp.mode==='lms'||comp.mode==='result'){
+      predLabel = pred==='H'?`${ev.home} (Home)`:pred==='D'?'Draw':`${ev.away} (Away)`;
+    } else if(comp.mode==='score'){
+      predLabel = `${pred.h ?? '-'} – ${pred.a ?? '-'}`;
+    } else if(comp.mode==='ou'){
+      predLabel = pred==='O'?`Over ${ev.line||2.5}`:`Under ${ev.line||2.5}`;
+    }
     html += `<div class="pred-result-row">
       <div class="pred-made">Your pick: <strong>${predLabel}</strong></div>
       ${correct!==null?`<span class="pred-correct ${correct?'yes':'no'}">${correct?'✓ Correct':'✗ Wrong'}</span>`:''}
@@ -576,6 +676,7 @@ function renderEventCard(ev, comp, isOpen){
   } else {
     html += `<div style="font-size:11px;color:var(--text-3);">No prediction made for this match.</div>`;
   }
+
   html += `</div></div>`;
   return html;
 }
@@ -583,6 +684,15 @@ function renderEventCard(ev, comp, isOpen){
 function pick(id,val){
   if(!currentUser){ openAuthModal('Sign in to make predictions'); return; }
   preds[id]=val; savePreds(); renderPredict();
+}
+
+function pickScore(id, side, val){
+  if(!currentUser){ openAuthModal('Sign in to make predictions'); return; }
+  if(!preds[id]||typeof preds[id]!=='object') preds[id]={};
+  preds[id][side] = val===''?undefined:parseInt(val);
+  savePreds();
+  const input = document.getElementById((side==='h'?'sh-':'sa-')+id);
+  if(input) input.classList.toggle('has', val!=='');
 }
 
 function changeRound(idx){ selectedRound[currentCompIdx]=parseInt(idx); renderPredict(); }
