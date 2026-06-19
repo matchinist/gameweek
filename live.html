@@ -292,81 +292,57 @@ function buildCompsFromRealData(){
   EVENTS = {};
   EVENTS_RAW = {};
 
-  // Primary source: admin panel state (gw_admin_state_<clientKey>)
-  // This is where competitions created in admin.html live.
+  // Always load raw event data from Data Manager (DM) — that's where the source of truth lives.
+  // Admin state only stores competition/round structure; event details come from DM.
+  const dmTeams  = (() => { try{ return JSON.parse(localStorage.getItem(dmKey('teams')))||[]; }catch(e){ return []; } })();
+  const dmEvents = (() => { try{ return JSON.parse(localStorage.getItem(dmKey('events')))||{}; }catch(e){ return {}; } })();
+  const teamById = id => dmTeams.find(t=>t.id===id);
+
+  // Build EVENTS lookup from DM
+  Object.entries(dmEvents).forEach(([eid, ev])=>{
+    const home = teamById(ev.homeId), away = teamById(ev.awayId);
+    if(!home||!away) return;
+    const hasResult = ev.result && ev.result.h!==null && ev.result.a!=null;
+    EVENTS[eid] = { home:home.name, away:away.name, kickoff:fmtKickoff(ev.kickoff), res: hasResult?ev.result:null };
+    EVENTS_RAW[eid] = hasResult ? ev.result : null;
+  });
+
+  // Load competition structure from admin state
   const adminKey = CLIENT_PARAM ? 'gw_admin_state_'+CLIENT_PARAM : null;
   const adminState = adminKey ? (() => { try{ return JSON.parse(localStorage.getItem(adminKey)); }catch(e){ return null; } })() : null;
 
   if(adminState && adminState.competitions && adminState.competitions.length > 0){
-    // Build events lookup from admin state events array
-    (adminState.events||[]).forEach(ev=>{
-      const hasResult = ev.result && ev.result.h!==null && ev.result.a!==null;
-      EVENTS[ev.id] = {
-        home: ev.home, away: ev.away,
-        kickoff: fmtKickoff(ev.kickoff),
-        res: hasResult ? ev.result : null
-      };
-      EVENTS_RAW[ev.id] = hasResult ? ev.result : null;
-    });
-
-    // Build comps from admin competitions, only include active/draft ones
     adminState.competitions.forEach(c=>{
       if(c.status==='archived') return;
       const rounds = (c.rounds||[]).map(r=>{
-        const evIds = r.eventIds||[];
-        const allDone = evIds.length>0 && evIds.every(eid=>{
-          const ev = EVENTS[eid];
-          return ev && ev.res!==null;
-        });
+        const evIds = (r.eventIds||[]).filter(eid=>EVENTS[eid]); // only include events that exist in DM
+        const allDone = evIds.length>0 && evIds.every(eid=>EVENTS[eid]?.res!==null);
         return {
-          id: r.id,
-          label: r.label,
-          deadline: r.deadline||'',
+          id: r.id, label: r.label, deadline: r.deadline||'',
           status: r.status==='completed' ? 'completed' : (allDone ? 'completed' : 'open'),
           eventIds: evIds
         };
       });
-      COMPS.push({
-        id: c.id,
-        name: c.name,
-        mode: c.mode || 'lms',
-        color: c.color || '#4F46E5',
-        rounds
-      });
+      COMPS.push({ id:c.id, name:c.name, mode:c.mode||'lms', color:c.color||'#4F46E5', scoring:c.scoring||null, markets:c.markets||[], rounds, tournamentNames:c.tournamentNames||[] });
     });
     return;
   }
 
-  // Fallback: data manager format (gw_dm_* keys) for legacy / data.html usage
-  const {teams, tournaments, events} = loadDMData();
-  const teamById = id => teams.find(t=>t.id===id);
-
-  tournaments.forEach(t=>{
+  // Fallback: build from DM tournament structure (legacy / no admin state)
+  const dmTournaments = (() => { try{ return JSON.parse(localStorage.getItem(dmKey('tournaments')))||[]; }catch(e){ return []; } })();
+  dmTournaments.forEach(t=>{
     let bestSeason=null, bestCount=-1;
     Object.values(t.seasons||{}).forEach(season=>{
       const count = (season.rounds||[]).reduce((sum,r)=>sum+(r.eventIds?.length||0),0);
       if(count>bestCount){ bestCount=count; bestSeason=season; }
     });
     if(!bestSeason || !bestSeason.rounds || bestSeason.rounds.length===0) return;
-
     const rounds = bestSeason.rounds.map(r=>{
-      const evIds = r.eventIds||[];
-      const allDone = evIds.length>0 && evIds.every(eid=>{
-        const ev = events[eid];
-        return ev && ev.result && ev.result.h!==null && ev.result.a!==null;
-      });
-      return { id:r.id, label:r.label, deadline:r.deadline||'', status: allDone?'completed':'open', eventIds: evIds };
+      const evIds = (r.eventIds||[]).filter(eid=>EVENTS[eid]);
+      const allDone = evIds.length>0 && evIds.every(eid=>EVENTS[eid]?.res!==null);
+      return { id:r.id, label:r.label, deadline:r.deadline||'', status:allDone?'completed':'open', eventIds:evIds };
     });
-
-    COMPS.push({ id:t.id, name:t.name, mode:'lms', color:t.color||'#4F46E5', rounds });
-  });
-
-  Object.entries(events).forEach(([eid,ev])=>{
-    const home = teamById(ev.homeId), away = teamById(ev.awayId);
-    if(!home||!away) return;
-    const hasResult = ev.result && ev.result.h!==null && ev.result.a!==undefined && ev.result.a!==null;
-    EVENTS[eid] = { home:home.name, away:away.name, kickoff:fmtKickoff(ev.kickoff), res: hasResult?ev.result:null };
-    EVENTS_RAW[eid] = hasResult ? ev.result : null;
+    COMPS.push({ id:t.id, name:t.name, mode:'lms', color:t.color||'#4F46E5', scoring:null, markets:[], rounds });
   });
 }
 
