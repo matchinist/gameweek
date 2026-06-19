@@ -468,7 +468,7 @@ function goTab(tab){
 }
 
 // ── COMP TABS ─────────────────────────────────────────────────────────────
-const MODE_LABELS = {lms:'Last Man Standing', score:'Score Predictor', ou:'Over / Under'};
+const MODE_LABELS = {lms:'Last Man Standing', score:'Score Predictor', ou:'Over / Under', betting:'Betting Markets'};
 
 function renderCompTabs(){
   const el = document.getElementById('comp-tabs');
@@ -599,8 +599,12 @@ function renderPredictionsPane(comp){
 function renderEventCard(ev, comp, isOpen){
   const pred = preds[ev.id] || null;
   const hasRes = !!ev.res;
-  const hasPred = comp.mode==='score' ? (pred && pred.h!==undefined && pred.a!==undefined) : (pred!==null && pred!==undefined);
-  const isPredicted = comp.mode==='score' ? (pred && pred.h!==undefined && pred.a!==undefined) : !!pred;
+  const hasPred = comp.mode==='score' ? (pred && pred.h!==undefined && pred.a!==undefined)
+                : comp.mode==='betting' ? (pred && typeof pred==='object' && Object.keys(pred).length>0)
+                : (pred!==null && pred!==undefined);
+  const isPredicted = comp.mode==='score' ? (pred && pred.h!==undefined && pred.a!==undefined)
+                    : comp.mode==='betting' ? (pred && typeof pred==='object' && Object.keys(pred).length>0)
+                    : !!pred;
   const hi = ev.home.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();
   const ai = ev.away.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();
 
@@ -680,6 +684,32 @@ function renderEventCard(ev, comp, isOpen){
         <button class="btn-ou over${pred==='O'?' selected':''}" onclick="pick('${ev.id}','O')">OVER<span class="sub">${line}+ goals</span></button>
         <button class="btn-ou under${pred==='U'?' selected':''}" onclick="pick('${ev.id}','U')">UNDER<span class="sub">${line} or less</span></button>
       </div>`;
+    } else if(comp.mode==='betting'){
+      const markets = comp.markets||[];
+      const mpred = (pred && typeof pred==='object') ? pred : {};
+      html += `<div style="display:flex;flex-direction:column;gap:8px;">`;
+      markets.forEach(mkt=>{
+        html += `<div><div class="pred-label" style="margin-bottom:5px;">${mkt.label} <span style="font-family:var(--mono);font-size:9px;color:var(--accent);">+${mkt.points}pts</span></div>`;
+        if(mkt.type==='1x2'){
+          html += `<div class="btns-1x2">
+            <button class="btn-1x2${mpred['1x2']==='H'?' selected':''}" onclick="pickMarket('${ev.id}','1x2','H')">${ev.home.split(' ')[0]}<span class="sub">Home</span></button>
+            <button class="btn-1x2${mpred['1x2']==='D'?' selected':''}" onclick="pickMarket('${ev.id}','1x2','D')">X<span class="sub">Draw</span></button>
+            <button class="btn-1x2${mpred['1x2']==='A'?' selected':''}" onclick="pickMarket('${ev.id}','1x2','A')">${ev.away.split(' ').pop()}<span class="sub">Away</span></button>
+          </div>`;
+        } else if(mkt.type==='ou25'){
+          html += `<div class="btns-ou">
+            <button class="btn-ou over${mpred['ou25']==='O'?' selected':''}" onclick="pickMarket('${ev.id}','ou25','O')">OVER<span class="sub">2.5+ goals</span></button>
+            <button class="btn-ou under${mpred['ou25']==='U'?' selected':''}" onclick="pickMarket('${ev.id}','ou25','U')">UNDER<span class="sub">2.5 or less</span></button>
+          </div>`;
+        } else if(mkt.type==='btts'){
+          html += `<div class="btns-ou">
+            <button class="btn-ou over${mpred['btts']==='Y'?' selected':''}" onclick="pickMarket('${ev.id}','btts','Y')">YES<span class="sub">Both score</span></button>
+            <button class="btn-ou under${mpred['btts']==='N'?' selected':''}" onclick="pickMarket('${ev.id}','btts','N')">NO<span class="sub">Clean sheet</span></button>
+          </div>`;
+        }
+        html += `</div>`;
+      });
+      html += `</div>`;
     }
   } else if(hasPred){
     let predLabel='';
@@ -689,6 +719,8 @@ function renderEventCard(ev, comp, isOpen){
       predLabel = `${pred.h ?? '-'} – ${pred.a ?? '-'}`;
     } else if(comp.mode==='ou'){
       predLabel = pred==='O'?`Over ${ev.line||2.5}`:`Under ${ev.line||2.5}`;
+    } else if(comp.mode==='betting' && pred && typeof pred==='object'){
+      predLabel = Object.entries(pred).map(([k,v])=>`${k.toUpperCase()}: ${v}`).join(' · ');
     }
     let resultBadge = '';
     if(comp.mode==='score' && earnedPts!==null){
@@ -721,6 +753,13 @@ function pickScore(id, side, val){
   savePreds();
   const input = document.getElementById((side==='h'?'sh-':'sa-')+id);
   if(input) input.classList.toggle('has', val!=='');
+}
+
+function pickMarket(evId, market, val){
+  if(!currentUser){ openAuthModal('Sign in to make predictions'); return; }
+  if(!preds[evId]||typeof preds[evId]!=='object') preds[evId]={};
+  preds[evId][market]=val;
+  savePreds(); renderPredict();
 }
 
 function changeRound(idx){ selectedRound[currentCompIdx]=parseInt(idx); renderPredict(); }

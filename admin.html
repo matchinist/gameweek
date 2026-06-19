@@ -535,23 +535,19 @@ tbody tr:hover td{background:var(--bg);}
     </div>
     <div class="modal-body">
       <div class="form-group">
-        <label class="form-label">Tournament / League</label>
-        <input class="form-input" id="new-comp-league" placeholder="e.g. Premier League, Champions League" />
-        <div style="font-size:11px;color:var(--text-3);margin-top:4px;">Shown as a label in the embed below the game mode tab.</div>
-      </div>
-      <div class="form-group">
         <label class="form-label">Game Mode</label>
         <select class="form-select" id="new-comp-mode" onchange="updateModeDescription()">
           <option value="lms">Last Man Standing</option>
           <option value="score">Score Predictor</option>
-          <option value="ou">Over / Under</option>
+          <option value="betting">Betting Markets</option>
         </select>
         <div id="mode-description" style="margin-top:10px;padding:12px;background:var(--bg);border-radius:6px;border-left:3px solid var(--accent);">
           <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;">Last Man Standing</div>
           <div style="font-size:12px;color:var(--text-2);line-height:1.6;">Users predict the result (Home / Draw / Away) for each event in the round. A wrong prediction eliminates them from the competition. Events resolve in kick-off order — tension builds with every result. The last survivor wins.</div>
         </div>
       </div>
-      <!-- Score Predictor points config (shown only for score mode) -->
+
+      <!-- Score Predictor points config -->
       <div id="score-points-config" style="display:none;">
         <div class="divider"></div>
         <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:12px;">Points Configuration</div>
@@ -566,6 +562,43 @@ tbody tr:hover td{background:var(--bg);}
           <input class="form-input" type="number" id="pts-total" value="1" min="0" max="99" style="width:64px;text-align:center;font-family:var(--mono);font-weight:700;" />
         </div>
       </div>
+
+      <!-- Betting Markets config -->
+      <div id="betting-markets-config" style="display:none;">
+        <div class="divider"></div>
+        <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;">Betting Markets</div>
+        <div style="font-size:11px;color:var(--text-3);margin-bottom:12px;">Select which markets users will predict for each event, and set points for a correct prediction.</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <label style="display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:10px;padding:10px;background:var(--bg);border-radius:7px;">
+            <input type="checkbox" id="mkt-1x2" checked style="accent-color:var(--accent);width:16px;height:16px;">
+            <div>
+              <div style="font-size:12px;font-weight:600;color:var(--text);">1X2 — Match Result</div>
+              <div style="font-size:11px;color:var(--text-3);">Home win, Draw, or Away win</div>
+            </div>
+            <span style="font-size:11px;color:var(--text-3);">pts</span>
+            <input class="form-input" type="number" id="pts-1x2" value="3" min="0" max="99" style="width:56px;text-align:center;font-family:var(--mono);font-weight:700;">
+          </label>
+          <label style="display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:10px;padding:10px;background:var(--bg);border-radius:7px;">
+            <input type="checkbox" id="mkt-ou25" style="accent-color:var(--accent);width:16px;height:16px;">
+            <div>
+              <div style="font-size:12px;font-weight:600;color:var(--text);">Over / Under 2.5 Goals</div>
+              <div style="font-size:11px;color:var(--text-3);">Total match goals above or below 2.5</div>
+            </div>
+            <span style="font-size:11px;color:var(--text-3);">pts</span>
+            <input class="form-input" type="number" id="pts-ou25" value="2" min="0" max="99" style="width:56px;text-align:center;font-family:var(--mono);font-weight:700;">
+          </label>
+          <label style="display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:10px;padding:10px;background:var(--bg);border-radius:7px;">
+            <input type="checkbox" id="mkt-btts" style="accent-color:var(--accent);width:16px;height:16px;">
+            <div>
+              <div style="font-size:12px;font-weight:600;color:var(--text);">Both Teams to Score</div>
+              <div style="font-size:11px;color:var(--text-3);">Will both teams score at least one goal?</div>
+            </div>
+            <span style="font-size:11px;color:var(--text-3);">pts</span>
+            <input class="form-input" type="number" id="pts-btts" value="2" min="0" max="99" style="width:56px;text-align:center;font-family:var(--mono);font-weight:700;">
+          </label>
+        </div>
+      </div>
+
       <div class="divider"></div>
       <div class="toggle-row">
         <div>
@@ -585,7 +618,7 @@ tbody tr:hover td{background:var(--bg);}
 <!-- Create Round -->
 <!-- Create Round -->
 <div class="modal-overlay" id="modal-create-round">
-  <div class="modal" style="max-width:520px;">
+  <div class="modal" style="max-width:540px;">
     <div class="modal-header">
       <div class="modal-title">New Round</div>
       <button class="modal-close" onclick="closeModal('modal-create-round')">×</button>
@@ -596,21 +629,20 @@ tbody tr:hover td{background:var(--bg);}
         <input class="form-input" id="new-round-name" placeholder="e.g. Gameweek 4" />
       </div>
       <div class="form-group">
-        <label class="form-label">Prediction Deadline</label>
-        <input class="form-input" type="datetime-local" id="new-round-deadline" />
-      </div>
-      <div class="form-group">
-        <label class="form-label">Tournament</label>
-        <select class="form-select" id="new-round-tournament" onchange="loadRoundEventsFromDM('new')">
-          <option value="">— select from Data Manager —</option>
-        </select>
+        <label class="form-label">Tournaments</label>
+        <div id="new-round-tournament-list" style="display:flex;flex-direction:column;gap:6px;border:1px solid var(--border);border-radius:7px;padding:10px;max-height:160px;overflow-y:auto;">
+          <div style="font-size:12px;color:var(--text-3);">Loading tournaments…</div>
+        </div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:5px;">Select one or more. Events from all selected tournaments will be listed below.</div>
       </div>
       <div class="form-group" id="new-round-events-wrap" style="display:none;">
-        <label class="form-label">Events <span id="new-round-event-count" style="color:var(--text-3);font-weight:400;"></span></label>
-        <div id="new-round-event-list" style="display:flex;flex-direction:column;gap:5px;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:8px;"></div>
+        <label class="form-label">Pick Events <span id="new-round-event-count" style="color:var(--text-3);font-weight:400;"></span></label>
+        <div style="font-size:11px;color:var(--amber);background:var(--amber-light);padding:6px 10px;border-radius:5px;margin-bottom:8px;" id="new-round-overlap-warn" style="display:none;"></div>
+        <div id="new-round-event-list" style="display:flex;flex-direction:column;gap:4px;max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:8px;"></div>
       </div>
     </div>
     <div class="modal-footer">
+      <div style="font-size:11px;color:var(--text-3);">Prediction deadline = 1 hour before each event's kick-off.</div>
       <button class="btn btn-ghost" onclick="closeModal('modal-create-round')">Cancel</button>
       <button class="btn btn-primary" onclick="createRound()">Create Round</button>
     </div>
@@ -619,7 +651,7 @@ tbody tr:hover td{background:var(--bg);}
 
 <!-- Edit Round -->
 <div class="modal-overlay" id="modal-edit-round">
-  <div class="modal" style="max-width:520px;">
+  <div class="modal" style="max-width:540px;">
     <div class="modal-header">
       <div class="modal-title">Edit Round</div>
       <button class="modal-close" onclick="closeModal('modal-edit-round')">×</button>
@@ -631,18 +663,15 @@ tbody tr:hover td{background:var(--bg);}
         <input class="form-input" id="edit-round-name" placeholder="e.g. Gameweek 4" />
       </div>
       <div class="form-group">
-        <label class="form-label">Prediction Deadline</label>
-        <input class="form-input" type="datetime-local" id="edit-round-deadline" />
-      </div>
-      <div class="form-group">
-        <label class="form-label">Tournament</label>
-        <select class="form-select" id="edit-round-tournament" onchange="loadRoundEventsFromDM('edit')">
-          <option value="">— select from Data Manager —</option>
-        </select>
+        <label class="form-label">Tournaments</label>
+        <div id="edit-round-tournament-list" style="display:flex;flex-direction:column;gap:6px;border:1px solid var(--border);border-radius:7px;padding:10px;max-height:160px;overflow-y:auto;">
+          <div style="font-size:12px;color:var(--text-3);">Loading tournaments…</div>
+        </div>
       </div>
       <div class="form-group" id="edit-round-events-wrap" style="display:none;">
-        <label class="form-label">Events <span id="edit-round-event-count" style="color:var(--text-3);font-weight:400;"></span></label>
-        <div id="edit-round-event-list" style="display:flex;flex-direction:column;gap:5px;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:8px;"></div>
+        <label class="form-label">Pick Events <span id="edit-round-event-count" style="color:var(--text-3);font-weight:400;"></span></label>
+        <div style="font-size:11px;color:var(--amber);background:var(--amber-light);padding:6px 10px;border-radius:5px;margin-bottom:8px;display:none;" id="edit-round-overlap-warn"></div>
+        <div id="edit-round-event-list" style="display:flex;flex-direction:column;gap:4px;max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:8px;"></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -1025,43 +1054,45 @@ function saveResult(){
 
 // ── CREATE COMP ───────────────────────────────────────────────────────────
 const MODE_DESCRIPTIONS = {
-  lms:  { title:'Last Man Standing', text:'Users predict the result (Home / Draw / Away) for each event in the round. A wrong prediction eliminates them. Events resolve in kick-off order — tension builds with every result. The last survivor wins.' },
-  score:{ title:'Score Predictor',   text:'Users predict the exact scoreline for every match. An exact score earns maximum points; a correct result with a wrong score earns partial credit. Rewards both knowledge and precision.' },
-  ou:   { title:'Over / Under',      text:'Users predict whether total goals will be over or under a set line (e.g. 2.5). Fast to play, casual-friendly, and easy to run across multiple leagues in a single round.' }
+  lms:     { title:'Last Man Standing',  text:'Users predict the result (Home / Draw / Away) for each event in the round. A wrong prediction eliminates them. Events resolve in kick-off order — tension builds with every result. The last survivor wins.' },
+  score:   { title:'Score Predictor',    text:'Users predict the exact scoreline for every match. An exact score earns maximum points; partial credit for getting individual team goals right.' },
+  betting: { title:'Betting Markets',    text:'Users predict multiple markets per event — choose from 1X2, Over/Under 2.5, and Both Teams to Score. Each market earns its own points.' }
 };
 function updateModeDescription(){
   const mode = document.getElementById('new-comp-mode')?.value;
   const d = MODE_DESCRIPTIONS[mode];
   const el = document.getElementById('mode-description');
   if(el && d) el.innerHTML = `<div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;">${d.title}</div><div style="font-size:12px;color:var(--text-2);line-height:1.6;">${d.text}</div>`;
-  const pts = document.getElementById('score-points-config');
-  if(pts) pts.style.display = mode==='score' ? 'block' : 'none';
+  document.getElementById('score-points-config').style.display   = mode==='score'   ? 'block' : 'none';
+  document.getElementById('betting-markets-config').style.display = mode==='betting' ? 'block' : 'none';
 }
 
 function createComp(){
-  const league = document.getElementById('new-comp-league').value.trim();
   const mode = document.getElementById('new-comp-mode').value;
-  const name = league || MODE_DESCRIPTIONS[mode]?.title || mode;
-  const scoring = mode==='score' ? {
-    exactScore: parseInt(document.getElementById('pts-exact').value)||5,
-    homeGoals:  parseInt(document.getElementById('pts-home').value)||2,
-    awayGoals:  parseInt(document.getElementById('pts-away').value)||2,
-    totalGoals: parseInt(document.getElementById('pts-total').value)||1,
-  } : null;
+  const name = MODE_DESCRIPTIONS[mode]?.title || mode;
+  let scoring = null, markets = null;
+  if(mode==='score'){
+    scoring = {
+      exactScore: parseInt(document.getElementById('pts-exact').value)||5,
+      homeGoals:  parseInt(document.getElementById('pts-home').value)||2,
+      awayGoals:  parseInt(document.getElementById('pts-away').value)||2,
+      totalGoals: parseInt(document.getElementById('pts-total').value)||1,
+    };
+  }
+  if(mode==='betting'){
+    markets = [];
+    if(document.getElementById('mkt-1x2').checked)  markets.push({type:'1x2',  label:'1X2 Result',          points: parseInt(document.getElementById('pts-1x2').value)||3});
+    if(document.getElementById('mkt-ou25').checked) markets.push({type:'ou25', label:'Over/Under 2.5',      points: parseInt(document.getElementById('pts-ou25').value)||2});
+    if(document.getElementById('mkt-btts').checked) markets.push({type:'btts', label:'Both Teams to Score', points: parseInt(document.getElementById('pts-btts').value)||2});
+    if(!markets.length){ toast('Select at least one market'); return; }
+  }
   const c = {
-    id: 'c'+uid(),
-    name,
-    league,
-    mode,
-    scoring,
+    id: 'c'+uid(), name, mode, scoring, markets,
     longTerm: document.getElementById('new-comp-longterm').checked,
-    status: 'draft',
-    color: '#4F46E5',
-    users: 0, predictions: 0, rounds: []
+    status: 'draft', color: '#4F46E5', users: 0, predictions: 0, rounds: []
   };
   state.competitions.push(c);
   closeModal('modal-create-comp');
-  document.getElementById('new-comp-league').value='';
   document.getElementById('new-comp-longterm').checked=false;
   document.getElementById('new-comp-mode').value='lms';
   updateModeDescription();
@@ -1082,103 +1113,130 @@ function getDMTeams(){
   try{ return JSON.parse(localStorage.getItem('gw_dm_teams_'+CLIENT_KEY))||[]; }catch(e){ return []; }
 }
 
-// ── CREATE ROUND ──────────────────────────────────────────────────────────
+// ── ROUND MODALS ──────────────────────────────────────────────────────────
 function openModal(id){
-  if(id==='modal-create-round') populateTournamentPicker('new');
+  if(id==='modal-create-round') populateTournamentCheckboxes('new');
   document.getElementById(id).classList.add('open');
 }
 
-function populateTournamentPicker(prefix){
-  const sel = document.getElementById(prefix+'-round-tournament');
+function populateTournamentCheckboxes(prefix){
+  const listEl = document.getElementById(prefix+'-round-tournament-list');
   const tournaments = getDMTournaments();
-  sel.innerHTML = '<option value="">— select from Data Manager —</option>' +
-    tournaments.map(t=>`<option value="${t.id}">${t.name}${t.country?' ('+t.country+')':''}</option>`).join('');
-  // hide events until tournament picked
+  if(!tournaments.length){
+    listEl.innerHTML='<div style="font-size:12px;color:var(--text-3);">No tournaments in Data Manager yet. Add them there first.</div>';
+    document.getElementById(prefix+'-round-events-wrap').style.display='none';
+    return;
+  }
+  listEl.innerHTML = tournaments.map(t=>`
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 4px;border-radius:5px;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+      <input type="checkbox" value="${t.id}" style="accent-color:var(--accent);" onchange="loadRoundEventsFromDM('${prefix}')">
+      <span style="font-size:12px;font-weight:600;color:var(--text);">${t.name}</span>
+      ${t.country?`<span style="font-size:10px;color:var(--text-3);">${t.country}</span>`:''}
+    </label>`).join('');
   document.getElementById(prefix+'-round-events-wrap').style.display='none';
 }
 
 function loadRoundEventsFromDM(prefix){
-  const tId = document.getElementById(prefix+'-round-tournament').value;
+  const checked = [...document.querySelectorAll('#'+prefix+'-round-tournament-list input:checked')].map(i=>i.value);
   const wrap = document.getElementById(prefix+'-round-events-wrap');
   const list = document.getElementById(prefix+'-round-event-list');
   const count = document.getElementById(prefix+'-round-event-count');
-  if(!tId){ wrap.style.display='none'; return; }
+  if(!checked.length){ wrap.style.display='none'; return; }
 
   const tournaments = getDMTournaments();
-  const tournament = tournaments.find(t=>t.id===tId);
   const dmEvents = getDMEvents();
   const teams = getDMTeams();
   const teamById = id => teams.find(t=>t.id===id);
 
-  if(!tournament){ wrap.style.display='none'; return; }
-
-  // Collect all events from all seasons of this tournament
   const allEventIds = new Set();
-  Object.values(tournament.seasons||{}).forEach(season=>{
-    (season.rounds||[]).forEach(r=>(r.eventIds||[]).forEach(eid=>allEventIds.add(eid)));
+  const tNameMap = {};
+  checked.forEach(tId=>{
+    const t = tournaments.find(x=>x.id===tId);
+    if(!t) return;
+    Object.values(t.seasons||{}).forEach(season=>{
+      (season.rounds||[]).forEach(r=>(r.eventIds||[]).forEach(eid=>{ allEventIds.add(eid); tNameMap[eid]=t.name; }));
+    });
   });
 
-  const evList = [...allEventIds].map(eid=>{
-    const ev = dmEvents[eid];
-    if(!ev) return null;
-    const home = teamById(ev.homeId), away = teamById(ev.awayId);
-    if(!home||!away) return null;
-    return { id:eid, home:home.name, away:away.name, kickoff:ev.kickoff, result:ev.result };
-  }).filter(Boolean);
-
-  if(evList.length===0){
-    list.innerHTML='<div style="font-size:12px;color:var(--text-3);padding:8px 4px;">No events found for this tournament in the Data Manager. Add events there first.</div>';
-    count.textContent='';
-    wrap.style.display='block';
-    return;
-  }
-
-  // For edit mode, get currently checked IDs
   const currentIds = new Set();
   if(prefix==='edit'){
     const rid = document.getElementById('edit-round-id').value;
-    const comp = getComp(state.currentComp);
-    const r = comp?.rounds.find(r=>r.id===rid);
+    const r = getComp(state.currentComp)?.rounds.find(r=>r.id===rid);
     (r?.eventIds||[]).forEach(id=>currentIds.add(id));
   }
 
+  const evList = [...allEventIds].map(eid=>{
+    const ev = dmEvents[eid]; if(!ev) return null;
+    const home = teamById(ev.homeId), away = teamById(ev.awayId);
+    if(!home||!away) return null;
+    return { id:eid, home:home.name, away:away.name, kickoff:ev.kickoff, result:ev.result, tName:tNameMap[eid]||'' };
+  }).filter(Boolean).sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
+
+  if(!evList.length){
+    list.innerHTML='<div style="font-size:12px;color:var(--text-3);padding:8px 4px;">No events found. Add events in the Data Manager first.</div>';
+    count.textContent=''; wrap.style.display='block'; return;
+  }
+
   list.innerHTML = evList.map(ev=>{
-    const ko = ev.kickoff ? new Date(ev.kickoff).toLocaleDateString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : 'TBD';
+    const ko = ev.kickoff ? new Date(ev.kickoff).toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : 'TBD';
     const hasResult = ev.result && ev.result.h!==null && ev.result.a!==null;
-    return `<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 6px;border-radius:4px;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
-      <input type="checkbox" value="${ev.id}" style="accent-color:var(--accent);" ${currentIds.has(ev.id)?'checked':''}>
+    return `<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 6px;border-radius:4px;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+      <input type="checkbox" value="${ev.id}" style="accent-color:var(--accent);" ${currentIds.has(ev.id)?'checked':''} onchange="checkRoundOverlap('${prefix}')">
       <span style="font-family:var(--mono);font-size:11px;font-weight:700;flex:1;">${ev.home} vs ${ev.away}</span>
-      ${hasResult?`<span style="font-size:10px;background:var(--green-light);color:var(--green);padding:1px 5px;border-radius:3px;font-weight:600;">FT ${ev.result.h}–${ev.result.a}</span>`:''}
-      <span style="font-size:10px;color:var(--text-3);">${ko}</span>
+      ${ev.tName?`<span style="font-size:9px;background:var(--bg);border:1px solid var(--border);color:var(--text-3);padding:1px 5px;border-radius:3px;">${ev.tName}</span>`:''}
+      ${hasResult?`<span style="font-size:10px;background:var(--green-light);color:var(--green);padding:1px 5px;border-radius:3px;font-weight:600;">FT ${ev.result.h}-${ev.result.a}</span>`:''}
+      <span style="font-size:10px;color:var(--text-3);flex-shrink:0;">${ko}</span>
     </label>`;
   }).join('');
   count.textContent = `(${evList.length} available)`;
   wrap.style.display='block';
 }
 
+function checkRoundOverlap(prefix){
+  const dmEvents = getDMEvents();
+  const checkedIds = [...document.querySelectorAll('#'+prefix+'-round-event-list input:checked')].map(i=>i.value);
+  const warnEl = document.getElementById(prefix+'-round-overlap-warn');
+  if(!warnEl){ return; }
+  if(!checkedIds.length){ warnEl.style.display='none'; return; }
+  const newKickoffs = checkedIds.map(eid=>dmEvents[eid]?.kickoff).filter(Boolean).map(k=>new Date(k).getTime());
+  if(!newKickoffs.length){ warnEl.style.display='none'; return; }
+  const newFirst = Math.min(...newKickoffs), newLast = Math.max(...newKickoffs);
+  const SIX_H = 6*60*60*1000;
+  const excludeId = prefix==='edit' ? document.getElementById('edit-round-id').value : null;
+  let conflict = null;
+  for(const r of getComp(state.currentComp).rounds){
+    if(r.id===excludeId) continue;
+    const rKo = (r.eventIds||[]).map(eid=>dmEvents[eid]?.kickoff).filter(Boolean).map(k=>new Date(k).getTime());
+    if(!rKo.length) continue;
+    const rFirst = Math.min(...rKo), rLast = Math.max(...rKo);
+    if(!(newFirst >= rLast+SIX_H || newLast+SIX_H <= rFirst)){ conflict=r.label; break; }
+  }
+  if(conflict){ warnEl.textContent='Warning: Overlaps with "'+conflict+'". Rounds need a 6-hour gap between their first and last events.'; warnEl.style.display='block'; }
+  else { warnEl.style.display='none'; }
+}
+
+function getCheckedEventIds(prefix){
+  return [...document.querySelectorAll('#'+prefix+'-round-event-list input:checked')].map(i=>i.value);
+}
+
 function createRound(){
   const name = document.getElementById('new-round-name').value.trim();
   if(!name){ toast('Enter a round name'); return; }
   if(!state.currentComp){ toast('Open a competition first'); return; }
-  const tId = document.getElementById('new-round-tournament').value;
-  const tournament = getDMTournaments().find(t=>t.id===tId);
-  const checked = [...document.querySelectorAll('#new-round-event-list input:checked')].map(i=>i.value);
-  const r = {
-    id: 'r'+uid(),
-    label: name,
-    status: 'open',
-    deadline: document.getElementById('new-round-deadline').value,
-    tournamentId: tId||null,
-    tournamentName: tournament?.name||null,
-    eventIds: checked
-  };
+  const checkedIds = getCheckedEventIds('new');
+  if(!checkedIds.length){ toast('Select at least one event'); return; }
+  const warnEl = document.getElementById('new-round-overlap-warn');
+  if(warnEl && warnEl.style.display!=='none'){ toast('Fix the overlap conflict before saving'); return; }
+  const dmEvents = getDMEvents();
+  const kickoffs = checkedIds.map(eid=>dmEvents[eid]?.kickoff).filter(Boolean).map(k=>new Date(k).getTime());
+  const deadline = kickoffs.length ? new Date(Math.min(...kickoffs)-60*60*1000).toISOString().slice(0,16) : '';
+  const selectedTIds = [...document.querySelectorAll('#new-round-tournament-list input:checked')].map(i=>i.value);
+  const tournamentNames = selectedTIds.map(tid=>getDMTournaments().find(t=>t.id===tid)?.name).filter(Boolean);
+  const r = { id:'r'+uid(), label:name, status:'open', deadline, tournamentIds:selectedTIds, tournamentNames, eventIds:checkedIds };
   getComp(state.currentComp).rounds.push(r);
   closeModal('modal-create-round');
   document.getElementById('new-round-name').value='';
-  document.getElementById('new-round-deadline').value='';
-  saveAdminState();
-  renderCompDetail();
-  toast('Round created');
+  saveAdminState(); renderCompDetail(); toast('Round created');
 }
 
 // ── EDIT ROUND ────────────────────────────────────────────────────────────
@@ -1188,13 +1246,12 @@ function openEditRound(roundId){
   if(!r) return;
   document.getElementById('edit-round-id').value = roundId;
   document.getElementById('edit-round-name').value = r.label;
-  document.getElementById('edit-round-deadline').value = r.deadline||'';
-  populateTournamentPicker('edit');
-  // Pre-select tournament if stored
-  if(r.tournamentId){
-    document.getElementById('edit-round-tournament').value = r.tournamentId;
-    loadRoundEventsFromDM('edit');
-  }
+  populateTournamentCheckboxes('edit');
+  const stored = new Set([...(r.tournamentIds||[]), r.tournamentId].filter(Boolean));
+  setTimeout(()=>{
+    document.querySelectorAll('#edit-round-tournament-list input').forEach(cb=>{ if(stored.has(cb.value)) cb.checked=true; });
+    if(stored.size) loadRoundEventsFromDM('edit');
+  },50);
   document.getElementById('modal-edit-round').classList.add('open');
 }
 
@@ -1203,18 +1260,21 @@ function saveRoundEdit(){
   const comp = getComp(state.currentComp);
   const r = comp.rounds.find(r=>r.id===rid);
   if(!r){ toast('Round not found'); return; }
-  const tId = document.getElementById('edit-round-tournament').value;
-  const tournament = getDMTournaments().find(t=>t.id===tId);
-  const checked = [...document.querySelectorAll('#edit-round-event-list input:checked')].map(i=>i.value);
-  r.label = document.getElementById('edit-round-name').value.trim() || r.label;
-  r.deadline = document.getElementById('edit-round-deadline').value;
-  r.tournamentId = tId||r.tournamentId;
-  r.tournamentName = tournament?.name||r.tournamentName;
-  if(checked.length>0) r.eventIds = checked;
+  const warnEl = document.getElementById('edit-round-overlap-warn');
+  if(warnEl && warnEl.style.display!=='none'){ toast('Fix the overlap conflict before saving'); return; }
+  const checkedIds = getCheckedEventIds('edit');
+  const dmEvents = getDMEvents();
+  const kickoffs = checkedIds.map(eid=>dmEvents[eid]?.kickoff).filter(Boolean).map(k=>new Date(k).getTime());
+  const deadline = kickoffs.length ? new Date(Math.min(...kickoffs)-60*60*1000).toISOString().slice(0,16) : r.deadline||'';
+  const selectedTIds = [...document.querySelectorAll('#edit-round-tournament-list input:checked')].map(i=>i.value);
+  const tournamentNames = selectedTIds.map(tid=>getDMTournaments().find(t=>t.id===tid)?.name).filter(Boolean);
+  r.label = document.getElementById('edit-round-name').value.trim()||r.label;
+  r.deadline = deadline;
+  r.tournamentIds = selectedTIds;
+  r.tournamentNames = tournamentNames;
+  if(checkedIds.length) r.eventIds = checkedIds;
   closeModal('modal-edit-round');
-  saveAdminState();
-  renderCompDetail();
-  toast('Round updated');
+  saveAdminState(); renderCompDetail(); toast('Round updated');
 }
 
 // ── MISC ACTIONS ──────────────────────────────────────────────────────────
