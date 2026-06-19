@@ -162,16 +162,14 @@ tbody tr:hover td{background:var(--bg);}
 .view{display:none;}.view.active{display:block;}
 
 /* ── ACTIVITY ── */
-.activity-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
-.activity-item:last-child{border-bottom:none;}
+
 .activity-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;background:var(--bg);}
 .activity-text{font-size:12px;color:var(--text-2);flex:1;}
 .activity-text strong{color:var(--text);font-weight:600;}
 .activity-time{font-size:10px;color:var(--text-3);font-family:var(--mono);}
 
 /* ── DEADLINE LIST ── */
-.deadline-item{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);}
-.deadline-item:last-child{border-bottom:none;}
+
 .deadline-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;}
 .deadline-dot.soon{background:var(--red);}
 .deadline-name{font-size:12px;font-weight:500;color:var(--text);flex:1;}
@@ -233,9 +231,6 @@ tbody tr:hover td{background:var(--bg);}
     <button class="nav-item" onclick="nav('competitions')">
       <span class="ni-icon">⚽</span> All Competitions
     </button>
-    <button class="nav-item" onclick="nav('events')">
-      <span class="ni-icon">📅</span> Event Manager
-    </button>
   </div>
 
   <div class="sidebar-section">
@@ -278,8 +273,8 @@ tbody tr:hover td{background:var(--bg);}
     <div class="view active" id="view-dashboard">
       <div class="page-header">
         <div>
-          <div class="page-title">// dashboard</div>
-          <div class="page-sub">Welcome back. Here's what's happening this week.</div>
+          <div style="font-size:26px;font-weight:800;color:var(--text);letter-spacing:-0.5px;">Welcome back, <span id="dash-greeting-name" style="color:var(--accent)">—</span></div>
+          <div style="font-size:16px;color:var(--text-2);margin-top:6px;font-weight:400;">Here's what's happening across your competitions.</div>
         </div>
         <button class="btn btn-primary" onclick="openModal('modal-create-comp')">+ New Competition</button>
       </div>
@@ -287,88 +282,25 @@ tbody tr:hover td{background:var(--bg);}
       <div class="stats-row">
         <div class="stat-card stat-card-accent">
           <div class="stat-card-label">Active Competitions</div>
-          <div class="stat-card-value" id="dash-active-comps">2</div>
-          <div class="stat-card-sub">1 draft</div>
+          <div class="stat-card-value" id="dash-active-comps">0</div>
+          <div class="stat-card-sub" id="dash-draft-sub">—</div>
         </div>
         <div class="stat-card">
           <div class="stat-card-label">Total Registered Users</div>
-          <div class="stat-card-value">510</div>
+          <div class="stat-card-value" id="dash-total-users">0</div>
           <div class="stat-card-sub">across all competitions</div>
         </div>
         <div class="stat-card stat-card-green">
-          <div class="stat-card-label">Predictions This Week</div>
-          <div class="stat-card-value">1,847</div>
-          <div class="stat-card-sub">+22% vs last week</div>
+          <div class="stat-card-label">Total Predictions</div>
+          <div class="stat-card-value" id="dash-total-preds">0</div>
+          <div class="stat-card-sub">all time</div>
         </div>
         <div class="stat-card">
           <div class="stat-card-label">Open Rounds</div>
-          <div class="stat-card-value">2</div>
+          <div class="stat-card-value" id="dash-open-rounds">0</div>
           <div class="stat-card-sub">accepting predictions</div>
         </div>
       </div>
-
-      <div class="two-col">
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">Upcoming Deadlines</span>
-          </div>
-          <div class="card-body">
-            <div class="deadline-item">
-              <div class="deadline-dot soon"></div>
-              <div class="deadline-name">PL 25/26 · Gameweek 3</div>
-              <div class="deadline-time">30 Aug · 14:00</div>
-            </div>
-            <div class="deadline-item">
-              <div class="deadline-dot"></div>
-              <div class="deadline-name">UCL 25/26 · Matchday 2</div>
-              <div class="deadline-time">1 Oct · 17:00</div>
-            </div>
-            <div class="deadline-item">
-              <div class="deadline-dot"></div>
-              <div class="deadline-name">Top 5 O/U · Round 3</div>
-              <div class="deadline-time">Not set</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">Recent Activity</span>
-          </div>
-          <div class="card-body">
-            <div class="activity-item">
-              <div class="activity-icon">📊</div>
-              <div>
-                <div class="activity-text"><strong>GW2 results confirmed</strong> — PL 25/26</div>
-                <div class="activity-time">2 hours ago</div>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-icon">👤</div>
-              <div>
-                <div class="activity-text"><strong>12 new users</strong> joined this week</div>
-                <div class="activity-time">Today</div>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-icon">🏆</div>
-              <div>
-                <div class="activity-text"><strong>GW2 winner</strong> — stadyum76 (8 pts)</div>
-                <div class="activity-time">Yesterday</div>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-icon">⚽</div>
-              <div>
-                <div class="activity-text"><strong>GW3 events assigned</strong> — 4 matches</div>
-                <div class="activity-time">2 days ago</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div style="height:20px"></div>
 
       <div class="card">
         <div class="card-header">
@@ -397,8 +329,8 @@ tbody tr:hover td{background:var(--bg);}
     <div class="view" id="view-competitions">
       <div class="page-header">
         <div>
-          <div class="page-title">// competitions</div>
-          <div class="page-sub">Manage your prediction competitions.</div>
+          <div class="page-title">Competitions</div>
+          <div class="page-sub" style="font-size:15px;">Manage your prediction competitions.</div>
         </div>
         <button class="btn btn-primary" onclick="openModal('modal-create-comp')">+ New Competition</button>
       </div>
@@ -411,48 +343,12 @@ tbody tr:hover td{background:var(--bg);}
       <div id="comp-detail-content"></div>
     </div>
 
-    <!-- ── EVENT MANAGER ── -->
-    <div class="view" id="view-events">
-      <div class="page-header">
-        <div>
-          <div class="page-title">// event manager</div>
-          <div class="page-sub">Create and manage match events, then assign them to rounds.</div>
-        </div>
-        <button class="btn btn-primary" onclick="openModal('modal-create-event')">+ Add Event</button>
-      </div>
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">All Events</span>
-          <select class="form-select" style="width:180px;padding:5px 8px;font-size:11px;" onchange="filterEvents(this.value)">
-            <option value="">All tournaments</option>
-            <option value="Premier League">Premier League</option>
-            <option value="UEFA Champions League">Champions League</option>
-          </select>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Match</th>
-                <th>Tournament</th>
-                <th>Kick-off</th>
-                <th>Status</th>
-                <th>Result</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="events-table"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
     <!-- ── EMBED ── -->
     <div class="view" id="view-embed">
       <div class="page-header">
         <div>
-          <div class="page-title">// embed & integration</div>
-          <div class="page-sub">Copy the snippet and paste it anywhere on your site.</div>
+          <div class="page-title">Embed & Integration</div>
+          <div class="page-sub" style="font-size:15px;">Copy the snippet and paste it anywhere on your site.</div>
         </div>
       </div>
 
@@ -546,8 +442,8 @@ tbody tr:hover td{background:var(--bg);}
     <div class="view" id="view-settings">
       <div class="page-header">
         <div>
-          <div class="page-title">// settings</div>
-          <div class="page-sub">Manage your account and workspace preferences.</div>
+          <div class="page-title">Settings</div>
+          <div class="page-sub" style="font-size:15px;">Manage your account and workspace preferences.</div>
         </div>
       </div>
       <div class="two-col">
@@ -687,8 +583,9 @@ tbody tr:hover td{background:var(--bg);}
 </div>
 
 <!-- Create Round -->
+<!-- Create Round -->
 <div class="modal-overlay" id="modal-create-round">
-  <div class="modal">
+  <div class="modal" style="max-width:520px;">
     <div class="modal-header">
       <div class="modal-title">New Round</div>
       <button class="modal-close" onclick="closeModal('modal-create-round')">×</button>
@@ -698,20 +595,19 @@ tbody tr:hover td{background:var(--bg);}
         <label class="form-label">Round Name</label>
         <input class="form-input" id="new-round-name" placeholder="e.g. Gameweek 4" />
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Opens</label>
-          <input class="form-input" type="datetime-local" id="new-round-open" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Prediction Deadline</label>
-          <input class="form-input" type="datetime-local" id="new-round-deadline" />
-        </div>
+      <div class="form-group">
+        <label class="form-label">Prediction Deadline</label>
+        <input class="form-input" type="datetime-local" id="new-round-deadline" />
       </div>
       <div class="form-group">
-        <label class="form-label">Assign Events</label>
-        <div id="round-event-picker" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:8px;"></div>
-        <div class="form-hint">Only unassigned events are shown. <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-create-round');openModal('modal-create-event')">+ Add new event</button></div>
+        <label class="form-label">Tournament</label>
+        <select class="form-select" id="new-round-tournament" onchange="loadRoundEventsFromDM('new')">
+          <option value="">— select from Data Manager —</option>
+        </select>
+      </div>
+      <div class="form-group" id="new-round-events-wrap" style="display:none;">
+        <label class="form-label">Events <span id="new-round-event-count" style="color:var(--text-3);font-weight:400;"></span></label>
+        <div id="new-round-event-list" style="display:flex;flex-direction:column;gap:5px;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:8px;"></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -721,40 +617,43 @@ tbody tr:hover td{background:var(--bg);}
   </div>
 </div>
 
-<!-- Create Event -->
-<div class="modal-overlay" id="modal-create-event">
-  <div class="modal">
+<!-- Edit Round -->
+<div class="modal-overlay" id="modal-edit-round">
+  <div class="modal" style="max-width:520px;">
     <div class="modal-header">
-      <div class="modal-title">Add Event</div>
-      <button class="modal-close" onclick="closeModal('modal-create-event')">×</button>
+      <div class="modal-title">Edit Round</div>
+      <button class="modal-close" onclick="closeModal('modal-edit-round')">×</button>
     </div>
     <div class="modal-body">
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Home Team</label>
-          <input class="form-input" id="new-ev-home" placeholder="e.g. Arsenal" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Away Team</label>
-          <input class="form-input" id="new-ev-away" placeholder="e.g. Man City" />
-        </div>
+      <input type="hidden" id="edit-round-id" />
+      <div class="form-group">
+        <label class="form-label">Round Name</label>
+        <input class="form-input" id="edit-round-name" placeholder="e.g. Gameweek 4" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prediction Deadline</label>
+        <input class="form-input" type="datetime-local" id="edit-round-deadline" />
       </div>
       <div class="form-group">
         <label class="form-label">Tournament</label>
-        <input class="form-input" id="new-ev-tournament" placeholder="e.g. Premier League" />
+        <select class="form-select" id="edit-round-tournament" onchange="loadRoundEventsFromDM('edit')">
+          <option value="">— select from Data Manager —</option>
+        </select>
       </div>
-      <div class="form-group">
-        <label class="form-label">Kick-off Date & Time</label>
-        <input class="form-input" type="datetime-local" id="new-ev-kickoff" />
+      <div class="form-group" id="edit-round-events-wrap" style="display:none;">
+        <label class="form-label">Events <span id="edit-round-event-count" style="color:var(--text-3);font-weight:400;"></span></label>
+        <div id="edit-round-event-list" style="display:flex;flex-direction:column;gap:5px;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:8px;"></div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-create-event')">Cancel</button>
-      <button class="btn btn-primary" onclick="createEvent()">Add Event</button>
+      <div style="font-size:11px;color:var(--text-3);">Editing does not affect already-submitted predictions.</div>
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-round')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRoundEdit()">Save changes</button>
     </div>
   </div>
 </div>
 
+<!-- Create Event -->
 <!-- Enter Result -->
 <div class="modal-overlay" id="modal-result">
   <div class="modal" style="width:380px;">
@@ -887,15 +786,7 @@ function statusBadge(s){
 function nav(view, subLabel){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('view-'+view).classList.add('active');
-
-  const navMap = {
-    dashboard:'.nav-item:nth-child(1)',
-    embed:'[onclick="nav(\'embed\')"]',
-    competitions:'[onclick="nav(\'competitions\')"]',
-    events:'[onclick="nav(\'events\')"]',
-    settings:'[onclick="nav(\'settings\')"]',
-  };
+  document.getElementById('view-'+view)?.classList.add('active');
 
   document.querySelectorAll('.nav-item').forEach(n=>{
     const onclick = n.getAttribute('onclick');
@@ -903,7 +794,7 @@ function nav(view, subLabel){
   });
 
   // breadcrumb
-  const labels = {dashboard:'Dashboard','comp-detail':'Competitions','competitions':'Competitions',events:'Event Manager',embed:'Embed & Integration',settings:'Settings'};
+  const labels = {dashboard:'Dashboard','comp-detail':'Competitions','competitions':'Competitions',embed:'Embed & Integration',settings:'Settings'};
   let bc = '';
   if(view==='comp-detail' && subLabel){
     bc = `<span>Competitions</span><span class="sep">/</span><span class="current">${subLabel}</span>`;
@@ -914,13 +805,30 @@ function nav(view, subLabel){
 
   if(view==='dashboard') renderDashboard();
   if(view==='competitions') renderCompList();
-  if(view==='events') renderEvents();
   if(view==='embed') renderEmbedInfo();
   if(view==='settings') renderSettings();
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────
 function renderDashboard(){
+  // Greeting
+  const nameEl = document.getElementById('dash-greeting-name');
+  if(nameEl) nameEl.textContent = currentOperator.companyName;
+
+  // Stats from real state
+  const active = state.competitions.filter(c=>c.status==='active').length;
+  const drafts = state.competitions.filter(c=>c.status==='draft').length;
+  const totalUsers = state.competitions.reduce((s,c)=>s+(c.users||0),0);
+  const totalPreds = state.competitions.reduce((s,c)=>s+(c.predictions||0),0);
+  const openRounds = state.competitions.reduce((s,c)=>s+c.rounds.filter(r=>r.status==='open').length,0);
+
+  document.getElementById('dash-active-comps').textContent = active;
+  const draftSub = document.getElementById('dash-draft-sub');
+  if(draftSub) draftSub.textContent = drafts ? `${drafts} draft` : 'none in draft';
+  document.getElementById('dash-total-users').textContent = totalUsers.toLocaleString();
+  document.getElementById('dash-total-preds').textContent = totalPreds.toLocaleString();
+  document.getElementById('dash-open-rounds').textContent = openRounds;
+
   const tbody = document.getElementById('dash-comp-table');
   if(state.competitions.length===0){
     tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-3);font-size:13px;">
@@ -1028,11 +936,12 @@ function renderCompDetail(){
             ? `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No rounds yet</div><div class="empty-sub">Create the first round for this competition.</div></div>`
             : `<div class="round-list">${c.rounds.map(r=>`
               <div class="round-item">
-                <div>
+                <div style="flex:1;">
                   <div class="round-item-name">${r.label}</div>
-                  <div class="round-item-meta">${r.eventIds.length} events · deadline ${fmtDt(r.deadline)}</div>
+                  <div class="round-item-meta">${r.eventIds.length} events · deadline ${fmtDt(r.deadline)}${r.tournamentId?` · ${r.tournamentName||r.tournamentId}`:''}</div>
                 </div>
                 ${statusBadge(r.status)}
+                <button class="btn btn-ghost btn-sm" onclick="openEditRound('${r.id}')">Edit</button>
                 ${r.status==='open'?`<button class="btn btn-outline btn-sm" onclick="confirmRound('${r.id}')">Lock →</button>`:''}
               </div>`).join('')}</div>`
           }
@@ -1091,32 +1000,6 @@ function renderCompDetail(){
   </div>`;
 }
 
-// ── EVENTS ────────────────────────────────────────────────────────────────
-function filterEvents(val){ state.eventFilter=val; renderEvents(); }
-
-function renderEvents(){
-  const evs = state.eventFilter
-    ? state.events.filter(e=>e.tournament===state.eventFilter)
-    : state.events;
-
-  document.getElementById('events-table').innerHTML = evs.map(ev=>`
-    <tr>
-      <td><span style="font-weight:600;font-family:var(--mono);font-size:12px;">${ev.home} <span style="color:var(--text-3);font-weight:400">vs</span> ${ev.away}</span></td>
-      <td style="color:var(--text-3);font-size:12px;">${ev.tournament}</td>
-      <td style="font-family:var(--mono);font-size:11px;color:var(--text-3);">${fmtDt(ev.kickoff)}</td>
-      <td>${statusBadge(ev.status)}</td>
-      <td>
-        ${ev.result
-          ? `<span class="event-row-result" style="color:var(--text)">${ev.result.h} – ${ev.result.a}</span>`
-          : `<button class="result-btn-inline" onclick="openResultModal('${ev.id}')">Enter result</button>`
-        }
-      </td>
-      <td>
-        <button class="btn btn-ghost btn-sm" style="color:var(--red-light);color:var(--red);" onclick="deleteEvent('${ev.id}')">Remove</button>
-      </td>
-    </tr>`).join('');
-}
-
 // ── RESULT MODAL ──────────────────────────────────────────────────────────
 function openResultModal(id){
   state.resultEventId = id;
@@ -1137,7 +1020,6 @@ function saveResult(){
   ev.status = 'completed';
   closeModal('modal-result');
   saveAdminState();
-  renderEvents();
   toast(`Result saved: ${ev.home} ${h}–${a} ${ev.away}`);
 }
 
@@ -1189,69 +1071,150 @@ function createComp(){
   toast('Competition created');
 }
 
+// ── DATA MANAGER HELPERS ──────────────────────────────────────────────────
+function getDMTournaments(){
+  try{ return JSON.parse(localStorage.getItem('gw_dm_tournaments_'+CLIENT_KEY))||[]; }catch(e){ return []; }
+}
+function getDMEvents(){
+  try{ return JSON.parse(localStorage.getItem('gw_dm_events_'+CLIENT_KEY))||{}; }catch(e){ return {}; }
+}
+function getDMTeams(){
+  try{ return JSON.parse(localStorage.getItem('gw_dm_teams_'+CLIENT_KEY))||[]; }catch(e){ return []; }
+}
+
 // ── CREATE ROUND ──────────────────────────────────────────────────────────
 function openModal(id){
-  if(id==='modal-create-round') populateRoundEventPicker();
+  if(id==='modal-create-round') populateTournamentPicker('new');
   document.getElementById(id).classList.add('open');
 }
 
-function populateRoundEventPicker(){
-  const assignedIds = new Set();
-  state.competitions.forEach(c=>c.rounds.forEach(r=>r.eventIds.forEach(id=>assignedIds.add(id))));
-  const avail = state.events.filter(e=>!assignedIds.has(e.id));
-  const el = document.getElementById('round-event-picker');
-  if(avail.length===0){
-    el.innerHTML='<div style="font-size:12px;color:var(--text-3);padding:8px;">No unassigned events. Add new events first.</div>';
+function populateTournamentPicker(prefix){
+  const sel = document.getElementById(prefix+'-round-tournament');
+  const tournaments = getDMTournaments();
+  sel.innerHTML = '<option value="">— select from Data Manager —</option>' +
+    tournaments.map(t=>`<option value="${t.id}">${t.name}${t.country?' ('+t.country+')':''}</option>`).join('');
+  // hide events until tournament picked
+  document.getElementById(prefix+'-round-events-wrap').style.display='none';
+}
+
+function loadRoundEventsFromDM(prefix){
+  const tId = document.getElementById(prefix+'-round-tournament').value;
+  const wrap = document.getElementById(prefix+'-round-events-wrap');
+  const list = document.getElementById(prefix+'-round-event-list');
+  const count = document.getElementById(prefix+'-round-event-count');
+  if(!tId){ wrap.style.display='none'; return; }
+
+  const tournaments = getDMTournaments();
+  const tournament = tournaments.find(t=>t.id===tId);
+  const dmEvents = getDMEvents();
+  const teams = getDMTeams();
+  const teamById = id => teams.find(t=>t.id===id);
+
+  if(!tournament){ wrap.style.display='none'; return; }
+
+  // Collect all events from all seasons of this tournament
+  const allEventIds = new Set();
+  Object.values(tournament.seasons||{}).forEach(season=>{
+    (season.rounds||[]).forEach(r=>(r.eventIds||[]).forEach(eid=>allEventIds.add(eid)));
+  });
+
+  const evList = [...allEventIds].map(eid=>{
+    const ev = dmEvents[eid];
+    if(!ev) return null;
+    const home = teamById(ev.homeId), away = teamById(ev.awayId);
+    if(!home||!away) return null;
+    return { id:eid, home:home.name, away:away.name, kickoff:ev.kickoff, result:ev.result };
+  }).filter(Boolean);
+
+  if(evList.length===0){
+    list.innerHTML='<div style="font-size:12px;color:var(--text-3);padding:8px 4px;">No events found for this tournament in the Data Manager. Add events there first.</div>';
+    count.textContent='';
+    wrap.style.display='block';
     return;
   }
-  el.innerHTML = avail.map(ev=>`
-    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 6px;border-radius:4px;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
-      <input type="checkbox" value="${ev.id}" style="accent-color:var(--accent);">
-      <span style="font-family:var(--mono);font-size:11px;font-weight:700;">${ev.home} vs ${ev.away}</span>
-      <span style="font-size:10px;color:var(--text-3);margin-left:auto;">${fmtDt(ev.kickoff)}</span>
-    </label>`).join('');
+
+  // For edit mode, get currently checked IDs
+  const currentIds = new Set();
+  if(prefix==='edit'){
+    const rid = document.getElementById('edit-round-id').value;
+    const comp = getComp(state.currentComp);
+    const r = comp?.rounds.find(r=>r.id===rid);
+    (r?.eventIds||[]).forEach(id=>currentIds.add(id));
+  }
+
+  list.innerHTML = evList.map(ev=>{
+    const ko = ev.kickoff ? new Date(ev.kickoff).toLocaleDateString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : 'TBD';
+    const hasResult = ev.result && ev.result.h!==null && ev.result.a!==null;
+    return `<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 6px;border-radius:4px;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+      <input type="checkbox" value="${ev.id}" style="accent-color:var(--accent);" ${currentIds.has(ev.id)?'checked':''}>
+      <span style="font-family:var(--mono);font-size:11px;font-weight:700;flex:1;">${ev.home} vs ${ev.away}</span>
+      ${hasResult?`<span style="font-size:10px;background:var(--green-light);color:var(--green);padding:1px 5px;border-radius:3px;font-weight:600;">FT ${ev.result.h}–${ev.result.a}</span>`:''}
+      <span style="font-size:10px;color:var(--text-3);">${ko}</span>
+    </label>`;
+  }).join('');
+  count.textContent = `(${evList.length} available)`;
+  wrap.style.display='block';
 }
 
 function createRound(){
   const name = document.getElementById('new-round-name').value.trim();
   if(!name){ toast('Enter a round name'); return; }
   if(!state.currentComp){ toast('Open a competition first'); return; }
-  const checked = [...document.querySelectorAll('#round-event-picker input:checked')].map(i=>i.value);
+  const tId = document.getElementById('new-round-tournament').value;
+  const tournament = getDMTournaments().find(t=>t.id===tId);
+  const checked = [...document.querySelectorAll('#new-round-event-list input:checked')].map(i=>i.value);
   const r = {
     id: 'r'+uid(),
     label: name,
     status: 'open',
     deadline: document.getElementById('new-round-deadline').value,
+    tournamentId: tId||null,
+    tournamentName: tournament?.name||null,
     eventIds: checked
   };
   getComp(state.currentComp).rounds.push(r);
   closeModal('modal-create-round');
   document.getElementById('new-round-name').value='';
+  document.getElementById('new-round-deadline').value='';
   saveAdminState();
   renderCompDetail();
   toast('Round created');
 }
 
-// ── CREATE EVENT ──────────────────────────────────────────────────────────
-function createEvent(){
-  const home = document.getElementById('new-ev-home').value.trim();
-  const away = document.getElementById('new-ev-away').value.trim();
-  if(!home||!away){ toast('Enter both team names'); return; }
-  const ev = {
-    id: 'e'+uid(),
-    home, away,
-    tournament: document.getElementById('new-ev-tournament').value.trim()||'—',
-    kickoff: document.getElementById('new-ev-kickoff').value,
-    result: null,
-    status: 'upcoming'
-  };
-  state.events.push(ev);
-  closeModal('modal-create-event');
-  document.getElementById('new-ev-home').value='';
-  document.getElementById('new-ev-away').value='';
+// ── EDIT ROUND ────────────────────────────────────────────────────────────
+function openEditRound(roundId){
+  const comp = getComp(state.currentComp);
+  const r = comp.rounds.find(r=>r.id===roundId);
+  if(!r) return;
+  document.getElementById('edit-round-id').value = roundId;
+  document.getElementById('edit-round-name').value = r.label;
+  document.getElementById('edit-round-deadline').value = r.deadline||'';
+  populateTournamentPicker('edit');
+  // Pre-select tournament if stored
+  if(r.tournamentId){
+    document.getElementById('edit-round-tournament').value = r.tournamentId;
+    loadRoundEventsFromDM('edit');
+  }
+  document.getElementById('modal-edit-round').classList.add('open');
+}
+
+function saveRoundEdit(){
+  const rid = document.getElementById('edit-round-id').value;
+  const comp = getComp(state.currentComp);
+  const r = comp.rounds.find(r=>r.id===rid);
+  if(!r){ toast('Round not found'); return; }
+  const tId = document.getElementById('edit-round-tournament').value;
+  const tournament = getDMTournaments().find(t=>t.id===tId);
+  const checked = [...document.querySelectorAll('#edit-round-event-list input:checked')].map(i=>i.value);
+  r.label = document.getElementById('edit-round-name').value.trim() || r.label;
+  r.deadline = document.getElementById('edit-round-deadline').value;
+  r.tournamentId = tId||r.tournamentId;
+  r.tournamentName = tournament?.name||r.tournamentName;
+  if(checked.length>0) r.eventIds = checked;
+  closeModal('modal-edit-round');
   saveAdminState();
-  renderEvents();
-  toast('Event added');
+  renderCompDetail();
+  toast('Round updated');
 }
 
 // ── MISC ACTIONS ──────────────────────────────────────────────────────────
@@ -1283,14 +1246,6 @@ function deleteComp(id){
   saveAdminState();
   nav('competitions');
   toast('Competition deleted');
-}
-
-function deleteEvent(id){
-  if(!confirm('Remove this event?')) return;
-  state.events = state.events.filter(e=>e.id!==id);
-  saveAdminState();
-  renderEvents();
-  toast('Event removed');
 }
 
 function confirmRound(id){
