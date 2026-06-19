@@ -813,47 +813,9 @@ function signOutOperator(){
 
 // ── STATE (persisted per-operator) ──────────────────────────────────────────
 const DEFAULT_ADMIN_STATE = {
-  competitions: [
-    {
-      id:'c1', name:'Premier League 25/26', league:'Premier League',
-      mode:'lms', longTerm:false, status:'active',
-      color:'#4F46E5', users:312, predictions:1247,
-      rounds:[
-        {id:'r1',label:'Gameweek 1',status:'completed',deadline:'2025-08-16T14:00',eventIds:['e101','e102','e103']},
-        {id:'r2',label:'Gameweek 2',status:'completed',deadline:'2025-08-23T14:00',eventIds:['e104','e105','e106']},
-        {id:'r3',label:'Gameweek 3',status:'open',deadline:'2025-08-30T14:00',eventIds:['e107','e108']},
-      ]
-    },
-    {
-      id:'c2', name:'UCL 25/26', league:'UEFA Champions League',
-      mode:'score', longTerm:true, status:'active',
-      color:'#1D4ED8', users:198, predictions:600,
-      rounds:[
-        {id:'r4',label:'Matchday 1',status:'completed',deadline:'2025-09-16T17:00',eventIds:['e201','e202']},
-        {id:'r5',label:'Matchday 2',status:'open',deadline:'2025-10-01T17:00',eventIds:['e203']},
-      ]
-    },
-    {
-      id:'c3', name:'Top 5 Leagues O/U', league:'Multi-league',
-      mode:'ou', longTerm:false, status:'draft',
-      color:'#059669', users:0, predictions:0,
-      rounds:[]
-    }
-  ],
-  events:[
-    {id:'e101',home:'Arsenal',away:'Wolves',tournament:'Premier League',kickoff:'2025-08-16T15:00',result:{h:3,a:0},status:'completed'},
-    {id:'e102',home:'Man City',away:'Chelsea',tournament:'Premier League',kickoff:'2025-08-16T17:30',result:{h:2,a:1},status:'completed'},
-    {id:'e103',home:'Liverpool',away:'Brentford',tournament:'Premier League',kickoff:'2025-08-17T14:00',result:{h:1,a:1},status:'completed'},
-    {id:'e104',home:'Arsenal',away:'Brighton',tournament:'Premier League',kickoff:'2025-08-23T15:00',result:{h:2,a:2},status:'completed'},
-    {id:'e105',home:'Man Utd',away:'Liverpool',tournament:'Premier League',kickoff:'2025-08-23T17:30',result:{h:0,a:3},status:'completed'},
-    {id:'e106',home:'Spurs',away:'Everton',tournament:'Premier League',kickoff:'2025-08-24T14:00',result:{h:1,a:0},status:'completed'},
-    {id:'e107',home:'Arsenal',away:'Man City',tournament:'Premier League',kickoff:'2025-08-30T15:00',result:null,status:'upcoming'},
-    {id:'e108',home:'Liverpool',away:'Man Utd',tournament:'Premier League',kickoff:'2025-08-30T17:30',result:null,status:'upcoming'},
-    {id:'e201',home:'Real Madrid',away:'Stuttgart',tournament:'UEFA Champions League',kickoff:'2025-09-17T21:00',result:{h:3,a:1},status:'completed'},
-    {id:'e202',home:'Bayern',away:'GNK Dinamo',tournament:'UEFA Champions League',kickoff:'2025-09-17T21:00',result:{h:9,a:2},status:'completed'},
-    {id:'e203',home:'PSG',away:'Arsenal',tournament:'UEFA Champions League',kickoff:'2025-10-01T21:00',result:null,status:'upcoming'},
-  ],
-  domains: ['yourdomain.com','app.yourdomain.com']
+  competitions: [],
+  events: [],
+  domains: []
 };
 
 function loadAdminState(){
@@ -944,6 +906,12 @@ function nav(view, subLabel){
 // ── DASHBOARD ─────────────────────────────────────────────────────────────
 function renderDashboard(){
   const tbody = document.getElementById('dash-comp-table');
+  if(state.competitions.length===0){
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-3);font-size:13px;">
+      No competitions yet. <a href="#" onclick="nav('competitions');return false;" style="color:var(--accent);">Create your first one →</a>
+    </td></tr>`;
+    return;
+  }
   tbody.innerHTML = state.competitions.map(c=>{
     const activeRound = c.rounds.find(r=>r.status==='open');
     return `<tr>
@@ -959,6 +927,15 @@ function renderDashboard(){
 
 // ── COMP LIST ─────────────────────────────────────────────────────────────
 function renderCompList(){
+  if(state.competitions.length===0){
+    document.getElementById('comp-grid').innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-3);">
+      <div style="font-size:32px;margin-bottom:12px;">🏆</div>
+      <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text-2);margin-bottom:6px;">No competitions yet</div>
+      <div style="font-size:12px;margin-bottom:20px;">Create your first competition to get started.</div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('modal-create-comp')">+ New competition</button>
+    </div>`;
+    return;
+  }
   document.getElementById('comp-grid').innerHTML = state.competitions.map(c=>{
     const openRound = c.rounds.find(r=>r.status==='open');
     const doneRounds = c.rounds.filter(r=>r.status==='completed').length;
