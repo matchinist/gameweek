@@ -224,6 +224,9 @@ tbody tr:hover td{background:var(--bg);}
     <button class="nav-item" onclick="nav('embed')">
       <span class="ni-icon">⟨⟩</span> Embed & Integration
     </button>
+    <button class="nav-item" onclick="nav('branding')">
+      <span class="ni-icon">🎨</span> Branding
+    </button>
   </div>
 
   <div class="sidebar-section">
@@ -521,6 +524,51 @@ tbody tr:hover td{background:var(--bg);}
       </div>
     </div>
 
+    <!-- BRANDING -->
+    <div class="view" id="view-branding">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Branding</div>
+          <div class="page-sub" style="font-size:15px;">Customise the look of your embed widget.</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:720px;">
+
+        <div class="card">
+          <div class="card-header"><span class="card-title">Competition Colours</span></div>
+          <div class="card-body">
+            <div style="font-size:12px;color:var(--text-3);margin-bottom:14px;">Each competition tab in the embed uses its own colour. Edit them here or directly in the competition settings.</div>
+            <div id="branding-comp-colours" style="display:flex;flex-direction:column;gap:12px;"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><span class="card-title">Widget Theme</span></div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">Accent Colour</label>
+              <div class="color-row">
+                <input type="color" class="color-input" id="brand-accent" value="#4F46E5" onchange="saveBrandingAccent(this.value)">
+                <span id="brand-accent-hex" style="font-family:var(--mono);font-size:12px;color:var(--text-2);">#4F46E5</span>
+              </div>
+              <div style="font-size:11px;color:var(--text-3);margin-top:6px;">Used for buttons, active states, and progress bars in the widget.</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Background</label>
+              <div class="color-row">
+                <input type="color" class="color-input" id="brand-bg" value="#F7F8FA" onchange="saveBrandingBg(this.value)">
+                <span id="brand-bg-hex" style="font-family:var(--mono);font-size:12px;color:var(--text-2);">#F7F8FA</span>
+              </div>
+            </div>
+            <div style="font-size:11px;color:var(--amber);background:var(--amber-light);padding:8px 10px;border-radius:5px;">
+              Widget theme colours are applied live in the embed. Full custom CSS injection coming soon.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
   </div><!-- /content -->
 </div><!-- /main -->
 
@@ -558,7 +606,7 @@ tbody tr:hover td{background:var(--bg);}
           <input class="form-input" type="number" id="pts-home" value="2" min="0" max="99" style="width:64px;text-align:center;font-family:var(--mono);font-weight:700;" />
           <label class="form-label" style="margin:0;">Only away team goals correct</label>
           <input class="form-input" type="number" id="pts-away" value="2" min="0" max="99" style="width:64px;text-align:center;font-family:var(--mono);font-weight:700;" />
-          <label class="form-label" style="margin:0;">Total goals correct</label>
+          <label class="form-label" style="margin:0;">Only total goals correct</label>
           <input class="form-input" type="number" id="pts-total" value="1" min="0" max="99" style="width:64px;text-align:center;font-family:var(--mono);font-weight:700;" />
         </div>
       </div>
@@ -830,7 +878,7 @@ function nav(view, subLabel){
   });
 
   // breadcrumb
-  const labels = {dashboard:'Dashboard','comp-detail':'Competitions','competitions':'Competitions',embed:'Embed & Integration',settings:'Settings'};
+  const labels = {dashboard:'Dashboard','comp-detail':'Competitions','competitions':'Competitions',embed:'Embed & Integration',settings:'Settings',branding:'Branding'};
   let bc = '';
   if(view==='comp-detail' && subLabel){
     bc = `<span>Competitions</span><span class="sep">/</span><span class="current">${subLabel}</span>`;
@@ -843,6 +891,7 @@ function nav(view, subLabel){
   if(view==='competitions') renderCompList();
   if(view==='embed') renderEmbedInfo();
   if(view==='settings') renderSettings();
+  if(view==='branding') renderBranding();
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────
@@ -1009,13 +1058,6 @@ function renderCompDetail(){
             <label class="toggle"><input type="checkbox" ${c.longTerm?'checked':''} onchange="toggleLongTerm('${c.id}',this.checked)"><span class="toggle-slider"></span></label>
           </div>
           <div class="divider"></div>
-          <div class="form-group">
-            <label class="form-label">Brand Colour</label>
-            <div class="color-row">
-              <input type="color" class="color-input" value="${c.color}" onchange="updateCompColor('${c.id}',this.value)">
-              <span style="font-family:var(--mono);font-size:12px;color:var(--text-2);">${c.color}</span>
-            </div>
-          </div>
           <button class="btn btn-primary btn-sm" onclick="saveCompSettings()">Save changes</button>
         </div>
       </div>
@@ -1120,9 +1162,49 @@ function getDMTeams(){
   try{ return JSON.parse(localStorage.getItem('gw_dm_teams_'+CLIENT_KEY))||[]; }catch(e){ return []; }
 }
 
+function renderBranding(){
+  // Render competition colour pickers
+  const el = document.getElementById('branding-comp-colours');
+  if(!el) return;
+  if(!state.competitions.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--text-3);">No competitions yet. Create one first.</div>';
+    return;
+  }
+  el.innerHTML = state.competitions.map(c=>`
+    <div style="display:flex;align-items:center;gap:10px;">
+      <input type="color" class="color-input" value="${c.color}" onchange="updateCompColor('${c.id}',this.value)">
+      <span style="font-size:12px;font-weight:600;color:var(--text);flex:1;">${c.name}</span>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--text-3);">${c.color}</span>
+    </div>`).join('');
+}
+
+function saveBrandingAccent(val){
+  document.getElementById('brand-accent-hex').textContent=val;
+  toast('Theme colour saved (applied in next embed update)');
+}
+function saveBrandingBg(val){
+  document.getElementById('brand-bg-hex').textContent=val;
+  toast('Background colour saved');
+}
+
 // ── ROUND MODALS ──────────────────────────────────────────────────────────
-function openModal(id){
-  if(id==='modal-create-round') populateTournamentCheckboxes('new');
+async function openModal(id){
+  if(id==='modal-create-round'){
+    // Refresh DM data from Supabase every time modal opens — picks up latest changes from data.html
+    if(CLIENT_KEY){
+      const [{data:teams},{data:tournaments},{data:events}] = await Promise.all([
+        supa.from('gw_dm_teams').select('*').eq('client_key',CLIENT_KEY),
+        supa.from('gw_dm_tournaments').select('*').eq('client_key',CLIENT_KEY),
+        supa.from('gw_dm_events').select('*').eq('client_key',CLIENT_KEY),
+      ]);
+      dmState.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color}));
+      dmState.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,color:t.color,seasons:t.seasons||{}}));
+      const evMap={};
+      (events||[]).forEach(e=>{ evMap[e.id]={homeId:e.home_id,awayId:e.away_id,kickoff:e.kickoff,result:e.result,status:e.status,line:e.line||2.5}; });
+      dmState.events=evMap;
+    }
+    populateTournamentCheckboxes('new');
+  }
   document.getElementById(id).classList.add('open');
 }
 

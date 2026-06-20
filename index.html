@@ -19,7 +19,11 @@
 }
 html,body{height:100%;overflow:hidden;}
 body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;}
+
+/* ── APP SHELL ── */
 .app{display:flex;flex-direction:column;height:100vh;max-width:860px;margin:0 auto;width:100%;background:var(--white);position:relative;}
+
+/* ── HEADER ── */
 .app-header{background:var(--white);border-bottom:1px solid var(--border);flex-shrink:0;z-index:50;}
 .header-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;}
 .header-logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text);letter-spacing:-0.5px;}
@@ -27,22 +31,38 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .header-user{display:flex;align-items:center;gap:8px;cursor:pointer;}
 .header-avatar{width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:700;color:white;}
 .header-username{font-size:12px;font-weight:500;color:var(--text-2);}
+
+/* ── BOTTOM NAV ── */
 .bottom-nav{background:var(--white);border-top:1px solid var(--border);display:flex;flex-shrink:0;}
 .bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px;cursor:pointer;border:none;background:none;transition:all 0.13s;gap:3px;}
 .bnav-icon{font-size:18px;line-height:1;}
 .bnav-label{font-size:10px;font-weight:600;color:var(--text-3);letter-spacing:0.3px;}
 .bnav-item.active .bnav-label{color:var(--accent);}
+.bnav-item.active .bnav-icon{filter:none;}
+
+/* ── SCROLL AREA ── */
 .scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;}
 ::-webkit-scrollbar{width:3px;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+/* ── SCREENS ── */
 .screen{display:none;padding:16px;}
 .screen.active{display:block;}
+
+/* ── AUTH SCREEN ── */
 .auth-wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px 16px;}
 .auth-card{width:100%;max-width:340px;}
 .auth-logo{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--text);text-align:center;margin-bottom:4px;}
 .auth-logo span{color:var(--accent);}
 .auth-tagline{font-size:12px;color:var(--text-3);text-align:center;margin-bottom:28px;}
 .auth-toggle{display:flex;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:3px;margin-bottom:20px;}
+/* ── AUTH MODAL OVERLAY ── */
+.auth-modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,17,23,0.5);backdrop-filter:blur(2px);z-index:200;align-items:center;justify-content:center;padding:16px;}
+.auth-modal-overlay.open{display:flex;}
+.auth-modal{background:var(--white);border-radius:14px;width:100%;max-width:320px;box-shadow:0 20px 60px rgba(0,0,0,0.2);padding:24px;}
+.auth-modal-logo{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);text-align:center;margin-bottom:2px;}
+.auth-modal-logo span{color:var(--accent);}
+.auth-modal-reason{font-size:11px;color:var(--text-3);text-align:center;margin-bottom:18px;}
 .auth-tab{flex:1;padding:7px;text-align:center;font-size:12px;font-weight:600;border-radius:5px;cursor:pointer;color:var(--text-2);transition:all 0.13s;border:none;background:none;}
 .auth-tab.active{background:var(--white);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.08);}
 .form-group{margin-bottom:12px;}
@@ -54,6 +74,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .auth-btn:hover{background:var(--accent-2);}
 .auth-error{font-size:11px;color:var(--red);text-align:center;margin-top:8px;min-height:16px;}
 .auth-terms{font-size:11px;color:var(--text-3);text-align:center;margin-top:14px;line-height:1.5;}
+
+/* ── COMP TABS ── */
 .comp-tabs{display:flex;gap:0;overflow-x:auto;border-bottom:1px solid var(--border);padding:0 16px;-webkit-overflow-scrolling:touch;}
 .comp-tabs::-webkit-scrollbar{display:none;}
 .comp-tab{padding:10px 14px;font-size:12px;font-weight:500;color:var(--text-2);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:all 0.13s;display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex-shrink:0;}
@@ -62,11 +84,17 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .comp-tab-name{font-size:12px;font-weight:600;}
 .comp-tab-mode{font-family:var(--mono);font-size:9px;color:var(--text-3);font-weight:700;letter-spacing:0.3px;}
 .comp-tab.active .comp-tab-mode{color:var(--comp-color);opacity:0.7;}
+
+/* ── ROUND SELECTOR ── */
 .round-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--white);border-bottom:1px solid var(--border);}
+
+/* ── PREDICT SUB-TABS ── */
 .predict-subtabs{display:flex;gap:6px;padding:12px 16px 0;}
 .ps-tab{flex:1;text-align:center;padding:8px 4px;font-size:12px;font-weight:600;color:var(--text-2);background:var(--bg);border:1px solid var(--border);border-radius:7px;cursor:pointer;transition:all 0.13s;}
 .ps-tab:hover{color:var(--text);}
 .ps-tab.active{background:var(--comp-color);border-color:var(--comp-color);color:white;}
+
+/* ── LEADERBOARD WEEK SELECT ── */
 .lb-week-row{padding:14px 16px 0;}
 .lb-week-select{width:100%;font-family:var(--mono);font-size:11px;border:1px solid var(--border);background:var(--white);padding:8px 10px;border-radius:6px;outline:none;color:var(--text);}
 .lb-week-select:focus{border-color:var(--comp-color);}
@@ -75,10 +103,15 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .round-status{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;}
 .round-status.open{background:var(--green-light);color:var(--green);}
 .round-status.completed{background:var(--bg);color:var(--text-3);}
+.round-status.locked{background:var(--amber-light);color:var(--amber);}
 .round-select{font-family:var(--mono);font-size:10px;border:1px solid var(--border);background:var(--white);padding:5px 8px;border-radius:5px;cursor:pointer;outline:none;color:var(--text);}
 .round-select:focus{border-color:var(--accent);}
+
+/* ── DEADLINE BANNER ── */
 .deadline-banner{background:var(--accent-light);border-bottom:1px solid #C7D2FE;padding:8px 16px;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--accent-2);}
 .deadline-banner strong{font-family:var(--mono);font-size:10px;}
+
+/* ── LMS PARTICIPATION BAR ── */
 .survival-tracker{padding:12px 16px;background:var(--bg);border-bottom:1px solid var(--border);}
 .st-label{font-size:10px;font-weight:600;color:var(--text-3);margin-bottom:8px;letter-spacing:0.3px;}
 .st-bar-wrap{display:flex;flex-direction:column;gap:6px;}
@@ -89,14 +122,26 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .st-bar-fill.participated{background:var(--accent);}
 .st-bar-fill.survived{background:var(--green);}
 .st-bar-count{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);min-width:36px;text-align:right;}
+.st-alive{font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;margin-left:8px;}
+.st-alive.alive{background:var(--green-light);color:var(--green);}
+.st-alive.out{background:var(--red-light);color:var(--red);}
+
+/* ── EVENT CARDS ── */
 .events-list{display:flex;flex-direction:column;gap:8px;padding:12px 16px;}
+.ev-pred-count{font-size:10px;color:var(--text-3);display:flex;align-items:center;gap:4px;margin-top:6px;padding-top:6px;border-top:1px solid var(--border);}
+.ev-pred-count strong{font-family:var(--mono);color:var(--text-2);font-size:11px;}
+.ev-pred-bar{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.ev-pred-bar-fill{height:3px;background:var(--comp-color);border-radius:2px;opacity:0.4;}
+
 .event-card{background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:border-color 0.13s;}
 .event-card.predicted{border-color:var(--comp-color);}
 .event-card.locked-pred{border-color:var(--border);opacity:0.8;}
+
 .event-card-top{padding:11px 13px;}
 .event-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
 .event-league{font-size:9px;font-weight:700;color:var(--text-3);letter-spacing:0.6px;text-transform:uppercase;}
 .event-kickoff{font-family:var(--mono);font-size:9px;color:var(--text-3);}
+
 .event-teams{display:flex;align-items:center;gap:8px;}
 .ev-team{flex:1;display:flex;align-items:center;gap:7px;}
 .ev-team.away{flex-direction:row-reverse;}
@@ -104,19 +149,45 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .ev-name{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);}
 .ev-vs{font-family:var(--mono);font-size:9px;color:var(--text-3);text-align:center;min-width:28px;}
 .ev-score{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);text-align:center;min-width:36px;}
+
+/* Prediction area */
 .pred-area{border-top:1px solid var(--border);padding:10px 13px;}
 .pred-label{font-size:10px;color:var(--text-3);font-weight:500;margin-bottom:7px;}
+
+/* 1X2 */
 .btns-1x2{display:flex;gap:5px;}
 .btn-1x2{flex:1;padding:7px 4px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-2);cursor:pointer;transition:all 0.13s;text-align:center;line-height:1.3;}
 .btn-1x2 .sub{display:block;font-size:8px;font-weight:400;opacity:0.6;margin-top:1px;}
 .btn-1x2:hover{border-color:var(--comp-color);color:var(--comp-color);}
 .btn-1x2.selected{border-color:var(--comp-color);background:var(--comp-color);color:white;}
+
+/* Score */
+.score-pred{display:flex;align-items:center;gap:8px;}
+.score-side{display:flex;align-items:center;gap:7px;flex:1;}
+.score-side.right{flex-direction:row-reverse;}
+.score-side-name{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:72px;}
+.score-num{width:44px;height:38px;border:1px solid var(--border);border-radius:6px;text-align:center;font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text);outline:none;-moz-appearance:textfield;transition:border-color 0.13s;flex-shrink:0;}
+.score-num::-webkit-inner-spin-button,.score-num::-webkit-outer-spin-button{-webkit-appearance:none;}
+.score-num:focus{border-color:var(--comp-color);}
+.score-num.has{border-color:var(--comp-color);background:var(--accent-light);color:var(--comp-color);}
+.score-dash{font-family:var(--mono);font-size:14px;color:var(--text-3);font-weight:700;}
+
+/* O/U */
+.btns-ou{display:flex;gap:6px;}
+.btn-ou{flex:1;padding:9px 4px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;transition:all 0.13s;text-align:center;line-height:1.3;}
+.btn-ou .sub{display:block;font-size:8px;font-weight:400;opacity:0.6;margin-top:2px;}
+.btn-ou.over:hover,.btn-ou.over.selected{border-color:var(--green);background:var(--green-light);color:var(--green);}
+.btn-ou.under:hover,.btn-ou.under.selected{border-color:var(--red);background:var(--red-light);color:var(--red);}
+
+/* Completed pred display */
 .pred-result-row{display:flex;align-items:center;justify-content:space-between;}
 .pred-made{font-size:11px;color:var(--text-2);}
 .pred-made strong{font-family:var(--mono);color:var(--text);}
 .pred-correct{font-size:11px;font-weight:700;}
 .pred-correct.yes{color:var(--green);}
 .pred-correct.no{color:var(--red);}
+
+/* ── PROGRESS ── */
 .progress-wrap{padding:12px 16px;border-top:1px solid var(--border);background:var(--white);}
 .progress-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--text-2);margin-bottom:6px;}
 .progress-pct{font-family:var(--mono);font-size:11px;color:var(--comp-color);}
@@ -126,10 +197,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .submit-hint{font-size:11px;color:var(--text-3);}
 .submit-btn{font-family:var(--mono);font-size:11px;font-weight:700;padding:9px 20px;background:var(--comp-color);color:white;border:none;border-radius:6px;cursor:pointer;transition:background 0.13s;letter-spacing:0.3px;}
 .submit-btn:disabled{background:var(--bg);color:var(--text-3);cursor:not-allowed;}
+
+/* ── LEADERBOARD ── */
 .lb-wrap{background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
 .lb-table-head{padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:space-between;}
 .lb-table-head-title{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);}
 .lb-table-head-sub{font-size:10px;color:var(--text-3);}
+
 table.lb-table{width:100%;border-collapse:collapse;}
 .lb-table th{font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:7px 14px;text-align:left;border-bottom:1px solid var(--border);}
 .lb-table th.r{text-align:right;}
@@ -137,6 +211,7 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .lb-table tbody tr:last-child td{border-bottom:none;}
 .lb-table tbody tr:hover td{background:var(--bg);}
 .lb-table tbody tr.me td{background:var(--accent-light);}
+
 .lb-rank{font-family:var(--mono);font-size:11px;color:var(--text-3);text-align:center;width:32px;}
 .lb-rank.top{font-size:15px;}
 .lb-user{display:flex;align-items:center;gap:8px;}
@@ -150,21 +225,36 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .alive-tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;}
 .alive-tag.alive{background:var(--green-light);color:var(--green);}
 .alive-tag.out{background:var(--red-light);color:var(--red);}
+
+/* ── PROFILE ── */
 .profile-header{background:var(--accent);padding:24px 16px;text-align:center;}
 .profile-av{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:16px;font-weight:700;color:white;margin:0 auto 10px;}
 .profile-name{font-family:var(--mono);font-size:16px;font-weight:700;color:white;margin-bottom:2px;}
 .profile-joined{font-size:11px;color:rgba(255,255,255,0.6);}
+
 .profile-stats{display:grid;grid-template-columns:repeat(3,1fr);background:var(--white);border-bottom:1px solid var(--border);}
 .profile-stat{padding:14px 8px;text-align:center;border-right:1px solid var(--border);}
 .profile-stat:last-child{border-right:none;}
 .ps-val{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--text);}
 .ps-label{font-size:10px;color:var(--text-3);margin-top:2px;}
+
 .profile-section{padding:14px 16px;border-bottom:1px solid var(--border);}
 .profile-section-title{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:0.6px;text-transform:uppercase;margin-bottom:12px;}
+.profile-comp-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
+.profile-comp-row:last-child{border-bottom:none;}
+.pcr-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.pcr-name{font-size:12px;font-weight:500;color:var(--text);flex:1;}
+.pcr-rank{font-family:var(--mono);font-size:11px;color:var(--text-2);}
+.pcr-pts{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);}
+
 .logout-btn{width:100%;padding:11px;background:var(--bg);color:var(--text-2);border:1px solid var(--border);border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.13s;margin-top:4px;}
 .logout-btn:hover{border-color:var(--red);color:var(--red);}
+
+/* ── TOAST ── */
 #toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--text);color:white;font-family:var(--mono);font-size:11px;padding:9px 18px;border-radius:6px;z-index:999;transition:transform 0.25s ease;pointer-events:none;white-space:nowrap;}
 #toast.show{transform:translateX(-50%) translateY(0);}
+
+/* ── EMPTY ── */
 .empty{text-align:center;padding:40px 20px;color:var(--text-3);}
 .empty-icon{font-size:28px;margin-bottom:10px;}
 .empty-title{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text-2);margin-bottom:5px;}
@@ -174,40 +264,41 @@ table.lb-table{width:100%;border-collapse:collapse;}
 <body>
 <div class="app" id="app">
 
-  <div id="screen-auth" style="flex:1;overflow-y:auto;display:none;">
-    <div class="auth-wrap">
-      <div class="auth-card">
-        <div class="auth-logo">game<span>week</span></div>
-        <div class="auth-tagline">Free-to-play predictions. Every gameweek.</div>
-        <div class="auth-toggle">
-          <button class="auth-tab active" id="tab-login" onclick="switchAuth('login')">Sign in</button>
-          <button class="auth-tab" id="tab-register" onclick="switchAuth('register')">Register</button>
-        </div>
-        <div id="form-login">
-          <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="login-username" placeholder="your username" autocomplete="username" /></div>
-          <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" /></div>
-          <button class="auth-btn" onclick="doLogin()">Sign in →</button>
-          <div class="auth-error" id="login-error"></div>
-        </div>
-        <div id="form-register" style="display:none;">
-          <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="reg-username" placeholder="choose a username" autocomplete="username" /></div>
-          <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="reg-email" placeholder="your@email.com" autocomplete="email" /></div>
-          <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="reg-password" placeholder="min 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()" /></div>
-          <button class="auth-btn" onclick="doRegister()">Create account →</button>
-          <div class="auth-error" id="reg-error"></div>
-          <div class="auth-terms">By registering you agree to our terms.<br>No real money involved. Free to play.</div>
-        </div>
+  <!-- ── AUTH MODAL (overlay, triggered on action) ── -->
+  <div class="auth-modal-overlay" id="auth-modal-overlay" onclick="if(event.target===this)closeAuthModal()">
+    <div class="auth-modal">
+      <div class="auth-modal-logo">game<span>week</span></div>
+      <div class="auth-modal-reason" id="auth-modal-reason">Sign in to make predictions</div>
+      <div class="auth-toggle">
+        <button class="auth-tab active" id="tab-login" onclick="switchAuth('login')">Sign in</button>
+        <button class="auth-tab" id="tab-register" onclick="switchAuth('register')">Register</button>
+      </div>
+      <div id="form-login">
+        <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="login-username" placeholder="your username" autocomplete="username" /></div>
+        <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" /></div>
+        <button class="auth-btn" onclick="doLogin()">Sign in →</button>
+        <div class="auth-error" id="login-error"></div>
+      </div>
+      <div id="form-register" style="display:none;">
+        <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="reg-username" placeholder="choose a username" autocomplete="username" /></div>
+        <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="reg-email" placeholder="your@email.com" autocomplete="email" /></div>
+        <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="reg-password" placeholder="min 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()" /></div>
+        <button class="auth-btn" onclick="doRegister()">Create account →</button>
+        <div class="auth-error" id="reg-error"></div>
+        <div class="auth-terms">Free to play. No deposit required.</div>
       </div>
     </div>
   </div>
 
-  <div id="screen-app" style="display:none;flex:1;min-height:0;display:flex;flex-direction:column;">
+  <!-- ── APP (always visible) ── -->
+  <div id="screen-app" style="flex:1;min-height:0;display:flex;flex-direction:column;">
+
     <div class="app-header">
       <div class="header-top">
         <div class="header-logo">game<span>week</span></div>
-        <div class="header-user" onclick="goTab('profile')">
+        <div class="header-user" onclick="headerUserClick()">
           <div class="header-avatar" id="hdr-avatar">?</div>
-          <div class="header-username" id="hdr-username">—</div>
+          <div class="header-username" id="hdr-username">Sign in</div>
         </div>
       </div>
       <div id="comp-tabs-wrap">
@@ -226,85 +317,186 @@ table.lb-table{width:100%;border-collapse:collapse;}
 
     <div class="bottom-nav">
       <button class="bnav-item active" id="bnav-predict" onclick="goTab('predict')">
-        <div class="bnav-icon">⚽</div><div class="bnav-label">PREDICT</div>
+        <div class="bnav-icon">⚽</div>
+        <div class="bnav-label">PREDICT</div>
       </button>
       <button class="bnav-item" id="bnav-profile" onclick="goTab('profile')">
-        <div class="bnav-icon">👤</div><div class="bnav-label">PROFILE</div>
+        <div class="bnav-icon">👤</div>
+        <div class="bnav-label">PROFILE</div>
       </button>
     </div>
+
   </div>
 </div>
 
 <div id="toast"></div>
 
 <script>
-// ── LOAD REAL DATA FROM DATA MANAGER (localStorage) ─────────────────────────
-function loadDMData(){
-  let teams=[], tournaments=[], events={};
-  try{ teams = JSON.parse(localStorage.getItem('gw_dm_teams'))||[]; }catch(e){}
-  try{ tournaments = JSON.parse(localStorage.getItem('gw_dm_tournaments'))||[]; }catch(e){}
-  try{ events = JSON.parse(localStorage.getItem('gw_dm_events'))||{}; }catch(e){}
-  return {teams, tournaments, events};
-}
+// ── DATA ─────────────────────────────────────────────────────────────────
+const COMPS = [
+  {
+    id:'c1', name:'Premier League', short:'PL', mode:'lms', longTerm:false, color:'#4F46E5',
+    rounds:[
+      {id:'r1',label:'Gameweek 1',status:'completed',deadline:'2025-08-16T14:00',eventIds:['e101','e102','e103']},
+      {id:'r2',label:'Gameweek 2',status:'completed',deadline:'2025-08-23T14:00',eventIds:['e104','e105','e106']},
+      {id:'r3',label:'Gameweek 3',status:'open',deadline:'2025-08-30T14:00',eventIds:['e107','e108','e109','e110']},
+    ],
+    lbWeekly:[
+      {u:'footy_oracle',pts:8,c:4,alive:true},
+      {u:'stadyum76',pts:8,c:4,alive:true},
+      {u:'bvb_predictor',pts:6,c:3,alive:true},
+      {u:'gegenpresser',pts:5,c:2,alive:true},
+      {u:'matchday_man',pts:4,c:2,alive:true},
+      {u:'xavi_8',pts:0,c:0,alive:false},
+      {u:'tiki_taka_fan',pts:0,c:0,alive:false},
+    ],
+    lbOverall:[
+      {u:'footy_oracle',pts:22,c:11,alive:true},
+      {u:'stadyum76',pts:20,c:10,alive:true},
+      {u:'bvb_predictor',pts:18,c:9,alive:true},
+      {u:'gegenpresser',pts:15,c:7,alive:true},
+      {u:'matchday_man',pts:12,c:6,alive:true},
+      {u:'xavi_8',pts:8,c:4,alive:false},
+      {u:'tiki_taka_fan',pts:5,c:2,alive:false},
+    ]
+  },
+  {
+    id:'c2', name:'Champions League', short:'UCL', mode:'score', longTerm:true, color:'#1D4ED8',
+    rounds:[
+      {id:'r4',label:'Matchday 1',status:'completed',deadline:'2025-09-16T17:00',eventIds:['e201','e202','e203']},
+      {id:'r5',label:'Matchday 2',status:'open',deadline:'2025-10-01T17:00',eventIds:['e204','e205','e206']},
+    ],
+    lbWeekly:[
+      {u:'bvb_predictor',pts:12,c:2},
+      {u:'footy_oracle',pts:9,c:1},
+      {u:'stadyum76',pts:9,c:1},
+      {u:'gegenpresser',pts:6,c:0},
+      {u:'xavi_8',pts:3,c:0},
+      {u:'matchday_man',pts:3,c:0},
+    ],
+    lbOverall:[
+      {u:'bvb_predictor',pts:27,c:3},
+      {u:'footy_oracle',pts:21,c:3},
+      {u:'stadyum76',pts:18,c:2},
+      {u:'gegenpresser',pts:15,c:1},
+      {u:'xavi_8',pts:12,c:1},
+      {u:'matchday_man',pts:9,c:0},
+    ]
+  },
+  {
+    id:'c3', name:'Top 5 Leagues', short:'T5', mode:'ou', longTerm:false, color:'#059669',
+    rounds:[
+      {id:'r6',label:'Round 1',status:'completed',deadline:'2025-08-16T17:00',eventIds:['e301','e302']},
+      {id:'r7',label:'Round 2',status:'completed',deadline:'2025-08-23T17:00',eventIds:['e303','e304']},
+      {id:'r8',label:'Round 3',status:'open',deadline:'2025-08-30T17:00',eventIds:['e305','e306','e307','e308']},
+    ],
+    lbWeekly:[
+      {u:'xavi_8',pts:8,c:4},
+      {u:'matchday_man',pts:6,c:3},
+      {u:'stadyum76',pts:6,c:3},
+      {u:'footy_oracle',pts:4,c:2},
+      {u:'bvb_predictor',pts:4,c:2},
+      {u:'gegenpresser',pts:2,c:1},
+    ],
+    lbOverall:[
+      {u:'stadyum76',pts:22,c:11},
+      {u:'xavi_8',pts:20,c:10},
+      {u:'matchday_man',pts:18,c:9},
+      {u:'footy_oracle',pts:16,c:8},
+      {u:'bvb_predictor',pts:14,c:7},
+      {u:'gegenpresser',pts:10,c:5},
+    ]
+  }
+];
 
-function fmtKickoff(dt){
-  if(!dt) return 'TBD';
-  try{
-    const d=new Date(dt);
-    return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' · '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-  }catch(e){return dt;}
-}
+const EVENTS = {
+  e101:{home:'Arsenal',away:'Wolves',kickoff:'Aug 16 · 15:00',res:{h:3,a:0}},
+  e102:{home:'Man City',away:'Chelsea',kickoff:'Aug 16 · 17:30',res:{h:2,a:1}},
+  e103:{home:'Liverpool',away:'Brentford',kickoff:'Aug 17 · 14:00',res:{h:1,a:1}},
+  e104:{home:'Arsenal',away:'Brighton',kickoff:'Aug 23 · 15:00',res:{h:2,a:2}},
+  e105:{home:'Man Utd',away:'Liverpool',kickoff:'Aug 23 · 17:30',res:{h:0,a:3}},
+  e106:{home:'Spurs',away:'Everton',kickoff:'Aug 24 · 14:00',res:{h:1,a:0}},
+  e107:{home:'Arsenal',away:'Man City',kickoff:'Aug 30 · 15:00',res:null},
+  e108:{home:'Liverpool',away:'Man Utd',kickoff:'Aug 30 · 17:30',res:null},
+  e109:{home:'Chelsea',away:'Spurs',kickoff:'Aug 31 · 14:00',res:null},
+  e110:{home:'Wolves',away:'Everton',kickoff:'Aug 31 · 14:00',res:null},
+  e201:{home:'Real Madrid',away:'Stuttgart',kickoff:'Sep 17 · 21:00',res:{h:3,a:1}},
+  e202:{home:'Bayern',away:'GNK Dinamo',kickoff:'Sep 17 · 21:00',res:{h:9,a:2}},
+  e203:{home:'Man City',away:'Inter',kickoff:'Sep 18 · 21:00',res:{h:0,a:0}},
+  e204:{home:'Barcelona',away:'Young Boys',kickoff:'Oct 2 · 21:00',res:null},
+  e205:{home:'PSG',away:'Arsenal',kickoff:'Oct 1 · 21:00',res:null},
+  e206:{home:'Atletico',away:'Lille',kickoff:'Oct 2 · 21:00',res:null},
+  e301:{home:'PSG',away:'Le Havre',kickoff:'Aug 16 · 21:00',res:{h:4,a:0},lg:'Ligue 1'},
+  e302:{home:'Inter',away:'Genoa',kickoff:'Aug 17 · 18:00',res:{h:2,a:2},lg:'Serie A'},
+  e303:{home:'Real Madrid',away:'Valladolid',kickoff:'Aug 25 · 21:00',res:{h:3,a:0},lg:'La Liga'},
+  e304:{home:'Bayern',away:'Wolfsburg',kickoff:'Aug 24 · 15:30',res:{h:3,a:2},lg:'Bundesliga'},
+  e305:{home:'Inter',away:'Juventus',kickoff:'Aug 30 · 20:45',res:null,lg:'Serie A',line:2.5},
+  e306:{home:'Atletico',away:'Sevilla',kickoff:'Aug 30 · 18:30',res:null,lg:'La Liga',line:2.5},
+  e307:{home:'Leverkusen',away:'Frankfurt',kickoff:'Aug 31 · 15:30',res:null,lg:'Bundesliga',line:2.5},
+  e308:{home:'PSG',away:'Marseille',kickoff:'Aug 30 · 20:45',res:null,lg:'Ligue 1',line:2.5},
+};
 
-let COMPS = [];
-let EVENTS = {};      // display version: {home,away,kickoff,res}
-let EVENTS_RAW = {};  // raw result version: {h,a}|null per event id
+// Fake past predictions for completed rounds
+const PAST_PREDS = {
+  e101:'H', e102:'H', e103:'D',
+  e104:'D', e105:'A', e106:'H',
+  e201:{h:2,a:1}, e202:{h:5,a:1}, e203:{h:1,a:0},
+  e301:'O', e302:'U',
+  e303:'O', e304:'O',
+};
 
-function buildCompsFromRealData(){
-  const {teams, tournaments, events} = loadDMData();
-  const teamById = id => teams.find(t=>t.id===id);
-
-  COMPS = [];
-  EVENTS = {};
-  EVENTS_RAW = {};
-
-  tournaments.forEach(t=>{
-    // pick season with most assigned events across its rounds
-    let bestSeason=null, bestCount=-1;
-    Object.values(t.seasons||{}).forEach(season=>{
-      const count = (season.rounds||[]).reduce((sum,r)=>sum+(r.eventIds?.length||0),0);
-      if(count>bestCount){ bestCount=count; bestSeason=season; }
-    });
-    if(!bestSeason || !bestSeason.rounds || bestSeason.rounds.length===0) return;
-
-    const rounds = bestSeason.rounds.map(r=>{
-      const evIds = r.eventIds||[];
-      const allDone = evIds.length>0 && evIds.every(eid=>{
-        const ev = events[eid];
-        return ev && ev.result && ev.result.h!==null && ev.result.a!==null;
-      });
-      return { id:r.id, label:r.label, deadline:r.deadline||'', status: allDone?'completed':'open', eventIds: evIds };
-    });
-
-    COMPS.push({ id:t.id, name:t.name, mode:'lms', color:t.color||'#4F46E5', rounds });
-  });
-
-  Object.entries(events).forEach(([eid,ev])=>{
-    const home = teamById(ev.homeId), away = teamById(ev.awayId);
-    if(!home||!away) return;
-    const hasResult = ev.result && ev.result.h!==null && ev.result.a!==undefined && ev.result.a!==null;
-    EVENTS[eid] = { home:home.name, away:away.name, kickoff:fmtKickoff(ev.kickoff), res: hasResult?ev.result:null };
-    EVENTS_RAW[eid] = hasResult ? ev.result : null;
-  });
-}
+// Mock LMS leaderboard data — per-round participation + overall survival stats
+const LMS_DATA = {
+  c1: {
+    rounds: {
+      r1: [
+        {u:'footy_oracle',predictions:3,alive:true},
+        {u:'stadyum76',predictions:3,alive:true},
+        {u:'bvb_predictor',predictions:3,alive:true},
+        {u:'gegenpresser',predictions:3,alive:true},
+        {u:'matchday_man',predictions:3,alive:true},
+        {u:'eredivisie_ed',predictions:3,alive:true},
+        {u:'presslord99',predictions:2,alive:false},
+        {u:'xavi_8',predictions:2,alive:false},
+        {u:'tiki_taka_fan',predictions:1,alive:false},
+      ],
+      r2: [
+        {u:'footy_oracle',predictions:3,alive:true},
+        {u:'stadyum76',predictions:3,alive:true},
+        {u:'bvb_predictor',predictions:3,alive:true},
+        {u:'eredivisie_ed',predictions:3,alive:true},
+        {u:'matchday_man',predictions:2,alive:false},
+        {u:'gegenpresser',predictions:1,alive:false},
+      ],
+      r3: [
+        {u:'footy_oracle',predictions:3,alive:true},
+        {u:'stadyum76',predictions:2,alive:true},
+        {u:'bvb_predictor',predictions:2,alive:true},
+        {u:'eredivisie_ed',predictions:1,alive:true},
+      ],
+    },
+    overall: [
+      {u:'footy_oracle',survived:3,avgPredictions:3.0},
+      {u:'stadyum76',survived:3,avgPredictions:2.7},
+      {u:'eredivisie_ed',survived:3,avgPredictions:2.3},
+      {u:'bvb_predictor',survived:3,avgPredictions:2.7},
+      {u:'matchday_man',survived:1,avgPredictions:2.5},
+      {u:'gegenpresser',survived:1,avgPredictions:2.0},
+      {u:'presslord99',survived:0,avgPredictions:2.0},
+      {u:'xavi_8',survived:0,avgPredictions:2.0},
+      {u:'tiki_taka_fan',survived:0,avgPredictions:1.0},
+    ]
+  }
+};
+const MEDALS = ['🥇','🥈','🥉'];
 
 // ── STATE ─────────────────────────────────────────────────────────────────
 let currentUser = null;
 let currentCompIdx = 0;
-let selectedRound = {};
+let selectedRound = {0:2, 1:1, 2:2};
 let preds = {};
 let predictSubTab = 'predictions';
 let lbSelection = {};
-const MEDALS = ['🥇','🥈','🥉'];
 
 // ── AUTH ──────────────────────────────────────────────────────────────────
 function switchAuth(tab){
@@ -317,58 +509,72 @@ function switchAuth(tab){
 }
 
 function doLogin(){
-  const u=document.getElementById('login-username').value.trim();
-  const p=document.getElementById('login-password').value;
+  const u = document.getElementById('login-username').value.trim();
+  const p = document.getElementById('login-password').value;
   if(!u||!p){ document.getElementById('login-error').textContent='Enter username and password.'; return; }
   const stored = JSON.parse(localStorage.getItem('gw_users')||'{}');
-  if(!stored[u]||stored[u].password!==p){ document.getElementById('login-error').textContent='Incorrect username or password.'; return; }
+  if(!stored[u]||stored[u].password!==p){
+    document.getElementById('login-error').textContent='Incorrect username or password.'; return;
+  }
   loginUser(u);
 }
 
 function doRegister(){
-  const u=document.getElementById('reg-username').value.trim();
-  const e=document.getElementById('reg-email').value.trim();
-  const p=document.getElementById('reg-password').value;
+  const u = document.getElementById('reg-username').value.trim();
+  const e = document.getElementById('reg-email').value.trim();
+  const p = document.getElementById('reg-password').value;
   if(!u||!e||!p){ document.getElementById('reg-error').textContent='All fields are required.'; return; }
   if(u.length<3){ document.getElementById('reg-error').textContent='Username must be at least 3 characters.'; return; }
   if(p.length<6){ document.getElementById('reg-error').textContent='Password must be at least 6 characters.'; return; }
   const stored = JSON.parse(localStorage.getItem('gw_users')||'{}');
   if(stored[u]){ document.getElementById('reg-error').textContent='Username already taken.'; return; }
-  stored[u]={password:p,email:e,joined:new Date().toISOString()};
+  stored[u] = {password:p, email:e, joined: new Date().toISOString()};
   localStorage.setItem('gw_users', JSON.stringify(stored));
   loginUser(u);
 }
 
 function loginUser(u){
-  currentUser=u;
+  currentUser = u;
   localStorage.setItem('gw_session', u);
   preds = JSON.parse(localStorage.getItem('gw_preds_'+u)||'{}');
-  showApp();
+  closeAuthModal();
+  updateHeaderUser();
+  renderPredict();
 }
 
 function doLogout(){
-  currentUser=null;
+  currentUser = null;
   localStorage.removeItem('gw_session');
-  showAuth();
+  updateHeaderUser();
+  renderPredict();
 }
 
-function showAuth(){
-  document.getElementById('screen-auth').style.display='flex';
-  document.getElementById('screen-app').style.display='none';
+function openAuthModal(reason){
+  document.getElementById('auth-modal-reason').textContent = reason||'Sign in to make predictions';
+  switchAuth('login');
+  document.getElementById('auth-modal-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('login-username').focus(),100);
 }
-
-function showApp(){
-  buildCompsFromRealData();
-  document.getElementById('screen-auth').style.display='none';
-  document.getElementById('screen-app').style.display='flex';
-  document.getElementById('hdr-avatar').textContent=currentUser.slice(0,2).toUpperCase();
-  document.getElementById('hdr-username').textContent=currentUser;
-  renderCompTabs();
-  goTab('predict');
+function closeAuthModal(){
+  document.getElementById('auth-modal-overlay').classList.remove('open');
+}
+function headerUserClick(){
+  if(currentUser) goTab('profile');
+  else openAuthModal('Sign in or create a free account');
+}
+function updateHeaderUser(){
+  if(currentUser){
+    document.getElementById('hdr-avatar').textContent=currentUser.slice(0,2).toUpperCase();
+    document.getElementById('hdr-username').textContent=currentUser;
+  } else {
+    document.getElementById('hdr-avatar').textContent='?';
+    document.getElementById('hdr-username').textContent='Sign in';
+  }
 }
 
 // ── TABS ──────────────────────────────────────────────────────────────────
 function goTab(tab){
+  if(tab==='profile'&&!currentUser){openAuthModal('Sign in to view your profile');return;}
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
@@ -384,8 +590,6 @@ const MODE_LABELS = {lms:'Last Man Standing', score:'Score Predictor', ou:'Over 
 
 function renderCompTabs(){
   const el = document.getElementById('comp-tabs');
-  if(COMPS.length===0){ el.innerHTML=''; return; }
-  if(currentCompIdx>=COMPS.length) currentCompIdx=0;
   el.innerHTML = COMPS.map((c,i)=>`
     <button class="comp-tab${i===currentCompIdx?' active':''}" onclick="switchComp(${i})" style="${i===currentCompIdx?`--comp-color:${c.color}`:''}">
       <span class="comp-tab-name">${c.name}</span>
@@ -395,8 +599,8 @@ function renderCompTabs(){
 }
 
 function switchComp(idx){
-  currentCompIdx=idx;
-  predictSubTab='predictions';
+  currentCompIdx = idx;
+  predictSubTab = 'predictions';
   document.documentElement.style.setProperty('--comp-color', COMPS[idx].color);
   renderCompTabs();
   renderPredict();
@@ -409,20 +613,8 @@ function getDefaultRoundIdx(comp){
 }
 
 function renderPredict(){
-  if(COMPS.length===0){
-    document.getElementById('predict-content').innerHTML = `<div class="empty" style="padding-top:60px;">
-      <div class="empty-icon">🏆</div>
-      <div class="empty-title">No competitions live yet</div>
-      <div class="empty-sub">Check back once the operator has set up their first competition.</div>
-    </div>`;
-    return;
-  }
-
-  if(selectedRound[currentCompIdx]===undefined){
-    selectedRound[currentCompIdx] = getDefaultRoundIdx(COMPS[currentCompIdx]);
-  }
-
   const comp = COMPS[currentCompIdx];
+
   let html = `<div class="predict-subtabs">
     <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button>
     <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
@@ -432,15 +624,18 @@ function renderPredict(){
   document.getElementById('predict-content').innerHTML = html;
 }
 
-function switchPredictSubTab(tab){ predictSubTab=tab; renderPredict(); }
+function switchPredictSubTab(tab){ predictSubTab = tab; renderPredict(); }
 
 function renderPredictionsPane(comp){
   const ri = selectedRound[currentCompIdx];
   const round = comp.rounds[ri];
-  const events = round.eventIds.map(id=>({id, ...EVENTS[id]})).filter(e=>e.home);
+  const events = round.eventIds.map(id=>({id,...EVENTS[id]}));
   const isOpen = round.status==='open';
+  const isLMS = comp.mode==='lms';
 
-  let html = `<div class="round-bar">
+  let html = '';
+
+  html += `<div class="round-bar">
     <div style="display:flex;align-items:center;gap:8px;">
       <span class="round-name">${round.label}</span>
       <span class="round-status ${round.status}">${isOpen?'● Open':'✓ Done'}</span>
@@ -450,45 +645,51 @@ function renderPredictionsPane(comp){
     </select>
   </div>`;
 
-  if(isOpen && round.deadline){
+  if(isOpen){
     html += `<div class="deadline-banner">⏱ &nbsp;Deadline <strong>${round.deadline.replace('T',' · ').slice(0,16)}</strong> — predictions lock at first kick-off.</div>`;
   }
 
-  // Real participation bar (from actual logged predictions)
-  const {usernames} = getRealPlayers();
-  const roundRows = computeRoundRows(comp, round, usernames);
-  const totalParticipated = roundRows.length;
-  const survived = roundRows.filter(r=>r.alive).length;
-  const survivedPct = totalParticipated ? Math.round(survived/totalParticipated*100) : 0;
-  html += `<div class="survival-tracker">
-    <div class="st-label">Competition status · ${comp.name} · ${round.label}</div>
-    <div class="st-bar-wrap">
-      <div class="st-bar-row">
-        <span class="st-bar-label">Participated</span>
-        <div class="st-bar-track"><div class="st-bar-fill participated" style="width:${totalParticipated?100:0}%"></div></div>
-        <span class="st-bar-count">${totalParticipated}</span>
+  if(isLMS){
+    const totalUsers = 312;
+    const survived = 187;
+    const survivedPct = Math.round(survived/totalUsers*100);
+    html += `<div class="survival-tracker">
+      <div class="st-label">Competition status · ${comp.name} · ${round.label}</div>
+      <div class="st-bar-wrap">
+        <div class="st-bar-row">
+          <span class="st-bar-label">Participated</span>
+          <div class="st-bar-track"><div class="st-bar-fill participated" style="width:100%"></div></div>
+          <span class="st-bar-count">${totalUsers.toLocaleString()}</span>
+        </div>
+        <div class="st-bar-row">
+          <span class="st-bar-label">Still alive</span>
+          <div class="st-bar-track"><div class="st-bar-fill survived" style="width:${survivedPct}%"></div></div>
+          <span class="st-bar-count">${survived}<span class="st-alive alive" style="margin-left:6px;">YOU ✓</span></span>
+        </div>
       </div>
-      <div class="st-bar-row">
-        <span class="st-bar-label">Still alive</span>
-        <div class="st-bar-track"><div class="st-bar-fill survived" style="width:${survivedPct}%"></div></div>
-        <span class="st-bar-count">${survived}</span>
-      </div>
-    </div>
-  </div>`;
+    </div>`;
+  }
 
   html += `<div class="events-list">`;
-  if(events.length===0){
-    html += `<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">No events yet</div><div class="empty-sub">The operator hasn't added matches to this round yet. Check back soon.</div></div>`;
-  } else {
-    events.forEach(ev=>{ html += renderEventCard(ev, comp, isOpen); });
-  }
+  events.forEach(ev=>{
+    html += renderEventCard(ev, comp, isOpen);
+  });
   html += `</div>`;
 
-  if(isOpen && events.length>0){
-    const predCount = events.filter(ev=>!!preds[ev.id]).length;
+  if(isOpen){
+    const predCount = events.filter(ev=>{
+      const p = preds[ev.id];
+      if(!p) return false;
+      if(comp.mode==='score') return p.h!==undefined && p.a!==undefined;
+      return !!p;
+    }).length;
     const pct = events.length ? Math.round(predCount/events.length*100) : 0;
+
     html += `<div class="progress-wrap">
-      <div class="progress-meta"><span>${predCount} of ${events.length} predictions made</span><span class="progress-pct">${pct}%</span></div>
+      <div class="progress-meta">
+        <span>${predCount} of ${events.length} predictions made</span>
+        <span class="progress-pct">${pct}%</span>
+      </div>
       <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:var(--comp-color);"></div></div>
       <div class="submit-row">
         <span class="submit-hint">${predCount===events.length?'All done! Submit to confirm.':events.length-predCount+' remaining'}</span>
@@ -501,149 +702,193 @@ function renderPredictionsPane(comp){
 }
 
 function renderEventCard(ev, comp, isOpen){
-  const pred = preds[ev.id] || null;
+  const pred = preds[ev.id] || PAST_PREDS[ev.id] || null;
   const hasRes = !!ev.res;
-  const hasPred = pred!==null && pred!==undefined;
-  const isPredicted = !!pred;
+  const hasPred = pred !== null && pred !== undefined;
+  const isCompleted = !isOpen;
+
+  let isPredicted = false;
+  if(comp.mode==='score') isPredicted = pred && pred.h!==undefined && pred.a!==undefined;
+  else isPredicted = !!pred;
+
   const hi = ev.home.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();
   const ai = ev.away.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();
 
-  let correct=null;
-  if(!isOpen && hasRes && hasPred){
-    const actual = ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
-    correct = pred===actual;
+  let correct = null;
+  if(isCompleted && hasRes && hasPred){
+    if(comp.mode==='lms'||comp.mode==='result'){
+      const actual = ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
+      correct = pred===actual;
+    } else if(comp.mode==='score'){
+      correct = pred && pred.h==ev.res.h && pred.a==ev.res.a;
+    } else if(comp.mode==='ou'){
+      const total = ev.res.h+ev.res.a;
+      const line = ev.line||2.5;
+      correct = (pred==='O'&&total>line)||(pred==='U'&&total<=line);
+    }
   }
 
-  let cls='event-card';
-  if(isOpen && isPredicted) cls+=' predicted';
-  if(!isOpen) cls+=' locked-pred';
+  // Mock prediction count per event
+  const mockPredCounts = {e107:241,e108:238,e109:219,e110:203,e204:168,e205:171,e206:155,e305:289,e306:274,e307:261,e308:293};
+  const predCount = mockPredCounts[ev.id] || Math.floor(Math.random()*200+100);
+  const totalUsers = 312;
+  const predPct = Math.round(predCount/totalUsers*100);
 
-  let html = `<div class="${cls}">
+  let cardCls = 'event-card';
+  if(isOpen && isPredicted) cardCls += ' predicted';
+  if(isCompleted) cardCls += ' locked-pred';
+
+  let html = `<div class="${cardCls}">
     <div class="event-card-top">
       <div class="event-meta">
-        <span class="event-league">${comp.name}</span>
+        <span class="event-league">${ev.lg||comp.name}</span>
         <span class="event-kickoff">${ev.kickoff}${hasRes?` · FT: ${ev.res.h}–${ev.res.a}`:''}</span>
       </div>
       <div class="event-teams">
-        <div class="ev-team"><div class="ev-badge">${hi}</div><span class="ev-name">${ev.home}</span></div>
+        <div class="ev-team">
+          <div class="ev-badge">${hi}</div>
+          <span class="ev-name">${ev.home}</span>
+        </div>
         <div class="ev-vs">${hasRes?'':'vs'}</div>
-        ${hasRes?`<div class="ev-score">${ev.res.h}–${ev.res.a}</div>`:`<div class="ev-vs">vs</div>`}
-        <div class="ev-team away"><div class="ev-badge">${ai}</div><span class="ev-name">${ev.away}</span></div>
+        ${hasRes?`<div class="ev-score">${ev.res.h}–${ev.res.a}</div>`:
+          `<div class="ev-vs">vs</div>`}
+        <div class="ev-team away">
+          <div class="ev-badge">${ai}</div>
+          <span class="ev-name">${ev.away}</span>
+        </div>
+      </div>
+      <div class="ev-pred-count">
+        <div class="ev-pred-bar"><div class="ev-pred-bar-fill" style="width:${predPct}%"></div></div>
+        <strong>${predCount}</strong> predictions
       </div>
     </div>`;
 
   html += `<div class="pred-area">`;
+
   if(isOpen){
-    html += `<div class="pred-label">Your pick</div>
-    <div class="btns-1x2">
-      <button class="btn-1x2${pred==='H'?' selected':''}" onclick="pick('${ev.id}','H')">${ev.home.split(' ')[0]}<span class="sub">Home Win</span></button>
-      <button class="btn-1x2${pred==='D'?' selected':''}" onclick="pick('${ev.id}','D')">X<span class="sub">Draw</span></button>
-      <button class="btn-1x2${pred==='A'?' selected':''}" onclick="pick('${ev.id}','A')">${ev.away.split(' ').pop()}<span class="sub">Away Win</span></button>
-    </div>`;
-  } else if(hasPred){
-    const predLabel = pred==='H'?`${ev.home} (Home)`:pred==='D'?'Draw':`${ev.away} (Away)`;
-    html += `<div class="pred-result-row">
-      <div class="pred-made">Your pick: <strong>${predLabel}</strong></div>
-      ${correct!==null?`<span class="pred-correct ${correct?'yes':'no'}">${correct?'✓ Correct':'✗ Wrong'}</span>`:''}
-    </div>`;
+    if(comp.mode==='lms'||comp.mode==='result'){
+      html += `<div class="pred-label">Your pick</div>
+      <div class="btns-1x2">
+        <button class="btn-1x2${pred==='H'?' selected':''}" onclick="pick('${ev.id}','H')">
+          ${ev.home.split(' ')[0]}<span class="sub">Home Win</span>
+        </button>
+        <button class="btn-1x2${pred==='D'?' selected':''}" onclick="pick('${ev.id}','D')">
+          X<span class="sub">Draw</span>
+        </button>
+        <button class="btn-1x2${pred==='A'?' selected':''}" onclick="pick('${ev.id}','A')">
+          ${ev.away.split(' ').pop()}<span class="sub">Away Win</span>
+        </button>
+      </div>`;
+    }
+
+    if(comp.mode==='score'){
+      const hv = (pred&&pred.h!==undefined)?pred.h:'';
+      const av = (pred&&pred.a!==undefined)?pred.a:'';
+      html += `<div class="pred-label">Exact score</div>
+      <div class="score-pred">
+        <div class="score-side">
+          <span class="score-side-name">${ev.home}</span>
+          <input class="score-num${hv!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${hv}"
+            id="sh-${ev.id}" oninput="pickScore('${ev.id}','h',this.value)">
+        </div>
+        <span class="score-dash">–</span>
+        <div class="score-side right">
+          <span class="score-side-name">${ev.away}</span>
+          <input class="score-num${av!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${av}"
+            id="sa-${ev.id}" oninput="pickScore('${ev.id}','a',this.value)">
+        </div>
+      </div>`;
+    }
+
+    if(comp.mode==='ou'){
+      const line = ev.line||2.5;
+      html += `<div class="pred-label">Over / Under ${line} goals</div>
+      <div class="btns-ou">
+        <button class="btn-ou over${pred==='O'?' selected':''}" onclick="pick('${ev.id}','O')">
+          OVER<span class="sub">${line}+ goals</span>
+        </button>
+        <button class="btn-ou under${pred==='U'?' selected':''}" onclick="pick('${ev.id}','U')">
+          UNDER<span class="sub">${line} or less</span>
+        </button>
+      </div>`;
+    }
+
   } else {
-    html += `<div style="font-size:11px;color:var(--text-3);">No prediction made for this match.</div>`;
+    if(hasPred){
+      let predLabel='';
+      if(comp.mode==='lms'||comp.mode==='result'){
+        predLabel = pred==='H'?`${ev.home} (Home)`:pred==='D'?'Draw':`${ev.away} (Away)`;
+      } else if(comp.mode==='score'){
+        predLabel = `${pred.h ?? '-'} – ${pred.a ?? '-'}`;
+      } else if(comp.mode==='ou'){
+        predLabel = pred==='O'?`Over ${ev.line||2.5}`:`Under ${ev.line||2.5}`;
+      }
+
+      html += `<div class="pred-result-row">
+        <div class="pred-made">Your pick: <strong>${predLabel}</strong></div>
+        ${correct!==null?`<span class="pred-correct ${correct?'yes':'no'}">${correct?'✓ Correct':'✗ Wrong'}</span>`:''}
+      </div>`;
+    } else {
+      html += `<div style="font-size:11px;color:var(--text-3);">No prediction made for this match.</div>`;
+    }
   }
+
   html += `</div></div>`;
   return html;
 }
 
-function pick(id,val){ preds[id]=val; savePreds(); renderPredict(); }
-
-function changeRound(idx){ selectedRound[currentCompIdx]=parseInt(idx); renderPredict(); }
-
-function submitPreds(){ savePreds(); toast('✓ Predictions submitted!'); renderPredict(); }
-
-function savePreds(){ if(currentUser) localStorage.setItem('gw_preds_'+currentUser, JSON.stringify(preds)); }
-
-// ── REAL LEADERBOARD COMPUTATION ─────────────────────────────────────────────
-function getRealPlayers(){
-  const usersStore = JSON.parse(localStorage.getItem('gw_users')||'{}');
-  const all = Object.keys(usersStore);
-  const usernames = all.filter(u=>{
-    try{ const p=JSON.parse(localStorage.getItem('gw_preds_'+u)||'{}'); return Object.keys(p).length>0; }
-    catch(e){ return false; }
-  });
-  return {usernames};
+function pick(id, val){
+  if(!currentUser){openAuthModal('Sign in to make predictions');return;}
+  preds[id]=val;
+  savePreds();
+  renderPredict();
 }
 
-function getUserPicks(u){
-  try{ return JSON.parse(localStorage.getItem('gw_preds_'+u)||'{}'); }catch(e){ return {}; }
+function pickScore(id, side, val){
+  if(!preds[id]||typeof preds[id]!=='object') preds[id]={};
+  preds[id][side] = val===''?undefined:parseInt(val);
+  savePreds();
+  const comp = COMPS[currentCompIdx];
+  const ri = selectedRound[currentCompIdx];
+  const round = comp.rounds[ri];
+  const events = round.eventIds.map(eid=>({id:eid,...EVENTS[eid]}));
+  const predCount = events.filter(ev=>{
+    const p=preds[ev.id]||PAST_PREDS[ev.id];
+    if(!p) return false;
+    if(comp.mode==='score') return p.h!==undefined&&p.a!==undefined;
+    return !!p;
+  }).length;
+  const pct = events.length?Math.round(predCount/events.length*100):0;
+  const fill = document.querySelector('.progress-fill');
+  const meta = document.querySelector('.progress-meta span:first-child');
+  const pctEl = document.querySelector('.progress-pct');
+  const btn = document.querySelector('.submit-btn');
+  if(fill) fill.style.width=pct+'%';
+  if(meta) meta.textContent=`${predCount} of ${events.length} predictions made`;
+  if(pctEl) pctEl.textContent=pct+'%';
+  if(btn) btn.disabled=predCount===0;
+  const input = document.getElementById((side==='h'?'sh-':'sa-')+id);
+  if(input) input.classList.toggle('has', val!=='');
 }
 
-// Compute participation/alive rows for ONE specific round (used by survival bar + weekly table)
-function computeRoundRows(comp, round, usernames){
-  const alive={}; usernames.forEach(u=>alive[u]=true);
-  let rows=[];
-  for(const r of comp.rounds){
-    const isTarget = r.id===round.id;
-    const roundRows=[];
-    usernames.forEach(u=>{
-      if(!alive[u] && !isTarget) return;
-      const picks=getUserPicks(u);
-      const made = r.eventIds.filter(eid=>picks[eid]).length;
-      if(made===0){ return; }
-      let stillAlive=alive[u];
-      if(stillAlive){
-        for(const eid of r.eventIds){
-          const res=EVENTS_RAW[eid];
-          if(res){
-            const actual = res.h>res.a?'H':res.h<res.a?'A':'D';
-            const p = picks[eid];
-            if(!p || p!==actual){ stillAlive=false; break; }
-          }
-        }
-      }
-      roundRows.push({u, predictions:made, alive:stillAlive});
-      alive[u]=stillAlive;
-    });
-    if(isTarget){ rows=roundRows; break; }
-  }
-  return rows;
+function changeRound(idx){
+  selectedRound[currentCompIdx]=parseInt(idx);
+  renderPredict();
 }
 
-function computeOverallRows(comp, usernames){
-  const alive={}; usernames.forEach(u=>alive[u]=true);
-  const survived={}; usernames.forEach(u=>survived[u]=0);
-  const predSum={}; usernames.forEach(u=>predSum[u]=0);
-  const roundsPlayed={}; usernames.forEach(u=>roundsPlayed[u]=0);
-
-  comp.rounds.forEach(r=>{
-    usernames.forEach(u=>{
-      if(!alive[u]) return;
-      const picks=getUserPicks(u);
-      const made = r.eventIds.filter(eid=>picks[eid]).length;
-      if(made===0) return;
-      let stillAlive=true;
-      for(const eid of r.eventIds){
-        const res=EVENTS_RAW[eid];
-        if(res){
-          const actual = res.h>res.a?'H':res.h<res.a?'A':'D';
-          const p=picks[eid];
-          if(!p||p!==actual){ stillAlive=false; break; }
-        }
-      }
-      predSum[u]+=made;
-      roundsPlayed[u]+=1;
-      if(stillAlive) survived[u]+=1;
-      alive[u]=stillAlive;
-    });
-  });
-
-  return usernames
-    .filter(u=>roundsPlayed[u]>0)
-    .map(u=>({u, survived:survived[u], avgPredictions: roundsPlayed[u]?predSum[u]/roundsPlayed[u]:0}));
+function submitPreds(){
+  savePreds();
+  toast('✓ Predictions submitted!');
 }
 
-// ── LEADERBOARD PANE ──────────────────────────────────────────────────────
+function savePreds(){
+  if(currentUser) localStorage.setItem('gw_preds_'+currentUser, JSON.stringify(preds));
+}
+
+// ── LEADERBOARD PANE (per-competition, contextual) ──────────────────────────
 function renderLeaderboardPane(comp){
   if(lbSelection[currentCompIdx]===undefined){
-    lbSelection[currentCompIdx]=getDefaultRoundIdx(comp);
+    lbSelection[currentCompIdx] = getDefaultRoundIdx(comp);
   }
   const sel = lbSelection[currentCompIdx];
   const isOverall = sel==='overall';
@@ -656,64 +901,110 @@ function renderLeaderboardPane(comp){
   </div>`;
 
   html += `<div class="lb-pane">`;
-  const {usernames} = getRealPlayers();
-
-  if(isOverall){
-    const rows = computeOverallRows(comp, usernames);
-    if(rows.length===0){
-      html += `<div class="empty"><div class="empty-icon">🏆</div><div class="empty-title">No predictions yet</div><div class="empty-sub">Once players start predicting, season standings will appear here.</div></div>`;
-    } else {
-      rows.sort((a,b)=> b.survived-a.survived || b.avgPredictions-a.avgPredictions);
-      let rank=1; rows.forEach((r,i)=>{ if(i>0 && rows[i].survived<rows[i-1].survived) rank=i+1; r.rank=rank; });
-      html += `<div class="lb-wrap">
-        <div class="lb-table-head"><span class="lb-table-head-title">${comp.name}</span><span class="lb-table-head-sub">Overall</span></div>
-        <table class="lb-table"><thead><tr>
-          <th style="width:32px;text-align:center">#</th><th>Player</th><th class="r">Survived</th><th class="r">Avg Preds/Wk</th>
-        </tr></thead><tbody>`;
-      rows.forEach(row=>{
-        const isMe=row.u===currentUser, ini=row.u.slice(0,2).toUpperCase();
-        html += `<tr class="${isMe?'me':''}">
-          <td class="lb-rank ${row.rank<=3?'top':''}">${row.rank<=3?MEDALS[row.rank-1]:row.rank}</td>
-          <td><div class="lb-user"><div class="lb-av ${isMe?'me':''}">${ini}</div><span class="lb-uname ${isMe?'me':''}">${row.u}${isMe?'<span class="you-tag">YOU</span>':''}</span></div></td>
-          <td class="lb-num">${row.survived}</td>
-          <td class="lb-pts">${row.avgPredictions.toFixed(1)}</td>
-        </tr>`;
-      });
-      html += `</tbody></table></div>`;
-    }
-  } else {
-    const round = comp.rounds[sel];
-    const rows = computeRoundRows(comp, round, usernames);
-    if(rows.length===0){
-      html += `<div class="empty"><div class="empty-icon">🏆</div><div class="empty-title">No predictions yet</div><div class="empty-sub">Be the first to predict ${round.label} and top the board.</div></div>`;
-    } else {
-      const totalEvents = round.eventIds.length;
-      rows.sort((a,b)=>b.predictions-a.predictions);
-      let rank=1; rows.forEach((r,i)=>{ if(i>0 && rows[i].predictions<rows[i-1].predictions) rank=i+1; r.rank=rank; });
-      html += `<div class="lb-wrap">
-        <div class="lb-table-head"><span class="lb-table-head-title">${comp.name}</span><span class="lb-table-head-sub">${round.label} · this week</span></div>
-        <table class="lb-table"><thead><tr>
-          <th style="width:32px;text-align:center">#</th><th>Player</th><th class="r">Predictions</th><th style="text-align:center">Last Man</th>
-        </tr></thead><tbody>`;
-      rows.forEach(row=>{
-        const isMe=row.u===currentUser, ini=row.u.slice(0,2).toUpperCase();
-        html += `<tr class="${isMe?'me':''}">
-          <td class="lb-rank ${row.rank<=3?'top':''}">${row.rank<=3?MEDALS[row.rank-1]:row.rank}</td>
-          <td><div class="lb-user"><div class="lb-av ${isMe?'me':''}">${ini}</div><span class="lb-uname ${isMe?'me':''}">${row.u}${isMe?'<span class="you-tag">YOU</span>':''}</span></div></td>
-          <td class="lb-num">${row.predictions} / ${totalEvents}</td>
-          <td style="text-align:center"><span class="alive-tag ${row.alive?'alive':'out'}">${row.alive?'YES':'NO'}</span></td>
-        </tr>`;
-      });
-      html += `</tbody></table></div>`;
-    }
-  }
+  html += comp.mode==='lms' ? renderLMSLeaderboard(comp, sel, isOverall) : renderStandardLeaderboard(comp, sel, isOverall);
   html += `</div>`;
+
   return html;
 }
 
 function changeLBSelection(val){
   lbSelection[currentCompIdx] = val==='overall' ? 'overall' : parseInt(val);
   renderPredict();
+}
+
+function renderLMSLeaderboard(comp, sel, isOverall){
+  const lms = LMS_DATA[comp.id];
+  if(!lms){
+    return `<div class="empty"><div class="empty-icon">🏆</div><div class="empty-title">No leaderboard data yet</div><div class="empty-sub">Check back once this round closes.</div></div>`;
+  }
+
+  if(isOverall){
+    let rows = lms.overall.map(r=>({...r}));
+    if(!rows.find(r=>r.u===currentUser)) rows.push({u:currentUser,survived:0,avgPredictions:0,isNew:true});
+    rows.sort((a,b)=> b.survived-a.survived || b.avgPredictions-a.avgPredictions);
+    let rank=1;
+    rows.forEach((r,i)=>{ if(i>0 && rows[i].survived<rows[i-1].survived) rank=i+1; r.rank=rank; });
+
+    let html = `<div class="lb-wrap">
+      <div class="lb-table-head"><span class="lb-table-head-title">${comp.name}</span><span class="lb-table-head-sub">Season 2025/26 · overall</span></div>
+      <table class="lb-table"><thead><tr>
+        <th style="width:32px;text-align:center">#</th><th>Player</th>
+        <th class="r">Survived</th><th class="r">Avg Preds/Wk</th>
+      </tr></thead><tbody>`;
+    rows.forEach(row=>{
+      const isMe = row.u===currentUser;
+      const ini = row.u.slice(0,2).toUpperCase();
+      html += `<tr class="${isMe?'me':''}">
+        <td class="lb-rank ${row.rank<=3?'top':''}">${row.rank<=3?MEDALS[row.rank-1]:row.rank}</td>
+        <td><div class="lb-user"><div class="lb-av ${isMe?'me':''}">${ini}</div><span class="lb-uname ${isMe?'me':''}">${row.u}${isMe?'<span class="you-tag">YOU</span>':''}</span></div></td>
+        <td class="lb-num">${row.survived}</td>
+        <td class="lb-pts">${row.avgPredictions.toFixed(1)}</td>
+      </tr>`;
+    });
+    html += `</tbody></table></div>`;
+    return html;
+  }
+
+  const round = comp.rounds[sel];
+  const totalEvents = round.eventIds.length;
+  let rows = (lms.rounds[round.id]||[]).map(r=>({...r}));
+  if(!rows.find(r=>r.u===currentUser)) rows.push({u:currentUser,predictions:0,alive:true,isNew:true});
+  rows.sort((a,b)=>b.predictions-a.predictions);
+  let rank=1;
+  rows.forEach((r,i)=>{ if(i>0 && rows[i].predictions<rows[i-1].predictions) rank=i+1; r.rank=rank; });
+
+  if(rows.every(r=>r.predictions===0)){
+    return `<div class="empty"><div class="empty-icon">🏆</div><div class="empty-title">No predictions yet</div><div class="empty-sub">Be the first to predict ${round.label} and top the board.</div></div>`;
+  }
+
+  let html = `<div class="lb-wrap">
+    <div class="lb-table-head"><span class="lb-table-head-title">${comp.name}</span><span class="lb-table-head-sub">${round.label} · this week</span></div>
+    <table class="lb-table"><thead><tr>
+      <th style="width:32px;text-align:center">#</th><th>Player</th>
+      <th class="r">Predictions</th><th style="text-align:center">Last Man</th>
+    </tr></thead><tbody>`;
+  rows.forEach(row=>{
+    const isMe = row.u===currentUser;
+    const ini = row.u.slice(0,2).toUpperCase();
+    html += `<tr class="${isMe?'me':''}">
+      <td class="lb-rank ${row.rank<=3?'top':''}">${row.rank<=3?MEDALS[row.rank-1]:row.rank}</td>
+      <td><div class="lb-user"><div class="lb-av ${isMe?'me':''}">${ini}</div><span class="lb-uname ${isMe?'me':''}">${row.u}${isMe?'<span class="you-tag">YOU</span>':''}</span></div></td>
+      <td class="lb-num">${row.predictions} / ${totalEvents}</td>
+      <td style="text-align:center"><span class="alive-tag ${row.alive?'alive':'out'}">${row.alive?'YES':'NO'}</span></td>
+    </tr>`;
+  });
+  html += `</tbody></table></div>`;
+  return html;
+}
+
+function renderStandardLeaderboard(comp, sel, isOverall){
+  const data = isOverall ? comp.lbOverall : comp.lbWeekly;
+  let rows = (data||[]).map(r=>({...r}));
+  if(!rows.find(r=>r.u===currentUser)) rows.push({u:currentUser,pts:0,c:0,isNew:true});
+  rows.sort((a,b)=>b.pts-a.pts);
+  let rank=1;
+  rows.forEach((r,i)=>{ if(i>0 && rows[i].pts<rows[i-1].pts) rank=i+1; r.rank=rank; });
+
+  const subLabel = isOverall ? 'Season 2025/26 · overall' : `${comp.rounds[sel].label} · this week`;
+
+  let html = `<div class="lb-wrap">
+    <div class="lb-table-head"><span class="lb-table-head-title">${comp.name}</span><span class="lb-table-head-sub">${subLabel}</span></div>
+    <table class="lb-table"><thead><tr>
+      <th style="width:32px;text-align:center">#</th><th>Player</th>
+      <th class="r">Correct</th><th class="r">Pts</th>
+    </tr></thead><tbody>`;
+  rows.forEach(row=>{
+    const isMe = row.u===currentUser;
+    const ini = row.u.slice(0,2).toUpperCase();
+    html += `<tr class="${isMe?'me':''}">
+      <td class="lb-rank ${row.rank<=3?'top':''}">${row.rank<=3?MEDALS[row.rank-1]:row.rank}</td>
+      <td><div class="lb-user"><div class="lb-av ${isMe?'me':''}">${ini}</div><span class="lb-uname ${isMe?'me':''}">${row.u}${isMe?'<span class="you-tag">YOU</span>':''}</span></div></td>
+      <td class="lb-num">${row.c}</td>
+      <td class="lb-pts">${row.pts}</td>
+    </tr>`;
+  });
+  html += `</tbody></table></div>`;
+  return html;
 }
 
 // ── PROFILE ───────────────────────────────────────────────────────────────
@@ -723,18 +1014,41 @@ function renderProfile(){
   const user = stored[currentUser]||{};
   const joined = user.joined ? new Date(user.joined).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : 'Today';
 
-  const totalPreds = Object.keys(getUserPicks(currentUser)).length;
+  let totalPts=0, totalCorrect=0;
+  COMPS.forEach(comp=>{
+    const row = comp.lbOverall.find(r=>r.u===currentUser)||{pts:0,c:0};
+    totalPts+=row.pts; totalCorrect+=row.c;
+  });
 
   let html = `<div class="profile-header">
     <div class="profile-av">${ini}</div>
     <div class="profile-name">${currentUser}</div>
     <div class="profile-joined">Joined ${joined}</div>
   </div>
+
   <div class="profile-stats">
-    <div class="profile-stat"><div class="ps-val">${totalPreds}</div><div class="ps-label">Predictions made</div></div>
+    <div class="profile-stat"><div class="ps-val">${totalPts}</div><div class="ps-label">Total pts</div></div>
+    <div class="profile-stat"><div class="ps-val">${totalCorrect}</div><div class="ps-label">Correct</div></div>
     <div class="profile-stat"><div class="ps-val">${COMPS.length}</div><div class="ps-label">Competitions</div></div>
-    <div class="profile-stat"><div class="ps-val">${COMPS.filter(c=>c.rounds.some(r=>r.status==='open')).length}</div><div class="ps-label">Active rounds</div></div>
   </div>
+
+  <div class="profile-section">
+    <div class="profile-section-title">Your Competitions</div>
+    ${COMPS.map(comp=>{
+      const row = comp.lbOverall.find(r=>r.u===currentUser);
+      const pts = row?row.pts:0;
+      const allRows = [...comp.lbOverall].sort((a,b)=>b.pts-a.pts);
+      let rank = allRows.findIndex(r=>r.u===currentUser)+1;
+      if(rank===0) rank = allRows.length+1;
+      return `<div class="profile-comp-row">
+        <div class="pcr-dot" style="background:${comp.color}"></div>
+        <div class="pcr-name">${comp.name} <span style="font-size:9px;font-family:var(--mono);background:var(--bg);color:var(--text-3);padding:1px 5px;border-radius:3px;">${comp.short}</span></div>
+        <div class="pcr-rank">#${rank}</div>
+        <div class="pcr-pts">${pts} pts</div>
+      </div>`;
+    }).join('')}
+  </div>
+
   <div class="profile-section">
     <div class="profile-section-title">Account</div>
     <div style="font-size:12px;color:var(--text-2);margin-bottom:14px;">
@@ -743,6 +1057,7 @@ function renderProfile(){
     </div>
     <button class="logout-btn" onclick="doLogout()">Sign out</button>
   </div>`;
+
   document.getElementById('profile-content').innerHTML=html;
 }
 
@@ -750,19 +1065,21 @@ function renderProfile(){
 let toastT;
 function toast(msg){
   const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2200);
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>t.classList.remove('show'),2200);
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────
 const session = localStorage.getItem('gw_session');
 if(session){
-  currentUser=session;
+  currentUser = session;
   preds = JSON.parse(localStorage.getItem('gw_preds_'+session)||'{}');
-  showApp();
-} else {
-  showAuth();
 }
+updateHeaderUser();
+renderCompTabs();
+goTab('predict');
 </script>
 </body>
 </html>

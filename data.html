@@ -299,14 +299,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
         <div><label class="form-label">Country / Region</label><input class="form-input" id="nt-country" placeholder="e.g. England" /></div>
         <div><label class="form-label">Type</label><select class="form-select" id="nt-type"><option value="league">League</option><option value="cup">Cup</option><option value="international">International</option></select></div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Badge Colour</label>
-        <div class="color-row">
-          <input type="color" class="color-picker" id="nt-color" value="#4F46E5">
-          <input class="form-input" id="nt-color-hex" value="#4F46E5" style="font-family:var(--mono);font-size:12px;max-width:110px;" oninput="syncColor('nt')">
-        </div>
-        <div class="swatches" id="nt-swatches"></div>
-      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-create-tournament')">Cancel</button>
@@ -756,7 +748,7 @@ function removeEventFromRound(eid){
 function createTournament(){
   const name=document.getElementById('nt-name').value.trim();
   if(!name){toast('Enter tournament name');return;}
-  const t={id:'t'+uid(),name,country:document.getElementById('nt-country').value.trim()||'—',type:document.getElementById('nt-type').value,color:document.getElementById('nt-color').value,seasons:{'2026/27':{teamIds:[],rounds:[]}}};
+  const t={id:'t'+uid(),name,country:document.getElementById('nt-country').value.trim()||'—',type:document.getElementById('nt-type').value,color:'#4F46E5',seasons:{'2026/27':{teamIds:[],rounds:[]}}};
   S.tournaments.push(t);closeModal('modal-create-tournament');
   document.getElementById('nt-name').value='';document.getElementById('nt-country').value='';
   save();renderTournamentNav();navTo('tournament',t.id);toast(name+' created');
