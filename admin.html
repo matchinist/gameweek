@@ -734,65 +734,72 @@ tbody tr:hover td{background:var(--bg);}
 <div id="toast"></div>
 
 <!-- ══ JS ══ -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ── OPERATOR AUTH GUARD ──────────────────────────────────────────────────
+// ── SUPABASE ──────────────────────────────────────────────────────────────
+const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ── AUTH GUARD (async, runs at page load) ────────────────────────────────
+let currentOperator = null;
+let CLIENT_KEY = null;
 const opSession = localStorage.getItem('gw_op_session');
-if(!opSession){
-  window.location.href = 'landing.html';
-  throw new Error('Redirecting to landing — not signed in');
-}
-const operators = JSON.parse(localStorage.getItem('gw_operators')||'{}');
-const currentOperator = operators[opSession];
-if(!currentOperator){
-  localStorage.removeItem('gw_op_session');
-  window.location.href = 'landing.html';
-  throw new Error('Redirecting to landing — operator record missing');
-}
-const CLIENT_KEY = currentOperator.clientKey;
+if(!opSession){ window.location.href='landing.html'; }
 
 function signOutOperator(){
   localStorage.removeItem('gw_op_session');
   window.location.href = 'landing.html';
 }
 
-// ── STATE (persisted per-operator) ──────────────────────────────────────────
-const DEFAULT_ADMIN_STATE = {
+// ── IN-MEMORY STATE ───────────────────────────────────────────────────────
+const state = {
+  currentComp: null,
+  resultEventId: null,
+  eventFilter: '',
   competitions: [],
   events: [],
   domains: []
 };
 
-function loadAdminState(){
+// DM data loaded into memory so round modal stays synchronous
+let dmState = { teams:[], tournaments:[], events:{} };
+
+// ── SUPABASE SAVE ─────────────────────────────────────────────────────────
+async function saveAdminState(){
+  if(!CLIENT_KEY) return;
   try{
-    const raw = localStorage.getItem('gw_admin_state_'+CLIENT_KEY);
-    if(raw) return JSON.parse(raw);
-  }catch(e){}
-  return JSON.parse(JSON.stringify(DEFAULT_ADMIN_STATE));
+    // Upsert competitions
+    if(state.competitions.length){
+      const compRows = state.competitions.map(c=>({
+        id:c.id, client_key:CLIENT_KEY, name:c.name, mode:c.mode,
+        color:c.color, status:c.status, long_term:c.longTerm||false,
+        scoring:c.scoring||null, markets:c.markets||null,
+        users:c.users||0, predictions:c.predictions||0
+      }));
+      await supa.from('gw_competitions').upsert(compRows,{onConflict:'id'});
+    }
+    // Upsert all rounds across all competitions
+    const allRounds = state.competitions.flatMap((c,ci)=>
+      (c.rounds||[]).map((r,ri)=>({
+        id:r.id, competition_id:c.id, client_key:CLIENT_KEY,
+        label:r.label, status:r.status, deadline:r.deadline||'',
+        event_ids:r.eventIds||[], tournament_ids:r.tournamentIds||[],
+        tournament_names:r.tournamentNames||[], sort_order:ri
+      }))
+    );
+    if(allRounds.length) await supa.from('gw_rounds').upsert(allRounds,{onConflict:'id'});
+  }catch(e){ console.error('saveAdminState failed:',e.message); }
 }
 
-function saveAdminState(){
-  try{
-    localStorage.setItem('gw_admin_state_'+CLIENT_KEY, JSON.stringify({
-      competitions: state.competitions,
-      events: state.events,
-      domains: state.domains
-    }));
-  }catch(e){ console.error('Save failed', e); }
-}
-
-const _persisted = loadAdminState();
-const state = {
-  currentComp: null,
-  resultEventId: null,
-  eventFilter: '',
-  competitions: _persisted.competitions,
-  events: _persisted.events,
-  domains: _persisted.domains
-};
+// ── DM HELPERS (read from in-memory dmState) ──────────────────────────────
+function getDMTournaments(){ return dmState.tournaments||[]; }
+function getDMEvents(){ return dmState.events||{}; }
+function getDMTeams(){ return dmState.teams||[]; }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
-const modeLabel = {lms:'Last Man Standing', score:'Score Predictor', ou:'Over / Under'};
-const modeChip  = {lms:'LMS', score:'SCORE', ou:'O/U'};
+const modeLabel = {lms:'Last Man Standing', score:'Score Predictor', betting:'Betting Markets'};
+const modeChip  = {lms:'LMS', score:'SCORE', betting:'BET'};
 
 function getEvent(id){ return state.events.find(e=>e.id===id); }
 function getComp(id){ return state.competitions.find(c=>c.id===id); }
@@ -1302,7 +1309,9 @@ function setCompStatus(id,status){
 }
 
 function deleteComp(id){
+  if(!confirm('Delete this competition and all its rounds?')) return;
   state.competitions = state.competitions.filter(c=>c.id!==id);
+  supa.from('gw_competitions').delete().eq('id',id).then(()=>{});
   saveAdminState();
   nav('competitions');
   toast('Competition deleted');
@@ -1394,29 +1403,74 @@ function toast(msg){
 }
 
 function renderSettings(){
-  document.getElementById('settings-email').value = opSession;
-  document.getElementById('settings-company').value = currentOperator.companyName;
+  document.getElementById('settings-email').value = opSession||'';
+  document.getElementById('settings-company').value = currentOperator?.company_name||'';
 }
 
-function saveSettingsAccount(){
+async function saveSettingsAccount(){
   const newCompany = document.getElementById('settings-company').value.trim();
   if(!newCompany){ toast('Company name cannot be empty'); return; }
-  currentOperator.companyName = newCompany;
-  operators[opSession] = currentOperator;
-  localStorage.setItem('gw_operators', JSON.stringify(operators));
+  await supa.from('gw_operators').update({company_name:newCompany}).eq('email',opSession);
+  currentOperator.company_name = newCompany;
   initOperatorChrome();
   toast('Account saved');
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────
 function initOperatorChrome(){
-  document.getElementById('sidebar-company').textContent = currentOperator.companyName;
-  const initials = currentOperator.companyName.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const name = currentOperator?.company_name || opSession;
+  document.getElementById('sidebar-company').textContent = name;
+  const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   document.getElementById('topbar-avatar').textContent = initials;
   document.getElementById('topbar-view-demo').href = `https://matchinist.github.io/gameweek/live.html?client=${CLIENT_KEY}`;
 }
-initOperatorChrome();
-renderDashboard();
+
+(async ()=>{
+  if(!opSession){ window.location.href='landing.html'; return; }
+
+  // Load operator from Supabase
+  const {data:op, error:opErr} = await supa.from('gw_operators')
+    .select('*').eq('email',opSession).single();
+  if(opErr||!op){
+    localStorage.removeItem('gw_op_session');
+    window.location.href='landing.html'; return;
+  }
+  currentOperator = op;
+  CLIENT_KEY = op.client_key;
+
+  // Load competitions + rounds from Supabase
+  const [{data:comps},{data:rounds}] = await Promise.all([
+    supa.from('gw_competitions').select('*').eq('client_key',CLIENT_KEY),
+    supa.from('gw_rounds').select('*').eq('client_key',CLIENT_KEY).order('sort_order'),
+  ]);
+  state.competitions = (comps||[]).map(c=>({
+    id:c.id, name:c.name, mode:c.mode, color:c.color, status:c.status,
+    longTerm:c.long_term, scoring:c.scoring, markets:c.markets,
+    users:c.users, predictions:c.predictions,
+    rounds: (rounds||[]).filter(r=>r.competition_id===c.id).map(r=>({
+      id:r.id, label:r.label, status:r.status, deadline:r.deadline||'',
+      eventIds:r.event_ids||[], tournamentIds:r.tournament_ids||[],
+      tournamentNames:r.tournament_names||[]
+    }))
+  }));
+
+  // Load DM data into memory
+  const [{data:teams},{data:tournaments},{data:events}] = await Promise.all([
+    supa.from('gw_dm_teams').select('*').eq('client_key',CLIENT_KEY),
+    supa.from('gw_dm_tournaments').select('*').eq('client_key',CLIENT_KEY),
+    supa.from('gw_dm_events').select('*').eq('client_key',CLIENT_KEY),
+  ]);
+  dmState.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color}));
+  dmState.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,color:t.color,seasons:t.seasons||{}}));
+  const evMap = {};
+  (events||[]).forEach(e=>{
+    evMap[e.id]={homeId:e.home_id,awayId:e.away_id,kickoff:e.kickoff,result:e.result,status:e.status,line:e.line||2.5};
+  });
+  dmState.events = evMap;
+
+  initOperatorChrome();
+  renderDashboard();
+})();
 </script>
 </body>
 </html>

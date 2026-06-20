@@ -1225,6 +1225,7 @@
 </footer>
 
 <!-- ── LIVE FEED ANIMATION ── -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   const feedData = [
     { user: 'footy_oracle',  text: 'picked', match: 'Arsenal vs Man City', badge: 'HOME', cls: 'home' },
@@ -1293,7 +1294,11 @@
   }
   setInterval(cyclePick, 3000);
 
-  // ── OPERATOR AUTH (sign up / log in) ──────────────────────────────────────
+  // ── SUPABASE ─────────────────────────────────────────────────────────────
+  const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
+  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
+  const supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
   function genClientKey(company){
     const slug = (company||'op').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,3) || 'gw';
     const rand = Math.random().toString(36).slice(2,8);
@@ -1316,44 +1321,41 @@
     document.getElementById('login-error').textContent='';
   }
 
-  function doSignup(){
+  async function doSignup(){
     const company = document.getElementById('su-company').value.trim();
-    const email = document.getElementById('su-email').value.trim().toLowerCase();
-    const password = document.getElementById('su-password').value;
-    const errEl = document.getElementById('signup-error');
-
-    if(!company || !email || !password){ errEl.textContent = 'All fields are required.'; return; }
-    if(password.length < 6){ errEl.textContent = 'Password must be at least 6 characters.'; return; }
-
-    const operators = JSON.parse(localStorage.getItem('gw_operators')||'{}');
-    if(operators[email]){ errEl.textContent = 'An account with this email already exists.'; return; }
-
+    const email   = document.getElementById('su-email').value.trim().toLowerCase();
+    const password= document.getElementById('su-password').value;
+    const errEl   = document.getElementById('signup-error');
+    if(!company||!email||!password){ errEl.textContent='All fields are required.'; return; }
+    if(password.length<6){ errEl.textContent='Password must be at least 6 characters.'; return; }
+    errEl.textContent='Creating account…';
     const clientKey = genClientKey(company);
-    operators[email] = {
-      password, companyName: company, clientKey,
-      plan: null, createdAt: new Date().toISOString()
-    };
-    localStorage.setItem('gw_operators', JSON.stringify(operators));
-    localStorage.setItem('gw_op_session', email);
-    window.location.href = 'admin.html';
-  }
-
-  function doOperatorLogin(){
-    const email = document.getElementById('li-email').value.trim().toLowerCase();
-    const password = document.getElementById('li-password').value;
-    const errEl = document.getElementById('login-error');
-
-    if(!email || !password){ errEl.textContent = 'Enter your email and password.'; return; }
-
-    const operators = JSON.parse(localStorage.getItem('gw_operators')||'{}');
-    if(!operators[email] || operators[email].password !== password){
-      errEl.textContent = 'Incorrect email or password.'; return;
+    const {data,error} = await supa.from('gw_operators')
+      .insert({email, password, company_name:company, client_key:clientKey})
+      .select('email,client_key,company_name').single();
+    if(error){
+      errEl.textContent = error.code==='23505' ? 'An account with this email already exists.' : 'Sign up failed: '+error.message;
+      return;
     }
-    localStorage.setItem('gw_op_session', email);
+    localStorage.setItem('gw_op_session', data.email);
     window.location.href = 'admin.html';
   }
 
-  // If already signed in, swap nav CTA to a direct Dashboard link
+  async function doOperatorLogin(){
+    const email   = document.getElementById('li-email').value.trim().toLowerCase();
+    const password= document.getElementById('li-password').value;
+    const errEl   = document.getElementById('login-error');
+    if(!email||!password){ errEl.textContent='Enter your email and password.'; return; }
+    errEl.textContent='Signing in…';
+    const {data,error} = await supa.from('gw_operators')
+      .select('email,client_key,company_name')
+      .eq('email',email).eq('password',password).single();
+    if(error||!data){ errEl.textContent='Incorrect email or password.'; return; }
+    localStorage.setItem('gw_op_session', data.email);
+    window.location.href = 'admin.html';
+  }
+
+  // If already signed in, swap nav to dashboard link
   (function(){
     const session = localStorage.getItem('gw_op_session');
     if(session){

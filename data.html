@@ -331,21 +331,19 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 
 <div id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ── OPERATOR AUTH GUARD ──────────────────────────────────────────────────
+// ── SUPABASE ──────────────────────────────────────────────────────────────
+const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ── AUTH GUARD ────────────────────────────────────────────────────────────
 const opSession = localStorage.getItem('gw_op_session');
-if(!opSession){
-  window.location.href = 'landing.html';
-  throw new Error('Redirecting to landing — not signed in');
-}
-const operators = JSON.parse(localStorage.getItem('gw_operators')||'{}');
-const currentOperator = operators[opSession];
-if(!currentOperator){
-  localStorage.removeItem('gw_op_session');
-  window.location.href = 'landing.html';
-  throw new Error('Redirecting to landing — operator record missing');
-}
-const CLIENT_KEY = currentOperator.clientKey;
+if(!opSession){ window.location.href='landing.html'; }
+
+let currentOperator = null;
+let CLIENT_KEY = null;
 
 function signOutOperator(){
   localStorage.removeItem('gw_op_session');
@@ -354,76 +352,47 @@ function signOutOperator(){
 
 const SWATCHES=['#DC2626','#D97706','#16A34A','#0891B2','#4F46E5','#7C3AED','#DB2777','#0F1117','#1D4ED8','#059669','#B45309','#64748B'];
 
-// ── DEFAULT DATA (used only on first load for a new client) ────────────────
-const DEFAULT_TEAMS=[
-  {id:'tm1',name:'Arsenal',short:'ARS',color:'#DC2626'},
-  {id:'tm2',name:'Man City',short:'MCI',color:'#6CABDD'},
-  {id:'tm3',name:'Liverpool',short:'LIV',color:'#C8102E'},
-  {id:'tm4',name:'Chelsea',short:'CHE',color:'#034694'},
-  {id:'tm5',name:'Man Utd',short:'MNU',color:'#DA291C'},
-  {id:'tm6',name:'Spurs',short:'TOT',color:'#132257'},
-  {id:'tm7',name:'Real Madrid',short:'RMA',color:'#FEBE10'},
-  {id:'tm8',name:'Barcelona',short:'BAR',color:'#A50044'},
-  {id:'tm9',name:'Bayern',short:'BAY',color:'#DC052D'},
-  {id:'tm10',name:'PSG',short:'PSG',color:'#004170'},
-  {id:'tm11',name:'Atletico',short:'ATL',color:'#CB3524'},
-  {id:'tm12',name:'Juventus',short:'JUV',color:'#111827'},
-  {id:'tm13',name:'Inter',short:'INT',color:'#010E80'},
-  {id:'tm14',name:'Dortmund',short:'BVB',color:'#FDE100'},
-  {id:'tm15',name:'Everton',short:'EVE',color:'#003399'},
-  {id:'tm16',name:'Brighton',short:'BHA',color:'#0057B8'},
-];
-const DEFAULT_TOURNAMENTS=[
-  {id:'t1',name:'Premier League',country:'England',type:'league',color:'#3D0D73',
-   seasons:{'2025/26':{teamIds:['tm1','tm2','tm3','tm4','tm5','tm6','tm15','tm16'],rounds:[{id:'r1',label:'Gameweek 1',deadline:'',eventIds:['ev1','ev2']},{id:'r2',label:'Gameweek 2',deadline:'',eventIds:['ev3']},{id:'r3',label:'Gameweek 3',deadline:'2025-08-30T14:00',eventIds:[]}]},'2026/27':{teamIds:['tm1','tm2','tm3','tm4','tm5','tm6'],rounds:[]}}},
-  {id:'t2',name:'Champions League',country:'Europe',type:'international',color:'#1D4ED8',
-   seasons:{'2025/26':{teamIds:['tm1','tm2','tm7','tm8','tm9','tm10','tm11','tm12','tm13'],rounds:[]},'2026/27':{teamIds:[],rounds:[]}}},
-  {id:'t3',name:'La Liga',country:'Spain',type:'league',color:'#DC2626',
-   seasons:{'2025/26':{teamIds:['tm7','tm8','tm11'],rounds:[]},'2026/27':{teamIds:[],rounds:[]}}},
-];
-const DEFAULT_EVENTS={
-  ev1:{homeId:'tm1',awayId:'tm6',kickoff:'2025-08-16T15:00',result:null,status:'upcoming',line:2.5},
-  ev2:{homeId:'tm2',awayId:'tm4',kickoff:'2025-08-16T17:30',result:{h:2,a:1},status:'completed',line:2.5},
-  ev3:{homeId:'tm3',awayId:'tm16',kickoff:'2025-08-23T15:00',result:{h:3,a:1},status:'completed',line:2.5},
-};
-
-// ── LOAD FROM LOCALSTORAGE, SCOPED PER CLIENT (or seed defaults on first load) ─
-function loadState(){
-  try {
-    return {
-      teams:       JSON.parse(localStorage.getItem('gw_dm_teams_'+CLIENT_KEY))       || DEFAULT_TEAMS,
-      tournaments: JSON.parse(localStorage.getItem('gw_dm_tournaments_'+CLIENT_KEY)) || DEFAULT_TOURNAMENTS,
-      events:      JSON.parse(localStorage.getItem('gw_dm_events_'+CLIENT_KEY))      || DEFAULT_EVENTS,
-    };
-  } catch(e) {
-    return { teams: DEFAULT_TEAMS, tournaments: DEFAULT_TOURNAMENTS, events: DEFAULT_EVENTS };
-  }
-}
-
-const persisted = loadState();
+// ── STATE (in memory, loaded from Supabase on init) ───────────────────────
 const S={
-  activePage:'teams', activeTournamentId:null, activeSeason:'2026/27', editingTeamId:null, openRounds:new Set(),
-  teams:       persisted.teams,
-  tournaments: persisted.tournaments,
-  events:      persisted.events,
+  activePage:'teams', activeTournamentId:null, activeSeason:'2026/27',
+  editingTeamId:null, openRounds:new Set(),
+  teams:[], tournaments:[], events:{},
 };
 
-// ── SAVE TO LOCALSTORAGE, SCOPED PER CLIENT ─────────────────────────────────
-function save(){
-  try {
-    localStorage.setItem('gw_dm_teams_'+CLIENT_KEY,       JSON.stringify(S.teams));
-    localStorage.setItem('gw_dm_tournaments_'+CLIENT_KEY, JSON.stringify(S.tournaments));
-    localStorage.setItem('gw_dm_events_'+CLIENT_KEY,      JSON.stringify(S.events));
-  } catch(e) {
-    console.error('Save failed:', e);
-  }
+// ── SAVE TO SUPABASE ─────────────────────────────────────────────────────
+async function save(){
+  if(!CLIENT_KEY) return;
+  try{
+    // Teams — upsert all, then delete removed ones
+    if(S.teams.length){
+      await supa.from('gw_dm_teams')
+        .upsert(S.teams.map(t=>({id:t.id,client_key:CLIENT_KEY,name:t.name,short:t.short,color:t.color})),{onConflict:'id'});
+    }
+    // Tournaments — store seasons as JSONB
+    if(S.tournaments.length){
+      await supa.from('gw_dm_tournaments')
+        .upsert(S.tournaments.map(t=>({id:t.id,client_key:CLIENT_KEY,name:t.name,country:t.country||'',type:t.type||'league',color:t.color||'#4F46E5',seasons:t.seasons||{}})),{onConflict:'id'});
+    }
+    // Events
+    const evArr = Object.entries(S.events).map(([id,ev])=>({
+      id, client_key:CLIENT_KEY,
+      home_id:ev.homeId, away_id:ev.awayId,
+      kickoff:ev.kickoff||'', result:ev.result||null,
+      status:ev.status||'upcoming', line:ev.line||2.5
+    }));
+    if(evArr.length){
+      await supa.from('gw_dm_events').upsert(evArr,{onConflict:'id'});
+    }
+  }catch(e){ console.error('DM save failed:',e.message); }
 }
 
-function resetClientData(){
-  if(!confirm('Reset all data to defaults? This only affects your workspace.')) return;
-  localStorage.removeItem('gw_dm_teams_'+CLIENT_KEY);
-  localStorage.removeItem('gw_dm_tournaments_'+CLIENT_KEY);
-  localStorage.removeItem('gw_dm_events_'+CLIENT_KEY);
+async function resetClientData(){
+  if(!confirm('Reset all data? This cannot be undone.')) return;
+  await Promise.all([
+    supa.from('gw_dm_teams').delete().eq('client_key',CLIENT_KEY),
+    supa.from('gw_dm_tournaments').delete().eq('client_key',CLIENT_KEY),
+    supa.from('gw_dm_events').delete().eq('client_key',CLIENT_KEY),
+  ]);
   location.reload();
 }
 
@@ -512,6 +481,7 @@ function deleteTeam(id){
   if(!confirm('Delete '+getTeam(id).name+'? Removed from all seasons.'))return;
   S.teams=S.teams.filter(x=>x.id!==id);
   S.tournaments.forEach(tr=>Object.values(tr.seasons).forEach(s=>{s.teamIds=s.teamIds.filter(x=>x!==id);}));
+  supa.from('gw_dm_teams').delete().eq('id',id).then(()=>{});
   save();renderTeams();toast('Team deleted');
 }
 
@@ -777,6 +747,7 @@ function removeEventFromRound(eid){
   const season=getSeasonData(S.activeTournamentId,S.activeSeason);
   season.rounds.forEach(r=>{r.eventIds=r.eventIds.filter(x=>x!==eid);});
   delete S.events[eid];
+  supa.from('gw_dm_events').delete().eq('id',eid).then(()=>{});
   save();
   document.getElementById('evmini-'+eid)?.remove();
   toast('Event removed');
@@ -794,6 +765,7 @@ function createTournament(){
 function deleteTournament(id){
   if(!confirm('Delete "'+getTournament(id).name+'" and all its seasons?'))return;
   S.tournaments=S.tournaments.filter(x=>x.id!==id);
+  supa.from('gw_dm_tournaments').delete().eq('id',id).then(()=>{});
   save();renderTournamentNav();navTo('teams');toast('Tournament deleted');
 }
 
@@ -819,9 +791,42 @@ let tt;
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2200);}
 
 // ── INIT ──────────────────────────────────────────────────────────────────
-document.getElementById('topnav-operator').textContent = '· ' + currentOperator.companyName;
-document.getElementById('topnav-view-embed').href = `https://matchinist.github.io/gameweek/live.html?client=${CLIENT_KEY}`;
-renderTournamentNav();renderTeams();
+(async ()=>{
+  if(!opSession){ window.location.href='landing.html'; return; }
+
+  // Verify operator in Supabase
+  const {data:op,error:opErr} = await supa.from('gw_operators')
+    .select('*').eq('email',opSession).single();
+  if(opErr||!op){
+    localStorage.removeItem('gw_op_session');
+    window.location.href='landing.html'; return;
+  }
+  currentOperator=op;
+  CLIENT_KEY=op.client_key;
+
+  // Update topnav
+  document.getElementById('topnav-operator').textContent='· '+op.company_name;
+  document.getElementById('topnav-view-embed').href=`https://matchinist.github.io/gameweek/live.html?client=${CLIENT_KEY}`;
+
+  // Load data from Supabase
+  const [{data:teams},{data:tournaments},{data:events}] = await Promise.all([
+    supa.from('gw_dm_teams').select('*').eq('client_key',CLIENT_KEY),
+    supa.from('gw_dm_tournaments').select('*').eq('client_key',CLIENT_KEY),
+    supa.from('gw_dm_events').select('*').eq('client_key',CLIENT_KEY),
+  ]);
+
+  S.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color}))
+    .sort((a,b)=>a.name.localeCompare(b.name));
+  S.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,color:t.color,seasons:t.seasons||{}}));
+  const evMap={};
+  (events||[]).forEach(e=>{
+    evMap[e.id]={homeId:e.home_id,awayId:e.away_id,kickoff:e.kickoff,result:e.result,status:e.status,line:e.line||2.5};
+  });
+  S.events=evMap;
+
+  renderTournamentNav();
+  renderTeams();
+})();
 </script>
 </body>
 </html>
