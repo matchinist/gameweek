@@ -128,38 +128,40 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 
 /* ── EVENT CARDS ── */
 .events-list{display:flex;flex-direction:column;gap:8px;padding:12px 16px;}
-.ev-pred-count{font-size:10px;color:var(--text-3);display:flex;align-items:center;gap:4px;margin-top:6px;padding-top:6px;border-top:1px solid var(--border);}
-.ev-pred-count strong{font-family:var(--mono);color:var(--text-2);font-size:11px;}
+.ev-participants{font-size:10px;color:var(--text-2);display:flex;align-items:center;gap:5px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
+.ev-participants strong{font-family:var(--mono);color:#333;font-size:11px;}
 .ev-pred-bar{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
 .ev-pred-bar-fill{height:3px;background:var(--comp-color);border-radius:2px;opacity:0.4;}
 
-.event-card{background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:border-color 0.13s;}
+.event-card{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color 0.13s;}
 .event-card.predicted{border-color:var(--comp-color);}
-.event-card.locked-pred{border-color:var(--border);opacity:0.8;}
-
-.event-card-top{padding:11px 13px;}
-.event-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
-.event-league{font-size:9px;font-weight:700;color:var(--text-3);letter-spacing:0.6px;text-transform:uppercase;}
-.event-kickoff{font-family:var(--mono);font-size:9px;color:var(--text-3);}
-
+.event-card.locked-pred{border-color:var(--border);opacity:0.85;}
+.event-card-top{padding:13px 14px;}
+.event-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.event-league{font-size:10px;font-weight:700;color:var(--text-2);letter-spacing:0.5px;text-transform:uppercase;}
+.event-kickoff{font-family:var(--mono);font-size:10px;color:var(--text-2);}
 .event-teams{display:flex;align-items:center;gap:8px;}
-.ev-team{flex:1;display:flex;align-items:center;gap:7px;}
+.ev-team{flex:1;display:flex;align-items:center;gap:9px;}
 .ev-team.away{flex-direction:row-reverse;}
-.ev-badge{width:26px;height:26px;border-radius:50%;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:7px;font-weight:700;color:var(--text-2);flex-shrink:0;}
-.ev-name{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);}
-.ev-vs{font-family:var(--mono);font-size:9px;color:var(--text-3);text-align:center;min-width:28px;}
-.ev-score{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);text-align:center;min-width:36px;}
-
-/* Prediction area */
-.pred-area{border-top:1px solid var(--border);padding:10px 13px;}
-.pred-label{font-size:10px;color:var(--text-3);font-weight:500;margin-bottom:7px;}
-
-/* 1X2 */
+.ev-badge{width:32px;height:32px;border-radius:50%;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:8px;font-weight:700;color:var(--text-2);flex-shrink:0;overflow:hidden;}
+.ev-badge img{width:100%;height:100%;object-fit:contain;}
+.ev-name{font-family:var(--mono);font-size:13px;font-weight:700;color:#000;}
+.ev-vs{font-family:var(--mono);font-size:11px;color:var(--text-3);text-align:center;min-width:28px;}
+.ev-score{font-family:var(--mono);font-size:15px;font-weight:700;color:#000;text-align:center;min-width:42px;}
+.pred-area{border-top:1px solid var(--border);padding:11px 14px;}
+.pred-label{font-size:11px;color:var(--text-2);font-weight:500;margin-bottom:8px;}
 .btns-1x2{display:flex;gap:5px;}
-.btn-1x2{flex:1;padding:7px 4px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-2);cursor:pointer;transition:all 0.13s;text-align:center;line-height:1.3;}
-.btn-1x2 .sub{display:block;font-size:8px;font-weight:400;opacity:0.6;margin-top:1px;}
+.btn-1x2{flex:1;padding:11px 4px;border:1px solid var(--border);border-radius:7px;background:var(--white);font-family:var(--mono);font-size:13px;font-weight:700;color:#111;cursor:pointer;transition:all 0.13s;text-align:center;line-height:1.2;}
 .btn-1x2:hover{border-color:var(--comp-color);color:var(--comp-color);}
 .btn-1x2.selected{border-color:var(--comp-color);background:var(--comp-color);color:white;}
+.pred-result-row{display:flex;align-items:center;justify-content:space-between;}
+.pred-made{font-size:12px;color:#333;}
+.pred-made strong{font-family:var(--mono);color:#000;}
+.pred-correct{font-size:12px;font-weight:700;}
+.pred-correct.yes{color:var(--green);}
+.pred-correct.no{color:var(--red);}
+.ev-participants{font-size:10px;color:var(--text-2);display:flex;align-items:center;gap:5px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
+.ev-participants strong{font-family:var(--mono);color:#333;font-size:11px;}
 
 /* Score */
 .score-pred{display:flex;align-items:center;gap:8px;}
@@ -757,9 +759,9 @@ function renderEventCard(ev, comp, isOpen){
           <span class="ev-name">${ev.away}</span>
         </div>
       </div>
-      <div class="ev-pred-count">
+      <div class="ev-participants">
         <div class="ev-pred-bar"><div class="ev-pred-bar-fill" style="width:${predPct}%"></div></div>
-        <strong>${predCount}</strong> predictions
+        <strong>${predCount}</strong> participants
       </div>
     </div>`;
 
@@ -767,17 +769,10 @@ function renderEventCard(ev, comp, isOpen){
 
   if(isOpen){
     if(comp.mode==='lms'||comp.mode==='result'){
-      html += `<div class="pred-label">Your pick</div>
-      <div class="btns-1x2">
-        <button class="btn-1x2${pred==='H'?' selected':''}" onclick="pick('${ev.id}','H')">
-          ${ev.home.split(' ')[0]}<span class="sub">Home Win</span>
-        </button>
-        <button class="btn-1x2${pred==='D'?' selected':''}" onclick="pick('${ev.id}','D')">
-          X<span class="sub">Draw</span>
-        </button>
-        <button class="btn-1x2${pred==='A'?' selected':''}" onclick="pick('${ev.id}','A')">
-          ${ev.away.split(' ').pop()}<span class="sub">Away Win</span>
-        </button>
+      html += `<div class="btns-1x2">
+        <button class="btn-1x2${pred==='H'?' selected':''}" onclick="pick('${ev.id}','H')">Home Win</button>
+        <button class="btn-1x2${pred==='D'?' selected':''}" onclick="pick('${ev.id}','D')">X</button>
+        <button class="btn-1x2${pred==='A'?' selected':''}" onclick="pick('${ev.id}','A')">Away</button>
       </div>`;
     }
 
