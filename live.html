@@ -257,94 +257,74 @@ table.lb-table{width:100%;border-collapse:collapse;}
 
 <div id="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-// ── SUPABASE ──────────────────────────────────────────────────────────────
-const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
-let supa;
-try {
-  supa = supabase.createClient(SUPA_URL, SUPA_KEY);
-} catch(e) {
-  console.error('Supabase init failed:', e);
+// ── DB HELPERS (pure fetch — no CDN dependency) ────────────────────────────
+const SUPA_URL='https://mgfzqkesikfdrahherfm.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
+const SUPA_H={'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Accept':'application/json'};
+
+async function dbGet(table,params={}){
+  const qs=Object.entries(params).map(([k,v])=>`${k}=eq.${encodeURIComponent(v)}`).join('&');
+  const res=await fetch(`${SUPA_URL}/rest/v1/${table}${qs?'?'+qs:''}`,{headers:SUPA_H});
+  if(!res.ok) throw new Error(`GET ${table} ${res.status}`);
+  return res.json();
+}
+async function dbInsert(table,data){
+  const res=await fetch(`${SUPA_URL}/rest/v1/${table}`,{method:'POST',headers:{...SUPA_H,'Prefer':'return=representation'},body:JSON.stringify(data)});
+  const text=await res.text();
+  if(!res.ok){let e;try{e=JSON.parse(text);}catch(_){e={message:text};}throw Object.assign(new Error(e.message||'Insert failed'),{code:e.code||''});}
+  return JSON.parse(text);
+}
+async function dbUpsert(table,data,conflict='id'){
+  const arr=Array.isArray(data)?data:[data];if(!arr.length)return;
+  const res=await fetch(`${SUPA_URL}/rest/v1/${table}?on_conflict=${conflict}`,{method:'POST',headers:{...SUPA_H,'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(arr)});
+  if(!res.ok){const t=await res.text();throw new Error(`UPSERT ${table} failed: ${t}`);}
 }
 
 // ── CLIENT PARAM ──────────────────────────────────────────────────────────
-const CLIENT_PARAM = new URLSearchParams(window.location.search).get('client') || 'demo';
+const CLIENT_PARAM=new URLSearchParams(window.location.search).get('client')||'demo';
 
-// ── DATA LOAD FROM SUPABASE ───────────────────────────────────────────────
-let COMPS=[], EVENTS={}, EVENTS_RAW={};
+// ── DATA LOAD ─────────────────────────────────────────────────────────────
+let COMPS=[],EVENTS={},EVENTS_RAW={};
 
 async function buildCompsFromRealData(){
-  COMPS=[]; EVENTS={}; EVENTS_RAW={};
-
+  COMPS=[];EVENTS={};EVENTS_RAW={};
   try{
-    const [{data:teams,error:e1},{data:evRows,error:e2},{data:compsRows,error:e3},{data:roundsRows,error:e4}] = await Promise.all([
-      supa.from('gw_dm_teams').select('*'),
-      supa.from('gw_dm_events').select('*'),
-      supa.from('gw_competitions').select('*').eq('client_key',CLIENT_PARAM),
-      supa.from('gw_rounds').select('*').eq('client_key',CLIENT_PARAM).order('sort_order'),
+    const [teams,evRows,compsRows,roundsRows]=await Promise.all([
+      dbGet('gw_dm_teams'),
+      dbGet('gw_dm_events'),
+      dbGet('gw_competitions',{client_key:CLIENT_PARAM}),
+      dbGet('gw_rounds',{client_key:CLIENT_PARAM}),
     ]);
-
-    if(e1||e2||e3||e4){
-      console.error('Supabase load errors:',{e1,e2,e3,e4});
-    }
-
-    const teamById = id => (teams||[]).find(t=>t.id===id);
-
-    // Build EVENTS lookup from DM
+    roundsRows.sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+    const teamById=id=>(teams||[]).find(t=>t.id===id);
     (evRows||[]).forEach(ev=>{
-      const home=teamById(ev.home_id), away=teamById(ev.away_id);
-      // Store even without team match — use raw IDs as fallback names
-      EVENTS[ev.id] = {
-        home: home?.name || ev.home_id,
-        away: away?.name || ev.away_id,
-        homeLogo: home?.logo||'',
-        awayLogo: away?.logo||'',
-        kickoff: fmtKickoff(ev.kickoff),
-        res: (ev.result && ev.result.h!=null && ev.result.a!=null) ? ev.result : null
-      };
-      EVENTS_RAW[ev.id] = ev.result || null;
+      const home=teamById(ev.home_id),away=teamById(ev.away_id);
+      const hasResult=ev.result&&ev.result.h!=null&&ev.result.a!=null;
+      EVENTS[ev.id]={home:home?.name||ev.home_id,away:away?.name||ev.away_id,homeLogo:home?.logo||'',awayLogo:away?.logo||'',kickoff:fmtKickoff(ev.kickoff),res:hasResult?ev.result:null};
+      EVENTS_RAW[ev.id]=hasResult?ev.result:null;
     });
-
-    // Build COMPS from Supabase competitions + rounds
     (compsRows||[]).forEach(c=>{
-      if(c.status==='archived') return;
-      const cRounds = (roundsRows||[]).filter(r=>r.competition_id===c.id).map(r=>{
-        // Don't filter out events — show them even if not in EVENTS (they may load later)
-        const evIds = r.event_ids||[];
-        const allDone = evIds.length>0 && evIds.every(eid=>EVENTS[eid]?.res!==null);
-        return {
-          id:r.id, label:r.label, deadline:r.deadline||'',
-          status: r.status==='completed'?'completed':(allDone?'completed':'open'),
-          eventIds: evIds
-        };
+      if(c.status==='archived')return;
+      const cRounds=(roundsRows||[]).filter(r=>r.competition_id===c.id).map(r=>{
+        const evIds=r.event_ids||[];
+        const allDone=evIds.length>0&&evIds.every(eid=>EVENTS[eid]?.res!==null);
+        return{id:r.id,label:r.label,deadline:r.deadline||'',status:r.status==='completed'?'completed':(allDone?'completed':'open'),eventIds:evIds};
       });
-      COMPS.push({
-        id:c.id, name:c.name, mode:c.mode||'lms', color:c.color||'#4F46E5',
-        scoring:c.scoring||null, markets:c.markets||[], rounds:cRounds
-      });
+      COMPS.push({id:c.id,name:c.name,mode:c.mode||'lms',color:c.color||'#4F46E5',scoring:c.scoring||null,markets:c.markets||[],rounds:cRounds});
     });
-
-    console.log(`Loaded: ${(evRows||[]).length} events, ${(compsRows||[]).length} competitions, ${(roundsRows||[]).length} rounds, CLIENT=${CLIENT_PARAM}`);
-
-  }catch(err){
-    console.error('buildCompsFromRealData failed:',err);
-  }
+    console.log('DB loaded:',{teams:(teams||[]).length,events:Object.keys(EVENTS).length,comps:COMPS.length,client:CLIENT_PARAM});
+  }catch(err){console.error('buildCompsFromRealData:',err);}
 }
 
 function fmtKickoff(dt){
-  if(!dt) return 'TBD';
-  try{
-    const d=new Date(dt);
-    return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' · '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-  }catch(e){return dt;}
+  if(!dt)return'TBD';
+  try{const d=new Date(dt);return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' · '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}catch(e){return dt;}
 }
 
 // ── STATE ─────────────────────────────────────────────────────────────────
-let currentPlayer = null; // {id, username, email, joined_at}
-let preds = {};           // event_id -> prediction value (in memory)
-let currentCompIdx=0, selectedRound={}, predictSubTab='predictions', lbSelection={};
+let currentPlayer=null,preds={};
+let currentCompIdx=0,selectedRound={},predictSubTab='predictions',lbSelection={};
 const MEDALS=['🥇','🥈','🥉'];
 const MODE_LABELS={lms:'Last Man Standing',score:'Score Predictor',ou:'Over / Under',betting:'Betting Markets'};
 
@@ -364,11 +344,11 @@ async function doLogin(){
   const errEl=document.getElementById('login-error');
   if(!username||!password){errEl.textContent='Enter username and password.';return;}
   errEl.textContent='Signing in…';
-  const {data,error}=await supa.from('gw_players')
-    .select('id,username,email,joined_at')
-    .eq('client_key',CLIENT_PARAM).eq('username',username).eq('password',password).single();
-  if(error||!data){errEl.textContent='Incorrect username or password.';return;}
-  await loginPlayer(data);
+  try{
+    const rows=await dbGet('gw_players',{client_key:CLIENT_PARAM,username,password});
+    if(!rows||!rows.length){errEl.textContent='Incorrect username or password.';return;}
+    await loginPlayer(rows[0]);
+  }catch(e){errEl.textContent='Login error: '+e.message;}
 }
 
 async function doRegister(){
@@ -380,78 +360,55 @@ async function doRegister(){
   if(username.length<3){errEl.textContent='Username must be at least 3 characters.';return;}
   if(password.length<6){errEl.textContent='Password must be at least 6 characters.';return;}
   errEl.textContent='Creating account…';
-  const {data,error}=await supa.from('gw_players')
-    .insert({client_key:CLIENT_PARAM,username,email,password})
-    .select('id,username,email,joined_at').single();
-  if(error){
-    if(error.code==='23505') errEl.textContent='Username already taken.';
-    else errEl.textContent='Registration failed: '+error.message;
-    return;
+  try{
+    const rows=await dbInsert('gw_players',{client_key:CLIENT_PARAM,username,email,password});
+    await loginPlayer(rows[0]);
+  }catch(e){
+    if(e.code==='23505')errEl.textContent='Username already taken.';
+    else errEl.textContent='Registration failed: '+e.message;
   }
-  await loginPlayer(data);
 }
 
 async function loginPlayer(player){
   currentPlayer=player;
-  localStorage.setItem('gw_session_'+CLIENT_PARAM, JSON.stringify(player));
-  await loadPlayerPreds();
-  closeAuthModal();
-  updateHeaderUser();
-  renderPredict();
+  localStorage.setItem('gw_session_'+CLIENT_PARAM,JSON.stringify(player));
+  try{await loadPlayerPreds();}catch(e){console.error('loadPlayerPreds:',e);}
+  closeAuthModal();updateHeaderUser();renderPredict();
 }
 
 function doLogout(){
-  currentPlayer=null; preds={};
+  currentPlayer=null;preds={};
   localStorage.removeItem('gw_session_'+CLIENT_PARAM);
-  updateHeaderUser(); renderPredict();
+  updateHeaderUser();renderPredict();
 }
 
-// ── PREDICTIONS — SUPABASE ────────────────────────────────────────────────
 async function loadPlayerPreds(){
-  if(!currentPlayer) return;
-  const {data}=await supa.from('gw_predictions')
-    .select('event_id,prediction')
-    .eq('client_key',CLIENT_PARAM).eq('player_id',currentPlayer.id);
+  if(!currentPlayer)return;
+  const rows=await dbGet('gw_predictions',{client_key:CLIENT_PARAM,player_id:currentPlayer.id});
   preds={};
-  (data||[]).forEach(p=>{
-    const v=p.prediction;
-    preds[p.event_id]=(v&&typeof v==='object'&&'value'in v)?v.value:v;
-  });
+  (rows||[]).forEach(p=>{const v=p.prediction;preds[p.event_id]=(v&&typeof v==='object'&&'value'in v)?v.value:v;});
 }
 
-async function savePred(eventId, prediction){
-  if(!currentPlayer) return;
+async function savePred(eventId,prediction){
+  if(!currentPlayer)return;
   const comp=COMPS[currentCompIdx];
   const ri=selectedRound[currentCompIdx];
-  const round=comp?.rounds[ri];
-  if(!round) return;
+  const round=comp?.rounds[ri];if(!round)return;
   const stored=(typeof prediction==='string'||typeof prediction==='number')?{value:prediction}:prediction;
-  supa.from('gw_predictions').upsert({
-    client_key:CLIENT_PARAM, player_id:currentPlayer.id,
-    username:currentPlayer.username, competition_id:comp.id,
-    round_id:round.id, event_id:eventId, prediction:stored
-  },{onConflict:'player_id,competition_id,event_id'}).then(({error})=>{
-    if(error) console.error('Pred save failed:',error.message);
-  });
+  dbUpsert('gw_predictions',{client_key:CLIENT_PARAM,player_id:currentPlayer.id,username:currentPlayer.username,competition_id:comp.id,round_id:round.id,event_id:eventId,prediction:stored},'player_id,competition_id,event_id').catch(e=>console.error('savePred:',e));
 }
 
 // ── AUTH MODAL ────────────────────────────────────────────────────────────
 function openAuthModal(reason){
   document.getElementById('auth-modal-reason').textContent=reason||'Sign in to make predictions';
-  switchAuth('login');
-  document.getElementById('auth-modal-overlay').classList.add('open');
+  switchAuth('login');document.getElementById('auth-modal-overlay').classList.add('open');
   setTimeout(()=>document.getElementById('login-username').focus(),100);
 }
 function closeAuthModal(){document.getElementById('auth-modal-overlay').classList.remove('open');}
-function headerUserClick(){ if(currentPlayer) goTab('profile'); else openAuthModal('Sign in or create a free account'); }
+function headerUserClick(){if(currentPlayer)goTab('profile');else openAuthModal('Sign in or create a free account');}
 function updateHeaderUser(){
-  if(currentPlayer){
-    document.getElementById('hdr-avatar').textContent=currentPlayer.username.slice(0,2).toUpperCase();
-    document.getElementById('hdr-username').textContent=currentPlayer.username;
-  } else {
-    document.getElementById('hdr-avatar').textContent='?';
-    document.getElementById('hdr-username').textContent='Sign in';
-  }
+  if(currentPlayer){document.getElementById('hdr-avatar').textContent=currentPlayer.username.slice(0,2).toUpperCase();document.getElementById('hdr-username').textContent=currentPlayer.username;}
+  else{document.getElementById('hdr-avatar').textContent='?';document.getElementById('hdr-username').textContent='Sign in';}
 }
 
 // ── TABS ──────────────────────────────────────────────────────────────────
@@ -463,551 +420,164 @@ function goTab(tab){
   document.getElementById('bnav-'+tab)?.classList.add('active');
   document.getElementById('comp-tabs-wrap').style.display=tab==='predict'?'block':'none';
   document.getElementById('scroll-area').scrollTop=0;
-  if(tab==='predict') renderPredict();
-  if(tab==='profile') renderProfile();
+  if(tab==='predict')renderPredict();
+  if(tab==='profile')renderProfile();
 }
 
 // ── COMP TABS ─────────────────────────────────────────────────────────────
 function renderCompTabs(){
   const el=document.getElementById('comp-tabs');
   if(!COMPS.length){el.innerHTML='';return;}
-  if(currentCompIdx>=COMPS.length) currentCompIdx=0;
-  el.innerHTML=COMPS.map((c,i)=>`
-    <button class="comp-tab${i===currentCompIdx?' active':''}" onclick="switchComp(${i})" style="${i===currentCompIdx?`--comp-color:${c.color}`:''}">
-      <span class="comp-tab-name">${MODE_LABELS[c.mode]||c.mode}</span>
-    </button>`).join('');
+  if(currentCompIdx>=COMPS.length)currentCompIdx=0;
+  el.innerHTML=COMPS.map((c,i)=>`<button class="comp-tab${i===currentCompIdx?' active':''}" onclick="switchComp(${i})" style="${i===currentCompIdx?`--comp-color:${c.color}`:''}"><span class="comp-tab-name">${MODE_LABELS[c.mode]||c.mode}</span></button>`).join('');
   document.documentElement.style.setProperty('--comp-color',COMPS[currentCompIdx].color);
 }
-function switchComp(idx){
-  currentCompIdx=idx; predictSubTab='predictions';
-  document.documentElement.style.setProperty('--comp-color',COMPS[idx].color);
-  renderCompTabs(); renderPredict();
-}
+function switchComp(idx){currentCompIdx=idx;predictSubTab='predictions';document.documentElement.style.setProperty('--comp-color',COMPS[idx].color);renderCompTabs();renderPredict();}
 function renderTournamentLabels(comp){
-  const src=comp.tournamentNames?.join(', ')||comp.league||comp.name||'';
-  const labels=src.split(',').map(l=>l.trim()).filter(Boolean);
-  if(!labels.length) return '';
-  return '<div style="display:flex;flex-wrap:wrap;gap:5px;padding:10px 16px 0;">'+
-    labels.map(l=>'<span style="font-size:10px;font-weight:600;background:var(--bg);border:1px solid var(--border);color:var(--text-2);padding:3px 9px;border-radius:12px;">'+l+'</span>').join('')+
-    '</div>';
+  const labels=(comp.tournamentNames||[]).filter(Boolean);
+  if(!labels.length)return'';
+  return'<div style="display:flex;flex-wrap:wrap;gap:5px;padding:10px 16px 0;">'+labels.map(l=>'<span style="font-size:10px;font-weight:600;background:var(--bg);border:1px solid var(--border);color:var(--text-2);padding:3px 9px;border-radius:12px;">'+l+'</span>').join('')+'</div>';
 }
 
 // ── PREDICT ───────────────────────────────────────────────────────────────
-function getDefaultRoundIdx(comp){
-  const idx=comp.rounds.findIndex(r=>r.status==='open');
-  return idx>=0?idx:Math.max(0,comp.rounds.length-1);
-}
+function getDefaultRoundIdx(comp){const idx=comp.rounds.findIndex(r=>r.status==='open');return idx>=0?idx:Math.max(0,comp.rounds.length-1);}
 
 function renderPredict(){
   if(!COMPS.length){
-    const evCount = Object.keys(EVENTS).length;
-    document.getElementById('predict-content').innerHTML=`<div class="empty" style="padding-top:60px;">
-      <div class="empty-icon">🏆</div>
-      <div class="empty-title">No competitions found</div>
-      <div class="empty-sub" style="margin-bottom:12px;">Client: <code style="font-family:monospace;background:var(--bg);padding:2px 6px;border-radius:3px;">${CLIENT_PARAM}</code></div>
-      <div class="empty-sub">Events in DB: ${evCount} · Check browser console (F12) for details.</div>
-    </div>`;
+    document.getElementById('predict-content').innerHTML=`<div class="empty" style="padding-top:60px;"><div class="empty-icon">🏆</div><div class="empty-title">No competitions found</div><div class="empty-sub">Client: <code style="font-family:monospace;background:var(--bg);padding:2px 6px;border-radius:3px;">${CLIENT_PARAM}</code><br>Events in DB: ${Object.keys(EVENTS).length}</div></div>`;
     return;
   }
-  if(selectedRound[currentCompIdx]===undefined) selectedRound[currentCompIdx]=getDefaultRoundIdx(COMPS[currentCompIdx]);
+  if(selectedRound[currentCompIdx]===undefined)selectedRound[currentCompIdx]=getDefaultRoundIdx(COMPS[currentCompIdx]);
   const comp=COMPS[currentCompIdx];
-  let html=`<div class="predict-subtabs">
-    <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button>
-    <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
-  </div>`;
+  let html=`<div class="predict-subtabs"><button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button></div>`;
   html+=renderTournamentLabels(comp);
   html+=predictSubTab==='predictions'?renderPredictionsPane(comp):renderLeaderboardShell(comp);
   document.getElementById('predict-content').innerHTML=html;
-  if(predictSubTab==='leaderboard') loadAndRenderLeaderboard(comp);
+  if(predictSubTab==='leaderboard')loadAndRenderLeaderboard(comp);
 }
-
 function switchPredictSubTab(tab){predictSubTab=tab;renderPredict();}
 
 function renderPredictionsPane(comp){
   const ri=selectedRound[currentCompIdx];
-  if(!comp.rounds.length) return `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No rounds yet</div></div>`;
-  const round=comp.rounds[ri];
-  if(!round) return '';
+  if(!comp.rounds.length)return`<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No rounds yet</div></div>`;
+  const round=comp.rounds[ri];if(!round)return'';
   const events=round.eventIds.map(id=>({id,...EVENTS[id]})).filter(e=>e.home);
   const isOpen=round.status==='open';
-
-  let html=`<div class="round-bar">
-    <div style="display:flex;align-items:center;gap:8px;">
-      <span class="round-name">${round.label}</span>
-      <span class="round-status ${round.status}">${isOpen?'● Open':'✓ Done'}</span>
-    </div>
-    <select class="round-select" onchange="changeRound(this.value)">
-      ${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}
-    </select>
-  </div>`;
-
-  if(isOpen&&round.deadline){
-    const dl=new Date(round.deadline);
-    html+=`<div class="deadline-banner">⏱ &nbsp;Predictions lock <strong>${dl.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})} · ${dl.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</strong></div>`;
-  }
-
+  let html=`<div class="round-bar"><div style="display:flex;align-items:center;gap:8px;"><span class="round-name">${round.label}</span><span class="round-status ${round.status}">${isOpen?'● Open':'✓ Done'}</span></div><select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select></div>`;
+  if(isOpen&&round.deadline){const dl=new Date(round.deadline);html+=`<div class="deadline-banner">⏱ &nbsp;Predictions lock <strong>${dl.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})} · ${dl.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</strong></div>`;}
   html+=`<div class="events-list">`;
-  if(!events.length){
-    html+=`<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">No events yet</div><div class="empty-sub">The operator hasn't added matches to this round yet.</div></div>`;
-  } else {
-    events.forEach(ev=>{html+=renderEventCard(ev,comp,isOpen);});
-  }
+  if(!events.length){html+=`<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">No events yet</div><div class="empty-sub">Events found in DB: ${Object.keys(EVENTS).length}. Round event IDs: ${round.eventIds.join(', ')}</div></div>`;}
+  else{events.forEach(ev=>{html+=renderEventCard(ev,comp,isOpen);});}
   html+=`</div>`;
-
-  // Load participant counts async (fire and forget)
-  if(isOpen && events.length){
-    setTimeout(()=>loadParticipantCounts(round.id, events),0);
-  }
-    const predCount=events.filter(ev=>{
-      const p=preds[ev.id];
-      if(!p) return false;
-      if(comp.mode==='score') return p.h!==undefined&&p.a!==undefined;
-      if(comp.mode==='betting') return typeof p==='object'&&Object.keys(p).length>0;
-      return !!p;
-    }).length;
+  if(isOpen&&events.length){
+    const predCount=events.filter(ev=>{const p=preds[ev.id];if(!p)return false;if(comp.mode==='score')return p.h!==undefined&&p.a!==undefined;if(comp.mode==='betting')return typeof p==='object'&&Object.keys(p).length>0;return!!p;}).length;
     const pct=events.length?Math.round(predCount/events.length*100):0;
-    html+=`<div class="progress-wrap">
-      <div class="progress-meta"><span>${predCount} of ${events.length} predictions made</span><span class="progress-pct">${pct}%</span></div>
-      <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:var(--comp-color);"></div></div>
-      <div class="submit-row">
-        <span class="submit-hint">${predCount===events.length?'All done! Predictions are saved automatically.':events.length-predCount+' remaining'}</span>
-      </div>
-    </div>`;
+    html+=`<div class="progress-wrap"><div class="progress-meta"><span>${predCount} of ${events.length} predictions made</span><span class="progress-pct">${pct}%</span></div><div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:var(--comp-color);"></div></div></div>`;
   }
   return html;
 }
 
-function teamBadge(logo, name){
-  if(logo) return `<div class="ev-badge"><img src="${logo}" alt="${name}" onerror="this.parentElement.innerHTML='${name.slice(0,3).toUpperCase()}'"></div>`;
-  return `<div class="ev-badge">${name.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase()}</div>`;
+function teamBadge(logo,name){
+  if(logo)return`<div class="ev-badge"><img src="${logo}" alt="${name}" onerror="this.parentElement.textContent='${(name||'').slice(0,3).toUpperCase()}'"></div>`;
+  return`<div class="ev-badge">${(name||'?').split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase()}</div>`;
 }
 
 function renderEventCard(ev,comp,isOpen){
   const pred=preds[ev.id]??null;
   const hasRes=!!ev.res;
-  const hasPred=comp.mode==='score'?(pred&&pred.h!==undefined&&pred.a!==undefined)
-               :comp.mode==='betting'?(pred&&typeof pred==='object'&&Object.keys(pred).length>0)
-               :(pred!==null&&pred!==undefined);
-  const isPredicted=hasPred;
-
-  let correct=null, earnedPts=null;
+  const hasPred=comp.mode==='score'?(pred&&pred.h!==undefined&&pred.a!==undefined):comp.mode==='betting'?(pred&&typeof pred==='object'&&Object.keys(pred).length>0):(pred!==null&&pred!==undefined);
+  let correct=null,earnedPts=null;
   if(!isOpen&&hasRes&&hasPred){
-    if(comp.mode==='lms'||comp.mode==='result'){
-      const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
-      correct=pred===actual;
-    } else if(comp.mode==='score'){
-      const s=comp.scoring||{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1};
-      const exactH=pred.h==ev.res.h, exactA=pred.a==ev.res.a;
-      if(exactH&&exactA){earnedPts=s.exactScore;correct=true;}
-      else if(exactH){earnedPts=s.homeGoals;correct=null;}
-      else if(exactA){earnedPts=s.awayGoals;correct=null;}
-      else if((pred.h+pred.a)==(ev.res.h+ev.res.a)){earnedPts=s.totalGoals;correct=null;}
-      else{earnedPts=0;correct=false;}
-    } else if(comp.mode==='ou'){
-      correct=(pred==='O'&&(ev.res.h+ev.res.a)>2.5)||(pred==='U'&&(ev.res.h+ev.res.a)<=2.5);
-    }
+    if(comp.mode==='lms'){const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';correct=pred===actual;}
+    else if(comp.mode==='score'){const s=comp.scoring||{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1};const eH=pred.h==ev.res.h,eA=pred.a==ev.res.a;if(eH&&eA){earnedPts=s.exactScore;correct=true;}else if(eH){earnedPts=s.homeGoals;}else if(eA){earnedPts=s.awayGoals;}else if((pred.h+pred.a)==(ev.res.h+ev.res.a)){earnedPts=s.totalGoals;}else{earnedPts=0;correct=false;}}
+    else if(comp.mode==='ou'){correct=(pred==='O'&&(ev.res.h+ev.res.a)>2.5)||(pred==='U'&&(ev.res.h+ev.res.a)<=2.5);}
   }
-
-  let cls='event-card';
-  if(isOpen&&isPredicted) cls+=' predicted';
-  if(!isOpen) cls+=' locked-pred';
-
-  // Participants count (only for open rounds, as an engagement signal)
-  const participantsHtml = isOpen
-    ? `<div class="ev-participants"><strong id="ev-pc-${ev.id}">—</strong> participants</div>`
-    : '';
-
-  let html=`<div class="${cls}">
-    <div class="event-card-top">
-      <div class="event-meta">
-        <span class="event-league">${comp.name}</span>
-        <span class="event-kickoff">${ev.kickoff}${hasRes?` · FT: ${ev.res.h}–${ev.res.a}`:''}</span>
-      </div>
-      <div class="event-teams">
-        <div class="ev-team">${teamBadge(ev.homeLogo||'',ev.home)}<span class="ev-name">${ev.home}</span></div>
-        ${hasRes?`<div class="ev-score">${ev.res.h}–${ev.res.a}</div>`:`<div class="ev-vs">vs</div>`}
-        <div class="ev-team away">${teamBadge(ev.awayLogo||'',ev.away)}<span class="ev-name">${ev.away}</span></div>
-      </div>
-      ${participantsHtml}
-    </div>
-    <div class="pred-area">`;
-
+  let cls='event-card';if(isOpen&&hasPred)cls+=' predicted';if(!isOpen)cls+=' locked-pred';
+  let html=`<div class="${cls}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${comp.name}</span><span class="event-kickoff">${ev.kickoff||''}${hasRes?` · FT: ${ev.res.h}–${ev.res.a}`:''}</span></div><div class="event-teams"><div class="ev-team">${teamBadge(ev.homeLogo||'',ev.home)}<span class="ev-name">${ev.home}</span></div>${hasRes?`<div class="ev-score">${ev.res.h}–${ev.res.a}</div>`:`<div class="ev-vs">vs</div>`}<div class="ev-team away">${teamBadge(ev.awayLogo||'',ev.away)}<span class="ev-name">${ev.away}</span></div></div></div><div class="pred-area">`;
   if(isOpen){
-    if(comp.mode==='lms'||comp.mode==='result'){
-      html+=`<div class="btns-1x2">
-        <button class="btn-1x2${pred==='H'?' selected':''}" onclick="pick('${ev.id}','H')">Home Win</button>
-        <button class="btn-1x2${pred==='D'?' selected':''}" onclick="pick('${ev.id}','D')">X</button>
-        <button class="btn-1x2${pred==='A'?' selected':''}" onclick="pick('${ev.id}','A')">Away</button>
-      </div>`;
-    } else if(comp.mode==='score'){
-      const hv=(pred&&pred.h!==undefined)?pred.h:'';
-      const av=(pred&&pred.a!==undefined)?pred.a:'';
-      html+=`<div class="pred-label">Exact score</div>
-      <div class="score-pred">
-        <div class="score-side"><span class="score-side-name">${ev.home}</span>
-          <input class="score-num${hv!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${hv}" id="sh-${ev.id}" oninput="pickScore('${ev.id}','h',this.value)">
-        </div>
-        <span class="score-dash">–</span>
-        <div class="score-side right"><span class="score-side-name">${ev.away}</span>
-          <input class="score-num${av!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${av}" id="sa-${ev.id}" oninput="pickScore('${ev.id}','a',this.value)">
-        </div>
-      </div>`;
-    } else if(comp.mode==='ou'){
-      html+=`<div class="pred-label">Over / Under 2.5 goals</div>
-      <div class="btns-ou">
-        <button class="btn-ou over${pred==='O'?' selected':''}" onclick="pick('${ev.id}','O')">OVER<span class="sub">2.5+ goals</span></button>
-        <button class="btn-ou under${pred==='U'?' selected':''}" onclick="pick('${ev.id}','U')">UNDER<span class="sub">2.5 or less</span></button>
-      </div>`;
-    } else if(comp.mode==='betting'){
-      const markets=comp.markets||[];
-      const mpred=(pred&&typeof pred==='object')?pred:{};
-      html+=`<div style="display:flex;flex-direction:column;gap:8px;">`;
-      markets.forEach(mkt=>{
-        html+=`<div><div class="pred-label" style="margin-bottom:5px;">${mkt.label} <span style="font-family:var(--mono);font-size:9px;color:var(--accent);">+${mkt.points}pts</span></div>`;
-        if(mkt.type==='1x2'){
-          html+=`<div class="btns-1x2">
-            <button class="btn-1x2${mpred['1x2']==='H'?' selected':''}" onclick="pickMarket('${ev.id}','1x2','H')">Home Win</button>
-            <button class="btn-1x2${mpred['1x2']==='D'?' selected':''}" onclick="pickMarket('${ev.id}','1x2','D')">X</button>
-            <button class="btn-1x2${mpred['1x2']==='A'?' selected':''}" onclick="pickMarket('${ev.id}','1x2','A')">Away</button>
-          </div>`;
-        } else if(mkt.type==='ou25'){
-          html+=`<div class="btns-ou">
-            <button class="btn-ou over${mpred['ou25']==='O'?' selected':''}" onclick="pickMarket('${ev.id}','ou25','O')">OVER<span class="sub">2.5+ goals</span></button>
-            <button class="btn-ou under${mpred['ou25']==='U'?' selected':''}" onclick="pickMarket('${ev.id}','ou25','U')">UNDER<span class="sub">2.5 or less</span></button>
-          </div>`;
-        } else if(mkt.type==='btts'){
-          html+=`<div class="btns-ou">
-            <button class="btn-ou over${mpred['btts']==='Y'?' selected':''}" onclick="pickMarket('${ev.id}','btts','Y')">YES<span class="sub">Both score</span></button>
-            <button class="btn-ou under${mpred['btts']==='N'?' selected':''}" onclick="pickMarket('${ev.id}','btts','N')">NO<span class="sub">Clean sheet</span></button>
-          </div>`;
-        }
-        html+=`</div>`;
-      });
-      html+=`</div>`;
-    }
-  } else if(hasPred){
-    let predLabel='';
-    if(comp.mode==='lms'||comp.mode==='result') predLabel=pred==='H'?`${ev.home} (Home)`:pred==='D'?'Draw':`${ev.away} (Away)`;
-    else if(comp.mode==='score') predLabel=`${pred.h??'-'} – ${pred.a??'-'}`;
-    else if(comp.mode==='ou') predLabel=pred==='O'?'Over 2.5':'Under 2.5';
-    else if(comp.mode==='betting'&&pred&&typeof pred==='object') predLabel=Object.entries(pred).map(([k,v])=>`${k.toUpperCase()}: ${v}`).join(' · ');
-    let resultBadge='';
-    if(comp.mode==='score'&&earnedPts!==null) resultBadge=`<span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'✗ 0 pts'}</span>`;
-    else if(correct!==null) resultBadge=`<span class="pred-correct ${correct?'yes':'no'}">${correct?'✓ Correct':'✗ Wrong'}</span>`;
-    html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${predLabel}</strong></div>${resultBadge}</div>`;
-  } else {
-    html+=`<div style="font-size:12px;color:var(--text-3);">No prediction made for this match.</div>`;
-  }
-
-  html+=`</div></div>`;
-  return html;
-}
-  const pred=preds[ev.id]??null;
-  const hasRes=!!ev.res;
-  const hasPred=comp.mode==='score'?(pred&&pred.h!==undefined&&pred.a!==undefined)
-               :comp.mode==='betting'?(pred&&typeof pred==='object'&&Object.keys(pred).length>0)
-               :(pred!==null&&pred!==undefined);
-  const isPredicted=hasPred;
-  const hi=ev.home.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();
-  const ai=ev.away.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();
-
-  let correct=null, earnedPts=null;
-  if(!isOpen&&hasRes&&hasPred){
-    if(comp.mode==='lms'||comp.mode==='result'){
-      const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
-      correct=pred===actual;
-    } else if(comp.mode==='score'){
-      const s=comp.scoring||{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1};
-      const exactH=pred.h==ev.res.h, exactA=pred.a==ev.res.a;
-      if(exactH&&exactA){earnedPts=s.exactScore;correct=true;}
-      else if(exactH){earnedPts=s.homeGoals;correct=null;}
-      else if(exactA){earnedPts=s.awayGoals;correct=null;}
-      else if((pred.h+pred.a)==(ev.res.h+ev.res.a)){earnedPts=s.totalGoals;correct=null;}
-      else{earnedPts=0;correct=false;}
-    } else if(comp.mode==='ou'){
-      correct=(pred==='O'&&(ev.res.h+ev.res.a)>2.5)||(pred==='U'&&(ev.res.h+ev.res.a)<=2.5);
-    }
-  }
-
-  let cls='event-card';
-  if(isOpen&&isPredicted) cls+=' predicted';
-  if(!isOpen) cls+=' locked-pred';
-
-  let html=`<div class="${cls}">
-    <div class="event-card-top">
-      <div class="event-meta">
-        <span class="event-league">${comp.name}</span>
-        <span class="event-kickoff">${ev.kickoff}${hasRes?` · FT: ${ev.res.h}–${ev.res.a}`:''}</span>
-      </div>
-      <div class="event-teams">
-        <div class="ev-team"><div class="ev-badge">${hi}</div><span class="ev-name">${ev.home}</span></div>
-        ${hasRes?`<div class="ev-score">${ev.res.h}–${ev.res.a}</div>`:`<div class="ev-vs">vs</div>`}
-        <div class="ev-team away"><div class="ev-badge">${ai}</div><span class="ev-name">${ev.away}</span></div>
-      </div>
-    </div>
-    <div class="pred-area">`;
-
-  if(isOpen){
-    if(comp.mode==='lms'||comp.mode==='result'){
-      html+=`<div class="pred-label">Your pick</div>
-      <div class="btns-1x2">
-        <button class="btn-1x2${pred==='H'?' selected':''}" onclick="pick('${ev.id}','H')">${ev.home.split(' ')[0]}<span class="sub">Home</span></button>
-        <button class="btn-1x2${pred==='D'?' selected':''}" onclick="pick('${ev.id}','D')">X<span class="sub">Draw</span></button>
-        <button class="btn-1x2${pred==='A'?' selected':''}" onclick="pick('${ev.id}','A')">${ev.away.split(' ').pop()}<span class="sub">Away</span></button>
-      </div>`;
-    } else if(comp.mode==='score'){
-      const hv=(pred&&pred.h!==undefined)?pred.h:'';
-      const av=(pred&&pred.a!==undefined)?pred.a:'';
-      html+=`<div class="pred-label">Exact score</div>
-      <div class="score-pred">
-        <div class="score-side"><span class="score-side-name">${ev.home}</span>
-          <input class="score-num${hv!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${hv}" id="sh-${ev.id}" oninput="pickScore('${ev.id}','h',this.value)">
-        </div>
-        <span class="score-dash">–</span>
-        <div class="score-side right"><span class="score-side-name">${ev.away}</span>
-          <input class="score-num${av!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${av}" id="sa-${ev.id}" oninput="pickScore('${ev.id}','a',this.value)">
-        </div>
-      </div>`;
-    } else if(comp.mode==='ou'){
-      html+=`<div class="pred-label">Over / Under 2.5 goals</div>
-      <div class="btns-ou">
-        <button class="btn-ou over${pred==='O'?' selected':''}" onclick="pick('${ev.id}','O')">OVER<span class="sub">2.5+ goals</span></button>
-        <button class="btn-ou under${pred==='U'?' selected':''}" onclick="pick('${ev.id}','U')">UNDER<span class="sub">2.5 or less</span></button>
-      </div>`;
-    } else if(comp.mode==='betting'){
-      const markets=comp.markets||[];
-      const mpred=(pred&&typeof pred==='object')?pred:{};
-      html+=`<div style="display:flex;flex-direction:column;gap:8px;">`;
-      markets.forEach(mkt=>{
-        html+=`<div><div class="pred-label" style="margin-bottom:5px;">${mkt.label} <span style="font-family:var(--mono);font-size:9px;color:var(--accent);">+${mkt.points}pts</span></div>`;
-        if(mkt.type==='1x2'){
-          html+=`<div class="btns-1x2">
-            <button class="btn-1x2${mpred['1x2']==='H'?' selected':''}" onclick="pickMarket('${ev.id}','1x2','H')">${ev.home.split(' ')[0]}<span class="sub">Home</span></button>
-            <button class="btn-1x2${mpred['1x2']==='D'?' selected':''}" onclick="pickMarket('${ev.id}','1x2','D')">X<span class="sub">Draw</span></button>
-            <button class="btn-1x2${mpred['1x2']==='A'?' selected':''}" onclick="pickMarket('${ev.id}','1x2','A')">${ev.away.split(' ').pop()}<span class="sub">Away</span></button>
-          </div>`;
-        } else if(mkt.type==='ou25'){
-          html+=`<div class="btns-ou">
-            <button class="btn-ou over${mpred['ou25']==='O'?' selected':''}" onclick="pickMarket('${ev.id}','ou25','O')">OVER<span class="sub">2.5+ goals</span></button>
-            <button class="btn-ou under${mpred['ou25']==='U'?' selected':''}" onclick="pickMarket('${ev.id}','ou25','U')">UNDER<span class="sub">2.5 or less</span></button>
-          </div>`;
-        } else if(mkt.type==='btts'){
-          html+=`<div class="btns-ou">
-            <button class="btn-ou over${mpred['btts']==='Y'?' selected':''}" onclick="pickMarket('${ev.id}','btts','Y')">YES<span class="sub">Both score</span></button>
-            <button class="btn-ou under${mpred['btts']==='N'?' selected':''}" onclick="pickMarket('${ev.id}','btts','N')">NO<span class="sub">Clean sheet</span></button>
-          </div>`;
-        }
-        html+=`</div>`;
-      });
-      html+=`</div>`;
-    }
-  } else if(hasPred){
-    let predLabel='';
-    if(comp.mode==='lms'||comp.mode==='result') predLabel=pred==='H'?`${ev.home} (Home)`:pred==='D'?'Draw':`${ev.away} (Away)`;
-    else if(comp.mode==='score') predLabel=`${pred.h??'-'} – ${pred.a??'-'}`;
-    else if(comp.mode==='ou') predLabel=pred==='O'?'Over 2.5':'Under 2.5';
-    else if(comp.mode==='betting'&&pred&&typeof pred==='object') predLabel=Object.entries(pred).map(([k,v])=>`${k.toUpperCase()}: ${v}`).join(' · ');
-    let resultBadge='';
-    if(comp.mode==='score'&&earnedPts!==null) resultBadge=`<span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'✗ 0 pts'}</span>`;
-    else if(correct!==null) resultBadge=`<span class="pred-correct ${correct?'yes':'no'}">${correct?'✓ Correct':'✗ Wrong'}</span>`;
-    html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${predLabel}</strong></div>${resultBadge}</div>`;
-  } else {
-    html+=`<div style="font-size:11px;color:var(--text-3);">No prediction made for this match.</div>`;
-  }
-
-  html+=`</div></div>`;
-  return html;
+    if(comp.mode==='lms'||comp.mode==='result'){html+=`<div class="btns-1x2"><button class="btn-1x2${pred==='H'?' selected':''}" onclick="pick('${ev.id}','H')">Home Win</button><button class="btn-1x2${pred==='D'?' selected':''}" onclick="pick('${ev.id}','D')">X</button><button class="btn-1x2${pred==='A'?' selected':''}" onclick="pick('${ev.id}','A')">Away</button></div>`;}
+    else if(comp.mode==='score'){const hv=(pred&&pred.h!==undefined)?pred.h:'';const av=(pred&&pred.a!==undefined)?pred.a:'';html+=`<div class="pred-label">Exact score</div><div class="score-pred"><div class="score-side"><span class="score-side-name">${ev.home}</span><input class="score-num${hv!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${hv}" id="sh-${ev.id}" oninput="pickScore('${ev.id}','h',this.value)"></div><span class="score-dash">–</span><div class="score-side right"><span class="score-side-name">${ev.away}</span><input class="score-num${av!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${av}" id="sa-${ev.id}" oninput="pickScore('${ev.id}','a',this.value)"></div></div>`;}
+    else if(comp.mode==='ou'){html+=`<div class="pred-label">Over / Under 2.5 goals</div><div class="btns-ou"><button class="btn-ou over${pred==='O'?' selected':''}" onclick="pick('${ev.id}','O')">OVER<span class="sub">2.5+ goals</span></button><button class="btn-ou under${pred==='U'?' selected':''}" onclick="pick('${ev.id}','U')">UNDER<span class="sub">2.5 or less</span></button></div>`;}
+    else if(comp.mode==='betting'){const markets=comp.markets||[];const mpred=(pred&&typeof pred==='object')?pred:{};html+=`<div style="display:flex;flex-direction:column;gap:8px;">`;markets.forEach(mkt=>{html+=`<div><div class="pred-label" style="margin-bottom:5px;">${mkt.label} <span style="font-family:var(--mono);font-size:9px;color:var(--accent);">+${mkt.points}pts</span></div>`;if(mkt.type==='1x2'){html+=`<div class="btns-1x2"><button class="btn-1x2${mpred['1x2']==='H'?' selected':''}" onclick="pickMarket('${ev.id}','1x2','H')">Home Win</button><button class="btn-1x2${mpred['1x2']==='D'?' selected':''}" onclick="pickMarket('${ev.id}','1x2','D')">X</button><button class="btn-1x2${mpred['1x2']==='A'?' selected':''}" onclick="pickMarket('${ev.id}','1x2','A')">Away</button></div>`;}else if(mkt.type==='ou25'){html+=`<div class="btns-ou"><button class="btn-ou over${mpred['ou25']==='O'?' selected':''}" onclick="pickMarket('${ev.id}','ou25','O')">OVER</button><button class="btn-ou under${mpred['ou25']==='U'?' selected':''}" onclick="pickMarket('${ev.id}','ou25','U')">UNDER</button></div>`;}else if(mkt.type==='btts'){html+=`<div class="btns-ou"><button class="btn-ou over${mpred['btts']==='Y'?' selected':''}" onclick="pickMarket('${ev.id}','btts','Y')">YES</button><button class="btn-ou under${mpred['btts']==='N'?' selected':''}" onclick="pickMarket('${ev.id}','btts','N')">NO</button></div>`;}html+=`</div>`;});html+=`</div>`;}
+  }else if(hasPred){
+    let pl='';
+    if(comp.mode==='lms')pl=pred==='H'?`${ev.home} (Home)`:pred==='D'?'Draw':`${ev.away} (Away)`;
+    else if(comp.mode==='score')pl=`${pred.h??'-'} – ${pred.a??'-'}`;
+    else if(comp.mode==='ou')pl=pred==='O'?'Over 2.5':'Under 2.5';
+    else if(comp.mode==='betting'&&pred&&typeof pred==='object')pl=Object.entries(pred).map(([k,v])=>`${k}: ${v}`).join(' · ');
+    let rb='';if(comp.mode==='score'&&earnedPts!=null)rb=`<span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'✗ 0 pts'}</span>`;else if(correct!=null)rb=`<span class="pred-correct ${correct?'yes':'no'}">${correct?'✓ Correct':'✗ Wrong'}</span>`;
+    html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div>${rb}</div>`;
+  }else{html+=`<div style="font-size:12px;color:var(--text-3);">No prediction made.</div>`;}
+  html+=`</div></div>`;return html;
 }
 
-async function loadParticipantCounts(roundId, events){
-  const {data} = await supa.from('gw_predictions')
-    .select('event_id, player_id')
-    .eq('client_key', CLIENT_PARAM)
-    .eq('round_id', roundId);
-  if(!data) return;
-  // Count unique players per event
-  const counts = {};
-  data.forEach(p=>{ if(!counts[p.event_id]) counts[p.event_id]=new Set(); counts[p.event_id].add(p.player_id); });
-  events.forEach(ev=>{
-    const el = document.getElementById('ev-pc-'+ev.id);
-    if(el) el.textContent = counts[ev.id]?.size ?? 0;
-  });
-}
-
-function pick(id,val){
-  if(!currentPlayer){openAuthModal('Sign in to make predictions');return;}
-  preds[id]=val; savePred(id,val); renderPredict();
-}
-function pickScore(id,side,val){
-  if(!currentPlayer){openAuthModal('Sign in to make predictions');return;}
-  if(!preds[id]||typeof preds[id]!=='object') preds[id]={};
-  preds[id][side]=val===''?undefined:parseInt(val);
-  savePred(id,preds[id]);
-  const input=document.getElementById((side==='h'?'sh-':'sa-')+id);
-  if(input) input.classList.toggle('has',val!=='');
-}
-function pickMarket(evId,market,val){
-  if(!currentPlayer){openAuthModal('Sign in to make predictions');return;}
-  if(!preds[evId]||typeof preds[evId]!=='object') preds[evId]={};
-  preds[evId][market]=val;
-  savePred(evId,preds[evId]); renderPredict();
-}
+function pick(id,val){if(!currentPlayer){openAuthModal('Sign in to make predictions');return;}preds[id]=val;savePred(id,val);renderPredict();}
+function pickScore(id,side,val){if(!currentPlayer){openAuthModal('Sign in to make predictions');return;}if(!preds[id]||typeof preds[id]!=='object')preds[id]={};preds[id][side]=val===''?undefined:parseInt(val);savePred(id,preds[id]);const input=document.getElementById((side==='h'?'sh-':'sa-')+id);if(input)input.classList.toggle('has',val!=='');}
+function pickMarket(evId,market,val){if(!currentPlayer){openAuthModal('Sign in to make predictions');return;}if(!preds[evId]||typeof preds[evId]!=='object')preds[evId]={};preds[evId][market]=val;savePred(evId,preds[evId]);renderPredict();}
 function changeRound(idx){selectedRound[currentCompIdx]=parseInt(idx);renderPredict();}
 
 // ── LEADERBOARD ───────────────────────────────────────────────────────────
 function renderLeaderboardShell(comp){
-  if(lbSelection[currentCompIdx]===undefined) lbSelection[currentCompIdx]=getDefaultRoundIdx(comp);
-  const sel=lbSelection[currentCompIdx];
-  const isOverall=sel==='overall';
-  return `<div class="lb-week-row">
-    <select class="lb-week-select" onchange="changeLBSelection(this.value)">
-      ${comp.rounds.map((r,i)=>`<option value="${i}" ${(!isOverall&&sel===i)?'selected':''}>${r.label}${r.status==='open'?' (Current)':''}</option>`).join('')}
-      <option value="overall" ${isOverall?'selected':''}>Overall — Season</option>
-    </select>
-  </div>
-  <div class="lb-pane" id="lb-pane-inner">
-    <div class="empty"><div class="empty-icon" style="font-size:20px;">⏳</div><div class="empty-title">Loading…</div></div>
-  </div>`;
+  if(lbSelection[currentCompIdx]===undefined)lbSelection[currentCompIdx]=getDefaultRoundIdx(comp);
+  const sel=lbSelection[currentCompIdx];const isOverall=sel==='overall';
+  return`<div class="lb-week-row"><select class="lb-week-select" onchange="changeLBSelection(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}" ${(!isOverall&&sel===i)?'selected':''}>${r.label}${r.status==='open'?' (Current)':''}</option>`).join('')}<option value="overall" ${isOverall?'selected':''}>Overall — Season</option></select></div><div class="lb-pane" id="lb-pane-inner"><div class="empty"><div class="empty-icon" style="font-size:20px;">⏳</div><div class="empty-title">Loading…</div></div></div>`;
 }
-
-function changeLBSelection(val){
-  lbSelection[currentCompIdx]=val==='overall'?'overall':parseInt(val);
-  renderPredict();
-}
-
+function changeLBSelection(val){lbSelection[currentCompIdx]=val==='overall'?'overall':parseInt(val);renderPredict();}
 async function loadAndRenderLeaderboard(comp){
-  const sel=lbSelection[currentCompIdx];
-  const isOverall=sel==='overall';
-  const paneEl=document.getElementById('lb-pane-inner');
-  if(!paneEl) return;
-
-  if(isOverall){
-    const {data}=await supa.from('gw_predictions')
-      .select('username,player_id,round_id')
-      .eq('client_key',CLIENT_PARAM).eq('competition_id',comp.id);
-    const players={};
-    (data||[]).forEach(p=>{
-      if(!players[p.player_id]) players[p.player_id]={u:p.username,rounds:new Set()};
-      players[p.player_id].rounds.add(p.round_id);
-    });
-    const rows=Object.values(players).map(p=>({u:p.u,survived:p.rounds.size}))
-      .sort((a,b)=>b.survived-a.survived);
-    if(!rows.length){
-      paneEl.innerHTML=`<div class="empty"><div class="empty-icon">🏆</div><div class="empty-title">No predictions yet</div></div>`;
-      return;
+  const sel=lbSelection[currentCompIdx];const isOverall=sel==='overall';const paneEl=document.getElementById('lb-pane-inner');if(!paneEl)return;
+  try{
+    if(isOverall){
+      const rows=await dbGet('gw_predictions',{client_key:CLIENT_PARAM,competition_id:comp.id});
+      const players={};(rows||[]).forEach(p=>{if(!players[p.player_id])players[p.player_id]={u:p.username,rounds:new Set()};players[p.player_id].rounds.add(p.round_id);});
+      const lbRows=Object.values(players).map(p=>({u:p.u,survived:p.rounds.size})).sort((a,b)=>b.survived-a.survived);
+      if(!lbRows.length){paneEl.innerHTML=`<div class="empty"><div class="empty-icon">🏆</div><div class="empty-title">No predictions yet</div></div>`;return;}
+      let rank=1;lbRows.forEach((r,i)=>{if(i>0&&lbRows[i].survived<lbRows[i-1].survived)rank=i+1;r.rank=rank;});
+      paneEl.innerHTML=buildLBTable(comp.name,'Overall',lbRows,r=>`<td class="lb-num">${r.survived}</td>`,`<th class="r">Rounds</th>`);
+    }else{
+      const round=comp.rounds[sel];if(!round){paneEl.innerHTML='';return;}
+      const rows=await dbGet('gw_predictions',{client_key:CLIENT_PARAM,round_id:round.id});
+      const players={};(rows||[]).forEach(p=>{if(!players[p.player_id])players[p.player_id]={u:p.username,predictions:0};players[p.player_id].predictions++;});
+      const lbRows=Object.values(players).sort((a,b)=>b.predictions-a.predictions);
+      if(!lbRows.length){paneEl.innerHTML=`<div class="empty"><div class="empty-icon">🏆</div><div class="empty-title">No predictions yet</div><div class="empty-sub">Be the first to predict ${round.label}.</div></div>`;return;}
+      const totalEvents=round.eventIds.length;let rank=1;lbRows.forEach((r,i)=>{if(i>0&&lbRows[i].predictions<lbRows[i-1].predictions)rank=i+1;r.rank=rank;});
+      paneEl.innerHTML=buildLBTable(comp.name,round.label+' · this week',lbRows,r=>`<td class="lb-num">${r.predictions} / ${totalEvents}</td>`,`<th class="r">Predictions</th>`);
     }
-    let rank=1; rows.forEach((r,i)=>{if(i>0&&rows[i].survived<rows[i-1].survived)rank=i+1;r.rank=rank;});
-    paneEl.innerHTML=buildLBTable(comp.name,'Overall',rows,r=>`<td class="lb-num">${r.survived}</td>`,`<th class="r">Rounds</th>`);
-  } else {
-    const round=comp.rounds[sel];
-    if(!round){paneEl.innerHTML='';return;}
-    const {data}=await supa.from('gw_predictions')
-      .select('username,player_id,event_id')
-      .eq('client_key',CLIENT_PARAM).eq('round_id',round.id);
-    const players={};
-    (data||[]).forEach(p=>{
-      if(!players[p.player_id]) players[p.player_id]={u:p.username,predictions:0};
-      players[p.player_id].predictions++;
-    });
-    const totalEvents=round.eventIds.length;
-    const rows=Object.values(players).sort((a,b)=>b.predictions-a.predictions);
-    if(!rows.length){
-      paneEl.innerHTML=`<div class="empty"><div class="empty-icon">🏆</div><div class="empty-title">No predictions yet</div><div class="empty-sub">Be the first to predict ${round.label}.</div></div>`;
-      return;
-    }
-    let rank=1; rows.forEach((r,i)=>{if(i>0&&rows[i].predictions<rows[i-1].predictions)rank=i+1;r.rank=rank;});
-    paneEl.innerHTML=buildLBTable(comp.name,round.label+' · this week',rows,
-      r=>`<td class="lb-num">${r.predictions} / ${totalEvents}</td>`,`<th class="r">Predictions</th>`);
-  }
+  }catch(e){paneEl.innerHTML=`<div class="empty"><div class="empty-title">Error loading leaderboard</div><div class="empty-sub">${e.message}</div></div>`;}
 }
-
 function buildLBTable(title,sub,rows,cellFn,colHeader){
   const me=currentPlayer?.username;
-  let html=`<div class="lb-wrap">
-    <div class="lb-table-head"><span class="lb-table-head-title">${title}</span><span class="lb-table-head-sub">${sub}</span></div>
-    <table class="lb-table"><thead><tr>
-      <th style="width:32px;text-align:center">#</th><th>Player</th>${colHeader}
-    </tr></thead><tbody>`;
-  rows.forEach(row=>{
-    const isMe=row.u===me, ini=row.u.slice(0,2).toUpperCase();
-    html+=`<tr class="${isMe?'me':''}">
-      <td class="lb-rank ${row.rank<=3?'top':''}">${row.rank<=3?MEDALS[row.rank-1]:row.rank}</td>
-      <td><div class="lb-user"><div class="lb-av ${isMe?'me':''}">${ini}</div>
-        <span class="lb-uname ${isMe?'me':''}">${row.u}${isMe?'<span class="you-tag">YOU</span>':''}</span></div></td>
-      ${cellFn(row)}</tr>`;
-  });
-  html+=`</tbody></table></div>`;
-  return html;
+  let html=`<div class="lb-wrap"><div class="lb-table-head"><span class="lb-table-head-title">${title}</span><span class="lb-table-head-sub">${sub}</span></div><table class="lb-table"><thead><tr><th style="width:32px;text-align:center">#</th><th>Player</th>${colHeader}</tr></thead><tbody>`;
+  rows.forEach(row=>{const isMe=row.u===me,ini=(row.u||'?').slice(0,2).toUpperCase();html+=`<tr class="${isMe?'me':''}"><td class="lb-rank ${row.rank<=3?'top':''}">${row.rank<=3?MEDALS[row.rank-1]:row.rank}</td><td><div class="lb-user"><div class="lb-av ${isMe?'me':''}">${ini}</div><span class="lb-uname ${isMe?'me':''}">${row.u}${isMe?'<span class="you-tag">YOU</span>':''}</span></div></td>${cellFn(row)}</tr>`;});
+  html+=`</tbody></table></div>`;return html;
 }
 
 // ── PROFILE ───────────────────────────────────────────────────────────────
 function renderProfile(){
-  if(!currentPlayer) return;
+  if(!currentPlayer)return;
   const ini=currentPlayer.username.slice(0,2).toUpperCase();
   const joined=currentPlayer.joined_at?new Date(currentPlayer.joined_at).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}):'Today';
-  const totalPreds=Object.keys(preds).length;
-  document.getElementById('profile-content').innerHTML=`
-    <div class="profile-header">
-      <div class="profile-av">${ini}</div>
-      <div class="profile-name">${currentPlayer.username}</div>
-      <div class="profile-joined">Joined ${joined}</div>
-    </div>
-    <div class="profile-stats">
-      <div class="profile-stat"><div class="ps-val">${totalPreds}</div><div class="ps-label">Predictions</div></div>
-      <div class="profile-stat"><div class="ps-val">${COMPS.length}</div><div class="ps-label">Competitions</div></div>
-      <div class="profile-stat"><div class="ps-val">${COMPS.filter(c=>c.rounds.some(r=>r.status==='open')).length}</div><div class="ps-label">Open rounds</div></div>
-    </div>
-    <div class="profile-section">
-      <div class="profile-section-title">Account</div>
-      <div style="font-size:12px;color:var(--text-2);margin-bottom:14px;">
-        <div style="margin-bottom:4px;">Username: <strong style="color:var(--text)">${currentPlayer.username}</strong></div>
-        ${currentPlayer.email?`<div>Email: <strong style="color:var(--text)">${currentPlayer.email}</strong></div>`:''}
-      </div>
-      <button class="logout-btn" onclick="doLogout()">Sign out</button>
-    </div>`;
+  document.getElementById('profile-content').innerHTML=`<div class="profile-header"><div class="profile-av">${ini}</div><div class="profile-name">${currentPlayer.username}</div><div class="profile-joined">Joined ${joined}</div></div><div class="profile-stats"><div class="profile-stat"><div class="ps-val">${Object.keys(preds).length}</div><div class="ps-label">Predictions</div></div><div class="profile-stat"><div class="ps-val">${COMPS.length}</div><div class="ps-label">Competitions</div></div><div class="profile-stat"><div class="ps-val">${COMPS.filter(c=>c.rounds.some(r=>r.status==='open')).length}</div><div class="ps-label">Open rounds</div></div></div><div class="profile-section"><div class="profile-section-title">Account</div><div style="font-size:12px;color:var(--text-2);margin-bottom:14px;"><div>Username: <strong>${currentPlayer.username}</strong></div>${currentPlayer.email?`<div>Email: <strong>${currentPlayer.email}</strong></div>`:''}</div><button class="logout-btn" onclick="doLogout()">Sign out</button></div>`;
 }
 
 // ── TOAST ─────────────────────────────────────────────────────────────────
 let toastT;
-function toast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
-  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2200);
-}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2200);}
 
 // ── INIT ──────────────────────────────────────────────────────────────────
-(async ()=>{
+(async()=>{
   try{
-    // Restore session
-    try{
-      const cached=localStorage.getItem('gw_session_'+CLIENT_PARAM);
-      if(cached) currentPlayer=JSON.parse(cached);
-    }catch(e){}
-
-    // Load competitions + events from Supabase
+    const cached=localStorage.getItem('gw_session_'+CLIENT_PARAM);
+    if(cached)try{currentPlayer=JSON.parse(cached);}catch(e){}
     await buildCompsFromRealData();
-
-    // Load this player's predictions
-    if(currentPlayer){
-      try{ await loadPlayerPreds(); }catch(e){ console.error('loadPlayerPreds failed:',e); }
-    }
-
-    // Populate operator badge
+    if(currentPlayer)try{await loadPlayerPreds();}catch(e){console.error('loadPlayerPreds:',e);}
     if(CLIENT_PARAM&&CLIENT_PARAM!=='demo'){
       try{
-        const {data:op}=await supa.from('gw_operators').select('company_name').eq('client_key',CLIENT_PARAM).single();
-        if(op) document.getElementById('hdr-operator-badge').textContent='· '+op.company_name;
+        const ops=await dbGet('gw_operators',{client_key:CLIENT_PARAM});
+        if(ops&&ops[0])document.getElementById('hdr-operator-badge').textContent='· '+ops[0].company_name;
       }catch(e){}
     }
-
-  }catch(err){
-    console.error('Init failed:',err);
-  }finally{
-    // Always render — even if something failed above
-    updateHeaderUser();
-    renderCompTabs();
-    goTab('predict');
-  }
+  }catch(err){console.error('Init error:',err);}
+  finally{updateHeaderUser();renderCompTabs();goTab('predict');}
 })();
 </script>
 </body>
