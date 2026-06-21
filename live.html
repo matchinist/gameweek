@@ -464,7 +464,7 @@ function renderPredict(){
   if(selectedRound[currentCompIdx]===undefined)selectedRound[currentCompIdx]=getDefaultRoundIdx(COMPS[currentCompIdx]);
   const comp=COMPS[currentCompIdx];
   const tlHtml=renderTournamentLabels(comp);
-  let html='<div class="predict-header-row"><div class="predict-tournament-labels">'+tlHtml+'</div><div class="predict-subtabs"><button class="ps-tab'+(predictSubTab==='predictions'?' active':'')+'" onclick="switchPredictSubTab('predictions')">Pred</button><button class="ps-tab'+(predictSubTab==='leaderboard'?' active':'')+'" onclick="switchPredictSubTab('leaderboard')">LB</button></div></div>';
+  let html=`<div class="predict-header-row"><div class="predict-tournament-labels">${tlHtml}</div><div class="predict-subtabs"><button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Pred</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">LB</button></div></div>`;
   html+=predictSubTab==='predictions'?renderPredictionsPane(comp):renderLeaderboardShell(comp);
   document.getElementById('predict-content').innerHTML=html;
   if(predictSubTab==='leaderboard')loadAndRenderLeaderboard(comp);
