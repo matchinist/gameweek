@@ -273,43 +273,58 @@ let COMPS=[], EVENTS={}, EVENTS_RAW={};
 async function buildCompsFromRealData(){
   COMPS=[]; EVENTS={}; EVENTS_RAW={};
 
-  // Load global DM data (shared — teams/tournaments/events have no client_key)
-  const [{data:teams},{data:evRows},{data:compsRows},{data:roundsRows}] = await Promise.all([
-    supa.from('gw_dm_teams').select('*'),
-    supa.from('gw_dm_events').select('*'),
-    supa.from('gw_competitions').select('*').eq('client_key',CLIENT_PARAM),
-    supa.from('gw_rounds').select('*').eq('client_key',CLIENT_PARAM).order('sort_order'),
-  ]);
+  try{
+    const [{data:teams,error:e1},{data:evRows,error:e2},{data:compsRows,error:e3},{data:roundsRows,error:e4}] = await Promise.all([
+      supa.from('gw_dm_teams').select('*'),
+      supa.from('gw_dm_events').select('*'),
+      supa.from('gw_competitions').select('*').eq('client_key',CLIENT_PARAM),
+      supa.from('gw_rounds').select('*').eq('client_key',CLIENT_PARAM).order('sort_order'),
+    ]);
 
-  const teamById = id => (teams||[]).find(t=>t.id===id);
+    if(e1||e2||e3||e4){
+      console.error('Supabase load errors:',{e1,e2,e3,e4});
+    }
 
-  // Build EVENTS lookup from DM
-  (evRows||[]).forEach(ev=>{
-    const home=teamById(ev.home_id), away=teamById(ev.away_id);
-    if(!home||!away) return;
-    const hasResult = ev.result && ev.result.h!==null && ev.result.a!=null;
-    EVENTS[ev.id] = {
-      home:home.name, away:away.name,
-      homeLogo:home.logo||'', awayLogo:away.logo||'',
-      kickoff:fmtKickoff(ev.kickoff), res:hasResult?ev.result:null
-    };
-    EVENTS_RAW[ev.id] = hasResult?ev.result:null;
-  });
+    const teamById = id => (teams||[]).find(t=>t.id===id);
 
-  // Build COMPS from Supabase competitions + rounds
-  if(compsRows && compsRows.length>0){
-    compsRows.forEach(c=>{
+    // Build EVENTS lookup from DM
+    (evRows||[]).forEach(ev=>{
+      const home=teamById(ev.home_id), away=teamById(ev.away_id);
+      // Store even without team match — use raw IDs as fallback names
+      EVENTS[ev.id] = {
+        home: home?.name || ev.home_id,
+        away: away?.name || ev.away_id,
+        homeLogo: home?.logo||'',
+        awayLogo: away?.logo||'',
+        kickoff: fmtKickoff(ev.kickoff),
+        res: (ev.result && ev.result.h!=null && ev.result.a!=null) ? ev.result : null
+      };
+      EVENTS_RAW[ev.id] = ev.result || null;
+    });
+
+    // Build COMPS from Supabase competitions + rounds
+    (compsRows||[]).forEach(c=>{
       if(c.status==='archived') return;
       const cRounds = (roundsRows||[]).filter(r=>r.competition_id===c.id).map(r=>{
-        const evIds = (r.event_ids||[]).filter(eid=>EVENTS[eid]);
+        // Don't filter out events — show them even if not in EVENTS (they may load later)
+        const evIds = r.event_ids||[];
         const allDone = evIds.length>0 && evIds.every(eid=>EVENTS[eid]?.res!==null);
-        return {id:r.id, label:r.label, deadline:r.deadline||'',
+        return {
+          id:r.id, label:r.label, deadline:r.deadline||'',
           status: r.status==='completed'?'completed':(allDone?'completed':'open'),
-          eventIds:evIds};
+          eventIds: evIds
+        };
       });
-      COMPS.push({id:c.id, name:c.name, mode:c.mode||'lms', color:c.color||'#4F46E5',
-        scoring:c.scoring||null, markets:c.markets||[], rounds:cRounds});
+      COMPS.push({
+        id:c.id, name:c.name, mode:c.mode||'lms', color:c.color||'#4F46E5',
+        scoring:c.scoring||null, markets:c.markets||[], rounds:cRounds
+      });
     });
+
+    console.log(`Loaded: ${(evRows||[]).length} events, ${(compsRows||[]).length} competitions, ${(roundsRows||[]).length} rounds, CLIENT=${CLIENT_PARAM}`);
+
+  }catch(err){
+    console.error('buildCompsFromRealData failed:',err);
   }
 }
 

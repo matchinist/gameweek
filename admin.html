@@ -666,31 +666,45 @@ tbody tr:hover td{background:var(--bg);}
 <!-- Create Round -->
 <!-- Create Round -->
 <div class="modal-overlay" id="modal-create-round">
-  <div class="modal" style="max-width:540px;">
+  <div class="modal" style="max-width:560px;">
     <div class="modal-header">
       <div class="modal-title">New Round</div>
       <button class="modal-close" onclick="closeModal('modal-create-round')">×</button>
     </div>
     <div class="modal-body">
+
       <div class="form-group">
         <label class="form-label">Round Name</label>
         <input class="form-input" id="new-round-name" placeholder="e.g. Gameweek 4" />
       </div>
+
       <div class="form-group">
-        <label class="form-label">Tournaments</label>
-        <div id="new-round-tournament-list" style="display:flex;flex-direction:column;gap:6px;border:1px solid var(--border);border-radius:7px;padding:10px;max-height:160px;overflow-y:auto;">
-          <div style="font-size:12px;color:var(--text-3);">Loading tournaments…</div>
+        <label class="form-label">Select Tournament</label>
+        <select class="form-select" id="new-round-tournament-select" onchange="roundSelectTournament('new')">
+          <option value="">— choose a tournament —</option>
+        </select>
+      </div>
+
+      <div id="new-round-available-wrap" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <label class="form-label" style="margin:0;">Available Events</label>
+          <span id="new-round-available-count" style="font-size:11px;color:var(--text-3);"></span>
         </div>
-        <div style="font-size:11px;color:var(--text-3);margin-top:5px;">Select one or more. Events from all selected tournaments will be listed below.</div>
+        <div id="new-round-available-list" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;"></div>
       </div>
-      <div class="form-group" id="new-round-events-wrap" style="display:none;">
-        <label class="form-label">Pick Events <span id="new-round-event-count" style="color:var(--text-3);font-weight:400;"></span></label>
-        <div style="font-size:11px;color:var(--amber);background:var(--amber-light);padding:6px 10px;border-radius:5px;margin-bottom:8px;" id="new-round-overlap-warn" style="display:none;"></div>
-        <div id="new-round-event-list" style="display:flex;flex-direction:column;gap:4px;max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:8px;"></div>
+
+      <div id="new-round-added-wrap" style="display:none;margin-top:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <label class="form-label" style="margin:0;color:var(--green);">✓ Added to Round</label>
+          <span id="new-round-added-count" style="font-size:11px;color:var(--text-3);"></span>
+        </div>
+        <div style="font-size:11px;color:var(--amber);background:var(--amber-light);padding:6px 10px;border-radius:5px;margin-bottom:8px;display:none;" id="new-round-overlap-warn"></div>
+        <div id="new-round-added-list" style="display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto;border:1px solid var(--green);border-radius:6px;padding:8px;background:var(--green-light);"></div>
       </div>
+
     </div>
     <div class="modal-footer">
-      <div style="font-size:11px;color:var(--text-3);">Prediction deadline = 1 hour before each event's kick-off.</div>
+      <div style="font-size:11px;color:var(--text-3);">Deadline = 1 hour before earliest kick-off.</div>
       <button class="btn btn-ghost" onclick="closeModal('modal-create-round')">Cancel</button>
       <button class="btn btn-primary" onclick="createRound()">Create Round</button>
     </div>
@@ -699,31 +713,46 @@ tbody tr:hover td{background:var(--bg);}
 
 <!-- Edit Round -->
 <div class="modal-overlay" id="modal-edit-round">
-  <div class="modal" style="max-width:540px;">
+  <div class="modal" style="max-width:560px;">
     <div class="modal-header">
       <div class="modal-title">Edit Round</div>
       <button class="modal-close" onclick="closeModal('modal-edit-round')">×</button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="edit-round-id" />
+
       <div class="form-group">
         <label class="form-label">Round Name</label>
         <input class="form-input" id="edit-round-name" placeholder="e.g. Gameweek 4" />
       </div>
+
       <div class="form-group">
-        <label class="form-label">Tournaments</label>
-        <div id="edit-round-tournament-list" style="display:flex;flex-direction:column;gap:6px;border:1px solid var(--border);border-radius:7px;padding:10px;max-height:160px;overflow-y:auto;">
-          <div style="font-size:12px;color:var(--text-3);">Loading tournaments…</div>
+        <label class="form-label">Select Tournament</label>
+        <select class="form-select" id="edit-round-tournament-select" onchange="roundSelectTournament('edit')">
+          <option value="">— choose a tournament —</option>
+        </select>
+      </div>
+
+      <div id="edit-round-available-wrap" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <label class="form-label" style="margin:0;">Available Events</label>
+          <span id="edit-round-available-count" style="font-size:11px;color:var(--text-3);"></span>
         </div>
+        <div id="edit-round-available-list" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;"></div>
       </div>
-      <div class="form-group" id="edit-round-events-wrap" style="display:none;">
-        <label class="form-label">Pick Events <span id="edit-round-event-count" style="color:var(--text-3);font-weight:400;"></span></label>
+
+      <div id="edit-round-added-wrap" style="display:none;margin-top:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <label class="form-label" style="margin:0;color:var(--green);">✓ Added to Round</label>
+          <span id="edit-round-added-count" style="font-size:11px;color:var(--text-3);"></span>
+        </div>
         <div style="font-size:11px;color:var(--amber);background:var(--amber-light);padding:6px 10px;border-radius:5px;margin-bottom:8px;display:none;" id="edit-round-overlap-warn"></div>
-        <div id="edit-round-event-list" style="display:flex;flex-direction:column;gap:4px;max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:8px;"></div>
+        <div id="edit-round-added-list" style="display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto;border:1px solid var(--green);border-radius:6px;padding:8px;background:var(--green-light);"></div>
       </div>
+
     </div>
     <div class="modal-footer">
-      <div style="font-size:11px;color:var(--text-3);">Editing does not affect already-submitted predictions.</div>
+      <div style="font-size:11px;color:var(--text-3);">Changes do not affect submitted predictions.</div>
       <button class="btn btn-ghost" onclick="closeModal('modal-edit-round')">Cancel</button>
       <button class="btn btn-primary" onclick="saveRoundEdit()">Save changes</button>
     </div>
@@ -1194,148 +1223,172 @@ function saveBrandingBg(val){
 }
 
 // ── ROUND MODALS ──────────────────────────────────────────────────────────
+// ── ROUND STATE ───────────────────────────────────────────────────────────
+// Tracks events added to the round currently being created/edited
+let roundAddedEvents = []; // [{id, home, away, kickoff, tName}]
+
+// ── OPEN MODAL (refresh DM data first) ───────────────────────────────────
 async function openModal(id){
   if(id==='modal-create-round'){
-    // Always refresh DM data from Supabase when modal opens
-    if(CLIENT_KEY){
-      // Load global DM data (shared across all clients — no client_key filter)
-      const [{data:teams},{data:tournaments},{data:events}] = await Promise.all([
-        supa.from('gw_dm_teams').select('*'),
-        supa.from('gw_dm_tournaments').select('*'),
-        supa.from('gw_dm_events').select('*'),
-      ]);
-      dmState.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color}));
-      dmState.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,color:t.color,seasons:t.seasons||{}}));
-      const evMap={};
-      (events||[]).forEach(e=>{ evMap[e.id]={homeId:e.home_id,awayId:e.away_id,kickoff:e.kickoff,result:e.result,status:e.status,line:e.line||2.5}; });
-      dmState.events=evMap;
-    }
-    populateTournamentCheckboxes('new');
+    roundAddedEvents = [];
+    await refreshDMState();
+    populateTournamentDropdown('new');
+    renderAddedEvents('new');
   }
   document.getElementById(id)?.classList.add('open');
 }
 
-function populateTournamentCheckboxes(prefix){
-  const listEl = document.getElementById(prefix+'-round-tournament-list');
-  const tournaments = getDMTournaments();
-  if(!tournaments.length){
-    listEl.innerHTML=`<div style="font-size:12px;color:var(--text-3);">
-      No tournaments found for this workspace (key: <span style="font-family:monospace">${CLIENT_KEY||'—'}</span>).<br><br>
-      Make sure you've added tournaments in the <a href="data.html" target="_blank" style="color:var(--accent);">Data Manager →</a>
-      and that you're logged in with the same account here.
-    </div>`;
-    document.getElementById(prefix+'-round-events-wrap').style.display='none';
-    return;
-  }
-  listEl.innerHTML = tournaments.map(t=>`
-    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 4px;border-radius:5px;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
-      <input type="checkbox" value="${t.id}" style="accent-color:var(--accent);" onchange="loadRoundEventsFromDM('${prefix}')">
-      <span style="font-size:12px;font-weight:600;color:var(--text);">${t.name}</span>
-      ${t.country?`<span style="font-size:10px;color:var(--text-3);">${t.country}</span>`:''}
-    </label>`).join('');
-  document.getElementById(prefix+'-round-events-wrap').style.display='none';
+async function refreshDMState(){
+  if(!CLIENT_KEY) return;
+  const [{data:teams},{data:tournaments},{data:events}] = await Promise.all([
+    supa.from('gw_dm_teams').select('*'),
+    supa.from('gw_dm_tournaments').select('*'),
+    supa.from('gw_dm_events').select('*'),
+  ]);
+  dmState.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||''}));
+  dmState.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,color:t.color,seasons:t.seasons||{}}));
+  const evMap={};
+  (events||[]).forEach(e=>{ evMap[e.id]={homeId:e.home_id,awayId:e.away_id,kickoff:e.kickoff,result:e.result,status:e.status,line:e.line||2.5}; });
+  dmState.events=evMap;
 }
 
-function loadRoundEventsFromDM(prefix){
-  const checked = [...document.querySelectorAll('#'+prefix+'-round-tournament-list input:checked')].map(i=>i.value);
-  const wrap = document.getElementById(prefix+'-round-events-wrap');
-  const list = document.getElementById(prefix+'-round-event-list');
-  const count = document.getElementById(prefix+'-round-event-count');
-  if(!checked.length){ wrap.style.display='none'; return; }
-
+function populateTournamentDropdown(prefix){
+  const sel = document.getElementById(prefix+'-round-tournament-select');
   const tournaments = getDMTournaments();
+  if(!tournaments.length){
+    sel.innerHTML=`<option value="">No tournaments found — add them in Data Manager first</option>`;
+    return;
+  }
+  sel.innerHTML=`<option value="">— choose a tournament —</option>`+
+    tournaments.map(t=>`<option value="${t.id}">${t.name}${t.country?' · '+t.country:''}</option>`).join('');
+}
+
+function roundSelectTournament(prefix){
+  const tId = document.getElementById(prefix+'-round-tournament-select').value;
+  const availWrap = document.getElementById(prefix+'-round-available-wrap');
+  const availList = document.getElementById(prefix+'-round-available-list');
+  const availCount = document.getElementById(prefix+'-round-available-count');
+  if(!tId){ availWrap.style.display='none'; return; }
+
+  const tournament = getDMTournaments().find(t=>t.id===tId);
   const dmEvents = getDMEvents();
   const teams = getDMTeams();
   const teamById = id => teams.find(t=>t.id===id);
 
-  const allEventIds = new Set();
-  const tNameMap = {};
-  checked.forEach(tId=>{
-    const t = tournaments.find(x=>x.id===tId);
-    if(!t) return;
-    Object.values(t.seasons||{}).forEach(season=>{
-      (season.rounds||[]).forEach(r=>(r.eventIds||[]).forEach(eid=>{ allEventIds.add(eid); tNameMap[eid]=t.name; }));
-    });
+  // Collect all event IDs from this tournament (all seasons/rounds)
+  const allEids = new Set();
+  Object.values(tournament?.seasons||{}).forEach(season=>{
+    (season.rounds||[]).forEach(r=>(r.eventIds||[]).forEach(eid=>allEids.add(eid)));
   });
 
-  const currentIds = new Set();
-  if(prefix==='edit'){
-    const rid = document.getElementById('edit-round-id').value;
-    const r = getComp(state.currentComp)?.rounds.find(r=>r.id===rid);
-    (r?.eventIds||[]).forEach(id=>currentIds.add(id));
-  }
-
-  const evList = [...allEventIds].map(eid=>{
-    const ev = dmEvents[eid]; if(!ev) return null;
-    const home = teamById(ev.homeId), away = teamById(ev.awayId);
-    if(!home||!away) return null;
-    return { id:eid, home:home.name, away:away.name, kickoff:ev.kickoff, result:ev.result, tName:tNameMap[eid]||'' };
-  }).filter(Boolean).sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
+  // Build event list, excluding already-added events
+  const addedIds = new Set(roundAddedEvents.map(e=>e.id));
+  const evList = [...allEids]
+    .filter(eid=>!addedIds.has(eid))
+    .map(eid=>{
+      const ev=dmEvents[eid]; if(!ev) return null;
+      const home=teamById(ev.homeId), away=teamById(ev.awayId);
+      if(!home||!away) return null;
+      const ko = ev.kickoff ? new Date(ev.kickoff).toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : 'TBD';
+      return {id:eid, home:home.name, away:away.name, kickoff:ev.kickoff, koFmt:ko, tName:tournament.name};
+    }).filter(Boolean).sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
 
   if(!evList.length){
-    list.innerHTML='<div style="font-size:12px;color:var(--text-3);padding:8px 4px;">No events found. Add events in the Data Manager first.</div>';
-    count.textContent=''; wrap.style.display='block'; return;
+    availList.innerHTML=`<div style="padding:10px;font-size:12px;color:var(--text-3);">${addedIds.size>0?'All events from this tournament already added.':'No events found in this tournament. Add events in the Data Manager first.'}</div>`;
+    availCount.textContent='';
+    availWrap.style.display='block';
+    return;
   }
 
-  list.innerHTML = evList.map(ev=>{
-    const ko = ev.kickoff ? new Date(ev.kickoff).toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : 'TBD';
-    const hasResult = ev.result && ev.result.h!==null && ev.result.a!==null;
-    return `<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 6px;border-radius:4px;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
-      <input type="checkbox" value="${ev.id}" style="accent-color:var(--accent);" ${currentIds.has(ev.id)?'checked':''} onchange="checkRoundOverlap('${prefix}')">
-      <span style="font-family:var(--mono);font-size:11px;font-weight:700;flex:1;">${ev.home} vs ${ev.away}</span>
-      ${ev.tName?`<span style="font-size:9px;background:var(--bg);border:1px solid var(--border);color:var(--text-3);padding:1px 5px;border-radius:3px;">${ev.tName}</span>`:''}
-      ${hasResult?`<span style="font-size:10px;background:var(--green-light);color:var(--green);padding:1px 5px;border-radius:3px;font-weight:600;">FT ${ev.result.h}-${ev.result.a}</span>`:''}
-      <span style="font-size:10px;color:var(--text-3);flex-shrink:0;">${ko}</span>
-    </label>`;
-  }).join('');
-  count.textContent = `(${evList.length} available)`;
-  wrap.style.display='block';
+  availList.innerHTML = evList.map(ev=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''" onclick="roundAddEvent('${prefix}','${ev.id}','${ev.home.replace(/'/g,"\'")}','${ev.away.replace(/'/g,"\'")}','${ev.kickoff||''}','${ev.tName.replace(/'/g,"\'")}')">
+      <div style="flex:1;">
+        <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">${ev.home} vs ${ev.away}</div>
+        <div style="font-size:10px;color:var(--text-3);">${ev.tName} · ${ev.koFmt}</div>
+      </div>
+      <div style="font-size:20px;color:var(--accent);font-weight:700;padding:0 4px;">+</div>
+    </div>`).join('');
+  availCount.textContent=`(${evList.length} available)`;
+  availWrap.style.display='block';
 }
 
-function checkRoundOverlap(prefix){
-  const dmEvents = getDMEvents();
-  const checkedIds = [...document.querySelectorAll('#'+prefix+'-round-event-list input:checked')].map(i=>i.value);
+function roundAddEvent(prefix, eid, home, away, kickoff, tName){
+  if(roundAddedEvents.find(e=>e.id===eid)) return; // already added
+  roundAddedEvents.push({id:eid, home, away, kickoff, tName});
+  // Re-render available list (remove newly added)
+  roundSelectTournament(prefix);
+  renderAddedEvents(prefix);
+  // Check overlap
+  validateRoundOverlap(prefix);
+}
+
+function roundRemoveEvent(prefix, eid){
+  roundAddedEvents = roundAddedEvents.filter(e=>e.id!==eid);
+  // Re-render available list (restore removed event)
+  roundSelectTournament(prefix);
+  renderAddedEvents(prefix);
+}
+
+function renderAddedEvents(prefix){
+  const wrap = document.getElementById(prefix+'-round-added-wrap');
+  const list = document.getElementById(prefix+'-round-added-list');
+  const count = document.getElementById(prefix+'-round-added-count');
+  if(!roundAddedEvents.length){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  count.textContent=`(${roundAddedEvents.length})`;
+  list.innerHTML = roundAddedEvents.map(ev=>{
+    const ko = ev.kickoff ? new Date(ev.kickoff).toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : 'TBD';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 4px;">
+      <div style="flex:1;">
+        <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);">${ev.home} vs ${ev.away}</div>
+        <div style="font-size:10px;color:var(--text-3);">${ev.tName} · ${ko}</div>
+      </div>
+      <button onclick="roundRemoveEvent('${prefix}','${ev.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:16px;padding:0 4px;">×</button>
+    </div>`;
+  }).join('');
+}
+
+function validateRoundOverlap(prefix){
   const warnEl = document.getElementById(prefix+'-round-overlap-warn');
-  if(!warnEl){ return; }
-  if(!checkedIds.length){ warnEl.style.display='none'; return; }
-  const newKickoffs = checkedIds.map(eid=>dmEvents[eid]?.kickoff).filter(Boolean).map(k=>new Date(k).getTime());
-  if(!newKickoffs.length){ warnEl.style.display='none'; return; }
-  const newFirst = Math.min(...newKickoffs), newLast = Math.max(...newKickoffs);
-  const SIX_H = 6*60*60*1000;
-  const excludeId = prefix==='edit' ? document.getElementById('edit-round-id').value : null;
-  let conflict = null;
+  if(!warnEl||!roundAddedEvents.length){ if(warnEl) warnEl.style.display='none'; return; }
+  const dmEvents = getDMEvents();
+  const kickoffs = roundAddedEvents.map(e=>dmEvents[e.id]?.kickoff).filter(Boolean).map(k=>new Date(k).getTime());
+  if(!kickoffs.length){ warnEl.style.display='none'; return; }
+  const newFirst=Math.min(...kickoffs), newLast=Math.max(...kickoffs);
+  const SIX_H=6*60*60*1000;
+  const excludeId = prefix==='edit'?document.getElementById('edit-round-id').value:null;
+  let conflict=null;
   for(const r of getComp(state.currentComp).rounds){
     if(r.id===excludeId) continue;
-    const rKo = (r.eventIds||[]).map(eid=>dmEvents[eid]?.kickoff).filter(Boolean).map(k=>new Date(k).getTime());
+    const rKo=(r.eventIds||[]).map(eid=>dmEvents[eid]?.kickoff).filter(Boolean).map(k=>new Date(k).getTime());
     if(!rKo.length) continue;
-    const rFirst = Math.min(...rKo), rLast = Math.max(...rKo);
-    if(!(newFirst >= rLast+SIX_H || newLast+SIX_H <= rFirst)){ conflict=r.label; break; }
+    const rFirst=Math.min(...rKo), rLast=Math.max(...rKo);
+    if(!(newFirst>=rLast+SIX_H||newLast+SIX_H<=rFirst)){ conflict=r.label; break; }
   }
-  if(conflict){ warnEl.textContent='Warning: Overlaps with "'+conflict+'". Rounds need a 6-hour gap between their first and last events.'; warnEl.style.display='block'; }
+  if(conflict){ warnEl.textContent='⚠ Overlaps with "'+conflict+'". Rounds need a 6-hour gap.'; warnEl.style.display='block'; }
   else { warnEl.style.display='none'; }
-}
-
-function getCheckedEventIds(prefix){
-  return [...document.querySelectorAll('#'+prefix+'-round-event-list input:checked')].map(i=>i.value);
 }
 
 function createRound(){
   const name = document.getElementById('new-round-name').value.trim();
   if(!name){ toast('Enter a round name'); return; }
   if(!state.currentComp){ toast('Open a competition first'); return; }
-  const checkedIds = getCheckedEventIds('new');
-  if(!checkedIds.length){ toast('Select at least one event'); return; }
+  if(!roundAddedEvents.length){ toast('Add at least one event to the round'); return; }
   const warnEl = document.getElementById('new-round-overlap-warn');
-  if(warnEl && warnEl.style.display!=='none'){ toast('Fix the overlap conflict before saving'); return; }
+  if(warnEl&&warnEl.style.display!=='none'){ toast('Fix the overlap conflict before saving'); return; }
   const dmEvents = getDMEvents();
-  const kickoffs = checkedIds.map(eid=>dmEvents[eid]?.kickoff).filter(Boolean).map(k=>new Date(k).getTime());
+  const kickoffs = roundAddedEvents.map(e=>dmEvents[e.id]?.kickoff).filter(Boolean).map(k=>new Date(k).getTime());
   const deadline = kickoffs.length ? new Date(Math.min(...kickoffs)-60*60*1000).toISOString().slice(0,16) : '';
-  const selectedTIds = [...document.querySelectorAll('#new-round-tournament-list input:checked')].map(i=>i.value);
-  const tournamentNames = selectedTIds.map(tid=>getDMTournaments().find(t=>t.id===tid)?.name).filter(Boolean);
-  const r = { id:'r'+uid(), label:name, status:'open', deadline, tournamentIds:selectedTIds, tournamentNames, eventIds:checkedIds };
+  const tNames = [...new Set(roundAddedEvents.map(e=>e.tName))];
+  const r = {
+    id:'r'+uid(), label:name, status:'open', deadline,
+    tournamentIds:[], tournamentNames:tNames,
+    eventIds: roundAddedEvents.map(e=>e.id)
+  };
   getComp(state.currentComp).rounds.push(r);
   closeModal('modal-create-round');
   document.getElementById('new-round-name').value='';
+  roundAddedEvents=[];
   saveAdminState(); renderCompDetail(); toast('Round created');
 }
 
@@ -1346,12 +1399,18 @@ function openEditRound(roundId){
   if(!r) return;
   document.getElementById('edit-round-id').value = roundId;
   document.getElementById('edit-round-name').value = r.label;
-  populateTournamentCheckboxes('edit');
-  const stored = new Set([...(r.tournamentIds||[]), r.tournamentId].filter(Boolean));
-  setTimeout(()=>{
-    document.querySelectorAll('#edit-round-tournament-list input').forEach(cb=>{ if(stored.has(cb.value)) cb.checked=true; });
-    if(stored.size) loadRoundEventsFromDM('edit');
-  },50);
+  // Pre-populate added events from the round
+  const dmEvents = getDMEvents();
+  const teams = getDMTeams();
+  const teamById = id => teams.find(t=>t.id===id);
+  roundAddedEvents = (r.eventIds||[]).map(eid=>{
+    const ev=dmEvents[eid]; if(!ev) return null;
+    const home=teamById(ev.homeId), away=teamById(ev.awayId);
+    const tName=(r.tournamentNames||[])[0]||'';
+    return {id:eid, home:home?.name||eid, away:away?.name||eid, kickoff:ev.kickoff||'', tName};
+  }).filter(Boolean);
+  populateTournamentDropdown('edit');
+  renderAddedEvents('edit');
   document.getElementById('modal-edit-round').classList.add('open');
 }
 
@@ -1361,21 +1420,17 @@ function saveRoundEdit(){
   const r = comp.rounds.find(r=>r.id===rid);
   if(!r){ toast('Round not found'); return; }
   const warnEl = document.getElementById('edit-round-overlap-warn');
-  if(warnEl && warnEl.style.display!=='none'){ toast('Fix the overlap conflict before saving'); return; }
-  const checkedIds = getCheckedEventIds('edit');
+  if(warnEl&&warnEl.style.display!=='none'){ toast('Fix the overlap conflict before saving'); return; }
   const dmEvents = getDMEvents();
-  const kickoffs = checkedIds.map(eid=>dmEvents[eid]?.kickoff).filter(Boolean).map(k=>new Date(k).getTime());
-  const deadline = kickoffs.length ? new Date(Math.min(...kickoffs)-60*60*1000).toISOString().slice(0,16) : r.deadline||'';
-  const selectedTIds = [...document.querySelectorAll('#edit-round-tournament-list input:checked')].map(i=>i.value);
-  const tournamentNames = selectedTIds.map(tid=>getDMTournaments().find(t=>t.id===tid)?.name).filter(Boolean);
+  const kickoffs = roundAddedEvents.map(e=>dmEvents[e.id]?.kickoff).filter(Boolean).map(k=>new Date(k).getTime());
   r.label = document.getElementById('edit-round-name').value.trim()||r.label;
-  r.deadline = deadline;
-  r.tournamentIds = selectedTIds;
-  r.tournamentNames = tournamentNames;
-  if(checkedIds.length) r.eventIds = checkedIds;
+  r.deadline = kickoffs.length ? new Date(Math.min(...kickoffs)-60*60*1000).toISOString().slice(0,16) : r.deadline;
+  r.tournamentNames = [...new Set(roundAddedEvents.map(e=>e.tName))];
+  r.eventIds = roundAddedEvents.map(e=>e.id);
   closeModal('modal-edit-round');
   saveAdminState(); renderCompDetail(); toast('Round updated');
 }
+
 
 // ── MISC ACTIONS ──────────────────────────────────────────────────────────
 function toggleLongTerm(id,val){ getComp(id).longTerm=val; saveAdminState(); }
