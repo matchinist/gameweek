@@ -968,29 +968,37 @@ function toast(msg){
 
 // ── INIT ──────────────────────────────────────────────────────────────────
 (async ()=>{
-  // Restore session
   try{
-    const cached=localStorage.getItem('gw_session_'+CLIENT_PARAM);
-    if(cached) currentPlayer=JSON.parse(cached);
-  }catch(e){}
-
-  // Load competitions + events from Supabase
-  await buildCompsFromRealData();
-
-  // Load this player's predictions
-  if(currentPlayer) await loadPlayerPreds();
-
-  // Populate operator badge
-  if(CLIENT_PARAM&&CLIENT_PARAM!=='demo'){
+    // Restore session
     try{
-      const {data:op}=await supa.from('gw_operators').select('company_name').eq('client_key',CLIENT_PARAM).single();
-      if(op) document.getElementById('hdr-operator-badge').textContent='· '+op.company_name;
+      const cached=localStorage.getItem('gw_session_'+CLIENT_PARAM);
+      if(cached) currentPlayer=JSON.parse(cached);
     }catch(e){}
-  }
 
-  updateHeaderUser();
-  renderCompTabs();
-  goTab('predict');
+    // Load competitions + events from Supabase
+    await buildCompsFromRealData();
+
+    // Load this player's predictions
+    if(currentPlayer){
+      try{ await loadPlayerPreds(); }catch(e){ console.error('loadPlayerPreds failed:',e); }
+    }
+
+    // Populate operator badge
+    if(CLIENT_PARAM&&CLIENT_PARAM!=='demo'){
+      try{
+        const {data:op}=await supa.from('gw_operators').select('company_name').eq('client_key',CLIENT_PARAM).single();
+        if(op) document.getElementById('hdr-operator-badge').textContent='· '+op.company_name;
+      }catch(e){}
+    }
+
+  }catch(err){
+    console.error('Init failed:',err);
+  }finally{
+    // Always render — even if something failed above
+    updateHeaderUser();
+    renderCompTabs();
+    goTab('predict');
+  }
 })();
 </script>
 </body>
