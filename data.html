@@ -368,37 +368,32 @@ const S={
 
 // ── SAVE TO SUPABASE ─────────────────────────────────────────────────────
 async function save(){
-  if(!CLIENT_KEY) return;
   try{
-    // Teams — upsert all, then delete removed ones
     if(S.teams.length){
       await supa.from('gw_dm_teams')
-        .upsert(S.teams.map(t=>({id:t.id,client_key:CLIENT_KEY,name:t.name,short:t.short,color:t.color,logo:t.logo||''})),{onConflict:'id'});
+        .upsert(S.teams.map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||''})),{onConflict:'id'});
     }
-    // Tournaments — store seasons as JSONB
     if(S.tournaments.length){
       await supa.from('gw_dm_tournaments')
-        .upsert(S.tournaments.map(t=>({id:t.id,client_key:CLIENT_KEY,name:t.name,country:t.country||'',type:t.type||'league',color:t.color||'#4F46E5',seasons:t.seasons||{}})),{onConflict:'id'});
+        .upsert(S.tournaments.map(t=>({id:t.id,name:t.name,country:t.country||'',type:t.type||'league',color:t.color||'#4F46E5',seasons:t.seasons||{}})),{onConflict:'id'});
     }
-    // Events
     const evArr = Object.entries(S.events).map(([id,ev])=>({
-      id, client_key:CLIENT_KEY,
-      home_id:ev.homeId, away_id:ev.awayId,
+      id, home_id:ev.homeId, away_id:ev.awayId,
       kickoff:ev.kickoff||'', result:ev.result||null,
       status:ev.status||'upcoming', line:ev.line||2.5
     }));
     if(evArr.length){
       await supa.from('gw_dm_events').upsert(evArr,{onConflict:'id'});
     }
-  }catch(e){ console.error('DM save failed:',e.message); }
+  }catch(e){ console.error('DM save failed:',e.message); toast('Save failed: '+e.message); }
 }
 
 async function resetClientData(){
-  if(!confirm('Reset all data? This cannot be undone.')) return;
+  if(!confirm('Reset ALL global data? This affects all operators. Cannot be undone.')) return;
   await Promise.all([
-    supa.from('gw_dm_teams').delete().eq('client_key',CLIENT_KEY),
-    supa.from('gw_dm_tournaments').delete().eq('client_key',CLIENT_KEY),
-    supa.from('gw_dm_events').delete().eq('client_key',CLIENT_KEY),
+    supa.from('gw_dm_teams').delete().neq('id','__none__'),
+    supa.from('gw_dm_tournaments').delete().neq('id','__none__'),
+    supa.from('gw_dm_events').delete().neq('id','__none__'),
   ]);
   location.reload();
 }
@@ -830,11 +825,11 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
   document.getElementById('topnav-operator').textContent='· '+op.company_name;
   document.getElementById('topnav-view-embed').href=`https://matchinist.github.io/gameweek/live.html?client=${CLIENT_KEY}`;
 
-  // Load data from Supabase
+  // Load global DM data (shared across all clients)
   const [{data:teams},{data:tournaments},{data:events}] = await Promise.all([
-    supa.from('gw_dm_teams').select('*').eq('client_key',CLIENT_KEY),
-    supa.from('gw_dm_tournaments').select('*').eq('client_key',CLIENT_KEY),
-    supa.from('gw_dm_events').select('*').eq('client_key',CLIENT_KEY),
+    supa.from('gw_dm_teams').select('*'),
+    supa.from('gw_dm_tournaments').select('*'),
+    supa.from('gw_dm_events').select('*'),
   ]);
 
   S.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||''}))

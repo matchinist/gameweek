@@ -1039,18 +1039,30 @@ function renderCompDetail(){
         <div class="card-header"><span class="card-title">Competition Settings</span></div>
         <div class="card-body">
           <div class="form-group">
-            <label class="form-label">Name</label>
-            <input class="form-input" value="${c.name}" id="edit-comp-name" />
-          </div>
-          <div class="form-group">
             <label class="form-label">Game Mode</label>
-            <select class="form-select" id="edit-comp-mode">
+            <select class="form-select" id="edit-comp-mode" disabled style="opacity:0.6;cursor:not-allowed;">
               <option value="lms" ${c.mode==='lms'?'selected':''}>Last Man Standing</option>
               <option value="score" ${c.mode==='score'?'selected':''}>Score Predictor</option>
-              <option value="ou" ${c.mode==='ou'?'selected':''}>Over / Under</option>
+              <option value="betting" ${c.mode==='betting'?'selected':''}>Betting Markets</option>
             </select>
+            <div style="font-size:11px;color:var(--amber);background:var(--amber-light);padding:7px 10px;border-radius:5px;margin-top:6px;">
+              Game mode cannot be changed after creation. To use a different mode, create a new competition from scratch.
+            </div>
           </div>
-          <div class="toggle-row">
+          ${c.mode==='score' ? `
+          <div class="divider"></div>
+          <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:12px;">Points Configuration</div>
+          <div style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px 14px;">
+            <label class="form-label" style="margin:0;">Exact score correct</label>
+            <input class="form-input" type="number" id="edit-pts-exact" value="${c.scoring?.exactScore??5}" min="0" max="99" style="width:64px;text-align:center;font-family:var(--mono);font-weight:700;" />
+            <label class="form-label" style="margin:0;">Only home team goals correct</label>
+            <input class="form-input" type="number" id="edit-pts-home" value="${c.scoring?.homeGoals??2}" min="0" max="99" style="width:64px;text-align:center;font-family:var(--mono);font-weight:700;" />
+            <label class="form-label" style="margin:0;">Only away team goals correct</label>
+            <input class="form-input" type="number" id="edit-pts-away" value="${c.scoring?.awayGoals??2}" min="0" max="99" style="width:64px;text-align:center;font-family:var(--mono);font-weight:700;" />
+            <label class="form-label" style="margin:0;">Only total goals correct</label>
+            <input class="form-input" type="number" id="edit-pts-total" value="${c.scoring?.totalGoals??1}" min="0" max="99" style="width:64px;text-align:center;font-family:var(--mono);font-weight:700;" />
+          </div>` : ''}
+          <div class="toggle-row" style="margin-top:${c.mode==='score'?'14':'0'}px;">
             <div>
               <div class="toggle-label">Season-Long Competition</div>
               <div class="toggle-sub">Cumulative points across all rounds</div>
@@ -1190,12 +1202,13 @@ function saveBrandingBg(val){
 // ── ROUND MODALS ──────────────────────────────────────────────────────────
 async function openModal(id){
   if(id==='modal-create-round'){
-    // Refresh DM data from Supabase every time modal opens — picks up latest changes from data.html
+    // Always refresh DM data from Supabase when modal opens
     if(CLIENT_KEY){
+      // Load global DM data (shared across all clients — no client_key filter)
       const [{data:teams},{data:tournaments},{data:events}] = await Promise.all([
-        supa.from('gw_dm_teams').select('*').eq('client_key',CLIENT_KEY),
-        supa.from('gw_dm_tournaments').select('*').eq('client_key',CLIENT_KEY),
-        supa.from('gw_dm_events').select('*').eq('client_key',CLIENT_KEY),
+        supa.from('gw_dm_teams').select('*'),
+        supa.from('gw_dm_tournaments').select('*'),
+        supa.from('gw_dm_events').select('*'),
       ]);
       dmState.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color}));
       dmState.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,color:t.color,seasons:t.seasons||{}}));
@@ -1205,14 +1218,18 @@ async function openModal(id){
     }
     populateTournamentCheckboxes('new');
   }
-  document.getElementById(id).classList.add('open');
+  document.getElementById(id)?.classList.add('open');
 }
 
 function populateTournamentCheckboxes(prefix){
   const listEl = document.getElementById(prefix+'-round-tournament-list');
   const tournaments = getDMTournaments();
   if(!tournaments.length){
-    listEl.innerHTML='<div style="font-size:12px;color:var(--text-3);">No tournaments in Data Manager yet. Add them there first.</div>';
+    listEl.innerHTML=`<div style="font-size:12px;color:var(--text-3);">
+      No tournaments found for this workspace (key: <span style="font-family:monospace">${CLIENT_KEY||'—'}</span>).<br><br>
+      Make sure you've added tournaments in the <a href="data.html" target="_blank" style="color:var(--accent);">Data Manager →</a>
+      and that you're logged in with the same account here.
+    </div>`;
     document.getElementById(prefix+'-round-events-wrap').style.display='none';
     return;
   }
@@ -1376,8 +1393,22 @@ function updateCompColor(id,val){
 
 function saveCompSettings(){
   const c = getComp(state.currentComp);
-  c.name = document.getElementById('edit-comp-name').value;
-  c.mode = document.getElementById('edit-comp-mode').value;
+  // Score mode — check if points changed and warn
+  if(c.mode==='score'){
+    const newScoring = {
+      exactScore: parseInt(document.getElementById('edit-pts-exact').value)||5,
+      homeGoals:  parseInt(document.getElementById('edit-pts-home').value)||2,
+      awayGoals:  parseInt(document.getElementById('edit-pts-away').value)||2,
+      totalGoals: parseInt(document.getElementById('edit-pts-total').value)||1,
+    };
+    const old = c.scoring||{};
+    const changed = old.exactScore!==newScoring.exactScore || old.homeGoals!==newScoring.homeGoals
+                 || old.awayGoals!==newScoring.awayGoals || old.totalGoals!==newScoring.totalGoals;
+    if(changed && c.rounds.some(r=>r.eventIds.length>0)){
+      if(!confirm('⚠ Changing point values will recalculate all existing scores across all submitted predictions in this competition. This cannot be undone. Proceed?')) return;
+    }
+    c.scoring = newScoring;
+  }
   saveAdminState();
   renderCompDetail();
   toast('Changes saved');
@@ -1536,11 +1567,11 @@ function initOperatorChrome(){
     }))
   }));
 
-  // Load DM data into memory
+  // Load global DM data (shared across all clients — no client_key filter)
   const [{data:teams},{data:tournaments},{data:events}] = await Promise.all([
-    supa.from('gw_dm_teams').select('*').eq('client_key',CLIENT_KEY),
-    supa.from('gw_dm_tournaments').select('*').eq('client_key',CLIENT_KEY),
-    supa.from('gw_dm_events').select('*').eq('client_key',CLIENT_KEY),
+    supa.from('gw_dm_teams').select('*'),
+    supa.from('gw_dm_tournaments').select('*'),
+    supa.from('gw_dm_events').select('*'),
   ]);
   dmState.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color}));
   dmState.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,color:t.color,seasons:t.seasons||{}}));
