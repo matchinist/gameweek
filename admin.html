@@ -1163,16 +1163,10 @@ function createComp(){
   toast('Competition created');
 }
 
-// ── DATA MANAGER HELPERS ──────────────────────────────────────────────────
-function getDMTournaments(){
-  try{ return JSON.parse(localStorage.getItem('gw_dm_tournaments_'+CLIENT_KEY))||[]; }catch(e){ return []; }
-}
-function getDMEvents(){
-  try{ return JSON.parse(localStorage.getItem('gw_dm_events_'+CLIENT_KEY))||{}; }catch(e){ return {}; }
-}
-function getDMTeams(){
-  try{ return JSON.parse(localStorage.getItem('gw_dm_teams_'+CLIENT_KEY))||[]; }catch(e){ return []; }
-}
+// ── DATA MANAGER HELPERS (read from in-memory dmState, loaded from Supabase) ──
+function getDMTournaments(){ return dmState.tournaments||[]; }
+function getDMEvents(){ return dmState.events||{}; }
+function getDMTeams(){ return dmState.teams||[]; }
 
 function renderBranding(){
   // Render competition colour pickers
