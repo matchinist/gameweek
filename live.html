@@ -257,12 +257,17 @@ table.lb-table{width:100%;border-collapse:collapse;}
 
 <div id="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 // ── SUPABASE ──────────────────────────────────────────────────────────────
 const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
-const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+let supa;
+try {
+  supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+} catch(e) {
+  console.error('Supabase init failed:', e);
+}
 
 // ── CLIENT PARAM ──────────────────────────────────────────────────────────
 const CLIENT_PARAM = new URLSearchParams(window.location.search).get('client') || 'demo';
@@ -495,9 +500,13 @@ function getDefaultRoundIdx(comp){
 
 function renderPredict(){
   if(!COMPS.length){
+    const evCount = Object.keys(EVENTS).length;
     document.getElementById('predict-content').innerHTML=`<div class="empty" style="padding-top:60px;">
-      <div class="empty-icon">🏆</div><div class="empty-title">No competitions live yet</div>
-      <div class="empty-sub">Check back once the operator has set up their first competition.</div></div>`;
+      <div class="empty-icon">🏆</div>
+      <div class="empty-title">No competitions found</div>
+      <div class="empty-sub" style="margin-bottom:12px;">Client: <code style="font-family:monospace;background:var(--bg);padding:2px 6px;border-radius:3px;">${CLIENT_PARAM}</code></div>
+      <div class="empty-sub">Events in DB: ${evCount} · Check browser console (F12) for details.</div>
+    </div>`;
     return;
   }
   if(selectedRound[currentCompIdx]===undefined) selectedRound[currentCompIdx]=getDefaultRoundIdx(COMPS[currentCompIdx]);

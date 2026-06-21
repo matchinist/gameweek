@@ -338,7 +338,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 
 <div id="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 // ── SUPABASE ──────────────────────────────────────────────────────────────
 const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
@@ -825,12 +825,60 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
   document.getElementById('topnav-operator').textContent='· '+op.company_name;
   document.getElementById('topnav-view-embed').href=`https://matchinist.github.io/gameweek/live.html?client=${CLIENT_KEY}`;
 
-  // Load global DM data (shared across all clients)
+  // Load global DM data (shared — no client_key filter)
   const [{data:teams},{data:tournaments},{data:events}] = await Promise.all([
     supa.from('gw_dm_teams').select('*'),
     supa.from('gw_dm_tournaments').select('*'),
     supa.from('gw_dm_events').select('*'),
   ]);
+
+  // ── MIGRATE from localStorage if Supabase is empty ──────────────────────
+  // If a user has data in the old localStorage format but nothing in Supabase,
+  // migrate it automatically on first load.
+  const noSupaData = (!teams||!teams.length) && (!tournaments||!tournaments.length);
+  if(noSupaData){
+    // Try to find old localStorage data under any gw_dm_* key
+    const allKeys = Object.keys(localStorage).filter(k=>k.startsWith('gw_dm_'));
+    if(allKeys.length){
+      toast('Migrating your data to the database…');
+      for(const key of allKeys){
+        try{
+          if(key.startsWith('gw_dm_teams')){
+            const localTeams = JSON.parse(localStorage.getItem(key)||'[]');
+            if(localTeams.length){
+              await supa.from('gw_dm_teams').upsert(
+                localTeams.map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||''})),
+                {onConflict:'id'}
+              );
+            }
+          } else if(key.startsWith('gw_dm_tournaments')){
+            const localT = JSON.parse(localStorage.getItem(key)||'[]');
+            if(localT.length){
+              await supa.from('gw_dm_tournaments').upsert(
+                localT.map(t=>({id:t.id,name:t.name,country:t.country||'',type:t.type||'league',color:t.color||'#4F46E5',seasons:t.seasons||{}})),
+                {onConflict:'id'}
+              );
+            }
+          } else if(key.startsWith('gw_dm_events')){
+            const localE = JSON.parse(localStorage.getItem(key)||'{}');
+            const evArr = Object.entries(localE).map(([id,ev])=>({
+              id, home_id:ev.homeId, away_id:ev.awayId,
+              kickoff:ev.kickoff||'', result:ev.result||null,
+              status:ev.status||'upcoming', line:ev.line||2.5
+            }));
+            if(evArr.length){
+              await supa.from('gw_dm_events').upsert(evArr,{onConflict:'id'});
+            }
+          }
+        }catch(migErr){ console.error('Migration error for key',key,migErr); }
+      }
+      toast('Data migrated to database ✓');
+      // Reload to pick up migrated data
+      setTimeout(()=>location.reload(), 1500);
+      return;
+    }
+  }
+  // ── END MIGRATION ────────────────────────────────────────────────────────
 
   S.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||''}))
     .sort((a,b)=>a.name.localeCompare(b.name));
