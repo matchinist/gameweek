@@ -305,6 +305,38 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 </div>
 
 <!-- Create Tournament -->
+<!-- Score Entry Modal -->
+<div class="modal-overlay" id="modal-score-entry">
+  <div class="modal" style="max-width:320px;">
+    <div class="modal-header">
+      <div class="modal-title" id="score-modal-title">Enter Result</div>
+      <button class="modal-close" onclick="closeModal('modal-score-entry')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="score-modal-eid">
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:16px 0;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
+          <label class="form-label" id="score-modal-home-label" style="text-align:center;">Home</label>
+          <input class="form-input" type="number" id="score-modal-h" min="0" max="30" placeholder="0"
+            style="text-align:center;font-family:var(--mono);font-size:28px;font-weight:700;padding:8px;width:80px;"
+            onkeydown="if(event.key==='Enter')saveScore()">
+        </div>
+        <div style="font-family:var(--mono);font-size:22px;color:var(--text-3);font-weight:700;padding-top:22px;">–</div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
+          <label class="form-label" id="score-modal-away-label" style="text-align:center;">Away</label>
+          <input class="form-input" type="number" id="score-modal-a" min="0" max="30" placeholder="0"
+            style="text-align:center;font-family:var(--mono);font-size:28px;font-weight:700;padding:8px;width:80px;"
+            onkeydown="if(event.key==='Enter')saveScore()">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-score-entry')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveScore()">Save Result</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-create-tournament">
   <div class="modal">
     <div class="modal-header"><div class="modal-title">New Tournament</div><button class="modal-close" onclick="closeModal('modal-create-tournament')">×</button></div>
@@ -605,19 +637,16 @@ function renderRoundItem(r,i,season,t,isOpen){
 function renderEventMini(eid){
   const ev=S.events[eid];if(!ev)return '';
   const home=getTeam(ev.homeId),away=getTeam(ev.awayId);if(!home||!away)return '';
-  const st=ev.result?'completed':(ev.status||'upcoming');
-  const hv=ev.result?ev.result.h:'',av=ev.result?ev.result.a:'';
+  const st=ev.result&&ev.result.h!==null&&ev.result.a!==null?'completed':(ev.status||'upcoming');
+  const score=st==='completed'?`${ev.result.h}–${ev.result.a}`:'—';
   return `<div class="event-mini" id="evmini-${eid}">
     <div class="tni-badge" style="background:${home.color};width:20px;height:20px;border-radius:50%;font-size:6px;">${home.short}</div>
     <div class="em-teams">${home.name}<span class="sep">vs</span>${away.name}</div>
     <div class="tni-badge" style="background:${away.color};width:20px;height:20px;border-radius:50%;font-size:6px;">${away.short}</div>
     <span class="em-time">${fmtKickoff(ev.kickoff)}</span>
-    <div class="em-result">
-      <input class="em-score-input${hv!==''?' has':''}" type="number" min="0" max="30" placeholder="H" value="${hv}" id="esh-${eid}" oninput="updateEventScore('${eid}','h',this.value)">
-      <span class="em-dash">–</span>
-      <input class="em-score-input${av!==''?' has':''}" type="number" min="0" max="30" placeholder="A" value="${av}" id="esa-${eid}" oninput="updateEventScore('${eid}','a',this.value)">
-    </div>
+    <span class="em-score-badge id="emsc-${eid}">${score}</span>
     <span class="em-status ${st}" id="emst-${eid}">${st==='completed'?'✓ FT':st==='live'?'● Live':'—'}</span>
+    <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:3px 9px;" onclick="openScoreModal('${eid}')">Edit</button>
     <button class="em-del" onclick="removeEventFromRound('${eid}')">✕</button>
   </div>`;
 }
@@ -754,10 +783,35 @@ function updateEventScore(eid,side,val){
   ev.result[side]=val===''?null:parseInt(val);
   if(ev.result.h!==null&&ev.result.a!==null){ev.status='completed';}
   save();
-  const input=document.getElementById((side==='h'?'esh-':'esa-')+eid);
-  if(input)input.classList.toggle('has',val!=='');
-  const badge=document.getElementById('emst-'+eid);
-  if(badge&&ev.result.h!==null&&ev.result.a!==null){badge.className='em-status completed';badge.textContent='✓ FT';}
+}
+
+function openScoreModal(eid){
+  const ev=S.events[eid];if(!ev)return;
+  const home=getTeam(ev.homeId),away=getTeam(ev.awayId);
+  document.getElementById('score-modal-title').textContent=`${home?.name||'Home'} vs ${away?.name||'Away'}`;
+  document.getElementById('score-modal-eid').value=eid;
+  document.getElementById('score-modal-h').value=ev.result?.h??'';
+  document.getElementById('score-modal-a').value=ev.result?.a??'';
+  document.getElementById('score-modal-home-label').textContent=home?.name||'Home';
+  document.getElementById('score-modal-away-label').textContent=away?.name||'Away';
+  document.getElementById('modal-score-entry').classList.add('open');
+  setTimeout(()=>document.getElementById('score-modal-h').focus(),80);
+}
+
+function saveScore(){
+  const eid=document.getElementById('score-modal-eid').value;
+  const h=document.getElementById('score-modal-h').value;
+  const a=document.getElementById('score-modal-a').value;
+  const ev=S.events[eid];if(!ev)return;
+  if(h===''||a===''){toast('Enter both scores');return;}
+  ev.result={h:parseInt(h),a:parseInt(a)};
+  ev.status='completed';
+  save();
+  closeModal('modal-score-entry');
+  // Refresh the event mini display
+  const el=document.getElementById('evmini-'+eid);
+  if(el)el.outerHTML=renderEventMini(eid);
+  toast(`Result saved: ${h}–${a}`);
 }
 
 function removeEventFromRound(eid){
