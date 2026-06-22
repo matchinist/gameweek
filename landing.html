@@ -122,13 +122,6 @@
       align-items: center;
       gap: 8px;
     }
-    .hero-eyebrow::before {
-      content: '';
-      display: inline-block;
-      width: 20px;
-      height: 1px;
-      background: var(--accent);
-    }
 
     .hero-title {
       font-family: var(--mono);
@@ -971,6 +964,9 @@
 
 <!-- ── STATS BAR ── -->
 
+<!-- ── SEPARATOR ── -->
+<div style="max-width:1100px;margin:0 auto;padding:0 32px;"><hr style="border:none;border-top:1px solid var(--border);margin:0;"></div>
+
 <!-- ── HOW IT WORKS ── -->
 <div class="section" id="how">
   <div class="section-eyebrow">How it works</div>
@@ -1141,67 +1137,13 @@
   <span class="footer-note">© 2025 Gameweek · B2B free-to-play prediction platform</span>
 </footer>
 
-<!-- ── LIVE FEED ANIMATION ── -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<!-- ── LIVE FEED (real data) ── -->
 <script>
-  const feedData = [
-    { user: 'footy_oracle',  text: 'picked', match: 'Arsenal vs Man City', badge: 'HOME', cls: 'home' },
-    { user: 'stadyum76',     text: 'picked', match: 'Arsenal vs Man City', badge: 'DRAW', cls: 'draw' },
-    { user: 'bvb_predictor', text: 'picked', match: 'Liverpool vs Man Utd', badge: 'HOME', cls: 'home' },
-    { user: 'xavi_8',        text: 'predicted', match: 'Arsenal vs Man City', badge: '2–1', cls: 'score' },
-    { user: 'gegenpresser',  text: 'picked', match: 'Chelsea vs Spurs', badge: 'AWAY', cls: 'away' },
-    { user: 'tiki_taka_fan', text: 'picked', match: 'Arsenal vs Man City', badge: 'OVER', cls: 'over' },
-    { user: 'demo_user',     text: 'predicted', match: 'Liverpool vs Man Utd', badge: '1–0', cls: 'score' },
-    { user: 'presslord99',   text: 'picked', match: 'Arsenal vs Man City', badge: 'HOME', cls: 'home' },
-    { user: 'matchday_man',  text: 'picked', match: 'Wolves vs Everton', badge: 'UNDER', cls: 'under' },
-    { user: 'eredivisie_ed', text: 'picked', match: 'Chelsea vs Spurs', badge: 'HOME', cls: 'home' },
-  ];
+  const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
+  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
+  const SUPA_H = { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY };
 
-  const VISIBLE = 5;
-  const feedEl = document.getElementById('feed');
-  let shown = [];
-  let count = 247;
-  let shuffleIdx = 0;
-
-  function getShuffled() {
-    const arr = [...feedData];
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-  }
-
-  let pool = getShuffled();
-  let pi = 0;
-
-  function nextItem() {
-    if (pi >= pool.length) { pool = getShuffled(); pi = 0; }
-    return pool[pi++];
-  }
-
-  function renderFeed() {
-    feedEl.innerHTML = shown.map((item, i) => `
-      <div class="feed-item visible">
-        <div class="feed-avatar">${item.user.slice(0,2).toUpperCase()}</div>
-        <div class="feed-text"><strong>${item.user}</strong> ${item.text} on ${item.match}</div>
-        <span class="feed-badge ${item.cls}">${item.badge}</span>
-      </div>`).join('');
-  }
-
-  // Seed initial items
-  for (let i = 0; i < VISIBLE; i++) shown.push(nextItem());
-  renderFeed();
-
-  setInterval(() => {
-    shown.push(nextItem());
-    if (shown.length > VISIBLE) shown.shift();
-    count += Math.floor(Math.random() * 3) + 1;
-    document.getElementById('pred-count').textContent = count.toLocaleString();
-    renderFeed();
-  }, 1800);
-
-  // Pick button animation cycle
+  // ── Pick button cycle ──────────────────────────────────────────────────
   const picks = ['H', 'D', 'A'];
   let pickIdx = 0;
   function cyclePick() {
@@ -1211,11 +1153,119 @@
   }
   setInterval(cyclePick, 3000);
 
-  // ── SUPABASE ─────────────────────────────────────────────────────────────
-  const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
-  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
-  const supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+  // ── Real predictions feed ──────────────────────────────────────────────
+  const feedEl = document.getElementById('feed');
+  const predCountEl = document.getElementById('pred-count');
+  const VISIBLE = 5;
+  const FALLBACK = [
+    { user: 'footy_oracle',  text: 'picked', match: 'Arsenal vs Chelsea', badge: 'HOME', cls: 'home' },
+    { user: 'stadyum76',     text: 'picked', match: 'Arsenal vs Chelsea', badge: 'DRAW', cls: 'draw' },
+    { user: 'bvb_predictor', text: 'predicted', match: 'Liverpool vs City', badge: '2–1', cls: 'score' },
+    { user: 'xavi_8',        text: 'picked', match: 'Arsenal vs Chelsea', badge: 'OVER', cls: 'over' },
+    { user: 'matchday_man',  text: 'picked', match: 'Liverpool vs City', badge: 'AWAY', cls: 'away' },
+  ];
 
+  function predToFeedItem(p, evLookup) {
+    const v = p.prediction;
+    let badge = '?', cls = 'home', text = 'predicted';
+    if (v && typeof v === 'object') {
+      if ('value' in v) {
+        // LMS: {value: 'H'/'D'/'A'}
+        const map = { H: ['HOME','home'], D: ['DRAW','draw'], A: ['AWAY','away'] };
+        [badge, cls] = map[v.value] || ['?','home'];
+        text = 'picked';
+      } else if ('h' in v && 'a' in v) {
+        badge = `${v.h}–${v.a}`; cls = 'score'; text = 'predicted';
+      } else {
+        // Betting markets: first market
+        const [k, mv] = Object.entries(v)[0] || [];
+        if (k === '1x2') { const m = { H:['HOME','home'], D:['DRAW','draw'], A:['AWAY','away']}; [badge,cls] = m[mv]||['?','home']; }
+        else if (k === 'ou25') { badge = mv==='O'?'OVER':'UNDER'; cls = mv==='O'?'over':'under'; }
+        else if (k === 'btts') { badge = mv==='Y'?'YES':'NO'; cls = mv==='Y'?'home':'away'; }
+        text = 'picked';
+      }
+    }
+    const ev = evLookup[p.event_id];
+    const match = ev ? `${ev.home} vs ${ev.away}` : 'a match';
+    return { user: p.username, text, match, badge, cls };
+  }
+
+  async function loadRealFeed() {
+    try {
+      // Get most recent predictions
+      const res = await fetch(
+        `${SUPA_URL}/rest/v1/gw_predictions?select=username,prediction,event_id&order=submitted_at.desc&limit=50`,
+        { headers: SUPA_H }
+      );
+      if (!res.ok) throw new Error();
+      const preds = await res.json();
+      if (!preds || !preds.length) throw new Error('no data');
+
+      // Get events to resolve match names
+      const evIds = [...new Set(preds.map(p => p.event_id))];
+      const [evRes, teamRes] = await Promise.all([
+        fetch(`${SUPA_URL}/rest/v1/gw_dm_events?select=id,home_id,away_id`, { headers: SUPA_H }),
+        fetch(`${SUPA_URL}/rest/v1/gw_dm_teams?select=id,name`, { headers: SUPA_H }),
+      ]);
+      const evRows = await evRes.json();
+      const teams = await teamRes.json();
+      const teamById = id => (teams || []).find(t => t.id === id);
+      const evLookup = {};
+      (evRows || []).forEach(ev => {
+        const h = teamById(ev.home_id), a = teamById(ev.away_id);
+        evLookup[ev.id] = { home: h?.name || 'Home', away: a?.name || 'Away' };
+      });
+
+      // Build feed items
+      const items = preds.map(p => predToFeedItem(p, evLookup));
+      let shown = items.slice(0, VISIBLE);
+      let pool = items;
+      let pi = VISIBLE;
+
+      function renderFeed() {
+        feedEl.innerHTML = shown.map(item => `
+          <div class="feed-item visible">
+            <div class="feed-avatar">${item.user.slice(0,2).toUpperCase()}</div>
+            <div class="feed-text"><strong>${item.user}</strong> ${item.text} on <em>${item.match}</em></div>
+            <span class="feed-badge ${item.cls}">${item.badge}</span>
+          </div>`).join('');
+        if (predCountEl) predCountEl.textContent = preds.length.toLocaleString();
+      }
+
+      renderFeed();
+
+      // Cycle through real predictions
+      setInterval(() => {
+        if (pi >= pool.length) pi = 0;
+        shown.push(pool[pi++]);
+        if (shown.length > VISIBLE) shown.shift();
+        renderFeed();
+      }, 2000);
+
+    } catch(e) {
+      // Fall back to demo data if no real predictions yet
+      let shown = [...FALLBACK];
+      let pi = 0;
+      function renderFallback() {
+        feedEl.innerHTML = shown.map(item => `
+          <div class="feed-item visible">
+            <div class="feed-avatar">${item.user.slice(0,2).toUpperCase()}</div>
+            <div class="feed-text"><strong>${item.user}</strong> ${item.text} on <em>${item.match}</em></div>
+            <span class="feed-badge ${item.cls}">${item.badge}</span>
+          </div>`).join('');
+      }
+      renderFallback();
+      setInterval(() => {
+        shown.push(FALLBACK[pi++ % FALLBACK.length]);
+        if (shown.length > VISIBLE) shown.shift();
+        renderFallback();
+      }, 2000);
+    }
+  }
+
+  loadRealFeed();
+
+  // ── Operator auth ──────────────────────────────────────────────────────
   function genClientKey(company){
     const slug = (company||'op').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,3) || 'gw';
     const rand = Math.random().toString(36).slice(2,8);
@@ -1247,15 +1297,21 @@
     if(password.length<6){ errEl.textContent='Password must be at least 6 characters.'; return; }
     errEl.textContent='Creating account…';
     const clientKey = genClientKey(company);
-    const {data,error} = await supa.from('gw_operators')
-      .insert({email, password, company_name:company, client_key:clientKey})
-      .select('email,client_key,company_name').single();
-    if(error){
-      errEl.textContent = error.code==='23505' ? 'An account with this email already exists.' : 'Sign up failed: '+error.message;
-      return;
-    }
-    localStorage.setItem('gw_op_session', data.email);
-    window.location.href = 'admin.html';
+    try{
+      const res = await fetch(`${SUPA_URL}/rest/v1/gw_operators`, {
+        method:'POST',
+        headers:{...SUPA_H,'Prefer':'return=representation'},
+        body:JSON.stringify({email,password,company_name:company,client_key:clientKey})
+      });
+      const text = await res.text();
+      if(!res.ok){
+        let e;try{e=JSON.parse(text);}catch(_){e={message:text};}
+        errEl.textContent = e.code==='23505'?'An account with this email already exists.':'Sign up failed: '+e.message;
+        return;
+      }
+      localStorage.setItem('gw_op_session', email);
+      window.location.href = 'admin.html';
+    }catch(e){ errEl.textContent='Sign up failed: '+e.message; }
   }
 
   async function doOperatorLogin(){
@@ -1264,12 +1320,16 @@
     const errEl   = document.getElementById('login-error');
     if(!email||!password){ errEl.textContent='Enter your email and password.'; return; }
     errEl.textContent='Signing in…';
-    const {data,error} = await supa.from('gw_operators')
-      .select('email,client_key,company_name')
-      .eq('email',email).eq('password',password).single();
-    if(error||!data){ errEl.textContent='Incorrect email or password.'; return; }
-    localStorage.setItem('gw_op_session', data.email);
-    window.location.href = 'admin.html';
+    try{
+      const res = await fetch(
+        `${SUPA_URL}/rest/v1/gw_operators?email=eq.${encodeURIComponent(email)}&password=eq.${encodeURIComponent(password)}&select=email,client_key,company_name`,
+        { headers: SUPA_H }
+      );
+      const rows = await res.json();
+      if(!rows||!rows.length){ errEl.textContent='Incorrect email or password.'; return; }
+      localStorage.setItem('gw_op_session', rows[0].email);
+      window.location.href = 'admin.html';
+    }catch(e){ errEl.textContent='Login failed: '+e.message; }
   }
 
   // If already signed in, swap nav to dashboard link
