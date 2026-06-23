@@ -61,7 +61,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 /* ── PREDICT HEADER ROW: tournament labels left, tabs right ── */
 .predict-header-row{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 0;gap:8px;}
 .predict-subtabs{display:flex;gap:3px;flex-shrink:0;}
-.ps-tab{padding:3px 8px;font-size:9px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;color:var(--text-3);background:var(--bg);border:1px solid var(--border);border-radius:4px;cursor:pointer;transition:all 0.13s;white-space:nowrap;}
+.ps-tab{padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:0.3px;text-transform:uppercase;color:var(--text-3);background:var(--bg);border:1px solid var(--border);border-radius:4px;cursor:pointer;transition:all 0.13s;white-space:nowrap;min-width:90px;text-align:center;}
 .ps-tab:hover{color:var(--text);}
 .ps-tab.active{background:var(--comp-color);border-color:var(--comp-color);color:white;}
 .predict-tournament-labels{display:flex;flex-wrap:wrap;gap:4px;flex:1;min-width:0;}
@@ -467,7 +467,7 @@ function renderPredict(){
   if(selectedRound[currentCompIdx]===undefined)selectedRound[currentCompIdx]=getDefaultRoundIdx(COMPS[currentCompIdx]);
   const comp=COMPS[currentCompIdx];
   const tlHtml=renderTournamentLabels(comp);
-  let html=`<div class="predict-header-row"><div class="predict-tournament-labels">${tlHtml}</div><div class="predict-subtabs"><button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Pred</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">LB</button></div></div>`;
+  let html='<div class="predict-header-row"><div class="predict-tournament-labels">'+tlHtml+'</div><div class="predict-subtabs"><button class="ps-tab'+(predictSubTab==='predictions'?' active':'')+`" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab`+(predictSubTab==='leaderboard'?' active':'')+`" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button></div></div>`;
   html+=predictSubTab==='predictions'?renderPredictionsPane(comp):renderLeaderboardShell(comp);
   document.getElementById('predict-content').innerHTML=html;
   if(predictSubTab==='leaderboard')loadAndRenderLeaderboard(comp);

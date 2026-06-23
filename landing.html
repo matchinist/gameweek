@@ -1137,7 +1137,7 @@
   <span class="footer-note">© 2025 Gameweek · B2B free-to-play prediction platform</span>
 </footer>
 
-<!-- ── LIVE FEED (real data) ── -->
+<!-- ── LIVE FEED (demo data) ── -->
 <script>
   const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
   const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
@@ -1153,119 +1153,49 @@
   }
   setInterval(cyclePick, 3000);
 
-  // ── Real predictions feed ──────────────────────────────────────────────
-  const feedEl = document.getElementById('feed');
-  const predCountEl = document.getElementById('pred-count');
-  const VISIBLE = 5;
-  const FALLBACK = [
-    { user: 'footy_oracle',  text: 'picked', match: 'Arsenal vs Chelsea', badge: 'HOME', cls: 'home' },
-    { user: 'stadyum76',     text: 'picked', match: 'Arsenal vs Chelsea', badge: 'DRAW', cls: 'draw' },
-    { user: 'bvb_predictor', text: 'predicted', match: 'Liverpool vs City', badge: '2–1', cls: 'score' },
-    { user: 'xavi_8',        text: 'picked', match: 'Arsenal vs Chelsea', badge: 'OVER', cls: 'over' },
-    { user: 'matchday_man',  text: 'picked', match: 'Liverpool vs City', badge: 'AWAY', cls: 'away' },
+  // ── Demo feed ──────────────────────────────────────────────────────────
+  const FEED_DATA = [
+    { user: 'footy_oracle',  text: 'picked',    match: 'Arsenal vs Man City',   badge: 'HOME',  cls: 'home'  },
+    { user: 'stadyum76',     text: 'picked',    match: 'Arsenal vs Man City',   badge: 'DRAW',  cls: 'draw'  },
+    { user: 'bvb_predictor', text: 'predicted', match: 'Liverpool vs Man Utd',  badge: '2–1',   cls: 'score' },
+    { user: 'xavi_8',        text: 'picked',    match: 'Arsenal vs Man City',   badge: 'OVER',  cls: 'over'  },
+    { user: 'gegenpresser',  text: 'picked',    match: 'Chelsea vs Spurs',      badge: 'AWAY',  cls: 'away'  },
+    { user: 'tiki_taka_fan', text: 'picked',    match: 'Arsenal vs Man City',   badge: 'HOME',  cls: 'home'  },
+    { user: 'demo_user',     text: 'predicted', match: 'Liverpool vs Man Utd',  badge: '1–0',   cls: 'score' },
+    { user: 'presslord99',   text: 'picked',    match: 'Arsenal vs Man City',   badge: 'HOME',  cls: 'home'  },
+    { user: 'matchday_man',  text: 'picked',    match: 'Wolves vs Everton',     badge: 'UNDER', cls: 'under' },
+    { user: 'eredivisie_ed', text: 'picked',    match: 'Chelsea vs Spurs',      badge: 'HOME',  cls: 'home'  },
   ];
 
-  function predToFeedItem(p, evLookup) {
-    const v = p.prediction;
-    let badge = '?', cls = 'home', text = 'predicted';
-    if (v && typeof v === 'object') {
-      if ('value' in v) {
-        // LMS: {value: 'H'/'D'/'A'}
-        const map = { H: ['HOME','home'], D: ['DRAW','draw'], A: ['AWAY','away'] };
-        [badge, cls] = map[v.value] || ['?','home'];
-        text = 'picked';
-      } else if ('h' in v && 'a' in v) {
-        badge = `${v.h}–${v.a}`; cls = 'score'; text = 'predicted';
-      } else {
-        // Betting markets: first market
-        const [k, mv] = Object.entries(v)[0] || [];
-        if (k === '1x2') { const m = { H:['HOME','home'], D:['DRAW','draw'], A:['AWAY','away']}; [badge,cls] = m[mv]||['?','home']; }
-        else if (k === 'ou25') { badge = mv==='O'?'OVER':'UNDER'; cls = mv==='O'?'over':'under'; }
-        else if (k === 'btts') { badge = mv==='Y'?'YES':'NO'; cls = mv==='Y'?'home':'away'; }
-        text = 'picked';
-      }
-    }
-    const ev = evLookup[p.event_id];
-    const match = ev ? `${ev.home} vs ${ev.away}` : 'a match';
-    return { user: p.username, text, match, badge, cls };
+  const feedEl = document.getElementById('feed');
+  const VISIBLE = 5;
+  let shown = [], pool = [...FEED_DATA], pi = 0, count = 247;
+
+  function renderFeed() {
+    feedEl.innerHTML = shown.map(item => `
+      <div class="feed-item visible">
+        <div class="feed-avatar">${item.user.slice(0,2).toUpperCase()}</div>
+        <div class="feed-text"><strong>${item.user}</strong> ${item.text} on <em>${item.match}</em></div>
+        <span class="feed-badge ${item.cls}">${item.badge}</span>
+      </div>`).join('');
   }
 
-  async function loadRealFeed() {
-    try {
-      // Get most recent predictions
-      const res = await fetch(
-        `${SUPA_URL}/rest/v1/gw_predictions?select=username,prediction,event_id&order=submitted_at.desc&limit=50`,
-        { headers: SUPA_H }
-      );
-      if (!res.ok) throw new Error();
-      const preds = await res.json();
-      if (!preds || !preds.length) throw new Error('no data');
-
-      // Get events to resolve match names
-      const evIds = [...new Set(preds.map(p => p.event_id))];
-      const [evRes, teamRes] = await Promise.all([
-        fetch(`${SUPA_URL}/rest/v1/gw_dm_events?select=id,home_id,away_id`, { headers: SUPA_H }),
-        fetch(`${SUPA_URL}/rest/v1/gw_dm_teams?select=id,name`, { headers: SUPA_H }),
-      ]);
-      const evRows = await evRes.json();
-      const teams = await teamRes.json();
-      const teamById = id => (teams || []).find(t => t.id === id);
-      const evLookup = {};
-      (evRows || []).forEach(ev => {
-        const h = teamById(ev.home_id), a = teamById(ev.away_id);
-        evLookup[ev.id] = { home: h?.name || 'Home', away: a?.name || 'Away' };
-      });
-
-      // Build feed items
-      const items = preds.map(p => predToFeedItem(p, evLookup));
-      let shown = items.slice(0, VISIBLE);
-      let pool = items;
-      let pi = VISIBLE;
-
-      function renderFeed() {
-        feedEl.innerHTML = shown.map(item => `
-          <div class="feed-item visible">
-            <div class="feed-avatar">${item.user.slice(0,2).toUpperCase()}</div>
-            <div class="feed-text"><strong>${item.user}</strong> ${item.text} on <em>${item.match}</em></div>
-            <span class="feed-badge ${item.cls}">${item.badge}</span>
-          </div>`).join('');
-        if (predCountEl) predCountEl.textContent = preds.length.toLocaleString();
-      }
-
-      renderFeed();
-
-      // Cycle through real predictions
-      setInterval(() => {
-        if (pi >= pool.length) pi = 0;
-        shown.push(pool[pi++]);
-        if (shown.length > VISIBLE) shown.shift();
-        renderFeed();
-      }, 2000);
-
-    } catch(e) {
-      // Fall back to demo data if no real predictions yet
-      let shown = [...FALLBACK];
-      let pi = 0;
-      function renderFallback() {
-        feedEl.innerHTML = shown.map(item => `
-          <div class="feed-item visible">
-            <div class="feed-avatar">${item.user.slice(0,2).toUpperCase()}</div>
-            <div class="feed-text"><strong>${item.user}</strong> ${item.text} on <em>${item.match}</em></div>
-            <span class="feed-badge ${item.cls}">${item.badge}</span>
-          </div>`).join('');
-      }
-      renderFallback();
-      setInterval(() => {
-        shown.push(FALLBACK[pi++ % FALLBACK.length]);
-        if (shown.length > VISIBLE) shown.shift();
-        renderFallback();
-      }, 2000);
-    }
+  function nextItem() {
+    if(pi >= pool.length){ pool = [...FEED_DATA].sort(()=>Math.random()-.5); pi = 0; }
+    return pool[pi++];
   }
 
-  loadRealFeed();
+  for(let i=0;i<VISIBLE;i++) shown.push(nextItem());
+  renderFeed();
 
-  // ── Operator auth ──────────────────────────────────────────────────────
+  setInterval(() => {
+    shown.push(nextItem());
+    if(shown.length > VISIBLE) shown.shift();
+    count += Math.floor(Math.random() * 3) + 1;
+    document.getElementById('pred-count').textContent = count.toLocaleString();
+    renderFeed();
+  }, 1800);
+
   function genClientKey(company){
     const slug = (company||'op').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,3) || 'gw';
     const rand = Math.random().toString(36).slice(2,8);

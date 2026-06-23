@@ -60,7 +60,22 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .btn-ghost{background:none;color:var(--text-2);border:none;}
 .btn-ghost:hover{color:var(--text);background:var(--bg);}
 
-/* ── PAGE HEADER ── */
+/* ── MOBILE ── */
+.hamburger{display:none;flex-direction:column;gap:4px;cursor:pointer;padding:6px;border:none;background:none;}
+.hamburger span{display:block;width:18px;height:2px;background:var(--text-2);border-radius:2px;transition:all 0.2s;}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:99;}
+.sidebar-overlay.open{display:block;}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform 0.25s ease;}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;}
+  .hamburger{display:flex;}
+  .topbar{padding:0 16px;}
+  .content{padding:16px;}
+  .comp-grid{grid-template-columns:1fr!important;}
+  .card-grid{grid-template-columns:1fr!important;}
+  .stats-row{grid-template-columns:repeat(2,1fr)!important;}
+}
 .page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;gap:16px;}
 .page-title{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text);letter-spacing:-0.5px;margin-bottom:3px;}
 .page-sub{font-size:12px;color:var(--text-3);}
@@ -252,12 +267,17 @@ tbody tr:hover td{background:var(--bg);}
   </div>
 </nav>
 
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
 <!-- ── MAIN ── -->
 <div class="main">
 
   <!-- TOPBAR -->
   <div class="topbar">
     <div class="topbar-left">
+      <button class="hamburger" onclick="toggleSidebar()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
       <div class="breadcrumb" id="breadcrumb">
         <span class="current">Dashboard</span>
       </div>
@@ -900,6 +920,7 @@ function nav(view, subLabel){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('view-'+view)?.classList.add('active');
+  closeSidebar();
 
   document.querySelectorAll('.nav-item').forEach(n=>{
     const onclick = n.getAttribute('onclick');
@@ -1562,6 +1583,15 @@ function toast(msg){
   t.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+function toggleSidebar(){
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeSidebar(){
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
 }
 
 function renderSettings(){
