@@ -69,6 +69,42 @@
       align-items: center;
       gap: 10px;
     }
+    .nav-hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 4px;
+    }
+    .nav-hamburger span { display: block; width: 20px; height: 2px; background: var(--text); border-radius: 2px; }
+    .nav-mobile-menu {
+      display: none;
+      position: fixed;
+      top: 54px;
+      left: 0; right: 0;
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px 20px;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 200;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+    .nav-mobile-menu.open { display: flex; }
+    .nav-mobile-menu a { padding: 10px 8px; font-size: 15px; color: var(--text-2); text-decoration: none; border-radius: 6px; }
+    .nav-mobile-menu a:hover { background: var(--surface); color: var(--text); }
+    .nav-mobile-menu .btn-primary { text-align: center; margin-top: 8px; }
+    @media (max-width: 680px) {
+      .nav-right { display: none; }
+      .nav-hamburger { display: flex; }
+      nav { padding: 0 20px; }
+      .hero { padding: 48px 20px 40px; grid-template-columns: 1fr !important; }
+      .hero-right { display: none; }
+      .section { padding: 48px 20px; }
+      .section-title { font-size: clamp(22px, 5vw, 32px); }
+    }
 
     .btn-ghost {
       font-size: 13px;
@@ -900,7 +936,20 @@
       <a href="#" class="btn-primary" onclick="openAuthModal('signup');return false;">Sign up →</a>
     </span>
   </div>
+  <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+
+<!-- Mobile nav menu -->
+<div class="nav-mobile-menu" id="nav-mobile-menu">
+  <a href="#how" onclick="closeMobileNav()">How it works</a>
+  <a href="https://matchinist.github.io/gameweek" target="_blank" onclick="closeMobileNav()">Demo</a>
+  <span id="nav-mobile-auth">
+    <a href="#" onclick="openAuthModal('login');closeMobileNav();return false;">Log in</a>
+    <a href="#" class="btn-primary" onclick="openAuthModal('signup');closeMobileNav();return false;">Sign up →</a>
+  </span>
+</div>
 
 <!-- ── HERO ── -->
 <div class="hero">
@@ -1026,13 +1075,13 @@
       </div>
 
       <div class="mode-card">
-        <div class="mode-icon">📈</div>
-        <div class="mode-title">Over / Under</div>
-        <p class="mode-desc">Users predict whether total goals in a match will be over or under a set line. Accessible to casual fans, quick to complete, and easy to run across multiple leagues in a single round.</p>
+        <div class="mode-icon">🎰</div>
+        <div class="mode-title">Betting Markets</div>
+        <p class="mode-desc">Users predict multiple markets per match — 1X2 result, Over/Under 2.5 goals, and Both Teams to Score. Operators choose which markets to activate and set their own points for each. Maximum engagement per fixture.</p>
         <div class="mode-pills">
-          <span class="mode-pill">CASUAL FRIENDLY</span>
-          <span class="mode-pill">MULTI-LEAGUE</span>
-          <span class="mode-pill">FAST TO PLAY</span>
+          <span class="mode-pill">MULTI-MARKET</span>
+          <span class="mode-pill">CONFIGURABLE</span>
+          <span class="mode-pill">HIGH ENGAGEMENT</span>
         </div>
       </div>
     </div>
@@ -1195,6 +1244,13 @@
     document.getElementById('pred-count').textContent = count.toLocaleString();
     renderFeed();
   }, 1800);
+
+  function toggleMobileNav(){
+    document.getElementById('nav-mobile-menu').classList.toggle('open');
+  }
+  function closeMobileNav(){
+    document.getElementById('nav-mobile-menu').classList.remove('open');
+  }
 
   function genClientKey(company){
     const slug = (company||'op').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,3) || 'gw';

@@ -326,9 +326,9 @@ async function buildCompsFromRealData(){
       const cRounds=(roundsRows||[]).filter(r=>r.competition_id===c.id).map(r=>{
         const evIds=r.event_ids||[];
         const allDone=evIds.length>0&&evIds.every(eid=>EVENTS[eid]?.res!==null);
-        return{id:r.id,label:r.label,deadline:r.deadline||'',status:r.status==='completed'?'completed':(allDone?'completed':'open'),eventIds:evIds};
+        return{id:r.id,label:r.label,deadline:r.deadline||'',status:r.status==='completed'?'completed':(allDone?'completed':'open'),eventIds:evIds,tournamentNames:r.tournament_names||[]};
       });
-      COMPS.push({id:c.id,name:c.name,mode:c.mode||'lms',color:c.color||'#4F46E5',scoring:c.scoring||null,markets:c.markets||[],rounds:cRounds});
+      COMPS.push({id:c.id,name:c.name,mode:c.mode||'lms',color:c.color||'#4F46E5',scoring:c.scoring||null,markets:c.markets||[],rounds:cRounds,tournamentNames:[...new Set(cRounds.flatMap(r=>r.tournamentNames||[]).filter(Boolean))]});
     });
     console.log('DB loaded:',{teams:(teams||[]).length,events:Object.keys(EVENTS).length,comps:COMPS.length,client:CLIENT_PARAM});
   }catch(err){console.error('buildCompsFromRealData:',err);}
