@@ -478,13 +478,45 @@ function renderPredictionsPane(comp){
   const ri=selectedRound[currentCompIdx];
   if(!comp.rounds.length)return`<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No rounds yet</div></div>`;
   const round=comp.rounds[ri];if(!round)return'';
-  const events=round.eventIds.map(id=>({id,...EVENTS[id]})).filter(e=>e.home);
+  let events=round.eventIds.map(id=>({id,...EVENTS[id]})).filter(e=>e.home);
+
+  // For LMS: sort by kickoff, compute elimination point
+  let eliminatedAtIdx = -1;
+  if(comp.mode==='lms'){
+    events.sort((a,b)=>new Date(a.kickoff||0)-new Date(b.kickoff||0));
+    if(!isOpen){
+      for(let i=0;i<events.length;i++){
+        const ev=events[i];
+        const p=preds[ev.id];
+        if(ev.res&&p){
+          const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
+          if(p!==actual){ eliminatedAtIdx=i; break; }
+        }
+      }
+    }
+  }
   const isOpen=round.status==='open';
   let html=`<div class="round-bar"><div style="display:flex;align-items:center;gap:8px;"><span class="round-name">${round.label}</span><span class="round-status ${round.status}">${isOpen?'● Open':'✓ Done'}</span></div><select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select></div>`;
   if(isOpen&&round.deadline){const dl=new Date(round.deadline);html+=`<div class="deadline-banner">⏱ &nbsp;Predictions lock <strong>${dl.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})} · ${dl.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</strong></div>`;}
   html+=`<div class="events-list">`;
-  if(!events.length){html+=`<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">No events yet</div><div class="empty-sub">Events found in DB: ${Object.keys(EVENTS).length}. Round event IDs: ${round.eventIds.join(', ')}</div></div>`;}
-  else{events.forEach(ev=>{html+=renderEventCard(ev,comp,isOpen);});}
+  if(!events.length){
+    html+=`<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">No events yet</div></div>`;
+  } else {
+    events.forEach((ev,i)=>{
+      const isEliminated = eliminatedAtIdx>=0 && i>eliminatedAtIdx;
+      const isEliminationPoint = i===eliminatedAtIdx;
+      if(comp.mode==='lms'){
+        html+=`<div style="display:flex;align-items:center;gap:6px;padding:6px 0 2px;">
+          <span style="font-family:var(--mono);font-size:10px;font-weight:700;color:${isEliminated?'var(--text-3)':isEliminationPoint?'var(--red)':'var(--accent)'};">Event ${i+1}</span>
+          ${isEliminationPoint?'<span style="font-size:10px;background:var(--red-light);color:var(--red);padding:1px 7px;border-radius:10px;font-weight:700;">✗ Eliminated here</span>':''}
+          ${isEliminated?'<span style="font-size:10px;color:var(--text-3);">— eliminated</span>':''}
+        </div>`;
+      }
+      html+=`<div style="opacity:${isEliminated?'0.4':'1'};">`;
+      html+=renderEventCard(ev,comp,isOpen);
+      html+=`</div>`;
+    });
+  }
   html+=`</div>`;
   if(isOpen&&events.length){
     const predCount=events.filter(ev=>{const p=preds[ev.id];if(!p)return false;if(comp.mode==='score')return p.h!==undefined&&p.a!==undefined;if(comp.mode==='betting')return typeof p==='object'&&Object.keys(p).length>0;return!!p;}).length;

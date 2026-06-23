@@ -1334,18 +1334,28 @@ function roundSelectTournament(prefix){
 }
 
 function roundAddEvent(prefix, eid, home, away, kickoff, tName){
-  if(roundAddedEvents.find(e=>e.id===eid)) return; // already added
+  if(roundAddedEvents.find(e=>e.id===eid)) return;
+
+  // LMS: block duplicate kickoff times — sequential elimination requires unique kickoffs
+  const comp = getComp(state.currentComp);
+  if(comp?.mode==='lms' && kickoff){
+    const duplicate = roundAddedEvents.find(e=>e.kickoff===kickoff);
+    if(duplicate){
+      toast(`⚠ LMS requires unique kickoff times. "${duplicate.home} vs ${duplicate.away}" already kicks off at this time.`);
+      return;
+    }
+  }
+
   roundAddedEvents.push({id:eid, home, away, kickoff, tName});
-  // Re-render available list (remove newly added)
+  // Sort by kickoff so elimination order is always clear
+  roundAddedEvents.sort((a,b)=>new Date(a.kickoff||0)-new Date(b.kickoff||0));
   roundSelectTournament(prefix);
   renderAddedEvents(prefix);
-  // Check overlap
   validateRoundOverlap(prefix);
 }
 
 function roundRemoveEvent(prefix, eid){
   roundAddedEvents = roundAddedEvents.filter(e=>e.id!==eid);
-  // Re-render available list (restore removed event)
   roundSelectTournament(prefix);
   renderAddedEvents(prefix);
 }
@@ -1355,11 +1365,14 @@ function renderAddedEvents(prefix){
   const list = document.getElementById(prefix+'-round-added-list');
   const count = document.getElementById(prefix+'-round-added-count');
   if(!roundAddedEvents.length){ wrap.style.display='none'; return; }
+  const comp = getComp(state.currentComp);
+  const isLMS = comp?.mode==='lms';
   wrap.style.display='block';
-  count.textContent=`(${roundAddedEvents.length})`;
-  list.innerHTML = roundAddedEvents.map(ev=>{
+  count.textContent=`(${roundAddedEvents.length} events${isLMS?' · sorted by kick-off':''})`;
+  list.innerHTML = roundAddedEvents.map((ev,i)=>{
     const ko = ev.kickoff ? new Date(ev.kickoff).toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : 'TBD';
-    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 4px;">
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--border);">
+      ${isLMS?`<span style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent);min-width:18px;">${i+1}.</span>`:''}
       <div style="flex:1;">
         <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);">${ev.home} vs ${ev.away}</div>
         <div style="font-size:10px;color:var(--text-3);">${ev.tName} · ${ko}</div>
