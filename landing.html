@@ -1190,7 +1190,7 @@
 <script>
   const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
   const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
-  const SUPA_H = { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY };
+  const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
   // ── Pick button cycle ──────────────────────────────────────────────────
   const picks = ['H', 'D', 'A'];
@@ -1276,28 +1276,24 @@
 
   async function doSignup(){
     const company = document.getElementById('su-company').value.trim();
-    const email   = document.getElementById('su-email').value.trim().toLowerCase();
+  async function doSignup(){
+    const company = document.getElementById('su-company').value.trim();
     const password= document.getElementById('su-password').value;
     const errEl   = document.getElementById('signup-error');
     if(!company||!email||!password){ errEl.textContent='All fields are required.'; return; }
     if(password.length<6){ errEl.textContent='Password must be at least 6 characters.'; return; }
     errEl.textContent='Creating account…';
     const clientKey = genClientKey(company);
-    try{
-      const res = await fetch(`${SUPA_URL}/rest/v1/gw_operators`, {
-        method:'POST',
-        headers:{...SUPA_H,'Prefer':'return=representation'},
-        body:JSON.stringify({email,password,company_name:company,client_key:clientKey})
-      });
-      const text = await res.text();
-      if(!res.ok){
-        let e;try{e=JSON.parse(text);}catch(_){e={message:text};}
-        errEl.textContent = e.code==='23505'?'An account with this email already exists.':'Sign up failed: '+e.message;
-        return;
-      }
-      localStorage.setItem('gw_op_session', email);
-      window.location.href = 'admin.html';
-    }catch(e){ errEl.textContent='Sign up failed: '+e.message; }
+
+    const {data:authData, error:authErr} = await supa.auth.signUp({email, password});
+    if(authErr){ errEl.textContent=authErr.message; return; }
+
+    const {error:opErr} = await supa.from('gw_operators')
+      .insert({auth_id:authData.user.id, email, company_name:company, client_key:clientKey});
+    if(opErr){ errEl.textContent=opErr.message; return; }
+
+    localStorage.setItem('gw_op_session', email);
+    window.location.href = 'admin.html';
   }
 
   async function doOperatorLogin(){
@@ -1306,16 +1302,12 @@
     const errEl   = document.getElementById('login-error');
     if(!email||!password){ errEl.textContent='Enter your email and password.'; return; }
     errEl.textContent='Signing in…';
-    try{
-      const res = await fetch(
-        `${SUPA_URL}/rest/v1/gw_operators?email=eq.${encodeURIComponent(email)}&password=eq.${encodeURIComponent(password)}&select=email,client_key,company_name`,
-        { headers: SUPA_H }
-      );
-      const rows = await res.json();
-      if(!rows||!rows.length){ errEl.textContent='Incorrect email or password.'; return; }
-      localStorage.setItem('gw_op_session', rows[0].email);
-      window.location.href = 'admin.html';
-    }catch(e){ errEl.textContent='Login failed: '+e.message; }
+
+    const {data:authData, error:authErr} = await supa.auth.signInWithPassword({email, password});
+    if(authErr){ errEl.textContent='Incorrect email or password.'; return; }
+
+    localStorage.setItem('gw_op_session', email);
+    window.location.href = 'admin.html';
   }
 
   // If already signed in, swap nav to dashboard link

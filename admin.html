@@ -838,14 +838,12 @@ const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
 const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-// ── AUTH GUARD (async, runs at page load) ────────────────────────────────
+// ── AUTH ─────────────────────────────────────────────────────────────────
 let currentOperator = null;
 let CLIENT_KEY = null;
-const opSession = localStorage.getItem('gw_op_session');
-if(!opSession){ window.location.href='landing.html'; }
 
-function signOutOperator(){
-  localStorage.removeItem('gw_op_session');
+async function signOutOperator(){
+  await supa.auth.signOut();
   window.location.href = 'landing.html';
 }
 
@@ -1615,7 +1613,8 @@ function renderSettings(){
 async function saveSettingsAccount(){
   const newCompany = document.getElementById('settings-company').value.trim();
   if(!newCompany){ toast('Company name cannot be empty'); return; }
-  await supa.from('gw_operators').update({company_name:newCompany}).eq('email',opSession);
+  const {data:{session}} = await supa.auth.getSession();
+  await supa.from('gw_operators').update({company_name:newCompany}).eq('auth_id',session.user.id);
   currentOperator.company_name = newCompany;
   initOperatorChrome();
   toast('Account saved');
@@ -1631,15 +1630,14 @@ function initOperatorChrome(){
 }
 
 (async ()=>{
-  if(!opSession){ window.location.href='landing.html'; return; }
+  // Check Supabase Auth session
+  const {data:{session}} = await supa.auth.getSession();
+  if(!session){ window.location.href='landing.html'; return; }
 
-  // Load operator from Supabase
+  // Load operator profile
   const {data:op, error:opErr} = await supa.from('gw_operators')
-    .select('*').eq('email',opSession).single();
-  if(opErr||!op){
-    localStorage.removeItem('gw_op_session');
-    window.location.href='landing.html'; return;
-  }
+    .select('*').eq('auth_id',session.user.id).single();
+  if(opErr||!op){ window.location.href='landing.html'; return; }
   currentOperator = op;
   CLIENT_KEY = op.client_key;
 

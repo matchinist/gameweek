@@ -378,14 +378,11 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
 // ── AUTH GUARD ────────────────────────────────────────────────────────────
-const opSession = localStorage.getItem('gw_op_session');
-if(!opSession){ window.location.href='landing.html'; }
-
 let currentOperator = null;
 let CLIENT_KEY = null;
 
-function signOutOperator(){
-  localStorage.removeItem('gw_op_session');
+async function signOutOperator(){
+  await supa.auth.signOut();
   window.location.href = 'landing.html';
 }
 
@@ -863,15 +860,14 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 
 // ── INIT ──────────────────────────────────────────────────────────────────
 (async ()=>{
-  if(!opSession){ window.location.href='landing.html'; return; }
+  // Check Supabase Auth session
+  const {data:{session}} = await supa.auth.getSession();
+  if(!session){ window.location.href='landing.html'; return; }
 
-  // Verify operator in Supabase
+  // Load operator profile
   const {data:op,error:opErr} = await supa.from('gw_operators')
-    .select('*').eq('email',opSession).single();
-  if(opErr||!op){
-    localStorage.removeItem('gw_op_session');
-    window.location.href='landing.html'; return;
-  }
+    .select('*').eq('auth_id',session.user.id).single();
+  if(opErr||!op){ window.location.href='landing.html'; return; }
   currentOperator=op;
   CLIENT_KEY=op.client_key;
 
