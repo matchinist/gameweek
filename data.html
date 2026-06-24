@@ -868,6 +868,20 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
   const {data:op,error:opErr} = await supa.from('gw_operators')
     .select('*').eq('auth_id',session.user.id).single();
   if(opErr||!op){ window.location.href='landing.html'; return; }
+
+  // ── ADMIN-ONLY GUARD ──
+  // The Data Manager is a platform-admin tool. Non-admin operators are redirected.
+  if(!op.is_admin){
+    document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui;text-align:center;padding:20px;">
+      <div>
+        <div style="font-size:40px;margin-bottom:16px;">🔒</div>
+        <h2 style="font-family:monospace;color:#111;margin-bottom:8px;">Admin access only</h2>
+        <p style="color:#666;font-size:14px;margin-bottom:20px;">The Data Manager is managed by the Gameweek platform team.<br>Tournament and event data is provided centrally.</p>
+        <a href="admin.html" style="color:#4F46E5;text-decoration:none;font-weight:600;">← Back to your dashboard</a>
+      </div>
+    </div>`;
+    return;
+  }
   currentOperator=op;
   CLIENT_KEY=op.client_key;
 

@@ -1399,7 +1399,7 @@ function populateTournamentDropdown(prefix){
   const sel = document.getElementById(prefix+'-round-tournament-select');
   const tournaments = getDMTournaments();
   if(!tournaments.length){
-    sel.innerHTML=`<option value="">No tournaments found — add them in Data Manager first</option>`;
+    sel.innerHTML=`<option value="">No tournaments available yet — contact support</option>`;
     return;
   }
   sel.innerHTML=`<option value="">— choose a tournament —</option>`+
