@@ -253,6 +253,9 @@ tbody tr:hover td{background:var(--bg);}
 
   <div class="sidebar-section">
     <div class="sidebar-section-label">Account</div>
+    <button class="nav-item" onclick="nav('billing')">
+      <span class="ni-icon">💳</span> Usage & Billing
+    </button>
     <button class="nav-item" onclick="nav('settings')">
       <span class="ni-icon">⚙</span> Settings
     </button>
@@ -587,6 +590,86 @@ tbody tr:hover td{background:var(--bg);}
         </div>
 
       </div>
+    </div>
+
+    <!-- BILLING -->
+    <div class="view" id="view-billing">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Usage & Billing</div>
+          <div class="page-sub" style="font-size:15px;">Track your active users and current billing cycle.</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:760px;margin-bottom:24px;">
+
+        <!-- Current bill -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">This Month</span><span id="billing-period" style="font-size:11px;color:var(--text-3);"></span></div>
+          <div class="card-body">
+            <div style="font-size:36px;font-weight:800;font-family:var(--mono);color:var(--text);margin-bottom:4px;" id="billing-total">—</div>
+            <div style="font-size:12px;color:var(--text-3);">estimated bill</div>
+            <div class="divider"></div>
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;">
+              <div style="display:flex;justify-content:space-between;">
+                <span style="color:var(--text-2);">Flat fee</span>
+                <span style="font-family:var(--mono);font-weight:600;" id="billing-flat">$50.00</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;">
+                <span style="color:var(--text-2);">Included MAU</span>
+                <span style="font-family:var(--mono);font-weight:600;" id="billing-included">100</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;">
+                <span style="color:var(--text-2);">Billable MAU overage</span>
+                <span style="font-family:var(--mono);font-weight:600;" id="billing-overage">0</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;">
+                <span style="color:var(--text-2);">Per MAU rate</span>
+                <span style="font-family:var(--mono);font-weight:600;">$0.10</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MAU gauge -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">Active Users</span></div>
+          <div class="card-body">
+            <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px;">
+              <span style="font-size:36px;font-weight:800;font-family:var(--mono);color:var(--text);" id="billing-mau">—</span>
+              <span style="font-size:14px;color:var(--text-3);" id="billing-mau-limit">/ 100 included</span>
+            </div>
+            <div style="font-size:11px;color:var(--text-3);margin-bottom:12px;">Users who made at least one prediction this month</div>
+            <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden;margin-bottom:8px;">
+              <div id="billing-mau-bar" style="height:8px;border-radius:4px;background:var(--accent);transition:width 0.4s;width:0%;"></div>
+            </div>
+            <div style="font-size:11px;" id="billing-mau-status"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Plan info -->
+      <div class="card" style="max-width:760px;">
+        <div class="card-header"><span class="card-title">Your Plan</span></div>
+        <div class="card-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+            <div>
+              <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;" id="billing-plan-name">Gameweek Standard</div>
+              <div style="font-size:12px;color:var(--text-3);">$50/month · includes 100 MAU · $0.10 per additional user · all game modes · unlimited competitions</div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-outline btn-sm" onclick="toast('Payment portal coming soon')">Manage Payment</button>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div style="font-size:12px;color:var(--text-3);line-height:1.7;">
+            <strong style="color:var(--text);">MAU definition:</strong> A Monthly Active User is any registered player who submits at least one prediction during the calendar month, counted once regardless of how many competitions they predict in.<br>
+            <strong style="color:var(--text);">Billing cycle:</strong> Monthly, billed on the 1st. Overage from the previous month is added to your next invoice.
+          </div>
+        </div>
+      </div>
+
     </div>
 
   </div><!-- /content -->
@@ -926,7 +1009,7 @@ function nav(view, subLabel){
   });
 
   // breadcrumb
-  const labels = {dashboard:'Dashboard','comp-detail':'Competitions','competitions':'Competitions',embed:'Embed & Integration',settings:'Settings',branding:'Branding'};
+  const labels = {dashboard:'Dashboard','comp-detail':'Competitions','competitions':'Competitions',embed:'Embed & Integration',settings:'Settings',branding:'Branding',billing:'Usage & Billing'};
   let bc = '';
   if(view==='comp-detail' && subLabel){
     bc = `<span>Competitions</span><span class="sep">/</span><span class="current">${subLabel}</span>`;
@@ -940,6 +1023,47 @@ function nav(view, subLabel){
   if(view==='embed') renderEmbedInfo();
   if(view==='settings') renderSettings();
   if(view==='branding') renderBranding();
+  if(view==='billing') renderBilling();
+}
+
+async function renderBilling(){
+  try{
+    // Fetch billing data from Supabase view
+    const {data:bill} = await supa.from('gw_billing_current')
+      .select('*').eq('client_key',CLIENT_KEY).single();
+
+    if(!bill) return;
+
+    const mau       = bill.mau_count || 0;
+    const included  = bill.included_mau || 100;
+    const overage   = bill.billable_mau || 0;
+    const total     = bill.total_due || 0;
+    const flat      = bill.flat_fee || 50;
+    const pct       = Math.min(100, Math.round(mau/included*100));
+
+    document.getElementById('billing-total').textContent   = '$'+total.toFixed(2);
+    document.getElementById('billing-flat').textContent    = '$'+flat.toFixed(2);
+    document.getElementById('billing-included').textContent= included;
+    document.getElementById('billing-overage').textContent = overage > 0 ? overage+' × $0.10 = $'+(overage*0.1).toFixed(2) : '0';
+    document.getElementById('billing-mau').textContent     = mau;
+    document.getElementById('billing-mau-limit').textContent = '/ '+included+' included';
+    document.getElementById('billing-mau-bar').style.width = pct+'%';
+    document.getElementById('billing-mau-bar').style.background = pct>=100?'var(--red)':pct>=80?'var(--amber)':'var(--accent)';
+
+    const now = new Date();
+    const monthName = now.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+    document.getElementById('billing-period').textContent = monthName;
+
+    let statusHtml = '';
+    if(pct>=100) statusHtml = `<span style="color:var(--red);font-weight:600;">⚠ Over limit — overage charges apply</span>`;
+    else if(pct>=80) statusHtml = `<span style="color:var(--amber);font-weight:600;">Approaching limit (${pct}%)</span>`;
+    else statusHtml = `<span style="color:var(--green);font-weight:600;">${100-pct}% of included MAU remaining</span>`;
+    document.getElementById('billing-mau-status').innerHTML = statusHtml;
+
+  }catch(e){
+    console.error('renderBilling:',e);
+    document.getElementById('billing-total').textContent = 'Error loading';
+  }
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────
@@ -1640,6 +1764,10 @@ function initOperatorChrome(){
   if(opErr||!op){ window.location.href='landing.html'; return; }
   currentOperator = op;
   CLIENT_KEY = op.client_key;
+
+  // Ensure subscription row exists
+  const {data:sub} = await supa.from('gw_subscriptions').select('id').eq('client_key',CLIENT_KEY).single();
+  if(!sub) await supa.from('gw_subscriptions').insert({client_key:CLIENT_KEY});
 
   // Load competitions + rounds from Supabase
   const [{data:comps},{data:rounds}] = await Promise.all([
