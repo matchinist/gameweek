@@ -1199,6 +1199,7 @@
 </footer>
 
 <!-- ── LIVE FEED (demo data) ── -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
   const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
   const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
@@ -1288,8 +1289,7 @@
 
   async function doSignup(){
     const company = document.getElementById('su-company').value.trim();
-  async function doSignup(){
-    const company = document.getElementById('su-company').value.trim();
+    const email   = document.getElementById('su-email').value.trim().toLowerCase();
     const password= document.getElementById('su-password').value;
     const errEl   = document.getElementById('signup-error');
     if(!company||!email||!password){ errEl.textContent='All fields are required.'; return; }
