@@ -401,7 +401,30 @@ async function doLogin(){
 
 async function loginPlayer(player){
   currentPlayer = player;
+  // Save any predictions entered before login (e.g. scores typed while logged out)
+  const localPreds = {...preds};
+  try{
+    if(Object.keys(localPreds).length){
+      const comp=COMPS[currentCompIdx];
+      const round=comp?.rounds[selectedRound[currentCompIdx]];
+      if(comp&&round){
+        for(const [eventId,prediction] of Object.entries(localPreds)){
+          // only save events that belong to the current round
+          if(!round.eventIds.includes(eventId)) continue;
+          const stored=(typeof prediction==='string'||typeof prediction==='number')?{value:prediction}:prediction;
+          await supa.from('gw_predictions').upsert({
+            client_key:CLIENT_PARAM, player_id:player.id, username:player.username,
+            competition_id:comp.id, round_id:round.id, event_id:eventId, prediction:stored
+          },{onConflict:'player_id,competition_id,event_id'});
+        }
+      }
+    }
+  }catch(e){ console.error('save local preds after login:',e); }
+
+  // Now load all preds from DB (merges what we just saved + any prior)
   try{ await loadPlayerPreds(); }catch(e){ console.error('loadPlayerPreds:',e); }
+  // Re-apply any local preds not yet in DB (safety)
+  preds = {...localPreds, ...preds};
   closeAuthModal();
   updateHeaderUser();
   renderPredict();
@@ -648,10 +671,10 @@ function renderEventCard(ev,comp,isOpen){
 
 function pick(id,val){ if(!currentPlayer){openAuthModal('Sign in to make predictions');return;} preds[id]=val; savePred(id,val); renderPredict(); }
 function pickScore(id,side,val){
-  if(!currentPlayer){openAuthModal('Sign in to make predictions');return;}
+  // Score entry does NOT require login — store locally; login is prompted on submit
   if(!preds[id]||typeof preds[id]!=='object') preds[id]={};
   preds[id][side]=val===''?undefined:parseInt(val);
-  savePred(id,preds[id]);
+  if(currentPlayer) savePred(id,preds[id]);  // persist immediately only if logged in
   const input=document.getElementById((side==='h'?'sh-':'sa-')+id);
   if(input) input.classList.toggle('has',val!=='');
 }
@@ -662,7 +685,11 @@ function pickMarket(evId,market,val){
 }
 function changeRound(idx){ selectedRound[currentCompIdx]=parseInt(idx); renderPredict(); }
 function submitScorePreds(){
-  if(!currentPlayer){openAuthModal('Sign in to save predictions');return;}
+  if(!currentPlayer){
+    // Prompt login here; entered scores are preserved in `preds` and saved after login
+    openAuthModal('Sign in to save your predictions');
+    return;
+  }
   const comp=COMPS[currentCompIdx], round=comp?.rounds[selectedRound[currentCompIdx]];
   if(!round) return;
   const events=round.eventIds.map(id=>({id,...EVENTS[id]})).filter(e=>e.home);
@@ -672,9 +699,9 @@ function submitScorePreds(){
 
 // ── LEADERBOARD ───────────────────────────────────────────────────────────────
 function renderLeaderboardShell(comp){
-  if(lbSelection[currentCompIdx]===undefined) lbSelection[currentCompIdx]=getDefaultRoundIdx(comp);
+  if(lbSelection[currentCompIdx]===undefined) lbSelection[currentCompIdx]='overall';
   const sel=lbSelection[currentCompIdx], isOverall=sel==='overall';
-  return `<div class="lb-week-row"><select class="lb-week-select" onchange="changeLBSelection(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}" ${(!isOverall&&sel===i)?'selected':''}>${r.label}${r.status==='open'?' (Current)':''}</option>`).join('')}<option value="overall" ${isOverall?'selected':''}>Overall — Season</option></select></div><div class="lb-pane" id="lb-pane-inner"><div class="empty"><div class="empty-icon" style="font-size:20px;">⏳</div><div class="empty-title">Loading…</div></div></div>`;
+  return `<div class="lb-week-row"><select class="lb-week-select" onchange="changeLBSelection(this.value)"><option value="overall" ${isOverall?'selected':''}>Overall — Season</option>${comp.rounds.map((r,i)=>`<option value="${i}" ${(!isOverall&&sel===i)?'selected':''}>${r.label}${r.status==='open'?' (Current)':''}</option>`).join('')}</select></div><div class="lb-pane" id="lb-pane-inner"><div class="empty"><div class="empty-icon" style="font-size:20px;">⏳</div><div class="empty-title">Loading…</div></div></div>`;
 }
 function changeLBSelection(val){ lbSelection[currentCompIdx]=val==='overall'?'overall':parseInt(val); renderPredict(); }
 

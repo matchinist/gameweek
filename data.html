@@ -180,6 +180,26 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 </head>
 <body>
 
+<!-- ── ADMIN LOGIN OVERLAY ── -->
+<div id="dm-login-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:#0f1117;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:14px;max-width:360px;width:100%;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;text-align:center;margin-bottom:2px;">game<span style="color:#4F46E5;">week</span></div>
+    <div style="text-align:center;font-size:11px;color:#9CA3AF;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Data Manager</div>
+    <div style="text-align:center;font-size:13px;color:#6B7280;margin-bottom:22px;">Platform admin access</div>
+    <div style="margin-bottom:14px;">
+      <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;">Email</label>
+      <input type="email" id="dm-login-email" placeholder="admin@gameweek.gg" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;" />
+    </div>
+    <div style="margin-bottom:18px;">
+      <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;">Password</label>
+      <input type="password" id="dm-login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')dmLogin()" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;" />
+    </div>
+    <button id="dm-login-btn" onclick="dmLogin()" style="width:100%;padding:12px;background:#4F46E5;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">Sign in</button>
+    <div id="dm-login-msg" style="text-align:center;font-size:12px;color:#9CA3AF;margin-top:12px;min-height:16px;"></div>
+  </div>
+</div>
+
+
 <div class="shell" id="main-shell">
   <div class="topnav">
     <div style="display:flex;align-items:center;gap:14px;">
@@ -383,7 +403,7 @@ let CLIENT_KEY = null;
 
 async function signOutOperator(){
   await supa.auth.signOut();
-  window.location.href = 'landing.html';
+  location.reload();
 }
 
 const SWATCHES=['#DC2626','#D97706','#16A34A','#0891B2','#4F46E5','#7C3AED','#DB2777','#0F1117','#1D4ED8','#059669','#B45309','#64748B'];
@@ -859,36 +879,60 @@ let tt;
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2200);}
 
 // ── INIT ──────────────────────────────────────────────────────────────────
-(async ()=>{
+async function bootDataManager(){
   // Check Supabase Auth session
   const {data:{session}} = await supa.auth.getSession();
-  if(!session){ window.location.href='landing.html'; return; }
+  if(!session){ showDMLogin(); return; }
 
   // Load operator profile
-  const {data:op,error:opErr} = await supa.from('gw_operators')
+  const {data:op} = await supa.from('gw_operators')
     .select('*').eq('auth_id',session.user.id).single();
-  if(opErr||!op){ window.location.href='landing.html'; return; }
 
-  // ── ADMIN-ONLY GUARD ──
-  // The Data Manager is a platform-admin tool. Non-admin operators are redirected.
-  if(!op.is_admin){
-    document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui;text-align:center;padding:20px;">
-      <div>
-        <div style="font-size:40px;margin-bottom:16px;">🔒</div>
-        <h2 style="font-family:monospace;color:#111;margin-bottom:8px;">Admin access only</h2>
-        <p style="color:#666;font-size:14px;margin-bottom:20px;">The Data Manager is managed by the Gameweek platform team.<br>Tournament and event data is provided centrally.</p>
-        <a href="admin.html" style="color:#4F46E5;text-decoration:none;font-weight:600;">← Back to your dashboard</a>
-      </div>
-    </div>`;
-    return;
-  }
+  // Not an operator, or not an admin → show login (let them sign in as admin)
+  if(!op){ showDMLogin('This account has no operator profile.'); return; }
+  if(!op.is_admin){ showDMLogin('This account is not a platform admin.'); return; }
+
+  // Admin confirmed — hide overlay, boot the app
+  document.getElementById('dm-login-overlay').style.display='none';
   currentOperator=op;
   CLIENT_KEY=op.client_key;
 
-  // Update topnav
   document.getElementById('topnav-operator').textContent='· '+op.company_name;
   document.getElementById('topnav-view-embed').href=`https://matchinist.github.io/gameweek/live.html?client=${CLIENT_KEY}`;
 
+  await loadDMData();
+}
+
+function showDMLogin(msg){
+  document.getElementById('dm-login-overlay').style.display='flex';
+  if(msg) document.getElementById('dm-login-msg').textContent=msg;
+  setTimeout(()=>document.getElementById('dm-login-email')?.focus(),80);
+}
+
+async function dmLogin(){
+  const email=document.getElementById('dm-login-email').value.trim().toLowerCase();
+  const password=document.getElementById('dm-login-password').value;
+  const btn=document.getElementById('dm-login-btn');
+  const msg=document.getElementById('dm-login-msg');
+  if(!email||!password){ msg.textContent='Enter email and password.'; return; }
+  btn.disabled=true; btn.textContent='Signing in…'; msg.textContent='';
+
+  const {data:authData, error:authErr} = await supa.auth.signInWithPassword({email,password});
+  if(authErr){ btn.disabled=false; btn.textContent='Sign in'; msg.textContent='Incorrect email or password.'; return; }
+
+  // Verify admin
+  const {data:op} = await supa.from('gw_operators').select('*').eq('auth_id',authData.user.id).single();
+  if(!op||!op.is_admin){
+    await supa.auth.signOut();
+    btn.disabled=false; btn.textContent='Sign in';
+    msg.textContent='This account does not have Data Manager access.';
+    return;
+  }
+  // Success — boot
+  bootDataManager();
+}
+
+async function loadDMData(){
   // Load global DM data (shared — no client_key filter)
   const [{data:teams},{data:tournaments},{data:events}] = await Promise.all([
     supa.from('gw_dm_teams').select('*'),
@@ -955,7 +999,10 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 
   renderTournamentNav();
   renderTeams();
-})();
+}
+
+// Start
+bootDataManager();
 </script>
 </body>
 </html>

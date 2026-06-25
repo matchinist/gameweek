@@ -777,15 +777,6 @@ tbody tr:hover td{background:var(--bg);}
           </label>
         </div>
       </div>
-
-      <div class="divider"></div>
-      <div class="toggle-row">
-        <div>
-          <div class="toggle-label">Enable Season-Long Competition</div>
-          <div class="toggle-sub">Cumulative points across all rounds. Weekly winner still runs by default.</div>
-        </div>
-        <label class="toggle"><input type="checkbox" id="new-comp-longterm"><span class="toggle-slider"></span></label>
-      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-create-comp')">Cancel</button>
@@ -1262,13 +1253,6 @@ function renderCompDetail(){
             <label class="form-label" style="margin:0;">Only total goals correct</label>
             <input class="form-input" type="number" id="edit-pts-total" value="${c.scoring?.totalGoals??1}" min="0" max="99" style="width:64px;text-align:center;font-family:var(--mono);font-weight:700;" />
           </div>` : ''}
-          <div class="toggle-row" style="margin-top:${c.mode==='score'?'14':'0'}px;">
-            <div>
-              <div class="toggle-label">Season-Long Competition</div>
-              <div class="toggle-sub">Cumulative points across all rounds</div>
-            </div>
-            <label class="toggle"><input type="checkbox" ${c.longTerm?'checked':''} onchange="toggleLongTerm('${c.id}',this.checked)"><span class="toggle-slider"></span></label>
-          </div>
           <div class="divider"></div>
           <button class="btn btn-primary btn-sm" onclick="saveCompSettings()">Save changes</button>
         </div>
@@ -1349,7 +1333,7 @@ function createComp(){
   }
   const c = {
     id: 'c'+uid(), name, mode, scoring, markets,
-    longTerm: document.getElementById('new-comp-longterm').checked,
+    longTerm: false,
     status: 'draft', color: '#4F46E5', users: 0, predictions: 0, rounds: []
   };
   state.competitions.push(c);
