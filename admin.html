@@ -1808,8 +1808,10 @@ function initOperatorChrome(){
     const {data:newSub} = await supa.from('gw_subscriptions').insert({client_key:CLIENT_KEY}).select().single();
     sub = newSub;
   }
-  // Admins bypass the paywall; everyone else needs an active plan
-  if(!op.is_admin && (!sub || sub.plan!=='active')){
+  // Admins and allowlisted accounts bypass the paywall; everyone else needs an active plan
+  const PAYWALL_BYPASS = ['ercanvural.bm@gmail.com','ercanvural.bm+admin@gmail.com'];
+  const bypass = op.is_admin || PAYWALL_BYPASS.includes((op.email||'').toLowerCase());
+  if(!bypass && (!sub || sub.plan!=='active')){
     showPaywall();
   }
 

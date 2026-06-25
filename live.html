@@ -678,10 +678,48 @@ function renderLeaderboardShell(comp){
 }
 function changeLBSelection(val){ lbSelection[currentCompIdx]=val==='overall'?'overall':parseInt(val); renderPredict(); }
 
+// Compute points for a single score-mode prediction against a result
+function scorePoints(pred, res, scoring){
+  if(!pred||!res||res.h==null||res.a==null) return 0;
+  if(pred.h==null||pred.a==null) return 0;
+  const s=scoring||{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1};
+  const eH=parseInt(pred.h)==res.h, eA=parseInt(pred.a)==res.a;
+  if(eH&&eA) return s.exactScore;
+  if(eH) return s.homeGoals;
+  if(eA) return s.awayGoals;
+  if((parseInt(pred.h)+parseInt(pred.a))==(res.h+res.a)) return s.totalGoals;
+  return 0;
+}
+
 async function loadAndRenderLeaderboard(comp){
   const sel=lbSelection[currentCompIdx], isOverall=sel==='overall';
   const paneEl=document.getElementById('lb-pane-inner'); if(!paneEl) return;
   try{
+    // ── SCORE MODE: points-based leaderboard ──
+    if(comp.mode==='score'){
+      let query = supa.from('gw_predictions').select('username,player_id,event_id,prediction,round_id').eq('client_key',CLIENT_PARAM).eq('competition_id',comp.id);
+      if(!isOverall){ const round=comp.rounds[sel]; if(!round){paneEl.innerHTML='';return;} query=query.eq('round_id',round.id); }
+      const {data} = await query;
+      if(!data||!data.length){ paneEl.innerHTML='<div class="empty"><div class="empty-icon">🏆</div><div class="empty-title">No predictions yet</div></div>'; return; }
+
+      const players={};
+      data.forEach(p=>{
+        const res=EVENTS_RAW[p.event_id];
+        const v=p.prediction;
+        const predObj=(v&&typeof v==='object'&&'value'in v)?v.value:v;
+        const pts=scorePoints(predObj,res,comp.scoring);
+        if(!players[p.player_id]) players[p.player_id]={u:p.username,points:0,played:0};
+        players[p.player_id].points+=pts;
+        players[p.player_id].played++;
+      });
+      const rows=Object.values(players).sort((a,b)=>b.points-a.points||b.played-a.played);
+      let rank=1; rows.forEach((r,i)=>{ if(i>0&&rows[i].points<rows[i-1].points)rank=i+1; r.rank=rank; });
+      const subtitle=isOverall?'Overall — total points':comp.rounds[sel].label+' · points';
+      paneEl.innerHTML=buildLBTable(comp.name,subtitle,rows,r=>`<td class="lb-num">${r.points} pts</td>`,'<th class="r">Points</th>');
+      return;
+    }
+
+    // ── LMS / other modes ──
     if(isOverall){
       const {data} = await supa.from('gw_predictions').select('username,player_id,round_id').eq('client_key',CLIENT_PARAM).eq('competition_id',comp.id);
       const players={};
