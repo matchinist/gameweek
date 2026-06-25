@@ -917,7 +917,10 @@
       font-family: var(--mono); font-size: 12px; font-weight: 700; cursor: pointer; margin-top: 4px; letter-spacing: 0.3px; transition: background 0.13s;
     }
     .auth-submit-btn:hover { background: var(--accent-2); }
-    .auth-modal-error { font-size: 11px; color: var(--red); text-align: center; margin-top: 10px; min-height: 14px; }
+    .btn-spinner { display:inline-block; width:13px; height:13px; border:2px solid rgba(255,255,255,0.4); border-top-color:#fff; border-radius:50%; animation:btnspin 0.6s linear infinite; vertical-align:middle; margin-right:6px; }
+    @keyframes btnspin { to { transform:rotate(360deg); } }
+    @keyframes shake { 10%,90%{transform:translateX(-1px);} 20%,80%{transform:translateX(2px);} 30%,50%,70%{transform:translateX(-4px);} 40%,60%{transform:translateX(4px);} }
+    .auth-modal.shake { animation:shake 0.4s; }
     .auth-modal-note { font-size: 11px; color: var(--text-3); text-align: center; margin-top: 14px; line-height: 1.6; }
 
   </style>
@@ -1171,7 +1174,6 @@
           <input type="password" id="su-password" placeholder="min 6 characters" onkeydown="if(event.key==='Enter')doSignup()" />
         </div>
         <button class="auth-submit-btn" onclick="doSignup()">Create account →</button>
-        <div class="auth-modal-error" id="signup-error"></div>
         <div class="auth-modal-note">Free to start. No card required. You'll get a dedicated dashboard and a unique embed key right away.</div>
       </div>
 
@@ -1186,7 +1188,6 @@
           <input type="password" id="li-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doOperatorLogin()" />
         </div>
         <button class="auth-submit-btn" onclick="doOperatorLogin()">Sign in →</button>
-        <div class="auth-modal-error" id="login-error"></div>
       </div>
     </div>
   </div>
@@ -1283,26 +1284,27 @@
     document.getElementById('auth-tab-login').classList.toggle('active', tab==='login');
     document.getElementById('auth-form-signup').style.display = tab==='signup' ? 'block' : 'none';
     document.getElementById('auth-form-login').style.display = tab==='login' ? 'block' : 'none';
-    document.getElementById('signup-error').textContent='';
-    document.getElementById('login-error').textContent='';
   }
 
   async function doSignup(){
     const company = document.getElementById('su-company').value.trim();
     const email   = document.getElementById('su-email').value.trim().toLowerCase();
     const password= document.getElementById('su-password').value;
-    const errEl   = document.getElementById('signup-error');
-    if(!company||!email||!password){ errEl.textContent='All fields are required.'; return; }
-    if(password.length<6){ errEl.textContent='Password must be at least 6 characters.'; return; }
-    errEl.textContent='Creating account…';
-    const clientKey = genClientKey(company);
+    const btn     = document.querySelector('#auth-form-signup .auth-submit-btn');
+    if(!company||!email||!password){ shakeField(); return; }
+    if(password.length<6){ shakeField(); return; }
+
+    btn.disabled=true;
+    btn.dataset.label=btn.textContent;
+    btn.innerHTML='<span class="btn-spinner"></span> Creating account…';
 
     const {data:authData, error:authErr} = await supa.auth.signUp({email, password});
-    if(authErr){ errEl.textContent=authErr.message; return; }
+    if(authErr){ resetBtn(btn); shakeField(); return; }
 
+    const clientKey = genClientKey(company);
     const {error:opErr} = await supa.from('gw_operators')
       .insert({auth_id:authData.user.id, email, company_name:company, client_key:clientKey});
-    if(opErr){ errEl.textContent=opErr.message; return; }
+    if(opErr){ resetBtn(btn); shakeField(); return; }
 
     localStorage.setItem('gw_op_session', email);
     window.location.href = 'admin.html';
@@ -1311,15 +1313,24 @@
   async function doOperatorLogin(){
     const email   = document.getElementById('li-email').value.trim().toLowerCase();
     const password= document.getElementById('li-password').value;
-    const errEl   = document.getElementById('login-error');
-    if(!email||!password){ errEl.textContent='Enter your email and password.'; return; }
-    errEl.textContent='Signing in…';
+    const btn     = document.querySelector('#auth-form-login .auth-submit-btn');
+    if(!email||!password){ shakeField(); return; }
+
+    btn.disabled=true;
+    btn.dataset.label=btn.textContent;
+    btn.innerHTML='<span class="btn-spinner"></span> Signing in…';
 
     const {data:authData, error:authErr} = await supa.auth.signInWithPassword({email, password});
-    if(authErr){ errEl.textContent='Incorrect email or password.'; return; }
+    if(authErr){ resetBtn(btn); shakeField(); return; }
 
     localStorage.setItem('gw_op_session', email);
     window.location.href = 'admin.html';
+  }
+
+  function resetBtn(btn){ btn.disabled=false; btn.textContent=btn.dataset.label||'Submit'; }
+  function shakeField(){
+    const modal=document.querySelector('.auth-modal');
+    if(modal){ modal.classList.remove('shake'); void modal.offsetWidth; modal.classList.add('shake'); }
   }
 
   // If already signed in, swap nav to dashboard link

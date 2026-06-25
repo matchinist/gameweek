@@ -675,6 +675,34 @@ tbody tr:hover td{background:var(--bg);}
   </div><!-- /content -->
 </div><!-- /main -->
 
+<!-- ── SUBSCRIPTION PAYWALL ── -->
+<div id="paywall-overlay" style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;padding:20px;">
+  <div style="position:absolute;inset:0;backdrop-filter:blur(8px);background:rgba(17,19,23,0.45);"></div>
+  <div style="position:relative;background:var(--white);border-radius:16px;max-width:420px;width:100%;padding:32px;box-shadow:0 24px 70px rgba(0,0,0,0.3);text-align:center;">
+    <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;">game<span style="color:var(--accent);">week</span></div>
+    <div style="display:inline-block;background:var(--accent-light);color:var(--accent);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;margin-bottom:18px;letter-spacing:0.5px;">SUBSCRIPTION REQUIRED</div>
+    <h2 style="font-size:22px;font-weight:800;color:var(--text);margin-bottom:8px;">Activate your plan to continue</h2>
+    <p style="font-size:14px;color:var(--text-2);margin-bottom:24px;line-height:1.6;">Your account is created, but you'll need an active subscription to build competitions and go live.</p>
+
+    <div style="background:var(--sidebar);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:22px;text-align:left;">
+      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:14px;">
+        <span style="font-size:34px;font-weight:800;font-family:var(--mono);color:var(--text);">$50</span>
+        <span style="font-size:14px;color:var(--text-3);">/month base</span>
+      </div>
+      <div style="font-size:13px;color:var(--text-2);margin-bottom:16px;">+ $0.40 per active user / month</div>
+      <div style="display:flex;flex-direction:column;gap:9px;font-size:13px;color:var(--text);">
+        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> All 3 game modes</div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> Unlimited competitions</div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> Full branding customisation</div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> Usage dashboard &amp; analytics</div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:13px;font-size:14px;margin-bottom:10px;" onclick="startSubscription()">Subscribe now →</button>
+    <a href="#" onclick="signOutOperator();return false;" style="font-size:12px;color:var(--text-3);text-decoration:none;">Sign out</a>
+  </div>
+</div>
+
 <!-- ══ MODALS ══ -->
 
 <!-- Create Competition -->
@@ -1720,6 +1748,15 @@ function toast(msg){
   toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
 }
 
+function showPaywall(){
+  const el=document.getElementById('paywall-overlay');
+  if(el){ el.style.display='flex'; document.body.style.overflow='hidden'; }
+}
+function startSubscription(){
+  // Redirect to landing page pricing / Stripe checkout
+  window.location.href='landing.html#pricing';
+}
+
 function toggleSidebar(){
   document.querySelector('.sidebar').classList.toggle('open');
   document.getElementById('sidebar-overlay').classList.toggle('open');
@@ -1765,9 +1802,16 @@ function initOperatorChrome(){
   currentOperator = op;
   CLIENT_KEY = op.client_key;
 
-  // Ensure subscription row exists
-  const {data:sub} = await supa.from('gw_subscriptions').select('id').eq('client_key',CLIENT_KEY).single();
-  if(!sub) await supa.from('gw_subscriptions').insert({client_key:CLIENT_KEY});
+  // Ensure subscription row exists, check status
+  let {data:sub} = await supa.from('gw_subscriptions').select('*').eq('client_key',CLIENT_KEY).single();
+  if(!sub){
+    const {data:newSub} = await supa.from('gw_subscriptions').insert({client_key:CLIENT_KEY}).select().single();
+    sub = newSub;
+  }
+  // Admins bypass the paywall; everyone else needs an active plan
+  if(!op.is_admin && (!sub || sub.plan!=='active')){
+    showPaywall();
+  }
 
   // Load competitions + rounds from Supabase
   const [{data:comps},{data:rounds}] = await Promise.all([
