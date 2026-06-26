@@ -1188,6 +1188,22 @@
           <input type="password" id="li-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doOperatorLogin()" />
         </div>
         <button class="auth-submit-btn" onclick="doOperatorLogin()">Sign in →</button>
+        <div style="text-align:center;margin-top:12px;">
+          <a href="#" onclick="showResetForm();return false;" style="font-size:12px;color:var(--text-3);text-decoration:none;">Forgot password?</a>
+        </div>
+      </div>
+
+      <div id="auth-form-reset" style="display:none;">
+        <div style="font-size:13px;color:var(--text-2);margin-bottom:16px;text-align:center;">Enter your email and we'll send you a reset link.</div>
+        <div class="auth-field">
+          <label>Work email</label>
+          <input type="email" id="reset-email" placeholder="you@company.com" onkeydown="if(event.key==='Enter')doPasswordReset()" />
+        </div>
+        <button class="auth-submit-btn" onclick="doPasswordReset()">Send reset link →</button>
+        <div id="reset-msg" style="text-align:center;font-size:12px;color:var(--text-3);margin-top:12px;min-height:16px;"></div>
+        <div style="text-align:center;margin-top:8px;">
+          <a href="#" onclick="switchAuthTab('login');return false;" style="font-size:12px;color:var(--text-3);text-decoration:none;">← Back to sign in</a>
+        </div>
       </div>
     </div>
   </div>
@@ -1284,6 +1300,27 @@
     document.getElementById('auth-tab-login').classList.toggle('active', tab==='login');
     document.getElementById('auth-form-signup').style.display = tab==='signup' ? 'block' : 'none';
     document.getElementById('auth-form-login').style.display = tab==='login' ? 'block' : 'none';
+    document.getElementById('auth-form-reset').style.display = 'none';
+  }
+
+  function showResetForm(){
+    document.getElementById('auth-form-login').style.display='none';
+    document.getElementById('auth-form-signup').style.display='none';
+    document.getElementById('auth-form-reset').style.display='block';
+    setTimeout(()=>document.getElementById('reset-email').focus(),80);
+  }
+
+  async function doPasswordReset(){
+    const email = document.getElementById('reset-email').value.trim().toLowerCase();
+    const msg = document.getElementById('reset-msg');
+    if(!email){ msg.textContent='Enter your email.'; msg.style.color='var(--text-3)'; return; }
+    msg.textContent='Sending…'; msg.style.color='var(--text-3)';
+    const {error} = await supa.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://www.gameweek.cloud/reset'
+    });
+    if(error){ msg.textContent=error.message; msg.style.color='var(--red)'; return; }
+    msg.textContent='✓ Check your email for the reset link.';
+    msg.style.color='var(--green)';
   }
 
   async function doSignup(){
