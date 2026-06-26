@@ -1,0 +1,1837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gameweek — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#F7F8FA;--white:#FFFFFF;--border:#E2E4EA;
+  --text:#0F1117;--text-2:#6B7280;--text-3:#9CA3AF;
+  --accent:#4F46E5;--accent-2:#3730A3;--accent-light:#EEF2FF;
+  --green:#16A34A;--green-light:#DCFCE7;
+  --red:#DC2626;--red-light:#FEE2E2;
+  --amber:#D97706;--amber-light:#FEF3C7;
+  --sidebar:#0F1117;--sidebar-2:#1A1B23;--sidebar-border:#262730;
+  --mono:'Space Mono',monospace;--sans:'Inter',sans-serif;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;display:flex;min-height:100vh;-webkit-font-smoothing:antialiased;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:220px;min-width:220px;background:var(--sidebar);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;}
+.sidebar-logo{padding:18px 20px;border-bottom:1px solid var(--sidebar-border);}
+.sidebar-logo .logo{font-family:var(--mono);font-size:14px;font-weight:700;color:white;letter-spacing:-0.5px;}
+.sidebar-logo .logo span{color:var(--accent);}
+.sidebar-logo .logo-tag{font-family:var(--mono);font-size:9px;color:#4B5563;letter-spacing:0.5px;margin-top:2px;}
+.sidebar-section{padding:20px 12px 8px;}
+.sidebar-section-label{font-size:9px;font-weight:700;color:#4B5563;letter-spacing:1px;text-transform:uppercase;padding:0 8px;margin-bottom:4px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:6px;cursor:pointer;transition:all 0.13s;color:#9CA3AF;font-size:12px;font-weight:500;border:none;background:none;width:100%;text-align:left;}
+.nav-item:hover{background:var(--sidebar-2);color:#D1D5DB;}
+.nav-item.active{background:var(--accent);color:white;}
+.nav-item .ni-icon{font-size:14px;width:16px;text-align:center;flex-shrink:0;}
+.sidebar-bottom{margin-top:auto;padding:16px 12px;border-top:1px solid var(--sidebar-border);}
+.plan-badge{background:var(--sidebar-2);border:1px solid var(--sidebar-border);border-radius:6px;padding:10px 12px;}
+.plan-name{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent);margin-bottom:2px;}
+.plan-label{font-size:11px;color:#6B7280;}
+.plan-upgrade{display:block;margin-top:8px;font-size:10px;color:var(--accent);text-decoration:none;font-weight:600;}
+
+/* ── MAIN ── */
+.main{margin-left:220px;flex:1;min-height:100vh;display:flex;flex-direction:column;}
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 28px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.topbar-left{display:flex;align-items:center;gap:6px;}
+.breadcrumb{font-size:12px;color:var(--text-3);}
+.breadcrumb .sep{margin:0 6px;color:var(--border);}
+.breadcrumb .current{color:var(--text);font-weight:600;}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.topbar-avatar{width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;font-weight:700;color:white;}
+.content{padding:28px;flex:1;}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all 0.13s;text-decoration:none;}
+.btn-sm{padding:5px 10px;font-size:11px;}
+.btn-primary{background:var(--accent);color:white;font-family:var(--mono);letter-spacing:0.3px;}
+.btn-primary:hover{background:var(--accent-2);}
+.btn-outline{background:var(--white);color:var(--text-2);border:1px solid var(--border);}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+.btn-danger{background:var(--red-light);color:var(--red);border:1px solid #FECACA;}
+.btn-danger:hover{background:#FEE2E2;}
+.btn-ghost{background:none;color:var(--text-2);border:none;}
+.btn-ghost:hover{color:var(--text);background:var(--bg);}
+
+/* ── MOBILE ── */
+.hamburger{display:none;flex-direction:column;gap:4px;cursor:pointer;padding:6px;border:none;background:none;}
+.hamburger span{display:block;width:18px;height:2px;background:var(--text-2);border-radius:2px;transition:all 0.2s;}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:99;}
+.sidebar-overlay.open{display:block;}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform 0.25s ease;}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;}
+  .hamburger{display:flex;}
+  .topbar{padding:0 16px;}
+  .content{padding:16px;}
+  .comp-grid{grid-template-columns:1fr!important;}
+  .card-grid{grid-template-columns:1fr!important;}
+  .stats-row{grid-template-columns:repeat(2,1fr)!important;}
+}
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;gap:16px;}
+.page-title{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text);letter-spacing:-0.5px;margin-bottom:3px;}
+.page-sub{font-size:12px;color:var(--text-3);}
+
+/* ── STAT CARDS ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:18px 20px;}
+.stat-card-label{font-size:11px;color:var(--text-3);font-weight:500;margin-bottom:8px;}
+.stat-card-value{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--text);line-height:1;}
+.stat-card-sub{font-size:11px;color:var(--text-3);margin-top:5px;}
+.stat-card-accent .stat-card-value{color:var(--accent);}
+.stat-card-green .stat-card-value{color:var(--green);}
+
+/* ── CARDS ── */
+.card{background:var(--white);border:1px solid var(--border);border-radius:8px;}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);}
+.card-body{padding:18px;}
+
+/* ── TABLES ── */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:8px 14px;text-align:left;border-bottom:1px solid var(--border);}
+td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text);}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:var(--bg);}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:0.3px;}
+.badge-green{background:var(--green-light);color:var(--green);}
+.badge-amber{background:var(--amber-light);color:var(--amber);}
+.badge-gray{background:#F3F4F6;color:#6B7280;}
+.badge-red{background:var(--red-light);color:var(--red);}
+.badge-blue{background:var(--accent-light);color:var(--accent);}
+.mode-chip{font-family:var(--mono);font-size:9px;background:#F3F4F6;color:#6B7280;padding:2px 7px;border-radius:4px;font-weight:700;letter-spacing:0.3px;}
+
+/* ── COMP CARDS ── */
+.comp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+.comp-card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:18px;cursor:pointer;transition:all 0.13s;}
+.comp-card:hover{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);}
+.comp-card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
+.comp-card-name{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.comp-card-meta{font-size:11px;color:var(--text-3);}
+.comp-card-stats{display:flex;gap:16px;padding-top:12px;border-top:1px solid var(--border);}
+.comp-card-stat{font-size:11px;color:var(--text-3);}
+.comp-card-stat strong{font-family:var(--mono);font-size:13px;color:var(--text);display:block;}
+
+/* ── ROUND LIST ── */
+.round-list{display:flex;flex-direction:column;gap:8px;}
+.round-item{background:var(--white);border:1px solid var(--border);border-radius:6px;padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color 0.13s;}
+.round-item:hover{border-color:var(--accent);}
+.round-item-name{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);flex:1;}
+.round-item-meta{font-size:11px;color:var(--text-3);}
+
+/* ── EVENT LIST ── */
+.event-row-result{font-family:var(--mono);font-size:12px;font-weight:700;}
+.result-btn-inline{font-family:var(--mono);font-size:10px;padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:var(--white);cursor:pointer;color:var(--text-2);transition:all 0.13s;}
+.result-btn-inline:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── EMBED PAGE ── */
+.embed-box{background:var(--sidebar);border-radius:8px;padding:16px 18px;font-family:var(--mono);font-size:12px;color:#A5B4FC;line-height:1.7;position:relative;overflow:hidden;}
+.embed-copy-btn{position:absolute;top:12px;right:12px;}
+.domain-tag{display:inline-flex;align-items:center;gap:6px;background:var(--white);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;color:var(--text);}
+.domain-tag button{background:none;border:none;cursor:pointer;color:var(--text-3);font-size:14px;line-height:1;}
+.domain-tag button:hover{color:var(--red);}
+
+/* ── FORM ── */
+.form-group{margin-bottom:16px;}
+.form-label{font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:5px;display:block;}
+.form-input,.form-select,.form-textarea{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:6px;font-family:var(--sans);font-size:13px;color:var(--text);background:var(--white);outline:none;transition:border-color 0.13s;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent);}
+.form-textarea{resize:vertical;min-height:80px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-hint{font-size:11px;color:var(--text-3);margin-top:4px;}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;}
+.toggle-label{font-size:13px;color:var(--text);font-weight:500;}
+.toggle-sub{font-size:11px;color:var(--text-3);}
+.toggle{position:relative;width:36px;height:20px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;top:0;left:0;right:0;bottom:0;background:#D1D5DB;border-radius:20px;cursor:pointer;transition:0.2s;}
+.toggle-slider::before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:3px;background:white;border-radius:50%;transition:0.2s;}
+.toggle input:checked + .toggle-slider{background:var(--accent);}
+.toggle input:checked + .toggle-slider::before{transform:translateX(16px);}
+.color-row{display:flex;align-items:center;gap:10px;}
+.color-input{width:36px;height:36px;border:1px solid var(--border);border-radius:6px;padding:2px;cursor:pointer;background:none;}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:500;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--white);border-radius:10px;width:520px;max-width:calc(100vw - 40px);max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.15);}
+.modal-header{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text);}
+.modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-3);padding:2px 6px;border-radius:4px;}
+.modal-close:hover{background:var(--bg);color:var(--text);}
+.modal-body{padding:20px;}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+
+/* ── VIEWS ── */
+.view{display:none;}.view.active{display:block;}
+
+/* ── ACTIVITY ── */
+
+.activity-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;background:var(--bg);}
+.activity-text{font-size:12px;color:var(--text-2);flex:1;}
+.activity-text strong{color:var(--text);font-weight:600;}
+.activity-time{font-size:10px;color:var(--text-3);font-family:var(--mono);}
+
+/* ── DEADLINE LIST ── */
+
+.deadline-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+.deadline-dot.soon{background:var(--red);}
+.deadline-name{font-size:12px;font-weight:500;color:var(--text);flex:1;}
+.deadline-time{font-family:var(--mono);font-size:10px;color:var(--text-3);}
+
+/* ── EMPTY ── */
+.empty-state{text-align:center;padding:48px 20px;color:var(--text-3);}
+.empty-icon{font-size:32px;margin-bottom:12px;}
+.empty-title{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text-2);margin-bottom:6px;}
+.empty-sub{font-size:12px;line-height:1.6;}
+
+/* ── BACK LINK ── */
+.back-link{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--text-3);cursor:pointer;margin-bottom:18px;border:none;background:none;padding:0;}
+.back-link:hover{color:var(--accent);}
+
+/* ── BRANDING PREVIEW ── */
+.brand-preview{background:var(--sidebar);border-radius:8px;padding:16px;margin-top:12px;}
+.brand-preview-label{font-family:var(--mono);font-size:9px;color:#4B5563;letter-spacing:0.8px;text-transform:uppercase;margin-bottom:10px;}
+.brand-preview-bar{height:4px;border-radius:2px;margin-bottom:10px;}
+.brand-preview-btn{padding:7px 16px;border-radius:5px;font-family:var(--mono);font-size:10px;font-weight:700;border:none;color:white;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:white;font-family:var(--mono);font-size:12px;padding:10px 18px;border-radius:6px;z-index:999;transform:translateY(80px);transition:transform 0.25s ease;pointer-events:none;}
+#toast.show{transform:translateY(0);}
+
+/* ── DIVIDER ── */
+.divider{height:1px;background:var(--border);margin:20px 0;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:24px;}
+
+/* result inline input */
+.score-inline{display:inline-flex;align-items:center;gap:6px;}
+.score-inline input{width:38px;height:30px;border:1px solid var(--border);border-radius:5px;text-align:center;font-family:var(--mono);font-size:13px;font-weight:700;outline:none;}
+.score-inline input:focus{border-color:var(--accent);}
+.score-inline .sep{font-family:var(--mono);font-size:12px;color:var(--text-3);}
+</style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo">game<span>week</span></div>
+    <div class="logo-tag">ADMIN PANEL</div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Overview</div>
+    <button class="nav-item active" onclick="nav('dashboard')">
+      <span class="ni-icon">▦</span> Dashboard
+    </button>
+    <button class="nav-item" onclick="nav('embed')">
+      <span class="ni-icon">⟨⟩</span> Embed & Integration
+    </button>
+    <button class="nav-item" onclick="nav('branding')">
+      <span class="ni-icon">🎨</span> Branding
+    </button>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Competitions</div>
+    <button class="nav-item" onclick="nav('competitions')">
+      <span class="ni-icon">⚽</span> All Competitions
+    </button>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Account</div>
+    <button class="nav-item" onclick="nav('billing')">
+      <span class="ni-icon">💳</span> Usage & Billing
+    </button>
+    <button class="nav-item" onclick="nav('settings')">
+      <span class="ni-icon">⚙</span> Settings
+    </button>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="plan-badge">
+      <div class="plan-name" id="sidebar-company">—</div>
+      <div class="plan-label" id="sidebar-plan-label">Free trial · no plan selected</div>
+      <a href="#" class="plan-upgrade" onclick="toast('Plan selection is coming soon');return false;">Choose a plan →</a>
+    </div>
+  </div>
+</nav>
+
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" onclick="toggleSidebar()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="breadcrumb" id="breadcrumb">
+        <span class="current">Dashboard</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <a href="https://www.gameweek.cloud/demo" target="_blank" class="btn btn-outline btn-sm" id="topbar-view-demo">View Demo ↗</a>
+      <a href="#" class="btn btn-outline btn-sm" onclick="signOutOperator();return false;" style="color:var(--text-3);">Sign out</a>
+      <div class="topbar-avatar" id="topbar-avatar">—</div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="view active" id="view-dashboard">
+      <div class="page-header">
+        <div>
+          <div style="font-size:26px;font-weight:800;color:var(--text);letter-spacing:-0.5px;">Welcome back, <span id="dash-greeting-name" style="color:var(--accent)">—</span></div>
+          <div style="font-size:16px;color:var(--text-2);margin-top:6px;font-weight:400;">Here's what's happening across your competitions.</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-create-comp')">+ New Competition</button>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card stat-card-accent">
+          <div class="stat-card-label">Active Competitions</div>
+          <div class="stat-card-value" id="dash-active-comps">0</div>
+          <div class="stat-card-sub" id="dash-draft-sub">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Total Registered Users</div>
+          <div class="stat-card-value" id="dash-total-users">0</div>
+          <div class="stat-card-sub">across all competitions</div>
+        </div>
+        <div class="stat-card stat-card-green">
+          <div class="stat-card-label">Total Predictions</div>
+          <div class="stat-card-value" id="dash-total-preds">0</div>
+          <div class="stat-card-sub">all time</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Open Rounds</div>
+          <div class="stat-card-value" id="dash-open-rounds">0</div>
+          <div class="stat-card-sub">accepting predictions</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Your Competitions</span>
+          <button class="btn btn-outline btn-sm" onclick="nav('competitions')">View all →</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Competition</th>
+                <th>Mode</th>
+                <th>Current Round</th>
+                <th>Users</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="dash-comp-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── COMPETITIONS ── -->
+    <div class="view" id="view-competitions">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Competitions</div>
+          <div class="page-sub" style="font-size:15px;">Manage your prediction competitions.</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-create-comp')">+ New Competition</button>
+      </div>
+      <div class="comp-grid" id="comp-grid"></div>
+    </div>
+
+    <!-- ── COMPETITION DETAIL ── -->
+    <div class="view" id="view-comp-detail">
+      <button class="back-link" onclick="nav('competitions')">← Back to competitions</button>
+      <div id="comp-detail-content"></div>
+    </div>
+
+    <!-- ── EMBED ── -->
+    <div class="view" id="view-embed">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Embed & Integration</div>
+          <div class="page-sub" style="font-size:15px;">Copy the snippet and paste it anywhere on your site.</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <div class="card" style="margin-bottom:14px;">
+            <div class="card-header"><span class="card-title">Your Embed Code</span></div>
+            <div class="card-body">
+              <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">Paste this snippet into any page on your site. The widget loads your competitions automatically.</p>
+              <div class="embed-box" id="embed-code-box">
+&lt;iframe
+  src="https://www.gameweek.cloud/embed?client=<span style="color:#FCD34D" id="embed-client-key">...</span>"
+  width="100%"
+  height="620"
+  frameborder="0"
+  style="border-radius:10px;"
+&gt;&lt;/iframe&gt;
+                <button class="btn btn-outline btn-sm embed-copy-btn" onclick="copyEmbed()" style="font-family:var(--mono);font-size:10px;background:var(--sidebar-2);border-color:var(--sidebar-border);color:#9CA3AF;" id="copy-btn">Copy</button>
+              </div>
+              <p style="font-size:11px;color:var(--text-3);margin-top:10px;">Your client key: <span style="font-family:var(--mono);color:var(--text)" id="embed-client-key-label">...</span></p>
+              <p style="font-size:11px;color:var(--text-3);margin-top:4px;">Domain not live yet? <a href="#" id="embed-test-link" target="_blank" style="color:var(--accent);text-decoration:none;">Test your live embed →</a></p>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Allowed Domains</span>
+              <button class="btn btn-outline btn-sm" onclick="openModal('modal-add-domain')">+ Add domain</button>
+            </div>
+            <div class="card-body">
+              <p style="font-size:12px;color:var(--text-2);margin-bottom:14px;">The embed only loads on these domains. This prevents unauthorised use of your client key.</p>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;" id="domain-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card" style="margin-bottom:14px;">
+            <div class="card-header"><span class="card-title">Integration Guide</span></div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:14px;">
+                <div style="display:flex;gap:10px;align-items:flex-start;">
+                  <div style="width:22px;height:22px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:700;color:white;flex-shrink:0;">1</div>
+                  <div>
+                    <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px;">Add allowed domain</div>
+                    <div style="font-size:11px;color:var(--text-3);">Register the domain where the embed will live.</div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:10px;align-items:flex-start;">
+                  <div style="width:22px;height:22px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:700;color:white;flex-shrink:0;">2</div>
+                  <div>
+                    <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px;">Copy the snippet</div>
+                    <div style="font-size:11px;color:var(--text-3);">Paste the iframe code into your CMS, HTML, or template.</div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:10px;align-items:flex-start;">
+                  <div style="width:22px;height:22px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:700;color:white;flex-shrink:0;">3</div>
+                  <div>
+                    <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px;">Go live</div>
+                    <div style="font-size:11px;color:var(--text-3);">Users see your competitions immediately. No page refresh needed after changes.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><span class="card-title">Status</span></div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-size:12px;color:var(--text-2);">Embed status</span>
+                  <span class="badge badge-green">● Active</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-size:12px;color:var(--text-2);">Last loaded</span>
+                  <span style="font-family:var(--mono);font-size:11px;color:var(--text-3);">3 min ago</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-size:12px;color:var(--text-2);">Loads today</span>
+                  <span style="font-family:var(--mono);font-size:11px;color:var(--text);">847</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SETTINGS ── -->
+    <div class="view" id="view-settings">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Settings</div>
+          <div class="page-sub" style="font-size:15px;">Manage your account and workspace preferences.</div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div>
+          <div class="card" style="margin-bottom:14px;">
+            <div class="card-header"><span class="card-title">Account</span></div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input class="form-input" id="settings-email" value="" disabled />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Workspace / Company name</label>
+                <input class="form-input" id="settings-company" value="" />
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="saveSettingsAccount()">Save changes</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Danger Zone</span></div>
+            <div class="card-body">
+              <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">These actions are permanent and cannot be undone.</p>
+              <button class="btn btn-danger btn-sm">Delete workspace</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:14px;">
+            <div class="card-header"><span class="card-title">Current Plan</span></div>
+            <div class="card-body">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                <div>
+                  <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);">No plan selected</div>
+                  <div style="font-size:12px;color:var(--text-3);">Free trial — full access while we set up billing</div>
+                </div>
+                <span class="badge badge-amber">Trial</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--text-2);">
+                <div>✓ Unlimited competitions</div>
+                <div>✓ All 3 game modes</div>
+                <div>✓ Analytics dashboard</div>
+                <div>✓ Up to 3 allowed domains</div>
+              </div>
+              <div class="divider"></div>
+              <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;" onclick="toast('Plan selection is coming soon')">Choose a plan →</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Notifications</span></div>
+            <div class="card-body">
+              <div class="toggle-row">
+                <div>
+                  <div class="toggle-label">Round deadline reminders</div>
+                  <div class="toggle-sub">Email 24h before deadline</div>
+                </div>
+                <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+              </div>
+              <div class="toggle-row">
+                <div>
+                  <div class="toggle-label">New user registrations</div>
+                  <div class="toggle-sub">Weekly digest</div>
+                </div>
+                <label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label>
+              </div>
+              <div class="toggle-row">
+                <div>
+                  <div class="toggle-label">Result entry reminders</div>
+                  <div class="toggle-sub">After match ends</div>
+                </div>
+                <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BRANDING -->
+    <div class="view" id="view-branding">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Branding</div>
+          <div class="page-sub" style="font-size:15px;">Customise the look of your embed widget.</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:720px;">
+
+        <div class="card">
+          <div class="card-header"><span class="card-title">Competition Colours</span></div>
+          <div class="card-body">
+            <div style="font-size:12px;color:var(--text-3);margin-bottom:14px;">Each competition tab in the embed uses its own colour. Edit them here or directly in the competition settings.</div>
+            <div id="branding-comp-colours" style="display:flex;flex-direction:column;gap:12px;"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><span class="card-title">Widget Theme</span></div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">Accent Colour</label>
+              <div class="color-row">
+                <input type="color" class="color-input" id="brand-accent" value="#4F46E5" onchange="saveBrandingAccent(this.value)">
+                <span id="brand-accent-hex" style="font-family:var(--mono);font-size:12px;color:var(--text-2);">#4F46E5</span>
+              </div>
+              <div style="font-size:11px;color:var(--text-3);margin-top:6px;">Used for buttons, active states, and progress bars in the widget.</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Background</label>
+              <div class="color-row">
+                <input type="color" class="color-input" id="brand-bg" value="#F7F8FA" onchange="saveBrandingBg(this.value)">
+                <span id="brand-bg-hex" style="font-family:var(--mono);font-size:12px;color:var(--text-2);">#F7F8FA</span>
+              </div>
+            </div>
+            <div style="font-size:11px;color:var(--amber);background:var(--amber-light);padding:8px 10px;border-radius:5px;">
+              Widget theme colours are applied live in the embed. Full custom CSS injection coming soon.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- BILLING -->
+    <div class="view" id="view-billing">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Usage & Billing</div>
+          <div class="page-sub" style="font-size:15px;">Track your active users and current billing cycle.</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:760px;margin-bottom:24px;">
+
+        <!-- Current bill -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">This Month</span><span id="billing-period" style="font-size:11px;color:var(--text-3);"></span></div>
+          <div class="card-body">
+            <div style="font-size:36px;font-weight:800;font-family:var(--mono);color:var(--text);margin-bottom:4px;" id="billing-total">—</div>
+            <div style="font-size:12px;color:var(--text-3);">estimated bill</div>
+            <div class="divider"></div>
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;">
+              <div style="display:flex;justify-content:space-between;">
+                <span style="color:var(--text-2);">Flat fee</span>
+                <span style="font-family:var(--mono);font-weight:600;" id="billing-flat">$50.00</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;">
+                <span style="color:var(--text-2);">Included MAU</span>
+                <span style="font-family:var(--mono);font-weight:600;" id="billing-included">100</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;">
+                <span style="color:var(--text-2);">Billable MAU overage</span>
+                <span style="font-family:var(--mono);font-weight:600;" id="billing-overage">0</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;">
+                <span style="color:var(--text-2);">Per MAU rate</span>
+                <span style="font-family:var(--mono);font-weight:600;">$0.10</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MAU gauge -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">Active Users</span></div>
+          <div class="card-body">
+            <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px;">
+              <span style="font-size:36px;font-weight:800;font-family:var(--mono);color:var(--text);" id="billing-mau">—</span>
+              <span style="font-size:14px;color:var(--text-3);" id="billing-mau-limit">/ 100 included</span>
+            </div>
+            <div style="font-size:11px;color:var(--text-3);margin-bottom:12px;">Users who made at least one prediction this month</div>
+            <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden;margin-bottom:8px;">
+              <div id="billing-mau-bar" style="height:8px;border-radius:4px;background:var(--accent);transition:width 0.4s;width:0%;"></div>
+            </div>
+            <div style="font-size:11px;" id="billing-mau-status"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Plan info -->
+      <div class="card" style="max-width:760px;">
+        <div class="card-header"><span class="card-title">Your Plan</span></div>
+        <div class="card-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+            <div>
+              <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;" id="billing-plan-name">Gameweek Standard</div>
+              <div style="font-size:12px;color:var(--text-3);">$50/month · includes 100 MAU · $0.10 per additional user · all game modes · unlimited competitions</div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-outline btn-sm" onclick="toast('Payment portal coming soon')">Manage Payment</button>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div style="font-size:12px;color:var(--text-3);line-height:1.7;">
+            <strong style="color:var(--text);">MAU definition:</strong> A Monthly Active User is any registered player who submits at least one prediction during the calendar month, counted once regardless of how many competitions they predict in.<br>
+            <strong style="color:var(--text);">Billing cycle:</strong> Monthly, billed on the 1st. Overage from the previous month is added to your next invoice.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ── SUBSCRIPTION PAYWALL ── -->
+<div id="paywall-overlay" style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;padding:20px;">
+  <div style="position:absolute;inset:0;backdrop-filter:blur(8px);background:rgba(17,19,23,0.45);"></div>
+  <div style="position:relative;background:var(--white);border-radius:16px;max-width:420px;width:100%;padding:32px;box-shadow:0 24px 70px rgba(0,0,0,0.3);text-align:center;">
+    <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;">game<span style="color:var(--accent);">week</span></div>
+    <div style="display:inline-block;background:var(--accent-light);color:var(--accent);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;margin-bottom:18px;letter-spacing:0.5px;">SUBSCRIPTION REQUIRED</div>
+    <h2 style="font-size:22px;font-weight:800;color:var(--text);margin-bottom:8px;">Activate your plan to continue</h2>
+    <p style="font-size:14px;color:var(--text-2);margin-bottom:24px;line-height:1.6;">Your account is created, but you'll need an active subscription to build competitions and go live.</p>
+
+    <div style="background:var(--sidebar);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:22px;text-align:left;">
+      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:14px;">
+        <span style="font-size:34px;font-weight:800;font-family:var(--mono);color:var(--text);">$50</span>
+        <span style="font-size:14px;color:var(--text-3);">/month base</span>
+      </div>
+      <div style="font-size:13px;color:var(--text-2);margin-bottom:16px;">+ $0.40 per active user / month</div>
+      <div style="display:flex;flex-direction:column;gap:9px;font-size:13px;color:var(--text);">
+        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> All 3 game modes</div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> Unlimited competitions</div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> Full branding customisation</div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> Usage dashboard &amp; analytics</div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:13px;font-size:14px;margin-bottom:10px;" onclick="startSubscription()">Subscribe now →</button>
+    <a href="#" onclick="signOutOperator();return false;" style="font-size:12px;color:var(--text-3);text-decoration:none;">Sign out</a>
+  </div>
+</div>
+
+<!-- ══ MODALS ══ -->
+
+<!-- Create Competition -->
+<div class="modal-overlay" id="modal-create-comp">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">New Competition</div>
+      <button class="modal-close" onclick="closeModal('modal-create-comp')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Game Mode</label>
+        <select class="form-select" id="new-comp-mode" onchange="updateModeDescription()">
+          <option value="lms">Last Man Standing</option>
+          <option value="score">Score Predictor</option>
+          <option value="betting">Betting Markets</option>
+        </select>
+        <div id="mode-description" style="margin-top:10px;padding:12px;background:var(--bg);border-radius:6px;border-left:3px solid var(--accent);">
+          <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;">Last Man Standing</div>
+          <div style="font-size:12px;color:var(--text-2);line-height:1.6;">Users predict the result (Home / Draw / Away) for each event in the round. A wrong prediction eliminates them from the competition. Events resolve in kick-off order — tension builds with every result. The last survivor wins.</div>
+        </div>
+      </div>
+
+      <!-- Score Predictor points config -->
+      <div id="score-points-config" style="display:none;">
+        <div class="divider"></div>
+        <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:12px;">Points Configuration</div>
+        <div style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px 14px;">
+          <label class="form-label" style="margin:0;">Exact score correct</label>
+          <input class="form-input" type="number" id="pts-exact" value="5" min="0" max="99" style="width:64px;text-align:center;font-family:var(--mono);font-weight:700;" />
+          <label class="form-label" style="margin:0;">Only home team goals correct</label>
+          <input class="form-input" type="number" id="pts-home" value="2" min="0" max="99" style="width:64px;text-align:center;font-family:var(--mono);font-weight:700;" />
+          <label class="form-label" style="margin:0;">Only away team goals correct</label>
+          <input class="form-input" type="number" id="pts-away" value="2" min="0" max="99" style="width:64px;text-align:center;font-family:var(--mono);font-weight:700;" />
+          <label class="form-label" style="margin:0;">Only total goals correct</label>
+          <input class="form-input" type="number" id="pts-total" value="1" min="0" max="99" style="width:64px;text-align:center;font-family:var(--mono);font-weight:700;" />
+        </div>
+      </div>
+
+      <!-- Betting Markets config -->
+      <div id="betting-markets-config" style="display:none;">
+        <div class="divider"></div>
+        <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;">Betting Markets</div>
+        <div style="font-size:11px;color:var(--text-3);margin-bottom:12px;">Select which markets users will predict for each event, and set points for a correct prediction.</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <label style="display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:10px;padding:10px;background:var(--bg);border-radius:7px;">
+            <input type="checkbox" id="mkt-1x2" checked style="accent-color:var(--accent);width:16px;height:16px;">
+            <div>
+              <div style="font-size:12px;font-weight:600;color:var(--text);">1X2 — Match Result</div>
+              <div style="font-size:11px;color:var(--text-3);">Home win, Draw, or Away win</div>
+            </div>
+            <span style="font-size:11px;color:var(--text-3);">pts</span>
+            <input class="form-input" type="number" id="pts-1x2" value="3" min="0" max="99" style="width:56px;text-align:center;font-family:var(--mono);font-weight:700;">
+          </label>
+          <label style="display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:10px;padding:10px;background:var(--bg);border-radius:7px;">
+            <input type="checkbox" id="mkt-ou25" style="accent-color:var(--accent);width:16px;height:16px;">
+            <div>
+              <div style="font-size:12px;font-weight:600;color:var(--text);">Over / Under 2.5 Goals</div>
+              <div style="font-size:11px;color:var(--text-3);">Total match goals above or below 2.5</div>
+            </div>
+            <span style="font-size:11px;color:var(--text-3);">pts</span>
+            <input class="form-input" type="number" id="pts-ou25" value="2" min="0" max="99" style="width:56px;text-align:center;font-family:var(--mono);font-weight:700;">
+          </label>
+          <label style="display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:10px;padding:10px;background:var(--bg);border-radius:7px;">
+            <input type="checkbox" id="mkt-btts" style="accent-color:var(--accent);width:16px;height:16px;">
+            <div>
+              <div style="font-size:12px;font-weight:600;color:var(--text);">Both Teams to Score</div>
+              <div style="font-size:11px;color:var(--text-3);">Will both teams score at least one goal?</div>
+            </div>
+            <span style="font-size:11px;color:var(--text-3);">pts</span>
+            <input class="form-input" type="number" id="pts-btts" value="2" min="0" max="99" style="width:56px;text-align:center;font-family:var(--mono);font-weight:700;">
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-create-comp')">Cancel</button>
+      <button class="btn btn-primary" onclick="createComp()">Create Competition</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create Round -->
+<!-- Create Round -->
+<div class="modal-overlay" id="modal-create-round">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <div class="modal-title">New Round</div>
+      <button class="modal-close" onclick="closeModal('modal-create-round')">×</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="form-group">
+        <label class="form-label">Round Name</label>
+        <input class="form-input" id="new-round-name" placeholder="e.g. Gameweek 4" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Select Tournament</label>
+        <select class="form-select" id="new-round-tournament-select" onchange="roundSelectTournament('new')">
+          <option value="">— choose a tournament —</option>
+        </select>
+      </div>
+
+      <div id="new-round-available-wrap" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <label class="form-label" style="margin:0;">Available Events</label>
+          <span id="new-round-available-count" style="font-size:11px;color:var(--text-3);"></span>
+        </div>
+        <div id="new-round-available-list" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;"></div>
+      </div>
+
+      <div id="new-round-added-wrap" style="display:none;margin-top:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <label class="form-label" style="margin:0;color:var(--green);">✓ Added to Round</label>
+          <span id="new-round-added-count" style="font-size:11px;color:var(--text-3);"></span>
+        </div>
+        <div style="font-size:11px;color:var(--amber);background:var(--amber-light);padding:6px 10px;border-radius:5px;margin-bottom:8px;display:none;" id="new-round-overlap-warn"></div>
+        <div id="new-round-added-list" style="display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto;border:1px solid var(--green);border-radius:6px;padding:8px;background:var(--green-light);"></div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <div style="font-size:11px;color:var(--text-3);">Deadline = 1 hour before earliest kick-off.</div>
+      <button class="btn btn-ghost" onclick="closeModal('modal-create-round')">Cancel</button>
+      <button class="btn btn-primary" onclick="createRound()">Create Round</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Round -->
+<div class="modal-overlay" id="modal-edit-round">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <div class="modal-title">Edit Round</div>
+      <button class="modal-close" onclick="closeModal('modal-edit-round')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-round-id" />
+
+      <div class="form-group">
+        <label class="form-label">Round Name</label>
+        <input class="form-input" id="edit-round-name" placeholder="e.g. Gameweek 4" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Select Tournament</label>
+        <select class="form-select" id="edit-round-tournament-select" onchange="roundSelectTournament('edit')">
+          <option value="">— choose a tournament —</option>
+        </select>
+      </div>
+
+      <div id="edit-round-available-wrap" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <label class="form-label" style="margin:0;">Available Events</label>
+          <span id="edit-round-available-count" style="font-size:11px;color:var(--text-3);"></span>
+        </div>
+        <div id="edit-round-available-list" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;"></div>
+      </div>
+
+      <div id="edit-round-added-wrap" style="display:none;margin-top:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <label class="form-label" style="margin:0;color:var(--green);">✓ Added to Round</label>
+          <span id="edit-round-added-count" style="font-size:11px;color:var(--text-3);"></span>
+        </div>
+        <div style="font-size:11px;color:var(--amber);background:var(--amber-light);padding:6px 10px;border-radius:5px;margin-bottom:8px;display:none;" id="edit-round-overlap-warn"></div>
+        <div id="edit-round-added-list" style="display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto;border:1px solid var(--green);border-radius:6px;padding:8px;background:var(--green-light);"></div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <div style="font-size:11px;color:var(--text-3);">Changes do not affect submitted predictions.</div>
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-round')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRoundEdit()">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create Event -->
+<!-- Enter Result -->
+<div class="modal-overlay" id="modal-result">
+  <div class="modal" style="width:380px;">
+    <div class="modal-header">
+      <div class="modal-title">Enter Result</div>
+      <button class="modal-close" onclick="closeModal('modal-result')">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">Confirming the result will automatically calculate points for all predictions on this event.</p>
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;padding:16px;background:var(--bg);border-radius:8px;margin-bottom:4px;">
+        <span style="font-family:var(--mono);font-size:13px;font-weight:700;" id="result-home-label">Arsenal</span>
+        <div class="score-inline">
+          <input type="number" min="0" max="20" id="result-h" placeholder="0">
+          <span class="sep">–</span>
+          <input type="number" min="0" max="20" id="result-a" placeholder="0">
+        </div>
+        <span style="font-family:var(--mono);font-size:13px;font-weight:700;" id="result-away-label">Man City</span>
+      </div>
+      <p style="font-size:11px;color:var(--text-3);text-align:center;">Enter the final score</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-result')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveResult()">Confirm Result</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Domain -->
+<div class="modal-overlay" id="modal-add-domain">
+  <div class="modal" style="width:400px;">
+    <div class="modal-header">
+      <div class="modal-title">Add Allowed Domain</div>
+      <button class="modal-close" onclick="closeModal('modal-add-domain')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Domain</label>
+        <input class="form-input" id="new-domain" placeholder="e.g. yourdomain.com" />
+        <div class="form-hint">Do not include https:// or trailing slashes.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-domain')">Cancel</button>
+      <button class="btn btn-primary" onclick="addDomain()">Add Domain</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ══ JS ══ -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+// ── SUPABASE ──────────────────────────────────────────────────────────────
+const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ── AUTH ─────────────────────────────────────────────────────────────────
+let currentOperator = null;
+let CLIENT_KEY = null;
+
+async function signOutOperator(){
+  await supa.auth.signOut();
+  window.location.href = '/';
+}
+
+// ── IN-MEMORY STATE ───────────────────────────────────────────────────────
+const state = {
+  currentComp: null,
+  resultEventId: null,
+  eventFilter: '',
+  competitions: [],
+  events: [],
+  domains: []
+};
+
+// DM data loaded into memory so round modal stays synchronous
+let dmState = { teams:[], tournaments:[], events:{} };
+
+// ── SUPABASE SAVE ─────────────────────────────────────────────────────────
+async function saveAdminState(){
+  if(!CLIENT_KEY) return;
+  try{
+    // Upsert competitions
+    if(state.competitions.length){
+      const compRows = state.competitions.map(c=>({
+        id:c.id, client_key:CLIENT_KEY, name:c.name, mode:c.mode,
+        color:c.color, status:c.status, long_term:c.longTerm||false,
+        scoring:c.scoring||null, markets:c.markets||null,
+        users:c.users||0, predictions:c.predictions||0
+      }));
+      await supa.from('gw_competitions').upsert(compRows,{onConflict:'id'});
+    }
+    // Upsert all rounds across all competitions
+    const allRounds = state.competitions.flatMap((c,ci)=>
+      (c.rounds||[]).map((r,ri)=>({
+        id:r.id, competition_id:c.id, client_key:CLIENT_KEY,
+        label:r.label, status:r.status, deadline:r.deadline||'',
+        event_ids:r.eventIds||[], tournament_ids:r.tournamentIds||[],
+        tournament_names:r.tournamentNames||[], sort_order:ri
+      }))
+    );
+    if(allRounds.length) await supa.from('gw_rounds').upsert(allRounds,{onConflict:'id'});
+  }catch(e){ console.error('saveAdminState failed:',e.message); }
+}
+
+// ── DM HELPERS (read from in-memory dmState) ──────────────────────────────
+function getDMTournaments(){ return dmState.tournaments||[]; }
+function getDMEvents(){ return dmState.events||{}; }
+function getDMTeams(){ return dmState.teams||[]; }
+
+// ── HELPERS ───────────────────────────────────────────────────────────────
+const modeLabel = {lms:'Last Man Standing', score:'Score Predictor', betting:'Betting Markets'};
+const modeChip  = {lms:'LMS', score:'SCORE', betting:'BET'};
+
+function getEvent(id){ return state.events.find(e=>e.id===id); }
+function getComp(id){ return state.competitions.find(c=>c.id===id); }
+function uid(){ return Math.random().toString(36).slice(2,8); }
+
+function fmtDt(dt){
+  if(!dt) return '—';
+  const d = new Date(dt);
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' · '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+}
+
+function statusBadge(s){
+  if(s==='active'||s==='open') return `<span class="badge badge-green">● ${s}</span>`;
+  if(s==='draft') return `<span class="badge badge-gray">Draft</span>`;
+  if(s==='completed') return `<span class="badge badge-gray">✓ Completed</span>`;
+  return `<span class="badge badge-gray">${s}</span>`;
+}
+
+// ── NAV ───────────────────────────────────────────────────────────────────
+function nav(view, subLabel){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('view-'+view)?.classList.add('active');
+  closeSidebar();
+
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    const onclick = n.getAttribute('onclick');
+    if(onclick && onclick.includes(`'${view}'`)) n.classList.add('active');
+  });
+
+  // breadcrumb
+  const labels = {dashboard:'Dashboard','comp-detail':'Competitions','competitions':'Competitions',embed:'Embed & Integration',settings:'Settings',branding:'Branding',billing:'Usage & Billing'};
+  let bc = '';
+  if(view==='comp-detail' && subLabel){
+    bc = `<span>Competitions</span><span class="sep">/</span><span class="current">${subLabel}</span>`;
+  } else {
+    bc = `<span class="current">${labels[view]||view}</span>`;
+  }
+  document.getElementById('breadcrumb').innerHTML = bc;
+
+  if(view==='dashboard') renderDashboard();
+  if(view==='competitions') renderCompList();
+  if(view==='embed') renderEmbedInfo();
+  if(view==='settings') renderSettings();
+  if(view==='branding') renderBranding();
+  if(view==='billing') renderBilling();
+}
+
+async function renderBilling(){
+  try{
+    // Fetch billing data from Supabase view
+    const {data:bill} = await supa.from('gw_billing_current')
+      .select('*').eq('client_key',CLIENT_KEY).single();
+
+    if(!bill) return;
+
+    const mau       = bill.mau_count || 0;
+    const included  = bill.included_mau || 100;
+    const overage   = bill.billable_mau || 0;
+    const total     = bill.total_due || 0;
+    const flat      = bill.flat_fee || 50;
+    const pct       = Math.min(100, Math.round(mau/included*100));
+
+    document.getElementById('billing-total').textContent   = '$'+total.toFixed(2);
+    document.getElementById('billing-flat').textContent    = '$'+flat.toFixed(2);
+    document.getElementById('billing-included').textContent= included;
+    document.getElementById('billing-overage').textContent = overage > 0 ? overage+' × $0.10 = $'+(overage*0.1).toFixed(2) : '0';
+    document.getElementById('billing-mau').textContent     = mau;
+    document.getElementById('billing-mau-limit').textContent = '/ '+included+' included';
+    document.getElementById('billing-mau-bar').style.width = pct+'%';
+    document.getElementById('billing-mau-bar').style.background = pct>=100?'var(--red)':pct>=80?'var(--amber)':'var(--accent)';
+
+    const now = new Date();
+    const monthName = now.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+    document.getElementById('billing-period').textContent = monthName;
+
+    let statusHtml = '';
+    if(pct>=100) statusHtml = `<span style="color:var(--red);font-weight:600;">⚠ Over limit — overage charges apply</span>`;
+    else if(pct>=80) statusHtml = `<span style="color:var(--amber);font-weight:600;">Approaching limit (${pct}%)</span>`;
+    else statusHtml = `<span style="color:var(--green);font-weight:600;">${100-pct}% of included MAU remaining</span>`;
+    document.getElementById('billing-mau-status').innerHTML = statusHtml;
+
+  }catch(e){
+    console.error('renderBilling:',e);
+    document.getElementById('billing-total').textContent = 'Error loading';
+  }
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────
+function renderDashboard(){
+  // Greeting
+  const nameEl = document.getElementById('dash-greeting-name');
+  if(nameEl) nameEl.textContent = currentOperator.companyName;
+
+  // Stats from real state
+  const active = state.competitions.filter(c=>c.status==='active').length;
+  const drafts = state.competitions.filter(c=>c.status==='draft').length;
+  const totalUsers = state.competitions.reduce((s,c)=>s+(c.users||0),0);
+  const totalPreds = state.competitions.reduce((s,c)=>s+(c.predictions||0),0);
+  const openRounds = state.competitions.reduce((s,c)=>s+c.rounds.filter(r=>r.status==='open').length,0);
+
+  document.getElementById('dash-active-comps').textContent = active;
+  const draftSub = document.getElementById('dash-draft-sub');
+  if(draftSub) draftSub.textContent = drafts ? `${drafts} draft` : 'none in draft';
+  document.getElementById('dash-total-users').textContent = totalUsers.toLocaleString();
+  document.getElementById('dash-total-preds').textContent = totalPreds.toLocaleString();
+  document.getElementById('dash-open-rounds').textContent = openRounds;
+
+  const tbody = document.getElementById('dash-comp-table');
+  if(state.competitions.length===0){
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-3);font-size:13px;">
+      No competitions yet. <a href="#" onclick="nav('competitions');return false;" style="color:var(--accent);">Create your first one →</a>
+    </td></tr>`;
+    return;
+  }
+  tbody.innerHTML = state.competitions.map(c=>{
+    const activeRound = c.rounds.find(r=>r.status==='open');
+    return `<tr>
+      <td><span style="font-weight:600">${c.name}</span></td>
+      <td><span class="mode-chip">${modeChip[c.mode]}</span></td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text-3)">${activeRound?activeRound.label:'—'}</td>
+      <td style="font-family:var(--mono)">${c.users}</td>
+      <td>${statusBadge(c.status)}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="openCompDetail('${c.id}')">Manage →</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── COMP LIST ─────────────────────────────────────────────────────────────
+function renderCompList(){
+  if(state.competitions.length===0){
+    document.getElementById('comp-grid').innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-3);">
+      <div style="font-size:32px;margin-bottom:12px;">🏆</div>
+      <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text-2);margin-bottom:6px;">No competitions yet</div>
+      <div style="font-size:12px;margin-bottom:20px;">Create your first competition to get started.</div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('modal-create-comp')">+ New competition</button>
+    </div>`;
+    return;
+  }
+  document.getElementById('comp-grid').innerHTML = state.competitions.map(c=>{
+    const openRound = c.rounds.find(r=>r.status==='open');
+    const doneRounds = c.rounds.filter(r=>r.status==='completed').length;
+    return `<div class="comp-card" onclick="openCompDetail('${c.id}')">
+      <div class="comp-card-top">
+        <div>
+          <div class="comp-card-name">${c.name}</div>
+          <div class="comp-card-meta">${c.league} · <span class="mode-chip">${modeChip[c.mode]}</span>${c.longTerm?' · Season-long':''}</div>
+        </div>
+        ${statusBadge(c.status)}
+      </div>
+      <div style="font-size:11px;color:var(--text-3);margin-bottom:12px;">
+        ${openRound?`Current: <strong style="color:var(--text)">${openRound.label}</strong> — deadline ${fmtDt(openRound.deadline)}`:'No active round'}
+      </div>
+      <div class="comp-card-stats">
+        <div class="comp-card-stat"><strong>${c.users}</strong>Users</div>
+        <div class="comp-card-stat"><strong>${c.predictions.toLocaleString()}</strong>Predictions</div>
+        <div class="comp-card-stat"><strong>${doneRounds}/${c.rounds.length}</strong>Rounds done</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── COMP DETAIL ───────────────────────────────────────────────────────────
+function openCompDetail(id){
+  state.currentComp = id;
+  nav('comp-detail', getComp(id).name);
+  renderCompDetail();
+}
+
+function renderCompDetail(){
+  const c = getComp(state.currentComp);
+  const el = document.getElementById('comp-detail-content');
+
+  el.innerHTML = `
+  <div class="page-header">
+    <div>
+      <div class="page-title" style="display:flex;align-items:center;gap:10px;">
+        ${c.name}
+        ${statusBadge(c.status)}
+      </div>
+      <div class="page-sub">${c.league} · ${modeLabel[c.mode]}${c.longTerm?' · Season-long enabled':''}</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-outline" onclick="openModal('modal-create-round')">+ New Round</button>
+    </div>
+  </div>
+
+  <div class="three-col">
+    <div class="stat-card">
+      <div class="stat-card-label">Total Users</div>
+      <div class="stat-card-value">${c.users}</div>
+    </div>
+    <div class="stat-card stat-card-accent">
+      <div class="stat-card-label">Total Predictions</div>
+      <div class="stat-card-value">${c.predictions.toLocaleString()}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-label">Rounds</div>
+      <div class="stat-card-value">${c.rounds.length}</div>
+      <div class="stat-card-sub">${c.rounds.filter(r=>r.status==='completed').length} completed</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Rounds</span>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-create-round')">+ New Round</button>
+        </div>
+        <div class="card-body" style="padding:12px;">
+          ${c.rounds.length===0
+            ? `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No rounds yet</div><div class="empty-sub">Create the first round for this competition.</div></div>`
+            : `<div class="round-list">${c.rounds.map(r=>`
+              <div class="round-item">
+                <div style="flex:1;">
+                  <div class="round-item-name">${r.label}</div>
+                  <div class="round-item-meta">${r.eventIds.length} events · deadline ${fmtDt(r.deadline)}${r.tournamentId?` · ${r.tournamentName||r.tournamentId}`:''}</div>
+                </div>
+                ${statusBadge(r.status)}
+                <button class="btn btn-ghost btn-sm" onclick="openEditRound('${r.id}')">Edit</button>
+                ${r.status==='open'?`<button class="btn btn-outline btn-sm" onclick="confirmRound('${r.id}')">Lock →</button>`:''}
+              </div>`).join('')}</div>`
+          }
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-header"><span class="card-title">Competition Settings</span></div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Game Mode</label>
+            <select class="form-select" id="edit-comp-mode" disabled style="opacity:0.6;cursor:not-allowed;">
+              <option value="lms" ${c.mode==='lms'?'selected':''}>Last Man Standing</option>
+              <option value="score" ${c.mode==='score'?'selected':''}>Score Predictor</option>
+              <option value="betting" ${c.mode==='betting'?'selected':''}>Betting Markets</option>
+            </select>
+            <div style="font-size:11px;color:var(--amber);background:var(--amber-light);padding:7px 10px;border-radius:5px;margin-top:6px;">
+              Game mode cannot be changed after creation. To use a different mode, create a new competition from scratch.
+            </div>
+          </div>
+          ${c.mode==='score' ? `
+          <div class="divider"></div>
+          <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:12px;">Points Configuration</div>
+          <div style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px 14px;">
+            <label class="form-label" style="margin:0;">Exact score correct</label>
+            <input class="form-input" type="number" id="edit-pts-exact" value="${c.scoring?.exactScore??5}" min="0" max="99" style="width:64px;text-align:center;font-family:var(--mono);font-weight:700;" />
+            <label class="form-label" style="margin:0;">Only home team goals correct</label>
+            <input class="form-input" type="number" id="edit-pts-home" value="${c.scoring?.homeGoals??2}" min="0" max="99" style="width:64px;text-align:center;font-family:var(--mono);font-weight:700;" />
+            <label class="form-label" style="margin:0;">Only away team goals correct</label>
+            <input class="form-input" type="number" id="edit-pts-away" value="${c.scoring?.awayGoals??2}" min="0" max="99" style="width:64px;text-align:center;font-family:var(--mono);font-weight:700;" />
+            <label class="form-label" style="margin:0;">Only total goals correct</label>
+            <input class="form-input" type="number" id="edit-pts-total" value="${c.scoring?.totalGoals??1}" min="0" max="99" style="width:64px;text-align:center;font-family:var(--mono);font-weight:700;" />
+          </div>` : ''}
+          <div class="divider"></div>
+          <button class="btn btn-primary btn-sm" onclick="saveCompSettings()">Save changes</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Status</span></div>
+        <div class="card-body">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${c.status==='draft'
+              ? `<button class="btn btn-primary btn-sm" onclick="setCompStatus('${c.id}','active')">Activate →</button>`
+              : `<button class="btn btn-outline btn-sm" onclick="setCompStatus('${c.id}','draft')">Set to Draft</button>`
+            }
+            <button class="btn btn-danger btn-sm" onclick="if(confirm('Delete this competition?')) deleteComp('${c.id}')">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── RESULT MODAL ──────────────────────────────────────────────────────────
+function openResultModal(id){
+  state.resultEventId = id;
+  const ev = getEvent(id);
+  document.getElementById('result-home-label').textContent = ev.home;
+  document.getElementById('result-away-label').textContent = ev.away;
+  document.getElementById('result-h').value = '';
+  document.getElementById('result-a').value = '';
+  openModal('modal-result');
+}
+
+function saveResult(){
+  const h = parseInt(document.getElementById('result-h').value);
+  const a = parseInt(document.getElementById('result-a').value);
+  if(isNaN(h)||isNaN(a)){ toast('Enter both scores'); return; }
+  const ev = getEvent(state.resultEventId);
+  ev.result = {h,a};
+  ev.status = 'completed';
+  closeModal('modal-result');
+  saveAdminState();
+  toast(`Result saved: ${ev.home} ${h}–${a} ${ev.away}`);
+}
+
+// ── CREATE COMP ───────────────────────────────────────────────────────────
+const MODE_DESCRIPTIONS = {
+  lms:     { title:'Last Man Standing',  text:'Users predict the result (Home / Draw / Away) for each event in the round. A wrong prediction eliminates them. Events resolve in kick-off order — tension builds with every result. The last survivor wins.' },
+  score:   { title:'Score Predictor',    text:'Users predict the exact scoreline for every match. An exact score earns maximum points; partial credit for getting individual team goals right.' },
+  betting: { title:'Betting Markets',    text:'Users predict multiple markets per event — choose from 1X2, Over/Under 2.5, and Both Teams to Score. Each market earns its own points.' }
+};
+function updateModeDescription(){
+  const mode = document.getElementById('new-comp-mode')?.value;
+  const d = MODE_DESCRIPTIONS[mode];
+  const el = document.getElementById('mode-description');
+  if(el && d) el.innerHTML = `<div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;">${d.title}</div><div style="font-size:12px;color:var(--text-2);line-height:1.6;">${d.text}</div>`;
+  document.getElementById('score-points-config').style.display   = mode==='score'   ? 'block' : 'none';
+  document.getElementById('betting-markets-config').style.display = mode==='betting' ? 'block' : 'none';
+}
+
+function createComp(){
+  const mode = document.getElementById('new-comp-mode').value;
+  const name = MODE_DESCRIPTIONS[mode]?.title || mode;
+  let scoring = null, markets = null;
+  if(mode==='score'){
+    scoring = {
+      exactScore: parseInt(document.getElementById('pts-exact').value)||5,
+      homeGoals:  parseInt(document.getElementById('pts-home').value)||2,
+      awayGoals:  parseInt(document.getElementById('pts-away').value)||2,
+      totalGoals: parseInt(document.getElementById('pts-total').value)||1,
+    };
+  }
+  if(mode==='betting'){
+    markets = [];
+    if(document.getElementById('mkt-1x2').checked)  markets.push({type:'1x2',  label:'1X2 Result',          points: parseInt(document.getElementById('pts-1x2').value)||3});
+    if(document.getElementById('mkt-ou25').checked) markets.push({type:'ou25', label:'Over/Under 2.5',      points: parseInt(document.getElementById('pts-ou25').value)||2});
+    if(document.getElementById('mkt-btts').checked) markets.push({type:'btts', label:'Both Teams to Score', points: parseInt(document.getElementById('pts-btts').value)||2});
+    if(!markets.length){ toast('Select at least one market'); return; }
+  }
+  const c = {
+    id: 'c'+uid(), name, mode, scoring, markets,
+    longTerm: false,
+    status: 'draft', color: '#4F46E5', users: 0, predictions: 0, rounds: []
+  };
+  state.competitions.push(c);
+  closeModal('modal-create-comp');
+  document.getElementById('new-comp-longterm').checked=false;
+  document.getElementById('new-comp-mode').value='lms';
+  updateModeDescription();
+  saveAdminState();
+  renderCompList();
+  nav('competitions');
+  toast('Competition created');
+}
+
+// ── DATA MANAGER HELPERS (read from in-memory dmState, loaded from Supabase) ──
+function getDMTournaments(){ return dmState.tournaments||[]; }
+function getDMEvents(){ return dmState.events||{}; }
+function getDMTeams(){ return dmState.teams||[]; }
+
+function renderBranding(){
+  // Render competition colour pickers
+  const el = document.getElementById('branding-comp-colours');
+  if(!el) return;
+  if(!state.competitions.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--text-3);">No competitions yet. Create one first.</div>';
+    return;
+  }
+  el.innerHTML = state.competitions.map(c=>`
+    <div style="display:flex;align-items:center;gap:10px;">
+      <input type="color" class="color-input" value="${c.color}" onchange="updateCompColor('${c.id}',this.value)">
+      <span style="font-size:12px;font-weight:600;color:var(--text);flex:1;">${c.name}</span>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--text-3);">${c.color}</span>
+    </div>`).join('');
+}
+
+function saveBrandingAccent(val){
+  document.getElementById('brand-accent-hex').textContent=val;
+  toast('Theme colour saved (applied in next embed update)');
+}
+function saveBrandingBg(val){
+  document.getElementById('brand-bg-hex').textContent=val;
+  toast('Background colour saved');
+}
+
+// ── ROUND MODALS ──────────────────────────────────────────────────────────
+// ── ROUND STATE ───────────────────────────────────────────────────────────
+// Tracks events added to the round currently being created/edited
+let roundAddedEvents = []; // [{id, home, away, kickoff, tName}]
+
+// ── OPEN MODAL (refresh DM data first) ───────────────────────────────────
+async function openModal(id){
+  if(id==='modal-create-round'){
+    roundAddedEvents = [];
+    await refreshDMState();
+    populateTournamentDropdown('new');
+    renderAddedEvents('new');
+  }
+  document.getElementById(id)?.classList.add('open');
+}
+
+async function refreshDMState(){
+  if(!CLIENT_KEY) return;
+  const [{data:teams},{data:tournaments},{data:events}] = await Promise.all([
+    supa.from('gw_dm_teams').select('*'),
+    supa.from('gw_dm_tournaments').select('*'),
+    supa.from('gw_dm_events').select('*'),
+  ]);
+  dmState.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||''}));
+  dmState.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,color:t.color,seasons:t.seasons||{}}));
+  const evMap={};
+  (events||[]).forEach(e=>{ evMap[e.id]={homeId:e.home_id,awayId:e.away_id,kickoff:e.kickoff,result:e.result,status:e.status,line:e.line||2.5}; });
+  dmState.events=evMap;
+}
+
+function populateTournamentDropdown(prefix){
+  const sel = document.getElementById(prefix+'-round-tournament-select');
+  const tournaments = getDMTournaments();
+  if(!tournaments.length){
+    sel.innerHTML=`<option value="">No tournaments available yet — contact support</option>`;
+    return;
+  }
+  sel.innerHTML=`<option value="">— choose a tournament —</option>`+
+    tournaments.map(t=>`<option value="${t.id}">${t.name}${t.country?' · '+t.country:''}</option>`).join('');
+}
+
+function roundSelectTournament(prefix){
+  const tId = document.getElementById(prefix+'-round-tournament-select').value;
+  const availWrap = document.getElementById(prefix+'-round-available-wrap');
+  const availList = document.getElementById(prefix+'-round-available-list');
+  const availCount = document.getElementById(prefix+'-round-available-count');
+  if(!tId){ availWrap.style.display='none'; return; }
+
+  const tournament = getDMTournaments().find(t=>t.id===tId);
+  const dmEvents = getDMEvents();
+  const teams = getDMTeams();
+  const teamById = id => teams.find(t=>t.id===id);
+
+  // Collect all event IDs from this tournament (all seasons/rounds)
+  const allEids = new Set();
+  Object.values(tournament?.seasons||{}).forEach(season=>{
+    (season.rounds||[]).forEach(r=>(r.eventIds||[]).forEach(eid=>allEids.add(eid)));
+  });
+
+  // Build event list, excluding already-added events
+  const addedIds = new Set(roundAddedEvents.map(e=>e.id));
+  const evList = [...allEids]
+    .filter(eid=>!addedIds.has(eid))
+    .map(eid=>{
+      const ev=dmEvents[eid]; if(!ev) return null;
+      const home=teamById(ev.homeId), away=teamById(ev.awayId);
+      if(!home||!away) return null;
+      const ko = ev.kickoff ? new Date(ev.kickoff).toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : 'TBD';
+      return {id:eid, home:home.name, away:away.name, kickoff:ev.kickoff, koFmt:ko, tName:tournament.name};
+    }).filter(Boolean).sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
+
+  if(!evList.length){
+    availList.innerHTML=`<div style="padding:10px;font-size:12px;color:var(--text-3);">${addedIds.size>0?'All events from this tournament already added.':'No events found in this tournament. Add events in the Data Manager first.'}</div>`;
+    availCount.textContent='';
+    availWrap.style.display='block';
+    return;
+  }
+
+  availList.innerHTML = evList.map(ev=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''" onclick="roundAddEvent('${prefix}','${ev.id}','${ev.home.replace(/'/g,"\'")}','${ev.away.replace(/'/g,"\'")}','${ev.kickoff||''}','${ev.tName.replace(/'/g,"\'")}')">
+      <div style="flex:1;">
+        <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">${ev.home} vs ${ev.away}</div>
+        <div style="font-size:10px;color:var(--text-3);">${ev.tName} · ${ev.koFmt}</div>
+      </div>
+      <div style="font-size:20px;color:var(--accent);font-weight:700;padding:0 4px;">+</div>
+    </div>`).join('');
+  availCount.textContent=`(${evList.length} available)`;
+  availWrap.style.display='block';
+}
+
+function roundAddEvent(prefix, eid, home, away, kickoff, tName){
+  if(roundAddedEvents.find(e=>e.id===eid)) return;
+
+  // LMS: block duplicate kickoff times — sequential elimination requires unique kickoffs
+  const comp = getComp(state.currentComp);
+  if(comp?.mode==='lms' && kickoff){
+    const duplicate = roundAddedEvents.find(e=>e.kickoff===kickoff);
+    if(duplicate){
+      toast(`⚠ LMS requires unique kickoff times. "${duplicate.home} vs ${duplicate.away}" already kicks off at this time.`);
+      return;
+    }
+  }
+
+  roundAddedEvents.push({id:eid, home, away, kickoff, tName});
+  // Sort by kickoff so elimination order is always clear
+  roundAddedEvents.sort((a,b)=>new Date(a.kickoff||0)-new Date(b.kickoff||0));
+  roundSelectTournament(prefix);
+  renderAddedEvents(prefix);
+  validateRoundOverlap(prefix);
+}
+
+function roundRemoveEvent(prefix, eid){
+  roundAddedEvents = roundAddedEvents.filter(e=>e.id!==eid);
+  roundSelectTournament(prefix);
+  renderAddedEvents(prefix);
+}
+
+function renderAddedEvents(prefix){
+  const wrap = document.getElementById(prefix+'-round-added-wrap');
+  const list = document.getElementById(prefix+'-round-added-list');
+  const count = document.getElementById(prefix+'-round-added-count');
+  if(!roundAddedEvents.length){ wrap.style.display='none'; return; }
+  const comp = getComp(state.currentComp);
+  const isLMS = comp?.mode==='lms';
+  wrap.style.display='block';
+  count.textContent=`(${roundAddedEvents.length} events${isLMS?' · sorted by kick-off':''})`;
+  list.innerHTML = roundAddedEvents.map((ev,i)=>{
+    const ko = ev.kickoff ? new Date(ev.kickoff).toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : 'TBD';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--border);">
+      ${isLMS?`<span style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent);min-width:18px;">${i+1}.</span>`:''}
+      <div style="flex:1;">
+        <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);">${ev.home} vs ${ev.away}</div>
+        <div style="font-size:10px;color:var(--text-3);">${ev.tName} · ${ko}</div>
+      </div>
+      <button onclick="roundRemoveEvent('${prefix}','${ev.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:16px;padding:0 4px;">×</button>
+    </div>`;
+  }).join('');
+}
+
+function validateRoundOverlap(prefix){
+  const warnEl = document.getElementById(prefix+'-round-overlap-warn');
+  if(!warnEl||!roundAddedEvents.length){ if(warnEl) warnEl.style.display='none'; return; }
+  const dmEvents = getDMEvents();
+  const kickoffs = roundAddedEvents.map(e=>dmEvents[e.id]?.kickoff).filter(Boolean).map(k=>new Date(k).getTime());
+  if(!kickoffs.length){ warnEl.style.display='none'; return; }
+  const newFirst=Math.min(...kickoffs), newLast=Math.max(...kickoffs);
+  const SIX_H=6*60*60*1000;
+  const excludeId = prefix==='edit'?document.getElementById('edit-round-id').value:null;
+  let conflict=null;
+  for(const r of getComp(state.currentComp).rounds){
+    if(r.id===excludeId) continue;
+    const rKo=(r.eventIds||[]).map(eid=>dmEvents[eid]?.kickoff).filter(Boolean).map(k=>new Date(k).getTime());
+    if(!rKo.length) continue;
+    const rFirst=Math.min(...rKo), rLast=Math.max(...rKo);
+    if(!(newFirst>=rLast+SIX_H||newLast+SIX_H<=rFirst)){ conflict=r.label; break; }
+  }
+  if(conflict){ warnEl.textContent='⚠ Overlaps with "'+conflict+'". Rounds need a 6-hour gap.'; warnEl.style.display='block'; }
+  else { warnEl.style.display='none'; }
+}
+
+function createRound(){
+  const name = document.getElementById('new-round-name').value.trim();
+  if(!name){ toast('Enter a round name'); return; }
+  if(!state.currentComp){ toast('Open a competition first'); return; }
+  if(!roundAddedEvents.length){ toast('Add at least one event to the round'); return; }
+  const warnEl = document.getElementById('new-round-overlap-warn');
+  if(warnEl&&warnEl.style.display!=='none'){ toast('Fix the overlap conflict before saving'); return; }
+  const dmEvents = getDMEvents();
+  const kickoffs = roundAddedEvents.map(e=>dmEvents[e.id]?.kickoff).filter(Boolean).map(k=>new Date(k).getTime());
+  const deadline = kickoffs.length ? new Date(Math.min(...kickoffs)-60*60*1000).toISOString().slice(0,16) : '';
+  const tNames = [...new Set(roundAddedEvents.map(e=>e.tName))];
+  const r = {
+    id:'r'+uid(), label:name, status:'open', deadline,
+    tournamentIds:[], tournamentNames:tNames,
+    eventIds: roundAddedEvents.map(e=>e.id)
+  };
+  getComp(state.currentComp).rounds.push(r);
+  closeModal('modal-create-round');
+  document.getElementById('new-round-name').value='';
+  roundAddedEvents=[];
+  saveAdminState(); renderCompDetail(); toast('Round created');
+}
+
+// ── EDIT ROUND ────────────────────────────────────────────────────────────
+function openEditRound(roundId){
+  const comp = getComp(state.currentComp);
+  const r = comp.rounds.find(r=>r.id===roundId);
+  if(!r) return;
+  document.getElementById('edit-round-id').value = roundId;
+  document.getElementById('edit-round-name').value = r.label;
+  // Pre-populate added events from the round
+  const dmEvents = getDMEvents();
+  const teams = getDMTeams();
+  const teamById = id => teams.find(t=>t.id===id);
+  roundAddedEvents = (r.eventIds||[]).map(eid=>{
+    const ev=dmEvents[eid]; if(!ev) return null;
+    const home=teamById(ev.homeId), away=teamById(ev.awayId);
+    const tName=(r.tournamentNames||[])[0]||'';
+    return {id:eid, home:home?.name||eid, away:away?.name||eid, kickoff:ev.kickoff||'', tName};
+  }).filter(Boolean);
+  populateTournamentDropdown('edit');
+  renderAddedEvents('edit');
+  document.getElementById('modal-edit-round').classList.add('open');
+}
+
+function saveRoundEdit(){
+  const rid = document.getElementById('edit-round-id').value;
+  const comp = getComp(state.currentComp);
+  const r = comp.rounds.find(r=>r.id===rid);
+  if(!r){ toast('Round not found'); return; }
+  const warnEl = document.getElementById('edit-round-overlap-warn');
+  if(warnEl&&warnEl.style.display!=='none'){ toast('Fix the overlap conflict before saving'); return; }
+  const dmEvents = getDMEvents();
+  const kickoffs = roundAddedEvents.map(e=>dmEvents[e.id]?.kickoff).filter(Boolean).map(k=>new Date(k).getTime());
+  r.label = document.getElementById('edit-round-name').value.trim()||r.label;
+  r.deadline = kickoffs.length ? new Date(Math.min(...kickoffs)-60*60*1000).toISOString().slice(0,16) : r.deadline;
+  r.tournamentNames = [...new Set(roundAddedEvents.map(e=>e.tName))];
+  r.eventIds = roundAddedEvents.map(e=>e.id);
+  closeModal('modal-edit-round');
+  saveAdminState(); renderCompDetail(); toast('Round updated');
+}
+
+
+// ── MISC ACTIONS ──────────────────────────────────────────────────────────
+function toggleLongTerm(id,val){ getComp(id).longTerm=val; saveAdminState(); }
+
+function updateCompColor(id,val){
+  getComp(id).color=val;
+  saveAdminState();
+}
+
+function saveCompSettings(){
+  const c = getComp(state.currentComp);
+  // Score mode — check if points changed and warn
+  if(c.mode==='score'){
+    const newScoring = {
+      exactScore: parseInt(document.getElementById('edit-pts-exact').value)||5,
+      homeGoals:  parseInt(document.getElementById('edit-pts-home').value)||2,
+      awayGoals:  parseInt(document.getElementById('edit-pts-away').value)||2,
+      totalGoals: parseInt(document.getElementById('edit-pts-total').value)||1,
+    };
+    const old = c.scoring||{};
+    const changed = old.exactScore!==newScoring.exactScore || old.homeGoals!==newScoring.homeGoals
+                 || old.awayGoals!==newScoring.awayGoals || old.totalGoals!==newScoring.totalGoals;
+    if(changed && c.rounds.some(r=>r.eventIds.length>0)){
+      if(!confirm('⚠ Changing point values will recalculate all existing scores across all submitted predictions in this competition. This cannot be undone. Proceed?')) return;
+    }
+    c.scoring = newScoring;
+  }
+  saveAdminState();
+  renderCompDetail();
+  toast('Changes saved');
+}
+
+function setCompStatus(id,status){
+  getComp(id).status=status;
+  saveAdminState();
+  renderCompDetail();
+  toast('Status updated');
+}
+
+function deleteComp(id){
+  if(!confirm('Delete this competition and all its rounds?')) return;
+  state.competitions = state.competitions.filter(c=>c.id!==id);
+  supa.from('gw_competitions').delete().eq('id',id).then(()=>{});
+  saveAdminState();
+  nav('competitions');
+  toast('Competition deleted');
+}
+
+function confirmRound(id){
+  state.competitions.forEach(c=>{
+    const r = c.rounds.find(r=>r.id===id);
+    if(r) r.status='completed';
+  });
+  saveAdminState();
+  renderCompDetail();
+  toast('Round locked');
+}
+
+function updateColorPreview(){
+  const val = document.getElementById('new-comp-color').value;
+  document.getElementById('new-comp-color-hex').value=val;
+  document.getElementById('preview-bar').style.background=val;
+  document.getElementById('preview-btn').style.background=val;
+}
+
+function syncColorFromHex(){
+  const val = document.getElementById('new-comp-color-hex').value;
+  if(/^#[0-9A-Fa-f]{6}$/.test(val)){
+    document.getElementById('new-comp-color').value=val;
+    document.getElementById('preview-bar').style.background=val;
+    document.getElementById('preview-btn').style.background=val;
+  }
+}
+
+function copyEmbed(){
+  const code = `<iframe src="https://www.gameweek.cloud/embed?client=${CLIENT_KEY}" width="100%" height="620" frameborder="0" style="border-radius:10px;"></iframe>`;
+  navigator.clipboard.writeText(code).then(()=>toast('Copied to clipboard'));
+}
+
+function renderDomains(){
+  const el = document.getElementById('domain-list');
+  if(!el) return;
+  if(state.domains.length===0){
+    el.innerHTML = '<span style="font-size:12px;color:var(--text-3);">No domains added yet.</span>';
+    return;
+  }
+  el.innerHTML = state.domains.map(d=>`<div class="domain-tag">${d} <button onclick="removeDomain('${d}')">×</button></div>`).join('');
+}
+
+function renderEmbedInfo(){
+  document.getElementById('embed-client-key').textContent = CLIENT_KEY;
+  document.getElementById('embed-client-key-label').textContent = CLIENT_KEY;
+  const testLink = document.getElementById('embed-test-link');
+  const liveUrl = `https://www.gameweek.cloud/embed?client=${CLIENT_KEY}`;
+  if(testLink) testLink.href = liveUrl;
+  renderDomains();
+}
+
+function addDomain(){
+  const d = document.getElementById('new-domain').value.trim();
+  if(!d){ toast('Enter a domain'); return; }
+  state.domains.push(d);
+  saveAdminState();
+  renderDomains();
+  closeModal('modal-add-domain');
+  document.getElementById('new-domain').value='';
+  toast('Domain added');
+}
+
+function removeDomain(d){
+  state.domains = state.domains.filter(x=>x!==d);
+  saveAdminState();
+  renderDomains();
+  toast('Domain removed');
+}
+
+// ── MODAL HELPERS ─────────────────────────────────────────────────────────
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); });
+});
+
+// ── TOAST ─────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+function showPaywall(){
+  const el=document.getElementById('paywall-overlay');
+  if(el){ el.style.display='flex'; document.body.style.overflow='hidden'; }
+}
+function startSubscription(){
+  // Redirect to landing page pricing / Stripe checkout
+  window.location.href='/#pricing';
+}
+
+function toggleSidebar(){
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeSidebar(){
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+function renderSettings(){
+  document.getElementById('settings-email').value = opSession||'';
+  document.getElementById('settings-company').value = currentOperator?.company_name||'';
+}
+
+async function saveSettingsAccount(){
+  const newCompany = document.getElementById('settings-company').value.trim();
+  if(!newCompany){ toast('Company name cannot be empty'); return; }
+  const {data:{session}} = await supa.auth.getSession();
+  await supa.from('gw_operators').update({company_name:newCompany}).eq('auth_id',session.user.id);
+  currentOperator.company_name = newCompany;
+  initOperatorChrome();
+  toast('Account saved');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+function initOperatorChrome(){
+  const name = currentOperator?.company_name || opSession;
+  document.getElementById('sidebar-company').textContent = name;
+  const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('topbar-avatar').textContent = initials;
+  document.getElementById('topbar-view-demo').href = `https://www.gameweek.cloud/embed?client=${CLIENT_KEY}`;
+}
+
+(async ()=>{
+  // Check Supabase Auth session
+  const {data:{session}} = await supa.auth.getSession();
+  if(!session){ window.location.href='/'; return; }
+
+  // Load operator profile
+  const {data:op, error:opErr} = await supa.from('gw_operators')
+    .select('*').eq('auth_id',session.user.id).single();
+  if(opErr||!op){ window.location.href='/'; return; }
+  currentOperator = op;
+  CLIENT_KEY = op.client_key;
+
+  // Ensure subscription row exists, check status
+  let {data:sub} = await supa.from('gw_subscriptions').select('*').eq('client_key',CLIENT_KEY).single();
+  if(!sub){
+    const {data:newSub} = await supa.from('gw_subscriptions').insert({client_key:CLIENT_KEY}).select().single();
+    sub = newSub;
+  }
+  // Admins and allowlisted accounts bypass the paywall; everyone else needs an active plan
+  const PAYWALL_BYPASS = ['ercanvural.bm@gmail.com','ercanvural.bm+admin@gmail.com'];
+  const bypass = op.is_admin || PAYWALL_BYPASS.includes((op.email||'').toLowerCase());
+  if(!bypass && (!sub || sub.plan!=='active')){
+    showPaywall();
+  }
+
+  // Load competitions + rounds from Supabase
+  const [{data:comps},{data:rounds}] = await Promise.all([
+    supa.from('gw_competitions').select('*').eq('client_key',CLIENT_KEY),
+    supa.from('gw_rounds').select('*').eq('client_key',CLIENT_KEY).order('sort_order'),
+  ]);
+  state.competitions = (comps||[]).map(c=>({
+    id:c.id, name:c.name, mode:c.mode, color:c.color, status:c.status,
+    longTerm:c.long_term, scoring:c.scoring, markets:c.markets,
+    users:c.users, predictions:c.predictions,
+    rounds: (rounds||[]).filter(r=>r.competition_id===c.id).map(r=>({
+      id:r.id, label:r.label, status:r.status, deadline:r.deadline||'',
+      eventIds:r.event_ids||[], tournamentIds:r.tournament_ids||[],
+      tournamentNames:r.tournament_names||[]
+    }))
+  }));
+
+  // Load global DM data (shared across all clients — no client_key filter)
+  const [{data:teams},{data:tournaments},{data:events}] = await Promise.all([
+    supa.from('gw_dm_teams').select('*'),
+    supa.from('gw_dm_tournaments').select('*'),
+    supa.from('gw_dm_events').select('*'),
+  ]);
+  dmState.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color}));
+  dmState.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,color:t.color,seasons:t.seasons||{}}));
+  const evMap = {};
+  (events||[]).forEach(e=>{
+    evMap[e.id]={homeId:e.home_id,awayId:e.away_id,kickoff:e.kickoff,result:e.result,status:e.status,line:e.line||2.5};
+  });
+  dmState.events = evMap;
+
+  initOperatorChrome();
+  renderDashboard();
+})();
+</script>
+</body>
+</html>

@@ -1,1080 +1,1347 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gameweek</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-:root{
-  --bg:#F7F8FA;--white:#FFFFFF;--border:#E2E4EA;
-  --text:#0F1117;--text-2:#6B7280;--text-3:#9CA3AF;
-  --accent:#4F46E5;--accent-2:#3730A3;--accent-light:#EEF2FF;
-  --green:#16A34A;--green-light:#DCFCE7;
-  --red:#DC2626;--red-light:#FEE2E2;
-  --amber:#D97706;--amber-light:#FEF3C7;
-  --mono:'Space Mono',monospace;--sans:'Inter',sans-serif;
-  --comp-color:#4F46E5;
-}
-html,body{height:100%;overflow:hidden;}
-body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gameweek — Free-to-Play Prediction Platform for Sports Operators</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── APP SHELL ── */
-.app{display:flex;flex-direction:column;height:100vh;max-width:860px;margin:0 auto;width:100%;background:var(--white);position:relative;}
+    :root {
+      --bg: #FAFAFA;
+      --white: #FFFFFF;
+      --surface: #F3F4F8;
+      --border: #E2E4EA;
+      --text: #0F1117;
+      --text-2: #6B7280;
+      --text-3: #9CA3AF;
+      --accent: #4F46E5;
+      --accent-2: #3730A3;
+      --accent-light: #EEF2FF;
+      --green: #16A34A;
+      --green-light: #DCFCE7;
+      --red: #DC2626;
+      --red-light: #FEE2E2;
+      --amber: #D97706;
+      --mono: 'Space Mono', monospace;
+      --sans: 'Inter', sans-serif;
+    }
 
-/* ── HEADER ── */
-.app-header{background:var(--white);border-bottom:1px solid var(--border);flex-shrink:0;z-index:50;}
-.header-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;}
-.header-logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text);letter-spacing:-0.5px;}
-.header-logo span{color:var(--accent);}
-.header-user{display:flex;align-items:center;gap:8px;cursor:pointer;}
-.header-avatar{width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:700;color:white;}
-.header-username{font-size:12px;font-weight:500;color:var(--text-2);}
+    html { scroll-behavior: smooth; }
 
-/* ── BOTTOM NAV ── */
-.bottom-nav{background:var(--white);border-top:1px solid var(--border);display:flex;flex-shrink:0;}
-.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px;cursor:pointer;border:none;background:none;transition:all 0.13s;gap:3px;}
-.bnav-icon{font-size:18px;line-height:1;}
-.bnav-label{font-size:10px;font-weight:600;color:var(--text-3);letter-spacing:0.3px;}
-.bnav-item.active .bnav-label{color:var(--accent);}
-.bnav-item.active .bnav-icon{filter:none;}
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
 
-/* ── SCROLL AREA ── */
-.scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;}
-::-webkit-scrollbar{width:3px;}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+    /* ── NAV ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      background: rgba(250,250,250,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 40px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
 
-/* ── SCREENS ── */
-.screen{display:none;padding:16px;}
-.screen.active{display:block;}
+    .logo {
+      font-family: var(--mono);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.5px;
+      text-decoration: none;
+    }
+    .logo span { color: var(--accent); }
 
-/* ── AUTH SCREEN ── */
-.auth-wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px 16px;}
-.auth-card{width:100%;max-width:340px;}
-.auth-logo{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--text);text-align:center;margin-bottom:4px;}
-.auth-logo span{color:var(--accent);}
-.auth-tagline{font-size:12px;color:var(--text-3);text-align:center;margin-bottom:28px;}
-.auth-toggle{display:flex;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:3px;margin-bottom:20px;}
-/* ── AUTH MODAL OVERLAY ── */
-.auth-modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,17,23,0.5);backdrop-filter:blur(2px);z-index:200;align-items:center;justify-content:center;padding:16px;}
-.auth-modal-overlay.open{display:flex;}
-.auth-modal{background:var(--white);border-radius:14px;width:100%;max-width:320px;box-shadow:0 20px 60px rgba(0,0,0,0.2);padding:24px;}
-.auth-modal-logo{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);text-align:center;margin-bottom:2px;}
-.auth-modal-logo span{color:var(--accent);}
-.auth-modal-reason{font-size:11px;color:var(--text-3);text-align:center;margin-bottom:18px;}
-.auth-tab{flex:1;padding:7px;text-align:center;font-size:12px;font-weight:600;border-radius:5px;cursor:pointer;color:var(--text-2);transition:all 0.13s;border:none;background:none;}
-.auth-tab.active{background:var(--white);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.08);}
-.form-group{margin-bottom:12px;}
-.form-label{font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:4px;}
-.form-input{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:7px;font-family:var(--sans);font-size:13px;color:var(--text);background:var(--white);outline:none;transition:border-color 0.13s;}
-.form-input:focus{border-color:var(--accent);}
-.form-input::placeholder{color:var(--text-3);}
-.auth-btn{width:100%;padding:11px;background:var(--accent);color:white;border:none;border-radius:7px;font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;transition:background 0.13s;margin-top:4px;letter-spacing:0.3px;}
-.auth-btn:hover{background:var(--accent-2);}
-.auth-error{font-size:11px;color:var(--red);text-align:center;margin-top:8px;min-height:16px;}
-.auth-terms{font-size:11px;color:var(--text-3);text-align:center;margin-top:14px;line-height:1.5;}
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .nav-hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 4px;
+    }
+    .nav-hamburger span { display: block; width: 20px; height: 2px; background: var(--text); border-radius: 2px; }
+    .nav-mobile-menu {
+      display: none;
+      position: fixed;
+      top: 54px;
+      left: 0; right: 0;
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px 20px;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 200;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+    .nav-mobile-menu.open { display: flex; }
+    .nav-mobile-menu a { padding: 10px 8px; font-size: 15px; color: var(--text-2); text-decoration: none; border-radius: 6px; }
+    .nav-mobile-menu a:hover { background: var(--surface); color: var(--text); }
+    .nav-mobile-menu .btn-primary { text-align: center; margin-top: 8px; }
+    @media (max-width: 680px) {
+      .nav-right { display: none; }
+      .nav-hamburger { display: flex; }
+      nav { padding: 0 20px; }
+      .hero { padding: 48px 20px 40px; grid-template-columns: 1fr !important; }
+      .hero-right { display: none; }
+      .section { padding: 48px 20px; }
+      .section-title { font-size: clamp(22px, 5vw, 32px); }
+    }
 
-/* ── COMP TABS ── */
-.comp-tabs{display:flex;gap:0;overflow-x:auto;border-bottom:1px solid var(--border);padding:0 16px;-webkit-overflow-scrolling:touch;}
-.comp-tabs::-webkit-scrollbar{display:none;}
-.comp-tab{padding:10px 14px;font-size:12px;font-weight:500;color:var(--text-2);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:all 0.13s;display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex-shrink:0;}
-.comp-tab:hover{color:var(--text);}
-.comp-tab.active{color:var(--comp-color);border-bottom-color:var(--comp-color);}
-.comp-tab-name{font-size:12px;font-weight:600;}
-.comp-tab-mode{font-family:var(--mono);font-size:9px;color:var(--text-3);font-weight:700;letter-spacing:0.3px;}
-.comp-tab.active .comp-tab-mode{color:var(--comp-color);opacity:0.7;}
+    .btn-ghost {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-2);
+      padding: 7px 14px;
+      border-radius: 6px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.13s;
+    }
+    .btn-ghost:hover { color: var(--text); background: var(--surface); }
 
-/* ── ROUND SELECTOR ── */
-.round-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--white);border-bottom:1px solid var(--border);}
+    .btn-primary {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: white;
+      background: var(--accent);
+      padding: 8px 18px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.13s;
+      letter-spacing: 0.3px;
+    }
+    .btn-primary:hover { background: var(--accent-2); }
 
-/* ── PREDICT SUB-TABS ── */
-.predict-subtabs{display:flex;gap:6px;padding:12px 16px 0;}
-.ps-tab{flex:1;text-align:center;padding:8px 4px;font-size:12px;font-weight:600;color:var(--text-2);background:var(--bg);border:1px solid var(--border);border-radius:7px;cursor:pointer;transition:all 0.13s;}
-.ps-tab:hover{color:var(--text);}
-.ps-tab.active{background:var(--comp-color);border-color:var(--comp-color);color:white;}
+    /* ── HERO ── */
+    .hero {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 80px 40px 72px;
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 64px;
+      align-items: center;
+    }
 
-/* ── LEADERBOARD WEEK SELECT ── */
-.lb-week-row{padding:14px 16px 0;}
-.lb-week-select{width:100%;font-family:var(--mono);font-size:11px;border:1px solid var(--border);background:var(--white);padding:8px 10px;border-radius:6px;outline:none;color:var(--text);}
-.lb-week-select:focus{border-color:var(--comp-color);}
-.lb-pane{padding:14px 16px;}
-.round-name{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);}
-.round-status{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;}
-.round-status.open{background:var(--green-light);color:var(--green);}
-.round-status.completed{background:var(--bg);color:var(--text-3);}
-.round-status.locked{background:var(--amber-light);color:var(--amber);}
-.round-select{font-family:var(--mono);font-size:10px;border:1px solid var(--border);background:var(--white);padding:5px 8px;border-radius:5px;cursor:pointer;outline:none;color:var(--text);}
-.round-select:focus{border-color:var(--accent);}
+    .hero-eyebrow {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-/* ── DEADLINE BANNER ── */
-.deadline-banner{background:var(--accent-light);border-bottom:1px solid #C7D2FE;padding:8px 16px;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--accent-2);}
-.deadline-banner strong{font-family:var(--mono);font-size:10px;}
+    .hero-title {
+      font-family: var(--mono);
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 700;
+      line-height: 1.15;
+      color: var(--text);
+      letter-spacing: -1px;
+      margin-bottom: 20px;
+    }
+    .hero-title .accent { color: var(--accent); }
 
-/* ── LMS PARTICIPATION BAR ── */
-.survival-tracker{padding:12px 16px;background:var(--bg);border-bottom:1px solid var(--border);}
-.st-label{font-size:10px;font-weight:600;color:var(--text-3);margin-bottom:8px;letter-spacing:0.3px;}
-.st-bar-wrap{display:flex;flex-direction:column;gap:6px;}
-.st-bar-row{display:flex;align-items:center;gap:10px;}
-.st-bar-label{font-size:11px;color:var(--text-2);min-width:80px;}
-.st-bar-track{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden;}
-.st-bar-fill{height:8px;border-radius:4px;transition:width 0.4s ease;}
-.st-bar-fill.participated{background:var(--accent);}
-.st-bar-fill.survived{background:var(--green);}
-.st-bar-count{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);min-width:36px;text-align:right;}
-.st-alive{font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;margin-left:8px;}
-.st-alive.alive{background:var(--green-light);color:var(--green);}
-.st-alive.out{background:var(--red-light);color:var(--red);}
+    .hero-sub {
+      font-size: 16px;
+      color: var(--text-2);
+      line-height: 1.65;
+      margin-bottom: 36px;
+      max-width: 440px;
+      font-weight: 400;
+    }
 
-/* ── EVENT CARDS ── */
-.events-list{display:flex;flex-direction:column;gap:8px;padding:12px 16px;}
-.ev-participants{font-size:10px;color:var(--text-2);display:flex;align-items:center;gap:5px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
-.ev-participants strong{font-family:var(--mono);color:#333;font-size:11px;}
-.ev-pred-bar{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
-.ev-pred-bar-fill{height:3px;background:var(--comp-color);border-radius:2px;opacity:0.4;}
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
 
-.event-card{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color 0.13s;}
-.event-card.predicted{border-color:var(--comp-color);}
-.event-card.locked-pred{border-color:var(--border);opacity:0.85;}
-.event-card-top{padding:13px 14px;}
-.event-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-.event-league{font-size:10px;font-weight:700;color:var(--text-2);letter-spacing:0.5px;text-transform:uppercase;}
-.event-kickoff{font-family:var(--mono);font-size:10px;color:var(--text-2);}
-.event-teams{display:flex;align-items:center;gap:8px;}
-.ev-team{flex:1;display:flex;align-items:center;gap:9px;}
-.ev-team.away{flex-direction:row-reverse;}
-.ev-badge{width:32px;height:32px;border-radius:50%;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:8px;font-weight:700;color:var(--text-2);flex-shrink:0;overflow:hidden;}
-.ev-badge img{width:100%;height:100%;object-fit:contain;}
-.ev-name{font-family:var(--mono);font-size:13px;font-weight:700;color:#000;}
-.ev-vs{font-family:var(--mono);font-size:11px;color:var(--text-3);text-align:center;min-width:28px;}
-.ev-score{font-family:var(--mono);font-size:15px;font-weight:700;color:#000;text-align:center;min-width:42px;}
-.pred-area{border-top:1px solid var(--border);padding:11px 14px;}
-.pred-label{font-size:11px;color:var(--text-2);font-weight:500;margin-bottom:8px;}
-.btns-1x2{display:flex;gap:5px;}
-.btn-1x2{flex:1;padding:11px 4px;border:1px solid var(--border);border-radius:7px;background:var(--white);font-family:var(--mono);font-size:13px;font-weight:700;color:#111;cursor:pointer;transition:all 0.13s;text-align:center;line-height:1.2;}
-.btn-1x2:hover{border-color:var(--comp-color);color:var(--comp-color);}
-.btn-1x2.selected{border-color:var(--comp-color);background:var(--comp-color);color:white;}
-.pred-result-row{display:flex;align-items:center;justify-content:space-between;}
-.pred-made{font-size:12px;color:#333;}
-.pred-made strong{font-family:var(--mono);color:#000;}
-.pred-correct{font-size:12px;font-weight:700;}
-.pred-correct.yes{color:var(--green);}
-.pred-correct.no{color:var(--red);}
-.ev-participants{font-size:10px;color:var(--text-2);display:flex;align-items:center;gap:5px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
-.ev-participants strong{font-family:var(--mono);color:#333;font-size:11px;}
+    .btn-hero-primary {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: white;
+      background: var(--accent);
+      padding: 13px 28px;
+      border-radius: 7px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.13s;
+      letter-spacing: 0.3px;
+    }
+    .btn-hero-primary:hover { background: var(--accent-2); }
 
-/* Score */
-.score-pred{display:flex;align-items:center;gap:8px;}
-.score-side{display:flex;align-items:center;gap:7px;flex:1;}
-.score-side.right{flex-direction:row-reverse;}
-.score-side-name{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:72px;}
-.score-num{width:44px;height:38px;border:1px solid var(--border);border-radius:6px;text-align:center;font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text);outline:none;-moz-appearance:textfield;transition:border-color 0.13s;flex-shrink:0;}
-.score-num::-webkit-inner-spin-button,.score-num::-webkit-outer-spin-button{-webkit-appearance:none;}
-.score-num:focus{border-color:var(--comp-color);}
-.score-num.has{border-color:var(--comp-color);background:var(--accent-light);color:var(--comp-color);}
-.score-dash{font-family:var(--mono);font-size:14px;color:var(--text-3);font-weight:700;}
+    .btn-hero-ghost {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-2);
+      padding: 13px 20px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--white);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.13s;
+    }
+    .btn-hero-ghost:hover { border-color: var(--accent); color: var(--accent); }
 
-/* O/U */
-.btns-ou{display:flex;gap:6px;}
-.btn-ou{flex:1;padding:9px 4px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;transition:all 0.13s;text-align:center;line-height:1.3;}
-.btn-ou .sub{display:block;font-size:8px;font-weight:400;opacity:0.6;margin-top:2px;}
-.btn-ou.over:hover,.btn-ou.over.selected{border-color:var(--green);background:var(--green-light);color:var(--green);}
-.btn-ou.under:hover,.btn-ou.under.selected{border-color:var(--red);background:var(--red-light);color:var(--red);}
+    /* ── LIVE FEED CARD ── */
+    .live-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    }
 
-/* Completed pred display */
-.pred-result-row{display:flex;align-items:center;justify-content:space-between;}
-.pred-made{font-size:11px;color:var(--text-2);}
-.pred-made strong{font-family:var(--mono);color:var(--text);}
-.pred-correct{font-size:11px;font-weight:700;}
-.pred-correct.yes{color:var(--green);}
-.pred-correct.no{color:var(--red);}
+    .live-card-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+    }
 
-/* ── PROGRESS ── */
-.progress-wrap{padding:12px 16px;border-top:1px solid var(--border);background:var(--white);}
-.progress-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--text-2);margin-bottom:6px;}
-.progress-pct{font-family:var(--mono);font-size:11px;color:var(--comp-color);}
-.progress-track{height:3px;background:var(--bg);border-radius:2px;}
-.progress-fill{height:3px;border-radius:2px;transition:width 0.3s ease;}
-.submit-row{display:flex;align-items:center;justify-content:space-between;margin-top:12px;}
-.submit-hint{font-size:11px;color:var(--text-3);}
-.submit-btn{font-family:var(--mono);font-size:11px;font-weight:700;padding:9px 20px;background:var(--comp-color);color:white;border:none;border-radius:6px;cursor:pointer;transition:background 0.13s;letter-spacing:0.3px;}
-.submit-btn:disabled{background:var(--bg);color:var(--text-3);cursor:not-allowed;}
+    .live-card-title {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text);
+    }
 
-/* ── LEADERBOARD ── */
-.lb-wrap{background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
-.lb-table-head{padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:space-between;}
-.lb-table-head-title{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);}
-.lb-table-head-sub{font-size:10px;color:var(--text-3);}
+    .live-dot {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      color: var(--green);
+      font-weight: 600;
+    }
+    .live-dot::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
 
-table.lb-table{width:100%;border-collapse:collapse;}
-.lb-table th{font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:7px 14px;text-align:left;border-bottom:1px solid var(--border);}
-.lb-table th.r{text-align:right;}
-.lb-table td{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;}
-.lb-table tbody tr:last-child td{border-bottom:none;}
-.lb-table tbody tr:hover td{background:var(--bg);}
-.lb-table tbody tr.me td{background:var(--accent-light);}
+    .live-match {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
 
-.lb-rank{font-family:var(--mono);font-size:11px;color:var(--text-3);text-align:center;width:32px;}
-.lb-rank.top{font-size:15px;}
-.lb-user{display:flex;align-items:center;gap:8px;}
-.lb-av{width:22px;height:22px;border-radius:50%;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:7px;font-weight:700;color:var(--text-2);flex-shrink:0;}
-.lb-av.me{background:var(--accent);color:white;border-color:var(--accent);}
-.lb-uname{font-weight:500;font-size:12px;}
-.lb-uname.me{color:var(--accent);}
-.you-tag{font-size:8px;background:var(--accent);color:white;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;vertical-align:middle;}
-.lb-pts{font-family:var(--mono);font-size:12px;font-weight:700;text-align:right;}
-.lb-num{font-family:var(--mono);font-size:11px;color:var(--text-2);text-align:right;}
-.alive-tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;}
-.alive-tag.alive{background:var(--green-light);color:var(--green);}
-.alive-tag.out{background:var(--red-light);color:var(--red);}
+    .match-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
 
-/* ── PROFILE ── */
-.profile-header{background:var(--accent);padding:24px 16px;text-align:center;}
-.profile-av{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:16px;font-weight:700;color:white;margin:0 auto 10px;}
-.profile-name{font-family:var(--mono);font-size:16px;font-weight:700;color:white;margin-bottom:2px;}
-.profile-joined{font-size:11px;color:rgba(255,255,255,0.6);}
+    .match-team {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+    }
 
-.profile-stats{display:grid;grid-template-columns:repeat(3,1fr);background:var(--white);border-bottom:1px solid var(--border);}
-.profile-stat{padding:14px 8px;text-align:center;border-right:1px solid var(--border);}
-.profile-stat:last-child{border-right:none;}
-.ps-val{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--text);}
-.ps-label{font-size:10px;color:var(--text-3);margin-top:2px;}
+    .match-vs {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-3);
+    }
 
-.profile-section{padding:14px 16px;border-bottom:1px solid var(--border);}
-.profile-section-title{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:0.6px;text-transform:uppercase;margin-bottom:12px;}
-.profile-comp-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
-.profile-comp-row:last-child{border-bottom:none;}
-.pcr-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-.pcr-name{font-size:12px;font-weight:500;color:var(--text);flex:1;}
-.pcr-rank{font-family:var(--mono);font-size:11px;color:var(--text-2);}
-.pcr-pts{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);}
+    .match-time {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-3);
+      text-align: center;
+      margin-bottom: 10px;
+    }
 
-.logout-btn{width:100%;padding:11px;background:var(--bg);color:var(--text-2);border:1px solid var(--border);border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.13s;margin-top:4px;}
-.logout-btn:hover{border-color:var(--red);color:var(--red);}
+    .pick-row {
+      display: flex;
+      gap: 5px;
+    }
 
-/* ── TOAST ── */
-#toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--text);color:white;font-family:var(--mono);font-size:11px;padding:9px 18px;border-radius:6px;z-index:999;transition:transform 0.25s ease;pointer-events:none;white-space:nowrap;}
-#toast.show{transform:translateX(-50%) translateY(0);}
+    .pick-btn {
+      flex: 1;
+      padding: 6px 4px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-2);
+      text-align: center;
+      cursor: default;
+      transition: all 0.3s;
+    }
+    .pick-btn.selected {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: white;
+    }
+    .pick-btn .pick-sub {
+      display: block;
+      font-size: 8px;
+      font-weight: 400;
+      opacity: 0.65;
+      margin-top: 1px;
+    }
 
-/* ── EMPTY ── */
-.empty{text-align:center;padding:40px 20px;color:var(--text-3);}
-.empty-icon{font-size:28px;margin-bottom:10px;}
-.empty-title{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text-2);margin-bottom:5px;}
-.empty-sub{font-size:11px;line-height:1.6;}
-</style>
+    /* Feed */
+    .live-feed {
+      height: 190px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .feed-inner {
+      padding: 8px 0;
+    }
+
+    .feed-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 16px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .feed-item.visible { opacity: 1; transform: translateY(0); }
+
+    .feed-avatar {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono);
+      font-size: 7px;
+      font-weight: 700;
+      color: var(--text-2);
+      flex-shrink: 0;
+    }
+
+    .feed-text {
+      font-size: 11px;
+      color: var(--text-2);
+      flex: 1;
+    }
+    .feed-text strong {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .feed-badge {
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .feed-badge.home { background: var(--accent-light); color: var(--accent); }
+    .feed-badge.draw { background: #FEF9C3; color: #854D0E; }
+    .feed-badge.away { background: var(--surface); color: var(--text-2); }
+    .feed-badge.over { background: var(--green-light); color: var(--green); }
+    .feed-badge.under { background: var(--red-light); color: var(--red); }
+    .feed-badge.score { background: var(--surface); color: var(--text); }
+
+    .live-footer {
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+    }
+    .live-footer-stat {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-3);
+    }
+    .live-footer-stat strong { color: var(--text); }
+
+    /* ── STATS BAR ── */
+    .stats-bar {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--white);
+      padding: 32px 40px;
+    }
+
+    .stats-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 0 24px;
+      border-right: 1px solid var(--border);
+    }
+    .stat-item:last-child { border-right: none; }
+
+    .stat-number {
+      font-family: var(--mono);
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .stat-number .accent { color: var(--accent); }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-3);
+      font-weight: 500;
+    }
+
+    /* ── SECTION BASE ── */
+    .section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 80px 40px;
+    }
+
+    .section-eyebrow {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--accent);
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-family: var(--mono);
+      font-size: clamp(22px, 3vw, 32px);
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.5px;
+      margin-bottom: 14px;
+      line-height: 1.2;
+    }
+
+    .section-sub {
+      font-size: 15px;
+      color: var(--text-2);
+      max-width: 520px;
+      line-height: 1.65;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      margin-top: 48px;
+      background: var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .step {
+      background: var(--white);
+      padding: 32px 28px;
+    }
+
+    .step-num {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 16px;
+      letter-spacing: 0.5px;
+    }
+
+    .step-title {
+      font-family: var(--mono);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 10px;
+      letter-spacing: -0.3px;
+    }
+
+    .step-desc {
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.6;
+    }
+
+    .step-tag {
+      display: inline-block;
+      margin-top: 16px;
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-3);
+      background: var(--surface);
+      padding: 4px 9px;
+      border-radius: 4px;
+      letter-spacing: 0.3px;
+    }
+
+    /* ── GAME MODES ── */
+    .modes-bg {
+      background: var(--white);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modes-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 48px;
+    }
+
+    .mode-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 28px 24px;
+      background: var(--bg);
+      transition: border-color 0.13s, box-shadow 0.13s;
+    }
+    .mode-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+
+    .mode-icon {
+      font-size: 24px;
+      margin-bottom: 16px;
+    }
+
+    .mode-title {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+      letter-spacing: -0.3px;
+    }
+
+    .mode-desc {
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .mode-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .mode-pill {
+      font-family: var(--mono);
+      font-size: 9px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--accent-light);
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    /* ── WHY ── */
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2px;
+      margin-top: 48px;
+      background: var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .why-item {
+      background: var(--white);
+      padding: 32px 28px;
+    }
+
+    .why-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--accent);
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .why-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    .why-desc {
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.6;
+    }
+
+    /* ── PRICING ── */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 48px;
+      align-items: start;
+    }
+
+    .pricing-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--white);
+      overflow: hidden;
+      transition: box-shadow 0.13s;
+    }
+    .pricing-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
+    .pricing-card.featured {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+
+    .pricing-head {
+      padding: 24px 24px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .pricing-badge {
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 700;
+      color: white;
+      background: var(--accent);
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    .pricing-name {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .pricing-price {
+      font-family: var(--mono);
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+    }
+    .pricing-price .currency { font-size: 18px; vertical-align: super; margin-right: 2px; }
+    .pricing-price .period { font-size: 12px; font-weight: 400; color: var(--text-3); }
+
+    .pricing-tagline {
+      font-size: 12px;
+      color: var(--text-3);
+      margin-top: 6px;
+    }
+
+    .pricing-features {
+      padding: 20px 24px;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .pricing-feature {
+      font-size: 13px;
+      color: var(--text-2);
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .pricing-feature::before {
+      content: '✓';
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--green);
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .pricing-feature.muted { color: var(--text-3); }
+    .pricing-feature.muted::before { content: '–'; color: var(--text-3); }
+
+    .pricing-cta {
+      padding: 0 24px 24px;
+    }
+
+    .btn-pricing {
+      display: block;
+      width: 100%;
+      padding: 11px;
+      text-align: center;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.13s;
+      letter-spacing: 0.3px;
+    }
+    .btn-pricing.outline {
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      background: none;
+    }
+    .btn-pricing.outline:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .btn-pricing.filled {
+      background: var(--accent);
+      color: white;
+      border: none;
+    }
+    .btn-pricing.filled:hover { background: var(--accent-2); }
+
+    .pricing-note {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-3);
+      margin-top: 20px;
+    }
+
+    /* ── FINAL CTA ── */
+    .cta-section {
+      background: var(--text);
+      padding: 80px 40px;
+    }
+
+    .cta-inner {
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .cta-title {
+      font-family: var(--mono);
+      font-size: clamp(22px, 3vw, 34px);
+      font-weight: 700;
+      color: white;
+      letter-spacing: -0.5px;
+      margin-bottom: 14px;
+      line-height: 1.2;
+    }
+    .cta-title .accent { color: var(--accent); }
+
+    .cta-sub {
+      font-size: 15px;
+      color: #9CA3AF;
+      margin-bottom: 36px;
+      line-height: 1.6;
+    }
+
+    .cta-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-cta-primary {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: white;
+      background: var(--accent);
+      padding: 13px 28px;
+      border-radius: 7px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.13s;
+      letter-spacing: 0.3px;
+    }
+    .btn-cta-primary:hover { background: var(--accent-2); }
+
+    .btn-cta-ghost {
+      font-size: 13px;
+      font-weight: 500;
+      color: #9CA3AF;
+      padding: 13px 20px;
+      border-radius: 7px;
+      border: 1px solid #374151;
+      background: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.13s;
+    }
+    .btn-cta-ghost:hover { border-color: #6B7280; color: white; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--text);
+      border-top: 1px solid #1F2937;
+      padding: 24px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-logo {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+      color: #6B7280;
+      text-decoration: none;
+    }
+    .footer-logo span { color: var(--accent); }
+
+    .footer-note {
+      font-size: 12px;
+      color: #4B5563;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      nav { padding: 0 20px; }
+      .hero { grid-template-columns: 1fr; gap: 40px; padding: 48px 20px; }
+      .live-card { max-width: 100%; }
+      .stats-inner { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+      .stat-item { border-right: none; }
+      .steps { grid-template-columns: 1fr; }
+      .modes-grid { grid-template-columns: 1fr; }
+      .why-grid { grid-template-columns: 1fr; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .section { padding: 56px 20px; }
+      .stats-bar { padding: 32px 20px; }
+      footer { flex-direction: column; gap: 8px; text-align: center; }
+    }
+
+    @media (max-width: 540px) {
+      .hero-title { font-size: 26px; }
+      .cta-title { font-size: 22px; }
+    }
+    /* ── AUTH MODAL ── */
+    .auth-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,17,23,0.55);
+      backdrop-filter: blur(2px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .auth-overlay.open { display: flex; }
+    .auth-modal {
+      background: var(--white);
+      border-radius: 14px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+    .auth-modal-header {
+      padding: 20px 24px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .auth-modal-logo { font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--text); }
+    .auth-modal-logo span { color: var(--accent); }
+    .auth-modal-close { background: none; border: none; font-size: 20px; color: var(--text-3); cursor: pointer; padding: 4px 8px; border-radius: 6px; }
+    .auth-modal-close:hover { background: var(--surface); color: var(--text); }
+    .auth-modal-body { padding: 20px 24px 26px; }
+    .auth-modal-tabs { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 3px; margin-bottom: 18px; }
+    .auth-modal-tab { flex: 1; padding: 7px; text-align: center; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; color: var(--text-2); border: none; background: none; transition: all 0.13s; }
+    .auth-modal-tab.active { background: var(--white); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .auth-field { margin-bottom: 13px; }
+    .auth-field label { font-size: 11px; font-weight: 600; color: var(--text-2); display: block; margin-bottom: 5px; }
+    .auth-field input {
+      width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
+      font-family: var(--sans); font-size: 13px; color: var(--text); outline: none; transition: border-color 0.13s;
+    }
+    .auth-field input:focus { border-color: var(--accent); }
+    .auth-submit-btn {
+      width: 100%; padding: 11px; background: var(--accent); color: white; border: none; border-radius: 8px;
+      font-family: var(--mono); font-size: 12px; font-weight: 700; cursor: pointer; margin-top: 4px; letter-spacing: 0.3px; transition: background 0.13s;
+    }
+    .auth-submit-btn:hover { background: var(--accent-2); }
+    .btn-spinner { display:inline-block; width:13px; height:13px; border:2px solid rgba(255,255,255,0.4); border-top-color:#fff; border-radius:50%; animation:btnspin 0.6s linear infinite; vertical-align:middle; margin-right:6px; }
+    @keyframes btnspin { to { transform:rotate(360deg); } }
+    @keyframes shake { 10%,90%{transform:translateX(-1px);} 20%,80%{transform:translateX(2px);} 30%,50%,70%{transform:translateX(-4px);} 40%,60%{transform:translateX(4px);} }
+    .auth-modal.shake { animation:shake 0.4s; }
+    .auth-modal-note { font-size: 11px; color: var(--text-3); text-align: center; margin-top: 14px; line-height: 1.6; }
+
+  </style>
 </head>
 <body>
-<div class="app" id="app">
 
-  <!-- ── AUTH MODAL (overlay, triggered on action) ── -->
-  <div class="auth-modal-overlay" id="auth-modal-overlay" onclick="if(event.target===this)closeAuthModal()">
-    <div class="auth-modal">
-      <div class="auth-modal-logo">game<span>week</span></div>
-      <div class="auth-modal-reason" id="auth-modal-reason">Sign in to make predictions</div>
-      <div class="auth-toggle">
-        <button class="auth-tab active" id="tab-login" onclick="switchAuth('login')">Sign in</button>
-        <button class="auth-tab" id="tab-register" onclick="switchAuth('register')">Register</button>
-      </div>
-      <div id="form-login">
-        <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="login-username" placeholder="your username" autocomplete="username" /></div>
-        <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" /></div>
-        <button class="auth-btn" onclick="doLogin()">Sign in →</button>
-        <div class="auth-error" id="login-error"></div>
-      </div>
-      <div id="form-register" style="display:none;">
-        <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="reg-username" placeholder="choose a username" autocomplete="username" /></div>
-        <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="reg-email" placeholder="your@email.com" autocomplete="email" /></div>
-        <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="reg-password" placeholder="min 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()" /></div>
-        <button class="auth-btn" onclick="doRegister()">Create account →</button>
-        <div class="auth-error" id="reg-error"></div>
-        <div class="auth-terms">Free to play. No deposit required.</div>
-      </div>
+<!-- ── NAV ── -->
+<nav>
+  <a href="#" class="logo">game<span>week</span></a>
+  <div class="nav-right">
+    <a href="#how" class="btn-ghost">How it works</a>
+    <a href="#pricing" class="btn-ghost">Pricing</a>
+    <a href="/demo" class="btn-ghost">Demo</a>
+    <span id="nav-auth-actions">
+      <a href="#" class="btn-ghost" onclick="openAuthModal('login');return false;">Log in</a>
+      <a href="#" class="btn-primary" onclick="openAuthModal('signup');return false;">Sign up →</a>
+    </span>
+  </div>
+  <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- Mobile nav menu -->
+<div class="nav-mobile-menu" id="nav-mobile-menu">
+  <a href="#how" onclick="closeMobileNav()">How it works</a>
+  <a href="/demo" onclick="closeMobileNav()">Demo</a>
+  <span id="nav-mobile-auth">
+    <a href="#" onclick="openAuthModal('login');closeMobileNav();return false;">Log in</a>
+    <a href="#" class="btn-primary" onclick="openAuthModal('signup');closeMobileNav();return false;">Sign up →</a>
+  </span>
+</div>
+
+<!-- ── HERO ── -->
+<div class="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow">F2P Platform for your website</div>
+    <h1 class="hero-title">
+      Bring fans back<br>every <span class="accent">gameweek.</span>
+    </h1>
+    <p class="hero-sub">
+      Gameweek is a free-to-play prediction platform you embed once.
+      Your users predict, compete, and return — week after week, across every competition you cover.
+    </p>
+    <div class="hero-actions">
+      <a href="#" class="btn-hero-primary" onclick="openAuthModal('signup');return false;">Sign up free →</a>
+      <a href="/demo" class="btn-hero-ghost">Try the demo</a>
     </div>
   </div>
 
-  <!-- ── APP (always visible) ── -->
-  <div id="screen-app" style="flex:1;min-height:0;display:flex;flex-direction:column;">
+  <!-- LIVE FEED CARD -->
+  <div class="hero-right">
+    <div class="live-card">
+      <div class="live-card-header">
+        <span class="live-card-title">Premier League · Gameweek 3</span>
+        <span class="live-dot">Live</span>
+      </div>
 
-    <div class="app-header">
-      <div class="header-top">
-        <div class="header-logo">game<span>week</span></div>
-        <div class="header-user" onclick="headerUserClick()">
-          <div class="header-avatar" id="hdr-avatar">?</div>
-          <div class="header-username" id="hdr-username">Sign in</div>
+      <div class="live-match">
+        <div class="match-row">
+          <span class="match-team">Arsenal</span>
+          <span class="match-vs">vs</span>
+          <span class="match-team">Man City</span>
+        </div>
+        <div class="match-time">Sat 30 Aug · 15:00</div>
+        <div class="pick-row">
+          <div class="pick-btn selected" id="pick-H">
+            Arsenal
+            <span class="pick-sub">Home Win</span>
+          </div>
+          <div class="pick-btn" id="pick-D">
+            X
+            <span class="pick-sub">Draw</span>
+          </div>
+          <div class="pick-btn" id="pick-A">
+            City
+            <span class="pick-sub">Away Win</span>
+          </div>
         </div>
       </div>
-      <div id="comp-tabs-wrap">
-        <div class="comp-tabs" id="comp-tabs"></div>
+
+      <div class="live-feed">
+        <div class="feed-inner" id="feed"></div>
+      </div>
+
+      <div class="live-footer">
+        <span class="live-footer-stat"><strong id="pred-count">247</strong> predictions</span>
+        <span class="live-footer-stat">Deadline: <strong>30 Aug · 14:00</strong></span>
       </div>
     </div>
-
-    <div class="scroll-area" id="scroll-area">
-      <div class="screen active" id="tab-predict">
-        <div id="predict-content" style="padding:0;"></div>
-      </div>
-      <div class="screen" id="tab-profile">
-        <div id="profile-content"></div>
-      </div>
-    </div>
-
-    <div class="bottom-nav">
-      <button class="bnav-item active" id="bnav-predict" onclick="goTab('predict')">
-        <div class="bnav-icon">⚽</div>
-        <div class="bnav-label">PREDICT</div>
-      </button>
-      <button class="bnav-item" id="bnav-profile" onclick="goTab('profile')">
-        <div class="bnav-icon">👤</div>
-        <div class="bnav-label">PROFILE</div>
-      </button>
-    </div>
-
   </div>
 </div>
 
-<div id="toast"></div>
+<!-- ── STATS BAR ── -->
 
+<!-- ── SEPARATOR ── -->
+<div style="max-width:1100px;margin:0 auto;padding:0 32px;"><hr style="border:none;border-top:1px solid var(--border);margin:0;"></div>
+
+<!-- ── HOW IT WORKS ── -->
+<div class="section" id="how">
+  <div class="section-eyebrow">How it works</div>
+  <h2 class="section-title">Three steps from sign-up to live.</h2>
+  <p class="section-sub">No custom development. No long integration cycles. Configure your competitions, paste one line of code, and your users are predicting.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">STEP 01</div>
+      <div class="step-title">Configure your competitions</div>
+      <p class="step-desc">Use the admin panel to set up competitions for any league or tournament. Create rounds, assign matches, choose your game mode, and set deadlines. No technical knowledge required.</p>
+      <span class="step-tag">admin panel · no code</span>
+    </div>
+    <div class="step">
+      <div class="step-num">STEP 02</div>
+      <div class="step-title">Embed with one line</div>
+      <p class="step-desc">Copy your personalised iframe snippet from the dashboard and paste it anywhere on your site — a widget, a dedicated page, a sidebar. It runs entirely on your users' screens, styled to match your brand.</p>
+      <span class="step-tag">&lt;iframe src="gameweek.gg/embed?client=KEY" /&gt;</span>
+    </div>
+    <div class="step">
+      <div class="step-num">STEP 03</div>
+      <div class="step-title">Watch engagement compound</div>
+      <p class="step-desc">Each gameweek brings users back to predict. Results auto-update the leaderboard. Weekly winners are crowned. Season-long competitions build sustained loyalty across an entire season.</p>
+      <span class="step-tag">weekly habit loop</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── GAME MODES ── -->
+<div class="modes-bg">
+  <div class="section" id="modes">
+    <div class="section-eyebrow">Game modes</div>
+    <h2 class="section-title">Three ways to predict.<br>One platform.</h2>
+    <p class="section-sub">Every competition runs one of three formats. Pick the one that fits your audience, or run all three simultaneously.</p>
+
+    <div class="modes-grid">
+      <div class="mode-card">
+        <div class="mode-icon">🎯</div>
+        <div class="mode-title">Last Man Standing</div>
+        <p class="mode-desc">Users pick one result per event. One wrong prediction and they're out. Games resolve in kick-off order, building tension through the entire gameweek. The last survivor wins.</p>
+        <div class="mode-pills">
+          <span class="mode-pill">HIGH TENSION</span>
+          <span class="mode-pill">SEASONAL</span>
+          <span class="mode-pill">ELIMINATION</span>
+        </div>
+      </div>
+
+      <div class="mode-card">
+        <div class="mode-icon">📊</div>
+        <div class="mode-title">Score Predictor</div>
+        <p class="mode-desc">Users predict the exact scoreline for every match in the round. Exact scores earn maximum points, correct results earn partial credit. Rewards knowledge and rewards accuracy.</p>
+        <div class="mode-pills">
+          <span class="mode-pill">HIGH SKILL</span>
+          <span class="mode-pill">WEEKLY OR SEASON</span>
+          <span class="mode-pill">TIERED POINTS</span>
+        </div>
+      </div>
+
+      <div class="mode-card">
+        <div class="mode-icon">🎰</div>
+        <div class="mode-title">Betting Markets</div>
+        <p class="mode-desc">Users predict multiple markets per match — 1X2 result, Over/Under 2.5 goals, and Both Teams to Score. Operators choose which markets to activate and set their own points for each. Maximum engagement per fixture.</p>
+        <div class="mode-pills">
+          <span class="mode-pill">MULTI-MARKET</span>
+          <span class="mode-pill">CONFIGURABLE</span>
+          <span class="mode-pill">HIGH ENGAGEMENT</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── WHY GAMEWEEK ── -->
+<div class="section" id="why">
+  <div class="section-eyebrow">Why operators choose Gameweek</div>
+  <h2 class="section-title">Built for the problem operators actually have.</h2>
+  <p class="section-sub">Most users visit once. Free-to-play prediction games give them a reason to come back — every single week.</p>
+
+  <div class="why-grid">
+    <div class="why-item">
+      <div class="why-label">Retention</div>
+      <div class="why-title">A weekly reason to return</div>
+      <p class="why-desc">Prediction deadlines create a natural habit loop. Users return before each round to predict, then return again to check results. 38 gameweeks means 38 touchpoints in a single season.</p>
+    </div>
+    <div class="why-item">
+      <div class="why-label">Acquisition</div>
+      <div class="why-title">Zero cost to play, zero barrier to sign up</div>
+      <p class="why-desc">Free-to-play removes the friction that kills sign-up funnels. Users register because the game is fun — not because they've been incentivised. That's a better quality user from day one.</p>
+    </div>
+    <div class="why-item">
+      <div class="why-label">First-party data</div>
+      <div class="why-title">Every prediction tells you something</div>
+      <p class="why-desc">Which teams do your users care about? Which competitions do they follow? Prediction patterns reveal fan identity at a level that page views never could. All data stays in your workspace.</p>
+    </div>
+    <div class="why-item">
+      <div class="why-label">Integration</div>
+      <div class="why-title">Works alongside your existing product</div>
+      <p class="why-desc">Gameweek runs as an embedded iframe. It doesn't replace anything — it sits alongside your existing content, odds, or betting product. One snippet. No dev sprint. Live in an afternoon.</p>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── PRICING ── -->
+<div class="section" id="pricing">
+  <div class="section-eyebrow">Pricing</div>
+  <h2 class="section-title">Simple, usage-based pricing.</h2>
+  <p class="section-sub">One plan. All game modes. Scales with your audience.</p>
+  <script async src="https://js.stripe.com/v3/pricing-table.js"></script>
+  <stripe-pricing-table
+    pricing-table-id="prctbl_1TlsWIR3NbpQTjwaPHnXAOhS"
+    publishable-key="pk_live_51TlREtR3NbpQTjwa0mq4Yvh5XoExt92D0SmhkorCEAYq6lL2IQynrHXM0g2GL6VlwEJGjwHoYYJKBUoOv75pUq6E00Zzbgu0OI">
+  </stripe-pricing-table>
+</div>
+
+<!-- ── FINAL CTA ── -->
+<div class="cta-section">
+  <div class="cta-inner">
+    <h2 class="cta-title">Ready before the<br><span class="accent">season starts?</span></h2>
+    <p class="cta-sub">The 2026/27 season kicks off soon. Setup takes less than a day. Try the demo, then get in touch and we'll have you live before Gameweek 1.</p>
+    <div class="cta-actions">
+      <a href="#" class="btn-cta-primary" onclick="openAuthModal('signup');return false;">Sign up free →</a>
+      <a href="mailto:hello@gameweek.gg" class="btn-cta-ghost">hello@gameweek.gg</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── AUTH MODAL ── -->
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-modal">
+    <div class="auth-modal-header">
+      <div class="auth-modal-logo">game<span>week</span></div>
+      <button class="auth-modal-close" onclick="closeAuthModal()">×</button>
+    </div>
+    <div class="auth-modal-body">
+      <div class="auth-modal-tabs">
+        <button class="auth-modal-tab active" id="auth-tab-signup" onclick="switchAuthTab('signup')">Sign up</button>
+        <button class="auth-modal-tab" id="auth-tab-login" onclick="switchAuthTab('login')">Log in</button>
+      </div>
+
+      <!-- Sign up form -->
+      <div id="auth-form-signup">
+        <div class="auth-field">
+          <label>Company / Site name</label>
+          <input type="text" id="su-company" placeholder="e.g. SportZone" />
+        </div>
+        <div class="auth-field">
+          <label>Work email</label>
+          <input type="email" id="su-email" placeholder="you@company.com" />
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="su-password" placeholder="min 6 characters" onkeydown="if(event.key==='Enter')doSignup()" />
+        </div>
+        <button class="auth-submit-btn" onclick="doSignup()">Create account →</button>
+        <div class="auth-modal-note">Free to start. No card required. You'll get a dedicated dashboard and a unique embed key right away.</div>
+      </div>
+
+      <!-- Log in form -->
+      <div id="auth-form-login" style="display:none;">
+        <div class="auth-field">
+          <label>Work email</label>
+          <input type="email" id="li-email" placeholder="you@company.com" />
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="li-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doOperatorLogin()" />
+        </div>
+        <button class="auth-submit-btn" onclick="doOperatorLogin()">Sign in →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <a href="#" class="footer-logo">game<span>week</span></a>
+  <span class="footer-note">© 2026/27 Gameweek · B2B free-to-play prediction platform</span>
+</footer>
+
+<!-- ── LIVE FEED (demo data) ── -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-// ── DATA ─────────────────────────────────────────────────────────────────
-const COMPS = [
-  {
-    id:'c1', name:'Premier League', short:'PL', mode:'lms', longTerm:false, color:'#4F46E5',
-    rounds:[
-      {id:'r1',label:'Gameweek 1',status:'completed',deadline:'2025-08-16T14:00',eventIds:['e101','e102','e103']},
-      {id:'r2',label:'Gameweek 2',status:'completed',deadline:'2025-08-23T14:00',eventIds:['e104','e105','e106']},
-      {id:'r3',label:'Gameweek 3',status:'open',deadline:'2025-08-30T14:00',eventIds:['e107','e108','e109','e110']},
-    ],
-    lbWeekly:[
-      {u:'footy_oracle',pts:8,c:4,alive:true},
-      {u:'stadyum76',pts:8,c:4,alive:true},
-      {u:'bvb_predictor',pts:6,c:3,alive:true},
-      {u:'gegenpresser',pts:5,c:2,alive:true},
-      {u:'matchday_man',pts:4,c:2,alive:true},
-      {u:'xavi_8',pts:0,c:0,alive:false},
-      {u:'tiki_taka_fan',pts:0,c:0,alive:false},
-    ],
-    lbOverall:[
-      {u:'footy_oracle',pts:22,c:11,alive:true},
-      {u:'stadyum76',pts:20,c:10,alive:true},
-      {u:'bvb_predictor',pts:18,c:9,alive:true},
-      {u:'gegenpresser',pts:15,c:7,alive:true},
-      {u:'matchday_man',pts:12,c:6,alive:true},
-      {u:'xavi_8',pts:8,c:4,alive:false},
-      {u:'tiki_taka_fan',pts:5,c:2,alive:false},
-    ]
-  },
-  {
-    id:'c2', name:'Champions League', short:'UCL', mode:'score', longTerm:true, color:'#1D4ED8',
-    rounds:[
-      {id:'r4',label:'Matchday 1',status:'completed',deadline:'2025-09-16T17:00',eventIds:['e201','e202','e203']},
-      {id:'r5',label:'Matchday 2',status:'open',deadline:'2025-10-01T17:00',eventIds:['e204','e205','e206']},
-    ],
-    lbWeekly:[
-      {u:'bvb_predictor',pts:12,c:2},
-      {u:'footy_oracle',pts:9,c:1},
-      {u:'stadyum76',pts:9,c:1},
-      {u:'gegenpresser',pts:6,c:0},
-      {u:'xavi_8',pts:3,c:0},
-      {u:'matchday_man',pts:3,c:0},
-    ],
-    lbOverall:[
-      {u:'bvb_predictor',pts:27,c:3},
-      {u:'footy_oracle',pts:21,c:3},
-      {u:'stadyum76',pts:18,c:2},
-      {u:'gegenpresser',pts:15,c:1},
-      {u:'xavi_8',pts:12,c:1},
-      {u:'matchday_man',pts:9,c:0},
-    ]
-  },
-  {
-    id:'c3', name:'Top 5 Leagues', short:'T5', mode:'ou', longTerm:false, color:'#059669',
-    rounds:[
-      {id:'r6',label:'Round 1',status:'completed',deadline:'2025-08-16T17:00',eventIds:['e301','e302']},
-      {id:'r7',label:'Round 2',status:'completed',deadline:'2025-08-23T17:00',eventIds:['e303','e304']},
-      {id:'r8',label:'Round 3',status:'open',deadline:'2025-08-30T17:00',eventIds:['e305','e306','e307','e308']},
-    ],
-    lbWeekly:[
-      {u:'xavi_8',pts:8,c:4},
-      {u:'matchday_man',pts:6,c:3},
-      {u:'stadyum76',pts:6,c:3},
-      {u:'footy_oracle',pts:4,c:2},
-      {u:'bvb_predictor',pts:4,c:2},
-      {u:'gegenpresser',pts:2,c:1},
-    ],
-    lbOverall:[
-      {u:'stadyum76',pts:22,c:11},
-      {u:'xavi_8',pts:20,c:10},
-      {u:'matchday_man',pts:18,c:9},
-      {u:'footy_oracle',pts:16,c:8},
-      {u:'bvb_predictor',pts:14,c:7},
-      {u:'gegenpresser',pts:10,c:5},
-    ]
+  const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
+  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
+  const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+  // ── Pick button cycle ──────────────────────────────────────────────────
+  const picks = ['H', 'D', 'A'];
+  let pickIdx = 0;
+  function cyclePick() {
+    document.querySelectorAll('.pick-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('pick-' + picks[pickIdx]).classList.add('selected');
+    pickIdx = (pickIdx + 1) % picks.length;
   }
-];
+  setInterval(cyclePick, 3000);
 
-const EVENTS = {
-  e101:{home:'Arsenal',away:'Wolves',kickoff:'Aug 16 · 15:00',res:{h:3,a:0}},
-  e102:{home:'Man City',away:'Chelsea',kickoff:'Aug 16 · 17:30',res:{h:2,a:1}},
-  e103:{home:'Liverpool',away:'Brentford',kickoff:'Aug 17 · 14:00',res:{h:1,a:1}},
-  e104:{home:'Arsenal',away:'Brighton',kickoff:'Aug 23 · 15:00',res:{h:2,a:2}},
-  e105:{home:'Man Utd',away:'Liverpool',kickoff:'Aug 23 · 17:30',res:{h:0,a:3}},
-  e106:{home:'Spurs',away:'Everton',kickoff:'Aug 24 · 14:00',res:{h:1,a:0}},
-  e107:{home:'Arsenal',away:'Man City',kickoff:'Aug 30 · 15:00',res:null},
-  e108:{home:'Liverpool',away:'Man Utd',kickoff:'Aug 30 · 17:30',res:null},
-  e109:{home:'Chelsea',away:'Spurs',kickoff:'Aug 31 · 14:00',res:null},
-  e110:{home:'Wolves',away:'Everton',kickoff:'Aug 31 · 14:00',res:null},
-  e201:{home:'Real Madrid',away:'Stuttgart',kickoff:'Sep 17 · 21:00',res:{h:3,a:1}},
-  e202:{home:'Bayern',away:'GNK Dinamo',kickoff:'Sep 17 · 21:00',res:{h:9,a:2}},
-  e203:{home:'Man City',away:'Inter',kickoff:'Sep 18 · 21:00',res:{h:0,a:0}},
-  e204:{home:'Barcelona',away:'Young Boys',kickoff:'Oct 2 · 21:00',res:null},
-  e205:{home:'PSG',away:'Arsenal',kickoff:'Oct 1 · 21:00',res:null},
-  e206:{home:'Atletico',away:'Lille',kickoff:'Oct 2 · 21:00',res:null},
-  e301:{home:'PSG',away:'Le Havre',kickoff:'Aug 16 · 21:00',res:{h:4,a:0},lg:'Ligue 1'},
-  e302:{home:'Inter',away:'Genoa',kickoff:'Aug 17 · 18:00',res:{h:2,a:2},lg:'Serie A'},
-  e303:{home:'Real Madrid',away:'Valladolid',kickoff:'Aug 25 · 21:00',res:{h:3,a:0},lg:'La Liga'},
-  e304:{home:'Bayern',away:'Wolfsburg',kickoff:'Aug 24 · 15:30',res:{h:3,a:2},lg:'Bundesliga'},
-  e305:{home:'Inter',away:'Juventus',kickoff:'Aug 30 · 20:45',res:null,lg:'Serie A',line:2.5},
-  e306:{home:'Atletico',away:'Sevilla',kickoff:'Aug 30 · 18:30',res:null,lg:'La Liga',line:2.5},
-  e307:{home:'Leverkusen',away:'Frankfurt',kickoff:'Aug 31 · 15:30',res:null,lg:'Bundesliga',line:2.5},
-  e308:{home:'PSG',away:'Marseille',kickoff:'Aug 30 · 20:45',res:null,lg:'Ligue 1',line:2.5},
-};
+  // ── Demo feed ──────────────────────────────────────────────────────────
+  const FEED_DATA = [
+    { user: 'footy_oracle',  text: 'picked',    match: 'Arsenal vs Man City',   badge: 'HOME',  cls: 'home'  },
+    { user: 'stadyum76',     text: 'picked',    match: 'Arsenal vs Man City',   badge: 'DRAW',  cls: 'draw'  },
+    { user: 'bvb_predictor', text: 'predicted', match: 'Liverpool vs Man Utd',  badge: '2–1',   cls: 'score' },
+    { user: 'xavi_8',        text: 'picked',    match: 'Arsenal vs Man City',   badge: 'OVER',  cls: 'over'  },
+    { user: 'gegenpresser',  text: 'picked',    match: 'Chelsea vs Spurs',      badge: 'AWAY',  cls: 'away'  },
+    { user: 'tiki_taka_fan', text: 'picked',    match: 'Arsenal vs Man City',   badge: 'HOME',  cls: 'home'  },
+    { user: 'demo_user',     text: 'predicted', match: 'Liverpool vs Man Utd',  badge: '1–0',   cls: 'score' },
+    { user: 'presslord99',   text: 'picked',    match: 'Arsenal vs Man City',   badge: 'HOME',  cls: 'home'  },
+    { user: 'matchday_man',  text: 'picked',    match: 'Wolves vs Everton',     badge: 'UNDER', cls: 'under' },
+    { user: 'eredivisie_ed', text: 'picked',    match: 'Chelsea vs Spurs',      badge: 'HOME',  cls: 'home'  },
+  ];
 
-// Fake past predictions for completed rounds
-const PAST_PREDS = {
-  e101:'H', e102:'H', e103:'D',
-  e104:'D', e105:'A', e106:'H',
-  e201:{h:2,a:1}, e202:{h:5,a:1}, e203:{h:1,a:0},
-  e301:'O', e302:'U',
-  e303:'O', e304:'O',
-};
+  const feedEl = document.getElementById('feed');
+  const VISIBLE = 5;
+  let shown = [], pool = [...FEED_DATA], pi = 0, count = 247;
 
-// Mock LMS leaderboard data — per-round participation + overall survival stats
-const LMS_DATA = {
-  c1: {
-    rounds: {
-      r1: [
-        {u:'footy_oracle',predictions:3,alive:true},
-        {u:'stadyum76',predictions:3,alive:true},
-        {u:'bvb_predictor',predictions:3,alive:true},
-        {u:'gegenpresser',predictions:3,alive:true},
-        {u:'matchday_man',predictions:3,alive:true},
-        {u:'eredivisie_ed',predictions:3,alive:true},
-        {u:'presslord99',predictions:2,alive:false},
-        {u:'xavi_8',predictions:2,alive:false},
-        {u:'tiki_taka_fan',predictions:1,alive:false},
-      ],
-      r2: [
-        {u:'footy_oracle',predictions:3,alive:true},
-        {u:'stadyum76',predictions:3,alive:true},
-        {u:'bvb_predictor',predictions:3,alive:true},
-        {u:'eredivisie_ed',predictions:3,alive:true},
-        {u:'matchday_man',predictions:2,alive:false},
-        {u:'gegenpresser',predictions:1,alive:false},
-      ],
-      r3: [
-        {u:'footy_oracle',predictions:3,alive:true},
-        {u:'stadyum76',predictions:2,alive:true},
-        {u:'bvb_predictor',predictions:2,alive:true},
-        {u:'eredivisie_ed',predictions:1,alive:true},
-      ],
-    },
-    overall: [
-      {u:'footy_oracle',survived:3,avgPredictions:3.0},
-      {u:'stadyum76',survived:3,avgPredictions:2.7},
-      {u:'eredivisie_ed',survived:3,avgPredictions:2.3},
-      {u:'bvb_predictor',survived:3,avgPredictions:2.7},
-      {u:'matchday_man',survived:1,avgPredictions:2.5},
-      {u:'gegenpresser',survived:1,avgPredictions:2.0},
-      {u:'presslord99',survived:0,avgPredictions:2.0},
-      {u:'xavi_8',survived:0,avgPredictions:2.0},
-      {u:'tiki_taka_fan',survived:0,avgPredictions:1.0},
-    ]
-  }
-};
-const MEDALS = ['🥇','🥈','🥉'];
-
-// ── STATE ─────────────────────────────────────────────────────────────────
-let currentUser = null;
-let currentCompIdx = 0;
-let selectedRound = {0:2, 1:1, 2:2};
-let preds = {};
-let predictSubTab = 'predictions';
-let lbSelection = {};
-
-// ── AUTH ──────────────────────────────────────────────────────────────────
-function switchAuth(tab){
-  document.getElementById('tab-login').classList.toggle('active', tab==='login');
-  document.getElementById('tab-register').classList.toggle('active', tab==='register');
-  document.getElementById('form-login').style.display = tab==='login'?'block':'none';
-  document.getElementById('form-register').style.display = tab==='register'?'block':'none';
-  document.getElementById('login-error').textContent='';
-  document.getElementById('reg-error').textContent='';
-}
-
-function doLogin(){
-  const u = document.getElementById('login-username').value.trim();
-  const p = document.getElementById('login-password').value;
-  if(!u||!p){ document.getElementById('login-error').textContent='Enter username and password.'; return; }
-  const stored = JSON.parse(localStorage.getItem('gw_users')||'{}');
-  if(!stored[u]||stored[u].password!==p){
-    document.getElementById('login-error').textContent='Incorrect username or password.'; return;
-  }
-  loginUser(u);
-}
-
-function doRegister(){
-  const u = document.getElementById('reg-username').value.trim();
-  const e = document.getElementById('reg-email').value.trim();
-  const p = document.getElementById('reg-password').value;
-  if(!u||!e||!p){ document.getElementById('reg-error').textContent='All fields are required.'; return; }
-  if(u.length<3){ document.getElementById('reg-error').textContent='Username must be at least 3 characters.'; return; }
-  if(p.length<6){ document.getElementById('reg-error').textContent='Password must be at least 6 characters.'; return; }
-  const stored = JSON.parse(localStorage.getItem('gw_users')||'{}');
-  if(stored[u]){ document.getElementById('reg-error').textContent='Username already taken.'; return; }
-  stored[u] = {password:p, email:e, joined: new Date().toISOString()};
-  localStorage.setItem('gw_users', JSON.stringify(stored));
-  loginUser(u);
-}
-
-function loginUser(u){
-  currentUser = u;
-  localStorage.setItem('gw_session', u);
-  preds = JSON.parse(localStorage.getItem('gw_preds_'+u)||'{}');
-  closeAuthModal();
-  updateHeaderUser();
-  renderPredict();
-}
-
-function doLogout(){
-  currentUser = null;
-  localStorage.removeItem('gw_session');
-  updateHeaderUser();
-  renderPredict();
-}
-
-function openAuthModal(reason){
-  document.getElementById('auth-modal-reason').textContent = reason||'Sign in to make predictions';
-  switchAuth('login');
-  document.getElementById('auth-modal-overlay').classList.add('open');
-  setTimeout(()=>document.getElementById('login-username').focus(),100);
-}
-function closeAuthModal(){
-  document.getElementById('auth-modal-overlay').classList.remove('open');
-}
-function headerUserClick(){
-  if(currentUser) goTab('profile');
-  else openAuthModal('Sign in or create a free account');
-}
-function updateHeaderUser(){
-  if(currentUser){
-    document.getElementById('hdr-avatar').textContent=currentUser.slice(0,2).toUpperCase();
-    document.getElementById('hdr-username').textContent=currentUser;
-  } else {
-    document.getElementById('hdr-avatar').textContent='?';
-    document.getElementById('hdr-username').textContent='Sign in';
-  }
-}
-
-// ── TABS ──────────────────────────────────────────────────────────────────
-function goTab(tab){
-  if(tab==='profile'&&!currentUser){openAuthModal('Sign in to view your profile');return;}
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-'+tab).classList.add('active');
-  document.getElementById('bnav-'+tab)?.classList.add('active');
-  document.getElementById('comp-tabs-wrap').style.display = tab==='predict'?'block':'none';
-  document.getElementById('scroll-area').scrollTop=0;
-  if(tab==='predict') renderPredict();
-  if(tab==='profile') renderProfile();
-}
-
-// ── COMP TABS ─────────────────────────────────────────────────────────────
-const MODE_LABELS = {lms:'Last Man Standing', score:'Score Predictor', ou:'Over / Under'};
-
-function renderCompTabs(){
-  const el = document.getElementById('comp-tabs');
-  el.innerHTML = COMPS.map((c,i)=>`
-    <button class="comp-tab${i===currentCompIdx?' active':''}" onclick="switchComp(${i})" style="${i===currentCompIdx?`--comp-color:${c.color}`:''}">
-      <span class="comp-tab-name">${c.name}</span>
-      <span class="comp-tab-mode">${MODE_LABELS[c.mode]}</span>
-    </button>`).join('');
-  document.documentElement.style.setProperty('--comp-color', COMPS[currentCompIdx].color);
-}
-
-function switchComp(idx){
-  currentCompIdx = idx;
-  predictSubTab = 'predictions';
-  document.documentElement.style.setProperty('--comp-color', COMPS[idx].color);
-  renderCompTabs();
-  renderPredict();
-}
-
-// ── PREDICT ───────────────────────────────────────────────────────────────
-function getDefaultRoundIdx(comp){
-  const idx = comp.rounds.findIndex(r=>r.status==='open');
-  return idx>=0 ? idx : comp.rounds.length-1;
-}
-
-function renderPredict(){
-  const comp = COMPS[currentCompIdx];
-
-  let html = `<div class="predict-subtabs">
-    <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button>
-    <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
-  </div>`;
-
-  html += predictSubTab==='predictions' ? renderPredictionsPane(comp) : renderLeaderboardPane(comp);
-  document.getElementById('predict-content').innerHTML = html;
-}
-
-function switchPredictSubTab(tab){ predictSubTab = tab; renderPredict(); }
-
-function renderPredictionsPane(comp){
-  const ri = selectedRound[currentCompIdx];
-  const round = comp.rounds[ri];
-  const events = round.eventIds.map(id=>({id,...EVENTS[id]}));
-  const isOpen = round.status==='open';
-  const isLMS = comp.mode==='lms';
-
-  let html = '';
-
-  html += `<div class="round-bar">
-    <div style="display:flex;align-items:center;gap:8px;">
-      <span class="round-name">${round.label}</span>
-      <span class="round-status ${round.status}">${isOpen?'● Open':'✓ Done'}</span>
-    </div>
-    <select class="round-select" onchange="changeRound(this.value)">
-      ${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}
-    </select>
-  </div>`;
-
-  if(isOpen){
-    html += `<div class="deadline-banner">⏱ &nbsp;Deadline <strong>${round.deadline.replace('T',' · ').slice(0,16)}</strong> — predictions lock at first kick-off.</div>`;
+  function renderFeed() {
+    feedEl.innerHTML = shown.map(item => `
+      <div class="feed-item visible">
+        <div class="feed-avatar">${item.user.slice(0,2).toUpperCase()}</div>
+        <div class="feed-text"><strong>${item.user}</strong> ${item.text} on <em>${item.match}</em></div>
+        <span class="feed-badge ${item.cls}">${item.badge}</span>
+      </div>`).join('');
   }
 
-  if(isLMS){
-    const totalUsers = 312;
-    const survived = 187;
-    const survivedPct = Math.round(survived/totalUsers*100);
-    html += `<div class="survival-tracker">
-      <div class="st-label">Competition status · ${comp.name} · ${round.label}</div>
-      <div class="st-bar-wrap">
-        <div class="st-bar-row">
-          <span class="st-bar-label">Participated</span>
-          <div class="st-bar-track"><div class="st-bar-fill participated" style="width:100%"></div></div>
-          <span class="st-bar-count">${totalUsers.toLocaleString()}</span>
-        </div>
-        <div class="st-bar-row">
-          <span class="st-bar-label">Still alive</span>
-          <div class="st-bar-track"><div class="st-bar-fill survived" style="width:${survivedPct}%"></div></div>
-          <span class="st-bar-count">${survived}<span class="st-alive alive" style="margin-left:6px;">YOU ✓</span></span>
-        </div>
-      </div>
-    </div>`;
+  function nextItem() {
+    if(pi >= pool.length){ pool = [...FEED_DATA].sort(()=>Math.random()-.5); pi = 0; }
+    return pool[pi++];
   }
 
-  html += `<div class="events-list">`;
-  events.forEach(ev=>{
-    html += renderEventCard(ev, comp, isOpen);
-  });
-  html += `</div>`;
+  for(let i=0;i<VISIBLE;i++) shown.push(nextItem());
+  renderFeed();
 
-  if(isOpen){
-    const predCount = events.filter(ev=>{
-      const p = preds[ev.id];
-      if(!p) return false;
-      if(comp.mode==='score') return p.h!==undefined && p.a!==undefined;
-      return !!p;
-    }).length;
-    const pct = events.length ? Math.round(predCount/events.length*100) : 0;
+  setInterval(() => {
+    shown.push(nextItem());
+    if(shown.length > VISIBLE) shown.shift();
+    count += Math.floor(Math.random() * 3) + 1;
+    document.getElementById('pred-count').textContent = count.toLocaleString();
+    renderFeed();
+  }, 1800);
 
-    html += `<div class="progress-wrap">
-      <div class="progress-meta">
-        <span>${predCount} of ${events.length} predictions made</span>
-        <span class="progress-pct">${pct}%</span>
-      </div>
-      <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:var(--comp-color);"></div></div>
-      <div class="submit-row">
-        <span class="submit-hint">${predCount===events.length?'All done! Submit to confirm.':events.length-predCount+' remaining'}</span>
-        <button class="submit-btn"${predCount===0?' disabled':''} onclick="submitPreds()">Submit →</button>
-      </div>
-    </div>`;
+  function toggleMobileNav(){
+    document.getElementById('nav-mobile-menu').classList.toggle('open');
+  }
+  function closeMobileNav(){
+    document.getElementById('nav-mobile-menu').classList.remove('open');
   }
 
-  return html;
-}
+  function genClientKey(company){
+    const slug = (company||'op').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,3) || 'gw';
+    const rand = Math.random().toString(36).slice(2,8);
+    return 'gw_' + slug + '_' + rand;
+  }
 
-function renderEventCard(ev, comp, isOpen){
-  const pred = preds[ev.id] || PAST_PREDS[ev.id] || null;
-  const hasRes = !!ev.res;
-  const hasPred = pred !== null && pred !== undefined;
-  const isCompleted = !isOpen;
+  function openAuthModal(tab){
+    switchAuthTab(tab || 'signup');
+    document.getElementById('auth-overlay').classList.add('open');
+  }
+  function closeAuthModal(){
+    document.getElementById('auth-overlay').classList.remove('open');
+  }
+  function switchAuthTab(tab){
+    document.getElementById('auth-tab-signup').classList.toggle('active', tab==='signup');
+    document.getElementById('auth-tab-login').classList.toggle('active', tab==='login');
+    document.getElementById('auth-form-signup').style.display = tab==='signup' ? 'block' : 'none';
+    document.getElementById('auth-form-login').style.display = tab==='login' ? 'block' : 'none';
+  }
 
-  let isPredicted = false;
-  if(comp.mode==='score') isPredicted = pred && pred.h!==undefined && pred.a!==undefined;
-  else isPredicted = !!pred;
+  async function doSignup(){
+    const company = document.getElementById('su-company').value.trim();
+    const email   = document.getElementById('su-email').value.trim().toLowerCase();
+    const password= document.getElementById('su-password').value;
+    const btn     = document.querySelector('#auth-form-signup .auth-submit-btn');
+    if(!company||!email||!password){ shakeField(); return; }
+    if(password.length<6){ shakeField(); return; }
 
-  const hi = ev.home.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();
-  const ai = ev.away.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();
+    btn.disabled=true;
+    btn.dataset.label=btn.textContent;
+    btn.innerHTML='<span class="btn-spinner"></span> Creating account…';
 
-  let correct = null;
-  if(isCompleted && hasRes && hasPred){
-    if(comp.mode==='lms'||comp.mode==='result'){
-      const actual = ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
-      correct = pred===actual;
-    } else if(comp.mode==='score'){
-      correct = pred && pred.h==ev.res.h && pred.a==ev.res.a;
-    } else if(comp.mode==='ou'){
-      const total = ev.res.h+ev.res.a;
-      const line = ev.line||2.5;
-      correct = (pred==='O'&&total>line)||(pred==='U'&&total<=line);
+    const {data:authData, error:authErr} = await supa.auth.signUp({email, password});
+    if(authErr){ resetBtn(btn); shakeField(); return; }
+
+    const clientKey = genClientKey(company);
+    const {error:opErr} = await supa.from('gw_operators')
+      .insert({auth_id:authData.user.id, email, company_name:company, client_key:clientKey});
+    if(opErr){ resetBtn(btn); shakeField(); return; }
+
+    localStorage.setItem('gw_op_session', email);
+    window.location.href = '/admin';
+  }
+
+  async function doOperatorLogin(){
+    const email   = document.getElementById('li-email').value.trim().toLowerCase();
+    const password= document.getElementById('li-password').value;
+    const btn     = document.querySelector('#auth-form-login .auth-submit-btn');
+    if(!email||!password){ shakeField(); return; }
+
+    btn.disabled=true;
+    btn.dataset.label=btn.textContent;
+    btn.innerHTML='<span class="btn-spinner"></span> Signing in…';
+
+    const {data:authData, error:authErr} = await supa.auth.signInWithPassword({email, password});
+    if(authErr){ resetBtn(btn); shakeField(); return; }
+
+    localStorage.setItem('gw_op_session', email);
+    window.location.href = '/admin';
+  }
+
+  function resetBtn(btn){ btn.disabled=false; btn.textContent=btn.dataset.label||'Submit'; }
+  function shakeField(){
+    const modal=document.querySelector('.auth-modal');
+    if(modal){ modal.classList.remove('shake'); void modal.offsetWidth; modal.classList.add('shake'); }
+  }
+
+  // If already signed in, swap nav to dashboard link
+  (function(){
+    const session = localStorage.getItem('gw_op_session');
+    if(session){
+      const navEl = document.getElementById('nav-auth-actions');
+      if(navEl) navEl.innerHTML = '<a href="/admin" class="btn-primary">Go to dashboard →</a>';
     }
-  }
-
-  // Mock prediction count per event
-  const mockPredCounts = {e107:241,e108:238,e109:219,e110:203,e204:168,e205:171,e206:155,e305:289,e306:274,e307:261,e308:293};
-  const predCount = mockPredCounts[ev.id] || Math.floor(Math.random()*200+100);
-  const totalUsers = 312;
-  const predPct = Math.round(predCount/totalUsers*100);
-
-  let cardCls = 'event-card';
-  if(isOpen && isPredicted) cardCls += ' predicted';
-  if(isCompleted) cardCls += ' locked-pred';
-
-  let html = `<div class="${cardCls}">
-    <div class="event-card-top">
-      <div class="event-meta">
-        <span class="event-league">${ev.lg||comp.name}</span>
-        <span class="event-kickoff">${ev.kickoff}${hasRes?` · FT: ${ev.res.h}–${ev.res.a}`:''}</span>
-      </div>
-      <div class="event-teams">
-        <div class="ev-team">
-          <div class="ev-badge">${hi}</div>
-          <span class="ev-name">${ev.home}</span>
-        </div>
-        <div class="ev-vs">${hasRes?'':'vs'}</div>
-        ${hasRes?`<div class="ev-score">${ev.res.h}–${ev.res.a}</div>`:
-          `<div class="ev-vs">vs</div>`}
-        <div class="ev-team away">
-          <div class="ev-badge">${ai}</div>
-          <span class="ev-name">${ev.away}</span>
-        </div>
-      </div>
-      <div class="ev-participants">
-        <div class="ev-pred-bar"><div class="ev-pred-bar-fill" style="width:${predPct}%"></div></div>
-        <strong>${predCount}</strong> participants
-      </div>
-    </div>`;
-
-  html += `<div class="pred-area">`;
-
-  if(isOpen){
-    if(comp.mode==='lms'||comp.mode==='result'){
-      html += `<div class="btns-1x2">
-        <button class="btn-1x2${pred==='H'?' selected':''}" onclick="pick('${ev.id}','H')">Home Win</button>
-        <button class="btn-1x2${pred==='D'?' selected':''}" onclick="pick('${ev.id}','D')">X</button>
-        <button class="btn-1x2${pred==='A'?' selected':''}" onclick="pick('${ev.id}','A')">Away</button>
-      </div>`;
-    }
-
-    if(comp.mode==='score'){
-      const hv = (pred&&pred.h!==undefined)?pred.h:'';
-      const av = (pred&&pred.a!==undefined)?pred.a:'';
-      html += `<div class="pred-label">Exact score</div>
-      <div class="score-pred">
-        <div class="score-side">
-          <span class="score-side-name">${ev.home}</span>
-          <input class="score-num${hv!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${hv}"
-            id="sh-${ev.id}" oninput="pickScore('${ev.id}','h',this.value)">
-        </div>
-        <span class="score-dash">–</span>
-        <div class="score-side right">
-          <span class="score-side-name">${ev.away}</span>
-          <input class="score-num${av!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${av}"
-            id="sa-${ev.id}" oninput="pickScore('${ev.id}','a',this.value)">
-        </div>
-      </div>`;
-    }
-
-    if(comp.mode==='ou'){
-      const line = ev.line||2.5;
-      html += `<div class="pred-label">Over / Under ${line} goals</div>
-      <div class="btns-ou">
-        <button class="btn-ou over${pred==='O'?' selected':''}" onclick="pick('${ev.id}','O')">
-          OVER<span class="sub">${line}+ goals</span>
-        </button>
-        <button class="btn-ou under${pred==='U'?' selected':''}" onclick="pick('${ev.id}','U')">
-          UNDER<span class="sub">${line} or less</span>
-        </button>
-      </div>`;
-    }
-
-  } else {
-    if(hasPred){
-      let predLabel='';
-      if(comp.mode==='lms'||comp.mode==='result'){
-        predLabel = pred==='H'?`${ev.home} (Home)`:pred==='D'?'Draw':`${ev.away} (Away)`;
-      } else if(comp.mode==='score'){
-        predLabel = `${pred.h ?? '-'} – ${pred.a ?? '-'}`;
-      } else if(comp.mode==='ou'){
-        predLabel = pred==='O'?`Over ${ev.line||2.5}`:`Under ${ev.line||2.5}`;
-      }
-
-      html += `<div class="pred-result-row">
-        <div class="pred-made">Your pick: <strong>${predLabel}</strong></div>
-        ${correct!==null?`<span class="pred-correct ${correct?'yes':'no'}">${correct?'✓ Correct':'✗ Wrong'}</span>`:''}
-      </div>`;
-    } else {
-      html += `<div style="font-size:11px;color:var(--text-3);">No prediction made for this match.</div>`;
-    }
-  }
-
-  html += `</div></div>`;
-  return html;
-}
-
-function pick(id, val){
-  if(!currentUser){openAuthModal('Sign in to make predictions');return;}
-  preds[id]=val;
-  savePreds();
-  renderPredict();
-}
-
-function pickScore(id, side, val){
-  if(!preds[id]||typeof preds[id]!=='object') preds[id]={};
-  preds[id][side] = val===''?undefined:parseInt(val);
-  savePreds();
-  const comp = COMPS[currentCompIdx];
-  const ri = selectedRound[currentCompIdx];
-  const round = comp.rounds[ri];
-  const events = round.eventIds.map(eid=>({id:eid,...EVENTS[eid]}));
-  const predCount = events.filter(ev=>{
-    const p=preds[ev.id]||PAST_PREDS[ev.id];
-    if(!p) return false;
-    if(comp.mode==='score') return p.h!==undefined&&p.a!==undefined;
-    return !!p;
-  }).length;
-  const pct = events.length?Math.round(predCount/events.length*100):0;
-  const fill = document.querySelector('.progress-fill');
-  const meta = document.querySelector('.progress-meta span:first-child');
-  const pctEl = document.querySelector('.progress-pct');
-  const btn = document.querySelector('.submit-btn');
-  if(fill) fill.style.width=pct+'%';
-  if(meta) meta.textContent=`${predCount} of ${events.length} predictions made`;
-  if(pctEl) pctEl.textContent=pct+'%';
-  if(btn) btn.disabled=predCount===0;
-  const input = document.getElementById((side==='h'?'sh-':'sa-')+id);
-  if(input) input.classList.toggle('has', val!=='');
-}
-
-function changeRound(idx){
-  selectedRound[currentCompIdx]=parseInt(idx);
-  renderPredict();
-}
-
-function submitPreds(){
-  savePreds();
-  toast('✓ Predictions submitted!');
-}
-
-function savePreds(){
-  if(currentUser) localStorage.setItem('gw_preds_'+currentUser, JSON.stringify(preds));
-}
-
-// ── LEADERBOARD PANE (per-competition, contextual) ──────────────────────────
-function renderLeaderboardPane(comp){
-  if(lbSelection[currentCompIdx]===undefined){
-    lbSelection[currentCompIdx] = getDefaultRoundIdx(comp);
-  }
-  const sel = lbSelection[currentCompIdx];
-  const isOverall = sel==='overall';
-
-  let html = `<div class="lb-week-row">
-    <select class="lb-week-select" onchange="changeLBSelection(this.value)">
-      ${comp.rounds.map((r,i)=>`<option value="${i}" ${(!isOverall&&sel===i)?'selected':''}>${r.label}${r.status==='open'?' (Current)':''}</option>`).join('')}
-      <option value="overall" ${isOverall?'selected':''}>Overall — Season</option>
-    </select>
-  </div>`;
-
-  html += `<div class="lb-pane">`;
-  html += comp.mode==='lms' ? renderLMSLeaderboard(comp, sel, isOverall) : renderStandardLeaderboard(comp, sel, isOverall);
-  html += `</div>`;
-
-  return html;
-}
-
-function changeLBSelection(val){
-  lbSelection[currentCompIdx] = val==='overall' ? 'overall' : parseInt(val);
-  renderPredict();
-}
-
-function renderLMSLeaderboard(comp, sel, isOverall){
-  const lms = LMS_DATA[comp.id];
-  if(!lms){
-    return `<div class="empty"><div class="empty-icon">🏆</div><div class="empty-title">No leaderboard data yet</div><div class="empty-sub">Check back once this round closes.</div></div>`;
-  }
-
-  if(isOverall){
-    let rows = lms.overall.map(r=>({...r}));
-    if(!rows.find(r=>r.u===currentUser)) rows.push({u:currentUser,survived:0,avgPredictions:0,isNew:true});
-    rows.sort((a,b)=> b.survived-a.survived || b.avgPredictions-a.avgPredictions);
-    let rank=1;
-    rows.forEach((r,i)=>{ if(i>0 && rows[i].survived<rows[i-1].survived) rank=i+1; r.rank=rank; });
-
-    let html = `<div class="lb-wrap">
-      <div class="lb-table-head"><span class="lb-table-head-title">${comp.name}</span><span class="lb-table-head-sub">Season 2025/26 · overall</span></div>
-      <table class="lb-table"><thead><tr>
-        <th style="width:32px;text-align:center">#</th><th>Player</th>
-        <th class="r">Survived</th><th class="r">Avg Preds/Wk</th>
-      </tr></thead><tbody>`;
-    rows.forEach(row=>{
-      const isMe = row.u===currentUser;
-      const ini = row.u.slice(0,2).toUpperCase();
-      html += `<tr class="${isMe?'me':''}">
-        <td class="lb-rank ${row.rank<=3?'top':''}">${row.rank<=3?MEDALS[row.rank-1]:row.rank}</td>
-        <td><div class="lb-user"><div class="lb-av ${isMe?'me':''}">${ini}</div><span class="lb-uname ${isMe?'me':''}">${row.u}${isMe?'<span class="you-tag">YOU</span>':''}</span></div></td>
-        <td class="lb-num">${row.survived}</td>
-        <td class="lb-pts">${row.avgPredictions.toFixed(1)}</td>
-      </tr>`;
-    });
-    html += `</tbody></table></div>`;
-    return html;
-  }
-
-  const round = comp.rounds[sel];
-  const totalEvents = round.eventIds.length;
-  let rows = (lms.rounds[round.id]||[]).map(r=>({...r}));
-  if(!rows.find(r=>r.u===currentUser)) rows.push({u:currentUser,predictions:0,alive:true,isNew:true});
-  rows.sort((a,b)=>b.predictions-a.predictions);
-  let rank=1;
-  rows.forEach((r,i)=>{ if(i>0 && rows[i].predictions<rows[i-1].predictions) rank=i+1; r.rank=rank; });
-
-  if(rows.every(r=>r.predictions===0)){
-    return `<div class="empty"><div class="empty-icon">🏆</div><div class="empty-title">No predictions yet</div><div class="empty-sub">Be the first to predict ${round.label} and top the board.</div></div>`;
-  }
-
-  let html = `<div class="lb-wrap">
-    <div class="lb-table-head"><span class="lb-table-head-title">${comp.name}</span><span class="lb-table-head-sub">${round.label} · this week</span></div>
-    <table class="lb-table"><thead><tr>
-      <th style="width:32px;text-align:center">#</th><th>Player</th>
-      <th class="r">Predictions</th><th style="text-align:center">Last Man</th>
-    </tr></thead><tbody>`;
-  rows.forEach(row=>{
-    const isMe = row.u===currentUser;
-    const ini = row.u.slice(0,2).toUpperCase();
-    html += `<tr class="${isMe?'me':''}">
-      <td class="lb-rank ${row.rank<=3?'top':''}">${row.rank<=3?MEDALS[row.rank-1]:row.rank}</td>
-      <td><div class="lb-user"><div class="lb-av ${isMe?'me':''}">${ini}</div><span class="lb-uname ${isMe?'me':''}">${row.u}${isMe?'<span class="you-tag">YOU</span>':''}</span></div></td>
-      <td class="lb-num">${row.predictions} / ${totalEvents}</td>
-      <td style="text-align:center"><span class="alive-tag ${row.alive?'alive':'out'}">${row.alive?'YES':'NO'}</span></td>
-    </tr>`;
-  });
-  html += `</tbody></table></div>`;
-  return html;
-}
-
-function renderStandardLeaderboard(comp, sel, isOverall){
-  const data = isOverall ? comp.lbOverall : comp.lbWeekly;
-  let rows = (data||[]).map(r=>({...r}));
-  if(!rows.find(r=>r.u===currentUser)) rows.push({u:currentUser,pts:0,c:0,isNew:true});
-  rows.sort((a,b)=>b.pts-a.pts);
-  let rank=1;
-  rows.forEach((r,i)=>{ if(i>0 && rows[i].pts<rows[i-1].pts) rank=i+1; r.rank=rank; });
-
-  const subLabel = isOverall ? 'Season 2025/26 · overall' : `${comp.rounds[sel].label} · this week`;
-
-  let html = `<div class="lb-wrap">
-    <div class="lb-table-head"><span class="lb-table-head-title">${comp.name}</span><span class="lb-table-head-sub">${subLabel}</span></div>
-    <table class="lb-table"><thead><tr>
-      <th style="width:32px;text-align:center">#</th><th>Player</th>
-      <th class="r">Correct</th><th class="r">Pts</th>
-    </tr></thead><tbody>`;
-  rows.forEach(row=>{
-    const isMe = row.u===currentUser;
-    const ini = row.u.slice(0,2).toUpperCase();
-    html += `<tr class="${isMe?'me':''}">
-      <td class="lb-rank ${row.rank<=3?'top':''}">${row.rank<=3?MEDALS[row.rank-1]:row.rank}</td>
-      <td><div class="lb-user"><div class="lb-av ${isMe?'me':''}">${ini}</div><span class="lb-uname ${isMe?'me':''}">${row.u}${isMe?'<span class="you-tag">YOU</span>':''}</span></div></td>
-      <td class="lb-num">${row.c}</td>
-      <td class="lb-pts">${row.pts}</td>
-    </tr>`;
-  });
-  html += `</tbody></table></div>`;
-  return html;
-}
-
-// ── PROFILE ───────────────────────────────────────────────────────────────
-function renderProfile(){
-  const ini = currentUser.slice(0,2).toUpperCase();
-  const stored = JSON.parse(localStorage.getItem('gw_users')||'{}');
-  const user = stored[currentUser]||{};
-  const joined = user.joined ? new Date(user.joined).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : 'Today';
-
-  let totalPts=0, totalCorrect=0;
-  COMPS.forEach(comp=>{
-    const row = comp.lbOverall.find(r=>r.u===currentUser)||{pts:0,c:0};
-    totalPts+=row.pts; totalCorrect+=row.c;
-  });
-
-  let html = `<div class="profile-header">
-    <div class="profile-av">${ini}</div>
-    <div class="profile-name">${currentUser}</div>
-    <div class="profile-joined">Joined ${joined}</div>
-  </div>
-
-  <div class="profile-stats">
-    <div class="profile-stat"><div class="ps-val">${totalPts}</div><div class="ps-label">Total pts</div></div>
-    <div class="profile-stat"><div class="ps-val">${totalCorrect}</div><div class="ps-label">Correct</div></div>
-    <div class="profile-stat"><div class="ps-val">${COMPS.length}</div><div class="ps-label">Competitions</div></div>
-  </div>
-
-  <div class="profile-section">
-    <div class="profile-section-title">Your Competitions</div>
-    ${COMPS.map(comp=>{
-      const row = comp.lbOverall.find(r=>r.u===currentUser);
-      const pts = row?row.pts:0;
-      const allRows = [...comp.lbOverall].sort((a,b)=>b.pts-a.pts);
-      let rank = allRows.findIndex(r=>r.u===currentUser)+1;
-      if(rank===0) rank = allRows.length+1;
-      return `<div class="profile-comp-row">
-        <div class="pcr-dot" style="background:${comp.color}"></div>
-        <div class="pcr-name">${comp.name} <span style="font-size:9px;font-family:var(--mono);background:var(--bg);color:var(--text-3);padding:1px 5px;border-radius:3px;">${comp.short}</span></div>
-        <div class="pcr-rank">#${rank}</div>
-        <div class="pcr-pts">${pts} pts</div>
-      </div>`;
-    }).join('')}
-  </div>
-
-  <div class="profile-section">
-    <div class="profile-section-title">Account</div>
-    <div style="font-size:12px;color:var(--text-2);margin-bottom:14px;">
-      <div style="margin-bottom:4px;">Username: <strong style="color:var(--text)">${currentUser}</strong></div>
-      ${user.email?`<div>Email: <strong style="color:var(--text)">${user.email}</strong></div>`:''}
-    </div>
-    <button class="logout-btn" onclick="doLogout()">Sign out</button>
-  </div>`;
-
-  document.getElementById('profile-content').innerHTML=html;
-}
-
-// ── TOAST ─────────────────────────────────────────────────────────────────
-let toastT;
-function toast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg;
-  t.classList.add('show');
-  clearTimeout(toastT);
-  toastT=setTimeout(()=>t.classList.remove('show'),2200);
-}
-
-// ── INIT ──────────────────────────────────────────────────────────────────
-const session = localStorage.getItem('gw_session');
-if(session){
-  currentUser = session;
-  preds = JSON.parse(localStorage.getItem('gw_preds_'+session)||'{}');
-}
-updateHeaderUser();
-renderCompTabs();
-goTab('predict');
+  })();
 </script>
+
 </body>
 </html>
