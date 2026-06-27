@@ -419,12 +419,14 @@ const S={
 async function save(){
   try{
     if(S.teams.length){
-      await supa.from('gw_dm_teams')
+      const {error:e1} = await supa.from('gw_dm_teams')
         .upsert(S.teams.map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||''})),{onConflict:'id'});
+      if(e1){ toast('Save failed: '+e1.message); console.error('teams save:',e1); return; }
     }
     if(S.tournaments.length){
-      await supa.from('gw_dm_tournaments')
+      const {error:e2} = await supa.from('gw_dm_tournaments')
         .upsert(S.tournaments.map(t=>({id:t.id,name:t.name,country:t.country||'',type:t.type||'league',color:t.color||'#4F46E5',seasons:t.seasons||{}})),{onConflict:'id'});
+      if(e2){ toast('Save failed: '+e2.message); console.error('tournaments save:',e2); return; }
     }
     const evArr = Object.entries(S.events).map(([id,ev])=>({
       id, home_id:ev.homeId, away_id:ev.awayId,
@@ -432,7 +434,8 @@ async function save(){
       status:ev.status||'upcoming', line:ev.line||2.5
     }));
     if(evArr.length){
-      await supa.from('gw_dm_events').upsert(evArr,{onConflict:'id'});
+      const {error:e3} = await supa.from('gw_dm_events').upsert(evArr,{onConflict:'id'});
+      if(e3){ toast('Save failed: '+e3.message); console.error('events save:',e3); return; }
     }
   }catch(e){ console.error('DM save failed:',e.message); toast('Save failed: '+e.message); }
 }

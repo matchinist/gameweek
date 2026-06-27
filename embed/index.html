@@ -47,7 +47,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .form-input::placeholder{color:var(--text-3);}
 .auth-btn{width:100%;padding:11px;background:var(--accent);color:white;border:none;border-radius:7px;font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;transition:background 0.13s;margin-top:4px;letter-spacing:0.3px;}
 .auth-btn:hover{background:var(--accent-2);}
-.auth-error{font-size:11px;color:var(--red);text-align:center;margin-top:8px;min-height:16px;}
+.auth-error{display:none;}
+.btn-spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:btnspin 0.6s linear infinite;vertical-align:middle;margin-right:6px;}
+@keyframes btnspin{to{transform:rotate(360deg);}}
+@keyframes authshake{10%,90%{transform:translateX(-1px);}20%,80%{transform:translateX(2px);}30%,50%,70%{transform:translateX(-4px);}40%,60%{transform:translateX(4px);}}
+.auth-modal.shake{animation:authshake 0.4s;}
 .auth-terms{font-size:11px;color:var(--text-3);text-align:center;margin-top:14px;line-height:1.5;}
 .comp-tabs{display:flex;gap:0;overflow-x:auto;border-bottom:1px solid var(--border);padding:0 16px;-webkit-overflow-scrolling:touch;}
 .comp-tabs::-webkit-scrollbar{display:none;}
@@ -224,15 +228,13 @@ table.lb-table{width:100%;border-collapse:collapse;}
         <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="login-username" placeholder="your username" autocomplete="username" /></div>
         <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" /></div>
         <button class="auth-btn" onclick="doLogin()">Sign in →</button>
-        <div class="auth-error" id="login-error"></div>
-      </div>
+              </div>
       <div id="form-register" style="display:none;">
         <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="reg-username" placeholder="choose a username" autocomplete="username" /></div>
         <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="reg-email" placeholder="your@email.com" autocomplete="email" /></div>
         <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="reg-password" placeholder="min 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()" /></div>
         <button class="auth-btn" onclick="doRegister()">Create account →</button>
-        <div class="auth-error" id="reg-error"></div>
-        <div class="auth-terms">Free to play. No deposit required.</div>
+                <div class="auth-terms">Free to play. No deposit required.</div>
       </div>
     </div>
   </div>
@@ -349,34 +351,39 @@ function switchAuth(tab){
   document.getElementById('tab-register').classList.toggle('active',tab==='register');
   document.getElementById('form-login').style.display=tab==='login'?'block':'none';
   document.getElementById('form-register').style.display=tab==='register'?'block':'none';
-  document.getElementById('login-error').textContent='';
-  document.getElementById('reg-error').textContent='';
 }
+
+function shakeAuth(){
+  const m=document.querySelector('.auth-modal');
+  if(m){m.classList.remove('shake');void m.offsetWidth;m.classList.add('shake');}
+}
+function setBtnLoading(btn,text){btn.disabled=true;btn.dataset.label=btn.textContent;btn.innerHTML='<span class="btn-spinner"></span> '+text;}
+function resetBtn(btn){btn.disabled=false;btn.textContent=btn.dataset.label||'Submit';}
 
 async function doRegister(){
   const username = document.getElementById('reg-username').value.trim();
   const email    = document.getElementById('reg-email').value.trim().toLowerCase();
   const password = document.getElementById('reg-password').value;
-  const errEl    = document.getElementById('reg-error');
-  if(!username||!email||!password){ errEl.textContent='All fields are required.'; return; }
-  if(username.length<3){ errEl.textContent='Username must be at least 3 characters.'; return; }
-  if(password.length<6){ errEl.textContent='Password must be at least 6 characters.'; return; }
-  errEl.textContent='Creating account…';
+  const btn      = document.querySelector('#form-register .auth-btn');
+  if(!username||!email||!password){ shakeAuth(); return; }
+  if(username.length<3){ shakeAuth(); return; }
+  if(password.length<6){ shakeAuth(); return; }
+  setBtnLoading(btn,'Creating account…');
 
   // Check username not taken in this embed
   const {data:existing} = await supa.from('gw_players')
     .select('id').eq('client_key',CLIENT_PARAM).eq('username',username).single();
-  if(existing){ errEl.textContent='Username already taken.'; return; }
+  if(existing){ resetBtn(btn); shakeAuth(); return; }
 
   // Create Supabase Auth user
   const {data:authData, error:authErr} = await supa.auth.signUp({email, password});
-  if(authErr){ errEl.textContent=authErr.message; return; }
+  if(authErr){ resetBtn(btn); shakeAuth(); return; }
 
   // Create player profile
   const {data:player, error:playerErr} = await supa.from('gw_players')
     .insert({auth_id:authData.user.id, client_key:CLIENT_PARAM, username, email})
     .select().single();
-  if(playerErr){ errEl.textContent=playerErr.message; return; }
+  if(playerErr){ resetBtn(btn); shakeAuth(); return; }
 
   await loginPlayer(player);
 }
@@ -384,17 +391,17 @@ async function doRegister(){
 async function doLogin(){
   const email    = document.getElementById('login-username').value.trim().toLowerCase();
   const password = document.getElementById('login-password').value;
-  const errEl    = document.getElementById('login-error');
-  if(!email||!password){ errEl.textContent='Enter email and password.'; return; }
-  errEl.textContent='Signing in…';
+  const btn      = document.querySelector('#form-login .auth-btn');
+  if(!email||!password){ shakeAuth(); return; }
+  setBtnLoading(btn,'Signing in…');
 
   const {data:authData, error:authErr} = await supa.auth.signInWithPassword({email,password});
-  if(authErr){ errEl.textContent='Incorrect email or password.'; return; }
+  if(authErr){ resetBtn(btn); shakeAuth(); return; }
 
   // Fetch player profile
   const {data:player, error:playerErr} = await supa.from('gw_players')
     .select('*').eq('auth_id',authData.user.id).eq('client_key',CLIENT_PARAM).single();
-  if(playerErr||!player){ errEl.textContent='Account not found for this embed.'; return; }
+  if(playerErr||!player){ resetBtn(btn); shakeAuth(); return; }
 
   await loginPlayer(player);
 }
@@ -699,9 +706,9 @@ function submitScorePreds(){
 
 // ── LEADERBOARD ───────────────────────────────────────────────────────────────
 function renderLeaderboardShell(comp){
-  if(lbSelection[currentCompIdx]===undefined) lbSelection[currentCompIdx]='overall';
+  if(lbSelection[currentCompIdx]===undefined) lbSelection[currentCompIdx]=getDefaultRoundIdx(comp);
   const sel=lbSelection[currentCompIdx], isOverall=sel==='overall';
-  return `<div class="lb-week-row"><select class="lb-week-select" onchange="changeLBSelection(this.value)"><option value="overall" ${isOverall?'selected':''}>Overall — Season</option>${comp.rounds.map((r,i)=>`<option value="${i}" ${(!isOverall&&sel===i)?'selected':''}>${r.label}${r.status==='open'?' (Current)':''}</option>`).join('')}</select></div><div class="lb-pane" id="lb-pane-inner"><div class="empty"><div class="empty-icon" style="font-size:20px;">⏳</div><div class="empty-title">Loading…</div></div></div>`;
+  return `<div class="lb-week-row"><select class="lb-week-select" style="font-size:11px;padding:4px 8px;max-width:180px;" onchange="changeLBSelection(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}" ${(!isOverall&&sel===i)?'selected':''}>${r.label}${r.status==='open'?' (Current)':''}</option>`).join('')}<option value="overall" ${isOverall?'selected':''}>Overall — Season</option></select></div><div class="lb-pane" id="lb-pane-inner"><div class="empty"><div class="empty-icon" style="font-size:20px;">⏳</div><div class="empty-title">Loading…</div></div></div>`;
 }
 function changeLBSelection(val){ lbSelection[currentCompIdx]=val==='overall'?'overall':parseInt(val); renderPredict(); }
 

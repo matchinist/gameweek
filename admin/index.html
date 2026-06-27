@@ -286,7 +286,6 @@ tbody tr:hover td{background:var(--bg);}
       </div>
     </div>
     <div class="topbar-right">
-      <a href="https://www.gameweek.cloud/demo" target="_blank" class="btn btn-outline btn-sm" id="topbar-view-demo">View Demo ↗</a>
       <a href="#" class="btn btn-outline btn-sm" onclick="signOutOperator();return false;" style="color:var(--text-3);">Sign out</a>
       <div class="topbar-avatar" id="topbar-avatar">—</div>
     </div>
@@ -1771,7 +1770,6 @@ function initOperatorChrome(){
   document.getElementById('sidebar-company').textContent = name;
   const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   document.getElementById('topbar-avatar').textContent = initials;
-  document.getElementById('topbar-view-demo').href = `https://www.gameweek.cloud/embed?client=${CLIENT_KEY}`;
 }
 
 (async ()=>{
