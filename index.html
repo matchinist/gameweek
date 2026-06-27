@@ -1392,15 +1392,33 @@
     btn.dataset.label=btn.textContent;
     btn.innerHTML='<span class="btn-spinner"></span> Creating account…';
 
-    const {data:authData, error:authErr} = await supa.auth.signUp({email, password});
-    if(authErr){ resetBtn(btn); shakeField(); return; }
-
     const clientKey = genClientKey(company);
+
+    // Try signup first
+    const {data:authData, error:authErr} = await supa.auth.signUp({email, password});
+
+    if(authErr){
+      // If user already exists in auth, try logging in instead
+      if(authErr.message && (authErr.message.toLowerCase().includes('already') || authErr.message.toLowerCase().includes('exists'))){
+        btn.innerHTML='<span class="btn-spinner"></span> Signing in…';
+        const {data:loginData, error:loginErr} = await supa.auth.signInWithPassword({email, password});
+        if(loginErr){ resetBtn(btn); shakeField(); return; }
+        // Check if operator row exists, create if not
+        const {data:existingOp} = await supa.from('gw_operators').select('id').eq('auth_id',loginData.user.id).single();
+        if(!existingOp){
+          await supa.from('gw_operators').insert({auth_id:loginData.user.id, email, company_name:company, client_key:clientKey});
+        }
+        window.location.href = '/admin';
+        return;
+      }
+      resetBtn(btn); shakeField(); return;
+    }
+
+    // New user — create operator row
     const {error:opErr} = await supa.from('gw_operators')
       .insert({auth_id:authData.user.id, email, company_name:company, client_key:clientKey});
     if(opErr){ resetBtn(btn); shakeField(); return; }
 
-    localStorage.setItem('gw_op_session', email);
     window.location.href = '/admin';
   }
 
@@ -1417,7 +1435,15 @@
     const {data:authData, error:authErr} = await supa.auth.signInWithPassword({email, password});
     if(authErr){ resetBtn(btn); shakeField(); return; }
 
-    localStorage.setItem('gw_op_session', email);
+    // Check if operator row exists — if not, the user signed up elsewhere (e.g. admin auth)
+    // but never completed operator registration. Let them in if row exists; otherwise bounce.
+    const {data:op} = await supa.from('gw_operators').select('id').eq('auth_id',authData.user.id).single();
+    if(!op){
+      // No operator profile — sign out and shake
+      await supa.auth.signOut();
+      resetBtn(btn); shakeField(); return;
+    }
+
     window.location.href = '/admin';
   }
 
