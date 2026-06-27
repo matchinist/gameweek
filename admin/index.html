@@ -675,30 +675,23 @@ tbody tr:hover td{background:var(--bg);}
 </div><!-- /main -->
 
 <!-- ── SUBSCRIPTION PAYWALL ── -->
-<div id="paywall-overlay" style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;padding:20px;">
+<div id="paywall-overlay" style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;padding:20px;overflow-y:auto;">
   <div style="position:absolute;inset:0;backdrop-filter:blur(8px);background:rgba(17,19,23,0.45);"></div>
-  <div style="position:relative;background:var(--white);border-radius:16px;max-width:420px;width:100%;padding:32px;box-shadow:0 24px 70px rgba(0,0,0,0.3);text-align:center;">
+  <div style="position:relative;background:var(--white);border-radius:16px;max-width:520px;width:100%;padding:32px;box-shadow:0 24px 70px rgba(0,0,0,0.3);text-align:center;">
     <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;">game<span style="color:var(--accent);">week</span></div>
     <div style="display:inline-block;background:var(--accent-light);color:var(--accent);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;margin-bottom:18px;letter-spacing:0.5px;">SUBSCRIPTION REQUIRED</div>
     <h2 style="font-size:22px;font-weight:800;color:var(--text);margin-bottom:8px;">Activate your plan to continue</h2>
     <p style="font-size:14px;color:var(--text-2);margin-bottom:24px;line-height:1.6;">Your account is created, but you'll need an active subscription to build competitions and go live.</p>
 
-    <div style="background:var(--sidebar);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:22px;text-align:left;">
-      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:14px;">
-        <span style="font-size:34px;font-weight:800;font-family:var(--mono);color:var(--text);">$50</span>
-        <span style="font-size:14px;color:var(--text-3);">/month base</span>
-      </div>
-      <div style="font-size:13px;color:var(--text-2);margin-bottom:16px;">+ $0.40 per active user / month</div>
-      <div style="display:flex;flex-direction:column;gap:9px;font-size:13px;color:var(--text);">
-        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> All 3 game modes</div>
-        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> Unlimited competitions</div>
-        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> Full branding customisation</div>
-        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> Usage dashboard &amp; analytics</div>
-      </div>
-    </div>
+    <script async src="https://js.stripe.com/v3/pricing-table.js"></script>
+    <stripe-pricing-table
+      pricing-table-id="prctbl_1TlsWIR3NbpQTjwaPHnXAOhS"
+      publishable-key="pk_live_51TlREtR3NbpQTjwa0mq4Yvh5XoExt92D0SmhkorCEAYq6lL2IQynrHXM0g2GL6VlwEJGjwHoYYJKBUoOv75pUq6E00Zzbgu0OI">
+    </stripe-pricing-table>
 
-    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:13px;font-size:14px;margin-bottom:10px;" onclick="startSubscription()">Subscribe now →</button>
-    <a href="#" onclick="signOutOperator();return false;" style="font-size:12px;color:var(--text-3);text-decoration:none;">Sign out</a>
+    <div style="margin-top:16px;">
+      <a href="#" onclick="signOutOperator();return false;" style="font-size:12px;color:var(--text-3);text-decoration:none;">Sign out</a>
+    </div>
   </div>
 </div>
 

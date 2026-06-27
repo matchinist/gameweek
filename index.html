@@ -104,6 +104,7 @@
       .hero-right { display: none; }
       .section { padding: 48px 20px; }
       .section-title { font-size: clamp(22px, 5vw, 32px); }
+      #pricing > div:last-child { grid-template-columns: 1fr !important; }
     }
 
     .btn-ghost {
@@ -1127,11 +1128,67 @@
   <div class="section-eyebrow">Pricing</div>
   <h2 class="section-title">Simple, usage-based pricing.</h2>
   <p class="section-sub">One plan. All game modes. Scales with your audience.</p>
-  <script async src="https://js.stripe.com/v3/pricing-table.js"></script>
-  <stripe-pricing-table
-    pricing-table-id="prctbl_1TlsWIR3NbpQTjwaPHnXAOhS"
-    publishable-key="pk_live_51TlREtR3NbpQTjwa0mq4Yvh5XoExt92D0SmhkorCEAYq6lL2IQynrHXM0g2GL6VlwEJGjwHoYYJKBUoOv75pUq6E00Zzbgu0OI">
-  </stripe-pricing-table>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;max-width:960px;margin:40px auto 0;align-items:start;">
+
+    <!-- LEFT — plan details -->
+    <div>
+      <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:18px;">What's included</div>
+
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="font-size:18px;flex-shrink:0;width:28px;text-align:center;">🎮</span>
+          <div><div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px;">All 3 game modes</div><div style="font-size:13px;color:var(--text-2);line-height:1.5;">Last Man Standing, Score Predictor, and Betting Markets. No feature gating — every operator gets the full product.</div></div>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="font-size:18px;flex-shrink:0;width:28px;text-align:center;">♾️</span>
+          <div><div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px;">Unlimited competitions</div><div style="font-size:13px;color:var(--text-2);line-height:1.5;">Run as many competitions as you want across any league or tournament. No per-competition charges.</div></div>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="font-size:18px;flex-shrink:0;width:28px;text-align:center;">🎨</span>
+          <div><div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px;">Full branding control</div><div style="font-size:13px;color:var(--text-2);line-height:1.5;">Customise colours, competition themes, and widget styling to match your site.</div></div>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <span style="font-size:18px;flex-shrink:0;width:28px;text-align:center;">📊</span>
+          <div><div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px;">Usage dashboard</div><div style="font-size:13px;color:var(--text-2);line-height:1.5;">Track active users, monitor your billing, and see engagement metrics in real time.</div></div>
+        </div>
+      </div>
+
+      <div style="margin-top:28px;padding:18px;background:var(--surface);border:1px solid var(--border);border-radius:10px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:14px;">
+          <span style="font-size:16px;flex-shrink:0;">👤</span>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">What counts as an active user?</div>
+            <div style="font-size:12px;color:var(--text-2);line-height:1.6;">A <strong>Monthly Active User (MAU)</strong> is any registered player who submits at least one prediction during the calendar month. Each user is counted <strong>once</strong>, regardless of how many competitions they participate in.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span style="font-size:16px;flex-shrink:0;">📅</span>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">When am I billed?</div>
+            <div style="font-size:12px;color:var(--text-2);line-height:1.6;">Billed monthly. The $50 base fee is charged at the start of each cycle. Overage (users above 100) is calculated at month-end and added to your next invoice.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;font-size:12px;color:var(--text-3);line-height:1.6;">
+        <strong style="color:var(--text-2);">Example:</strong> 500 active users in a month → $50 + (400 × $0.30) = <strong style="color:var(--text);">$170/month</strong>
+      </div>
+    </div>
+
+    <!-- RIGHT — Stripe pricing table -->
+    <div>
+      <script async src="https://js.stripe.com/v3/pricing-table.js"></script>
+      <stripe-pricing-table
+        pricing-table-id="prctbl_1TlsWIR3NbpQTjwaPHnXAOhS"
+        publishable-key="pk_live_51TlREtR3NbpQTjwa0mq4Yvh5XoExt92D0SmhkorCEAYq6lL2IQynrHXM0g2GL6VlwEJGjwHoYYJKBUoOv75pUq6E00Zzbgu0OI">
+      </stripe-pricing-table>
+    </div>
+
+  </div>
 </div>
 
 <!-- ── FINAL CTA ── -->
