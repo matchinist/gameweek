@@ -1773,8 +1773,13 @@ function initOperatorChrome(){
 }
 
 (async ()=>{
-  // Check Supabase Auth session
-  const {data:{session}} = await supa.auth.getSession();
+  // Check Supabase Auth session — try refresh if expired
+  let {data:{session}} = await supa.auth.getSession();
+  if(!session){
+    // Token might be expired — try refreshing
+    const {data:refreshed} = await supa.auth.refreshSession();
+    session = refreshed?.session;
+  }
   if(!session){ window.location.href='/'; return; }
 
   // Load operator profile

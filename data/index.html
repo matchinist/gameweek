@@ -884,7 +884,12 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 // ── INIT ──────────────────────────────────────────────────────────────────
 async function bootDataManager(){
   // Check Supabase Auth session
-  const {data:{session}} = await supa.auth.getSession();
+  // Check Supabase Auth session — try refresh if expired
+  let {data:{session}} = await supa.auth.getSession();
+  if(!session){
+    const {data:refreshed} = await supa.auth.refreshSession();
+    session = refreshed?.session;
+  }
   if(!session){ showDMLogin(); return; }
 
   // Check if this auth user is a platform admin
