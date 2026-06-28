@@ -1767,27 +1767,60 @@ function initOperatorChrome(){
 
 (async ()=>{
   // Wait for Supabase to fully restore session from storage
-  const session = await new Promise(resolve => {
-    const {data:{subscription}} = supa.auth.onAuthStateChange((event, sess) => {
-      if(event === 'INITIAL_SESSION'){
-        subscription.unsubscribe();
-        resolve(sess);
-      }
+  let session = null;
+  try{
+    session = await new Promise((resolve, reject) => {
+      let resolved = false;
+      const {data:{subscription}} = supa.auth.onAuthStateChange((event, sess) => {
+        if(event === 'INITIAL_SESSION' && !resolved){
+          resolved = true;
+          subscription.unsubscribe();
+          resolve(sess);
+        }
+      });
+      // Fallback: if INITIAL_SESSION doesn't fire in 3s, try getSession
+      setTimeout(async ()=>{
+        if(!resolved){
+          resolved = true;
+          subscription.unsubscribe();
+          try{
+            const {data:{session:s}} = await supa.auth.getSession();
+            resolve(s);
+          }catch(e){ resolve(null); }
+        }
+      }, 3000);
     });
-    // Fallback: if INITIAL_SESSION doesn't fire in 3s, try getSession
-    setTimeout(async ()=>{
-      subscription.unsubscribe();
-      const {data:{session:s}} = await supa.auth.getSession();
-      resolve(s);
-    }, 3000);
-  });
+  }catch(e){ console.error('Session restore error:', e); }
 
-  if(!session){ window.location.href='/'; return; }
+  if(!session){
+    console.warn('GW: No session found, redirecting to login');
+    window.location.href='/'; return;
+  }
+  console.log('GW: Session restored for', session.user.email);
 
-  // Load operator profile
-  const {data:op, error:opErr} = await supa.from('gw_operators')
-    .select('*').eq('auth_id',session.user.id).single();
-  if(opErr||!op){ window.location.href='/'; return; }
+  // Load operator profile — retry once on failure
+  let op = null, opErr = null;
+  for(let attempt=0; attempt<2; attempt++){
+    const res = await supa.from('gw_operators').select('*').eq('auth_id',session.user.id).single();
+    op = res.data; opErr = res.error;
+    if(op) break;
+    if(attempt===0) await new Promise(r=>setTimeout(r,1000)); // wait 1s before retry
+  }
+  if(!op){
+    console.error('GW: No operator profile found', opErr?.message);
+    // Don't redirect silently — show what happened
+    document.body.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui;text-align:center;padding:20px;">
+      <div>
+        <div style="font-size:32px;margin-bottom:12px;">⚠️</div>
+        <h2 style="margin-bottom:8px;">Account not found</h2>
+        <p style="color:#666;font-size:14px;margin-bottom:16px;">Logged in as <strong>${session.user.email}</strong> but no operator profile exists for this account.</p>
+        <a href="/" style="color:#4F46E5;font-weight:600;text-decoration:none;">← Sign up or log in with a different account</a>
+        <br><a href="#" onclick="supa.auth.signOut().then(()=>location.reload())" style="color:#999;font-size:12px;text-decoration:none;display:inline-block;margin-top:12px;">Sign out</a>
+      </div>
+    </div>`;
+    return;
+  }
+  console.log('GW: Operator loaded', op.company_name);
   currentOperator = op;
   CLIENT_KEY = op.client_key;
 

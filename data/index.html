@@ -918,24 +918,39 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 async function bootDataManager(){
   // Check Supabase Auth session
   // Wait for Supabase to fully restore session from storage
-  const session = await new Promise(resolve => {
-    const {data:{subscription}} = supa.auth.onAuthStateChange((event, sess) => {
-      if(event === 'INITIAL_SESSION'){
-        subscription.unsubscribe();
-        resolve(sess);
-      }
+  let session = null;
+  try{
+    session = await new Promise((resolve) => {
+      let resolved = false;
+      const {data:{subscription}} = supa.auth.onAuthStateChange((event, sess) => {
+        if(event === 'INITIAL_SESSION' && !resolved){
+          resolved = true;
+          subscription.unsubscribe();
+          resolve(sess);
+        }
+      });
+      setTimeout(async ()=>{
+        if(!resolved){
+          resolved = true;
+          subscription.unsubscribe();
+          try{ const {data:{session:s}} = await supa.auth.getSession(); resolve(s); }
+          catch(e){ resolve(null); }
+        }
+      }, 3000);
     });
-    setTimeout(async ()=>{
-      subscription.unsubscribe();
-      const {data:{session:s}} = await supa.auth.getSession();
-      resolve(s);
-    }, 3000);
-  });
-  if(!session){ showDMLogin(); return; }
+  }catch(e){ console.error('Session restore error:', e); }
 
-  // Check if this auth user is a platform admin
-  const {data:admin} = await supa.from('gw_admins')
-    .select('*').eq('auth_id',session.user.id).single();
+  if(!session){ showDMLogin(); return; }
+  console.log('GW DM: Session restored for', session.user.email);
+
+  // Check if this auth user is a platform admin — retry once
+  let admin = null;
+  for(let attempt=0; attempt<2; attempt++){
+    const res = await supa.from('gw_admins').select('*').eq('auth_id',session.user.id).single();
+    admin = res.data;
+    if(admin) break;
+    if(attempt===0) await new Promise(r=>setTimeout(r,1000));
+  }
 
   if(!admin){ showDMLogin('This account is not a platform admin.'); return; }
 
