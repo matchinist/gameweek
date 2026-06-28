@@ -194,8 +194,8 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .profile-section-title{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:0.6px;text-transform:uppercase;margin-bottom:12px;}
 .logout-btn{width:100%;padding:11px;background:var(--bg);color:var(--text-2);border:1px solid var(--border);border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.13s;margin-top:4px;}
 .logout-btn:hover{border-color:var(--red);color:var(--red);}
-#toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--text);color:white;font-family:var(--mono);font-size:11px;padding:9px 18px;border-radius:6px;z-index:999;transition:transform 0.25s ease;pointer-events:none;white-space:nowrap;}
-#toast.show{transform:translateX(-50%) translateY(0);}
+#toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--text);color:white;font-family:var(--mono);font-size:11px;padding:9px 18px;border-radius:6px;z-index:999;transition:transform 0.25s ease,opacity 0.25s ease;pointer-events:none;white-space:nowrap;opacity:0;}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
 .empty{text-align:center;padding:40px 20px;color:var(--text-3);}
 .empty-icon{font-size:28px;margin-bottom:10px;}
 .empty-title{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text-2);margin-bottom:5px;}

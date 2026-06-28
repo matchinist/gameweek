@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --bg:#F7F8FA;--white:#FFFFFF;--border:#E2E4EA;
@@ -29,11 +30,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .header-user{display:flex;align-items:center;gap:8px;cursor:pointer;}
 .header-avatar{width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:700;color:white;}
 .header-username{font-size:12px;font-weight:500;color:var(--text-2);}
-.bottom-nav{background:var(--white);border-top:1px solid var(--border);display:flex;flex-shrink:0;}
-.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px;cursor:pointer;border:none;background:none;transition:all 0.13s;gap:3px;}
-.bnav-icon{font-size:18px;line-height:1;}
-.bnav-label{font-size:10px;font-weight:600;color:var(--text-3);letter-spacing:0.3px;}
-.bnav-item.active .bnav-label{color:var(--accent);}
+
+
+
+
+
 .scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;}
 ::-webkit-scrollbar{width:3px;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
@@ -63,7 +64,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .comp-tab-name{font-size:15px;font-weight:700;}
 .comp-tab-mode{font-family:var(--mono);font-size:9px;color:var(--text-3);font-weight:700;letter-spacing:0.3px;}
 .comp-tab.active .comp-tab-mode{color:var(--comp-color);opacity:0.7;}
-.round-bar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--white);border-bottom:1px solid var(--border);}
+.round-bar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--white);border-bottom:1px solid var(--border);flex-wrap:wrap;}
 .round-select{font-family:var(--mono);font-size:11px;border:1px solid var(--border);background:var(--white);padding:5px 8px;border-radius:5px;cursor:pointer;outline:none;color:var(--text);}
 .round-select:focus{border-color:var(--accent);}
 .round-status{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap;}
@@ -71,20 +72,19 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .round-status.completed{background:var(--bg);color:var(--text-3);}
 .round-bar-right{margin-left:auto;display:flex;align-items:center;gap:4px;}
 @media(max-width:480px){
-  .predict-header-row{flex-direction:row;gap:4px;padding:8px 6px 0;}
-  .predict-tournament-labels{flex:1;min-width:0;}
   .predict-subtabs{display:none;}
   .predict-subtabs-mobile{display:block;}
-  .events-list{padding:10px 6px;}
+  .events-list{padding:10px 4px;}
   .event-card-top{padding:11px 10px;}
   .pred-area{padding:9px 10px;}
+  .round-bar{padding:8px 8px;}
 }
 @media(min-width:481px){
   .predict-subtabs-mobile{display:none;}
 }
 .predict-subtabs-mobile select{font-family:var(--mono);font-size:10px;font-weight:700;border:1px solid var(--border);background:var(--white);padding:4px 8px;border-radius:4px;cursor:pointer;outline:none;color:var(--text);text-transform:uppercase;}
 /* ── PREDICT HEADER ROW: tournament labels left, tabs right ── */
-.predict-header-row{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 0;gap:8px;}
+
 .predict-subtabs{display:flex;gap:3px;flex-shrink:0;}
 .ps-tab{padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:0.3px;text-transform:uppercase;color:var(--text-3);background:var(--bg);border:1px solid var(--border);border-radius:4px;cursor:pointer;transition:all 0.13s;white-space:nowrap;min-width:90px;text-align:center;}
 .ps-tab:hover{color:var(--text);}
@@ -196,8 +196,8 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .profile-section-title{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:0.6px;text-transform:uppercase;margin-bottom:12px;}
 .logout-btn{width:100%;padding:11px;background:var(--bg);color:var(--text-2);border:1px solid var(--border);border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.13s;margin-top:4px;}
 .logout-btn:hover{border-color:var(--red);color:var(--red);}
-#toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--text);color:white;font-family:var(--mono);font-size:11px;padding:9px 18px;border-radius:6px;z-index:999;transition:transform 0.25s ease;pointer-events:none;white-space:nowrap;}
-#toast.show{transform:translateX(-50%) translateY(0);}
+#toast{position:fixed;bottom:70px;opacity:0;left:50%;transform:translateX(-50%) translateY(60px);background:var(--text);color:white;font-family:var(--mono);font-size:11px;padding:9px 18px;border-radius:6px;z-index:999;transition:transform 0.25s ease;pointer-events:none;white-space:nowrap;}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
 .empty{text-align:center;padding:40px 20px;color:var(--text-3);}
 .empty-icon{font-size:28px;margin-bottom:10px;}
 .empty-title{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text-2);margin-bottom:5px;}
@@ -225,6 +225,9 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .auth-modal-logo{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--text);text-align:center;margin-bottom:2px;}
 .auth-modal-logo span{color:var(--accent);}
 .auth-modal-reason{font-size:11px;color:var(--text-3);text-align:center;margin-bottom:18px;}
+
+
+.round-bar-spacer{flex:1;}
 
 </style>
 </head>
@@ -257,9 +260,8 @@ table.lb-table{width:100%;border-collapse:collapse;}
 
 <script>
 const MODE_LABELS={lms:'Last Man Standing',score:'Score Predictor',betting:'Betting Markets'};
-const MEDALS=['🥇','🥈','🥉'];
+const MEDALS=['\u{1F947}','\u{1F948}','\u{1F949}'];
 
-// ── LOGOS ──────────────────────────────────────────────────────────────────
 const LOGO={
   'Arsenal':'https://upload.wikimedia.org/wikipedia/en/5/53/Arsenal_FC.svg',
   'Chelsea':'https://upload.wikimedia.org/wikipedia/en/c/cc/Chelsea_FC.svg',
@@ -277,15 +279,16 @@ const LOGO={
   'Atletico':'https://upload.wikimedia.org/wikipedia/en/f/f9/Atletico_Madrid_Logo_2024.svg',
   'Dortmund':'https://upload.wikimedia.org/wikipedia/commons/6/67/Borussia_Dortmund_logo.svg',
 };
+const lg=n=>LOGO[n]||'';
 
 // ── FAKE DATA ─────────────────────────────────────────────────────────────
+// Score Predictor: ONE round with 5 events showing all states
 const COMPS=[
   {id:'c1',name:'Score Predictor',mode:'score',color:'#4F46E5',
     scoring:{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1},
     tournamentNames:['Premier League'],
     rounds:[
-      {id:'r1',label:'Gameweek 1',status:'completed',deadline:'2026-08-16T14:00',eventIds:['e101','e102','e103']},
-      {id:'r2',label:'Gameweek 2',status:'open',deadline:'2026-08-30T14:00',eventIds:['e104','e105','e106','e107']},
+      {id:'r1',label:'Gameweek 3',status:'open',deadline:'2026-08-31T14:00',eventIds:['e1','e2','e3','e4','e5']},
     ]},
   {id:'c2',name:'Last Man Standing',mode:'lms',color:'#DC2626',
     tournamentNames:['Champions League'],
@@ -297,69 +300,59 @@ const COMPS=[
     markets:[{type:'1x2',label:'Match Result',points:3},{type:'ou25',label:'Over / Under 2.5',points:2},{type:'btts',label:'Both Teams to Score',points:2}],
     tournamentNames:['La Liga','Serie A'],
     rounds:[
-      {id:'r5',label:'Round 1',status:'completed',deadline:'2026-08-16T17:00',eventIds:['e301','e302']},
-      {id:'r6',label:'Round 2',status:'open',deadline:'2026-08-30T17:00',eventIds:['e303','e304']},
+      {id:'r5',label:'Round 1',status:'open',deadline:'2026-08-30T17:00',eventIds:['e303','e304']},
     ]},
 ];
 
-const lg=n=>LOGO[n]||'';
 const EVENTS={
-  // Score GW1: completed with results
-  e101:{home:'Arsenal',away:'Wolves',homeLogo:lg('Arsenal'),awayLogo:lg('Wolves'),kickoff:'16 Aug · 15:00',res:{h:3,a:0}},
-  e102:{home:'Man City',away:'Chelsea',homeLogo:lg('Man City'),awayLogo:lg('Chelsea'),kickoff:'16 Aug · 17:30',res:{h:2,a:1}},
-  e103:{home:'Liverpool',away:'Spurs',homeLogo:lg('Liverpool'),awayLogo:lg('Spurs'),kickoff:'17 Aug · 14:00',res:{h:1,a:1}},
-  // Score GW2: open — 2 predicted, 2 not yet
-  e104:{home:'Arsenal',away:'Man City',homeLogo:lg('Arsenal'),awayLogo:lg('Man City'),kickoff:'30 Aug · 15:00',res:null},
-  e105:{home:'Liverpool',away:'Man Utd',homeLogo:lg('Liverpool'),awayLogo:lg('Man Utd'),kickoff:'30 Aug · 17:30',res:null},
-  e106:{home:'Chelsea',away:'Spurs',homeLogo:lg('Chelsea'),awayLogo:lg('Spurs'),kickoff:'31 Aug · 14:00',res:null},
-  e107:{home:'Wolves',away:'Man City',homeLogo:lg('Wolves'),awayLogo:lg('Man City'),kickoff:'31 Aug · 16:30',res:null},
-  // LMS MD1: completed — eliminated at event 3
-  e201:{home:'Real Madrid',away:'Dortmund',homeLogo:lg('Real Madrid'),awayLogo:lg('Dortmund'),kickoff:'17 Sep · 21:00',res:{h:3,a:1}},
-  e202:{home:'Bayern',away:'Inter',homeLogo:lg('Bayern'),awayLogo:lg('Inter'),kickoff:'17 Sep · 21:15',res:{h:2,a:0}},
-  e203:{home:'Barcelona',away:'PSG',homeLogo:lg('Barcelona'),awayLogo:lg('PSG'),kickoff:'18 Sep · 21:00',res:{h:1,a:2}},
-  // LMS MD2: open
-  e204:{home:'Real Madrid',away:'Liverpool',homeLogo:lg('Real Madrid'),awayLogo:lg('Liverpool'),kickoff:'01 Oct · 21:00',res:null},
-  e205:{home:'PSG',away:'Arsenal',homeLogo:lg('PSG'),awayLogo:lg('Arsenal'),kickoff:'01 Oct · 21:15',res:null},
-  e206:{home:'Atletico',away:'Dortmund',homeLogo:lg('Atletico'),awayLogo:lg('Dortmund'),kickoff:'02 Oct · 21:00',res:null},
-  // Betting R1: completed
-  e301:{home:'Real Madrid',away:'Atletico',homeLogo:lg('Real Madrid'),awayLogo:lg('Atletico'),kickoff:'25 Aug · 21:00',res:{h:3,a:0}},
-  e302:{home:'Inter',away:'Juventus',homeLogo:lg('Inter'),awayLogo:lg('Juventus'),kickoff:'25 Aug · 18:00',res:{h:2,a:2}},
-  // Betting R2: open
-  e303:{home:'Barcelona',away:'Real Madrid',homeLogo:lg('Barcelona'),awayLogo:lg('Real Madrid'),kickoff:'30 Aug · 21:00',res:null},
-  e304:{home:'Juventus',away:'Inter',homeLogo:lg('Juventus'),awayLogo:lg('Inter'),kickoff:'31 Aug · 20:45',res:null},
+  // Score Predictor — 5 events, different states:
+  // 1-2: resulted (kickoff past, has result)
+  e1:{home:'Arsenal',away:'Wolves',homeLogo:lg('Arsenal'),awayLogo:lg('Wolves'),kickoff:'30 Aug \u00b7 15:00',res:{h:3,a:0},locked:true},
+  e2:{home:'Man City',away:'Chelsea',homeLogo:lg('Man City'),awayLogo:lg('Chelsea'),kickoff:'30 Aug \u00b7 17:30',res:{h:2,a:1},locked:true},
+  // 3: predicted, locked, waiting for result
+  e3:{home:'Liverpool',away:'Man Utd',homeLogo:lg('Liverpool'),awayLogo:lg('Man Utd'),kickoff:'31 Aug \u00b7 14:00',res:null,locked:true},
+  // 4-5: open for prediction
+  e4:{home:'Chelsea',away:'Spurs',homeLogo:lg('Chelsea'),awayLogo:lg('Spurs'),kickoff:'31 Aug \u00b7 16:30',res:null,locked:false},
+  e5:{home:'Wolves',away:'Man City',homeLogo:lg('Wolves'),awayLogo:lg('Man City'),kickoff:'01 Sep \u00b7 15:00',res:null,locked:false},
+
+  // LMS completed — eliminated at event 3
+  e201:{home:'Real Madrid',away:'Dortmund',homeLogo:lg('Real Madrid'),awayLogo:lg('Dortmund'),kickoff:'17 Sep \u00b7 21:00',res:{h:3,a:1}},
+  e202:{home:'Bayern',away:'Inter',homeLogo:lg('Bayern'),awayLogo:lg('Inter'),kickoff:'17 Sep \u00b7 21:15',res:{h:2,a:0}},
+  e203:{home:'Barcelona',away:'PSG',homeLogo:lg('Barcelona'),awayLogo:lg('PSG'),kickoff:'18 Sep \u00b7 21:00',res:{h:1,a:2}},
+  // LMS open
+  e204:{home:'Real Madrid',away:'Liverpool',homeLogo:lg('Real Madrid'),awayLogo:lg('Liverpool'),kickoff:'01 Oct \u00b7 21:00',res:null},
+  e205:{home:'PSG',away:'Arsenal',homeLogo:lg('PSG'),awayLogo:lg('Arsenal'),kickoff:'01 Oct \u00b7 21:15',res:null},
+  e206:{home:'Atletico',away:'Dortmund',homeLogo:lg('Atletico'),awayLogo:lg('Dortmund'),kickoff:'02 Oct \u00b7 21:00',res:null},
+
+  // Betting open
+  e303:{home:'Barcelona',away:'Real Madrid',homeLogo:lg('Barcelona'),awayLogo:lg('Real Madrid'),kickoff:'30 Aug \u00b7 21:00',res:null},
+  e304:{home:'Juventus',away:'Inter',homeLogo:lg('Juventus'),awayLogo:lg('Inter'),kickoff:'31 Aug \u00b7 20:45',res:null},
 };
 
-// Fake predictions — mix of correct, wrong, pending
 let preds={
-  // Score GW1: exact, home goals only, wrong
-  e101:{h:3,a:0}, e102:{h:2,a:0}, e103:{h:2,a:0},
-  // Score GW2: 2 predicted, 2 empty
-  e104:{h:2,a:1}, e105:{h:1,a:0},
-  // LMS MD1: correct, correct, wrong (eliminated)
+  // Score: events 1-3 predicted
+  e1:{h:3,a:0}, e2:{h:2,a:0}, e3:{h:1,a:0},
+  // LMS: correct, correct, wrong
   e201:'H', e202:'H', e203:'H',
-  // LMS MD2: 1 predicted
+  // LMS open: 1 predicted
   e204:'H',
-  // Betting R1: predicted
-  e301:{'1x2':'H','ou25':'O','btts':'N'}, e302:{'1x2':'D','ou25':'O','btts':'Y'},
-  // Betting R2: 1 predicted
+  // Betting: 1 predicted
   e303:{'1x2':'H','ou25':'U','btts':'Y'},
 };
 
 const LB_DATA={
   c1:{r1:[{u:'footy_oracle',points:12},{u:'demo_user',points:9},{u:'stadyum76',points:7},{u:'bvb_predictor',points:5},{u:'xavi_8',points:3}],
-      r2:[{u:'bvb_predictor',points:5},{u:'footy_oracle',points:3},{u:'demo_user',points:2}],
-      overall:[{u:'footy_oracle',points:27},{u:'demo_user',points:18},{u:'stadyum76',points:16},{u:'bvb_predictor',points:14},{u:'xavi_8',points:10}]},
-  c2:{r3:[{u:'footy_oracle',predictions:3},{u:'stadyum76',predictions:3},{u:'demo_user',predictions:3},{u:'matchday_man',predictions:2}],
+      overall:[{u:'footy_oracle',points:27},{u:'demo_user',points:18},{u:'stadyum76',points:16}]},
+  c2:{r3:[{u:'footy_oracle',predictions:3},{u:'demo_user',predictions:3},{u:'stadyum76',predictions:3}],
       r4:[{u:'footy_oracle',predictions:2},{u:'demo_user',predictions:1}],
-      overall:[{u:'footy_oracle',survived:2},{u:'stadyum76',survived:1},{u:'demo_user',survived:1}]},
-  c3:{r5:[{u:'xavi_8',points:14},{u:'demo_user',points:10},{u:'stadyum76',points:8}],
-      r6:[{u:'demo_user',points:3}],
-      overall:[{u:'xavi_8',points:22},{u:'demo_user',points:16},{u:'stadyum76',points:12}]},
+      overall:[{u:'footy_oracle',survived:2},{u:'demo_user',survived:1},{u:'stadyum76',survived:1}]},
+  c3:{r5:[{u:'demo_user',points:3},{u:'xavi_8',points:5}],
+      overall:[{u:'xavi_8',points:14},{u:'demo_user',points:10}]},
 };
 
 // ── STATE ─────────────────────────────────────────────────────────────────
 const currentUser='demo_user';
-let currentCompIdx=0, selectedRound={0:0,1:0,2:0}, predictSubTab='predictions', lbSelection={};
+let currentCompIdx=0, selectedRound={}, predictSubTab='predictions', lbSelection={};
 
 // ── TABS ──────────────────────────────────────────────────────────────────
 function goTab(tab){
@@ -370,7 +363,6 @@ function goTab(tab){
   if(tab==='predict')renderPredict();
   if(tab==='profile')renderProfile();
 }
-
 function renderCompTabs(){
   const el=document.getElementById('comp-tabs');
   el.innerHTML=COMPS.map((c,i)=>`<button class="comp-tab${i===currentCompIdx?' active':''}" onclick="switchComp(${i})" style="${i===currentCompIdx?'--comp-color:'+c.color:''}"><span class="comp-tab-name">${MODE_LABELS[c.mode]}</span></button>`).join('');
@@ -378,14 +370,15 @@ function renderCompTabs(){
 }
 function switchComp(idx){currentCompIdx=idx;predictSubTab='predictions';document.documentElement.style.setProperty('--comp-color',COMPS[idx].color);renderCompTabs();renderPredict();}
 
-// ── RENDER ────────────────────────────────────────────────────────────────
-function getDefaultRoundIdx(comp){const idx=comp.rounds.findIndex(r=>r.status==='open');return idx>=0?idx:Math.max(0,comp.rounds.length-1);}
+// ── PREDICT (merged header: round + status + tabs in ONE bar) ─────────────
+function getDefaultRoundIdx(comp){const idx=comp.rounds.findIndex(r=>r.status==='open');return idx>=0?idx:0;}
 
 function renderPredict(){
   if(selectedRound[currentCompIdx]===undefined)selectedRound[currentCompIdx]=getDefaultRoundIdx(COMPS[currentCompIdx]);
   const comp=COMPS[currentCompIdx];
   const tlHtml=(comp.tournamentNames||[]).map(l=>'<span class="predict-tournament-label">'+l+'</span>').join('');
-  let html=`<div class="predict-header-row"><div class="predict-tournament-labels">${tlHtml}</div><div class="predict-subtabs"><button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button></div><div class="predict-subtabs-mobile"><select onchange="switchPredictSubTab(this.value)"><option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option><option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option></select></div></div>`;
+  // Tournament labels on their own row if present
+  let html=tlHtml?`<div style="display:flex;flex-wrap:wrap;gap:4px;padding:10px 16px 0;">${tlHtml}</div>`:'';
   html+=predictSubTab==='predictions'?renderPredictionsPane(comp):renderLeaderboardPane(comp);
   document.getElementById('predict-content').innerHTML=html;
 }
@@ -403,35 +396,57 @@ function renderPredictionsPane(comp){
       if(events[i].res&&p){const actual=events[i].res.h>events[i].res.a?'H':events[i].res.h<events[i].res.a?'A':'D';if(p!==actual){eliminatedAtIdx=i;break;}}
     }
   }
-  let html=`<div class="round-bar"><select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select><span class="round-status ${round.status}">${isOpen?'● Open':'✓ Done'}</span></div>`;
-  if(isOpen&&round.deadline){const dl=new Date(round.deadline);html+=`<div class="deadline-banner">⏱ &nbsp;Predictions lock <strong>${dl.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})} · ${dl.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</strong></div>`;}
+
+  // Combined bar: [round dropdown] [status] ... [Predictions|Leaderboard]
+  let html=`<div class="round-bar">
+    <select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select>
+    <span class="round-status ${round.status}">${isOpen?'\u25cf Open':'\u2713 Done'}</span>
+    <div class="round-bar-spacer"></div>
+    <div class="predict-subtabs">
+      <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button>
+      <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
+    </div>
+    <div class="predict-subtabs-mobile">
+      <select onchange="switchPredictSubTab(this.value)">
+        <option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option>
+        <option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option>
+      </select>
+    </div>
+  </div>`;
+
+  if(isOpen&&round.deadline){const dl=new Date(round.deadline);html+=`<div class="deadline-banner">\u23f1 \u00a0Predictions lock <strong>${dl.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})} \u00b7 ${dl.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</strong></div>`;}
   html+='<div class="events-list">';
   events.forEach((ev,i)=>{
     const isEliminated=eliminatedAtIdx>=0&&i>eliminatedAtIdx;
     const isEliminationPoint=i===eliminatedAtIdx;
     if(comp.mode==='lms'){
-      html+=`<div style="display:flex;align-items:center;gap:6px;padding:6px 0 2px;"><span style="font-family:var(--mono);font-size:10px;font-weight:700;color:${isEliminated?'var(--text-3)':isEliminationPoint?'var(--red)':'var(--accent)'};">Event ${i+1}</span>${isEliminationPoint?'<span style="font-size:10px;background:var(--red-light);color:var(--red);padding:1px 7px;border-radius:10px;font-weight:700;">✗ Eliminated here</span>':''}${isEliminated?'<span style="font-size:10px;color:var(--text-3);">— eliminated</span>':''}</div>`;
+      html+=`<div style="display:flex;align-items:center;gap:6px;padding:6px 0 2px;"><span style="font-family:var(--mono);font-size:10px;font-weight:700;color:${isEliminated?'var(--text-3)':isEliminationPoint?'var(--red)':'var(--accent)'};">Event ${i+1}</span>${isEliminationPoint?'<span style="font-size:10px;background:var(--red-light);color:var(--red);padding:1px 7px;border-radius:10px;font-weight:700;">\u2717 Eliminated here</span>':''}${isEliminated?'<span style="font-size:10px;color:var(--text-3);">\u2014 eliminated</span>':''}</div>`;
     }
     html+=`<div style="opacity:${isEliminated?'0.4':'1'};">${renderEventCard(ev,comp,isOpen)}</div>`;
   });
   html+='</div>';
-  // LMS survival tracker for completed rounds
+
+  // LMS survival tracker
   if(comp.mode==='lms'&&!isOpen&&events.length){
-    const totalPlayers=7;
-    const survived=[7,5,3];
+    const total=7,survived=[7,5,3];
     html+='<div class="survival-tracker"><div class="st-label">SURVIVAL TRACKER</div><div class="st-bar-wrap">';
     events.forEach((ev,i)=>{
-      const s=survived[i]||0;const pct=Math.round(s/totalPlayers*100);
-      const col=s>totalPlayers*0.6?'var(--green)':s>totalPlayers*0.3?'var(--amber)':'var(--red)';
-      html+=`<div class="st-bar-row"><span class="st-bar-label">Event ${i+1}</span><div class="st-bar-track"><div class="st-bar-fill" style="width:${pct}%;background:${col};"></div></div><span style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-2);min-width:32px;text-align:right;">${s}/${totalPlayers}</span></div>`;
+      const s=survived[i]||0;const pct=Math.round(s/total*100);
+      const col=s>total*0.6?'var(--green)':s>total*0.3?'var(--amber)':'var(--red)';
+      html+=`<div class="st-bar-row"><span class="st-bar-label">Event ${i+1}</span><div class="st-bar-track"><div class="st-bar-fill" style="width:${pct}%;background:${col};"></div></div><span style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-2);min-width:32px;text-align:right;">${s}/${total}</span></div>`;
     });
     html+='</div></div>';
   }
+
+  // Progress bar for open events
   if(isOpen&&events.length){
-    const predCount=events.filter(ev=>{const p=preds[ev.id];if(!p)return false;if(comp.mode==='score')return p.h!==undefined&&p.a!==undefined;if(comp.mode==='betting')return typeof p==='object'&&Object.keys(p).length>0;return!!p;}).length;
-    const pct=events.length?Math.round(predCount/events.length*100):0;
-    html+=`<div class="progress-wrap"><div class="progress-meta"><span>${predCount} of ${events.length} predictions made</span><span class="progress-pct">${pct}%</span></div><div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:var(--comp-color);"></div></div></div>`;
-    if(comp.mode==='score')html+=`<button class="submit-preds-btn" onclick="submitScorePreds()">${predCount===events.length?'✓ All predictions saved':'Save Predictions ('+predCount+'/'+events.length+')'}</button>`;
+    const openEvents=events.filter(ev=>!ev.res&&!ev.locked);
+    const predCount=openEvents.filter(ev=>{const p=preds[ev.id];if(!p)return false;if(comp.mode==='score')return p.h!==undefined&&p.a!==undefined;if(comp.mode==='betting')return typeof p==='object'&&Object.keys(p).length>0;return!!p;}).length;
+    if(openEvents.length){
+      const pct=Math.round(predCount/openEvents.length*100);
+      html+=`<div class="progress-wrap"><div class="progress-meta"><span>${predCount} of ${openEvents.length} predictions made</span><span class="progress-pct">${pct}%</span></div><div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:var(--comp-color);"></div></div></div>`;
+      if(comp.mode==='score')html+=`<button class="submit-preds-btn" onclick="submitScorePreds()">${predCount===openEvents.length?'\u2713 All predictions saved':'Save Predictions ('+predCount+'/'+openEvents.length+')'}</button>`;
+    }
   }
   return html;
 }
@@ -440,7 +455,6 @@ function teamBadge(logo,name){
   if(logo)return'<div class="ev-badge"><img src="'+logo+'" alt="'+name+'"></div>';
   return'<div class="ev-badge">'+(name||'?').split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase()+'</div>';
 }
-
 function scorePoints(pred,res,scoring){
   if(!pred||!res||res.h==null||res.a==null)return[0,''];
   const s=scoring||{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1};
@@ -452,34 +466,47 @@ function scorePoints(pred,res,scoring){
   return[0,'No points scored'];
 }
 
-function renderEventCard(ev,comp,isOpen){
+function renderEventCard(ev,comp,isRoundOpen){
   const pred=preds[ev.id]??null;
   const hasRes=!!ev.res;
+  const isLocked=ev.locked||false;
+  // Event is "open for input" only if: round is open AND event has no result AND not locked
+  const canPredict=isRoundOpen&&!hasRes&&!isLocked;
   const hasPred=comp.mode==='score'?(pred&&pred.h!==undefined&&pred.a!==undefined):comp.mode==='betting'?(pred&&typeof pred==='object'&&Object.keys(pred).length>0):(pred!==null&&pred!==undefined);
+
   let correct=null,earnedPts=null,pointsBreakdown='';
-  if(!isOpen&&hasRes&&hasPred){
+  if(hasRes&&hasPred){
     if(comp.mode==='lms'){const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';correct=pred===actual;}
     else if(comp.mode==='score'){[earnedPts,pointsBreakdown]=scorePoints(pred,ev.res,comp.scoring);correct=earnedPts>0;}
   }
-  let cls='event-card';if(isOpen&&hasPred)cls+=' predicted';if(!isOpen)cls+=' locked-pred';
+
+  let cls='event-card';
+  if(canPredict&&hasPred)cls+=' predicted';
+  if(!canPredict)cls+=' locked-pred';
+
   const hv=(pred&&pred.h!==undefined)?pred.h:'';
   const av=(pred&&pred.a!==undefined)?pred.a:'';
+
+  // Middle section (score inputs, result, or locked pick)
   let midSection;
-  if(comp.mode==='score'&&isOpen){
-    midSection=`<div class="score-inline-mid"><input class="score-num-inline${hv!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${hv}" id="sh-${ev.id}" oninput="pickScore('${ev.id}','h',this.value)"><span class="score-inline-dash">–</span><input class="score-num-inline${av!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${av}" id="sa-${ev.id}" oninput="pickScore('${ev.id}','a',this.value)"></div>`;
+  if(comp.mode==='score'&&canPredict){
+    midSection=`<div class="score-inline-mid"><input class="score-num-inline${hv!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${hv}" id="sh-${ev.id}" oninput="pickScore('${ev.id}','h',this.value)"><span class="score-inline-dash">\u2013</span><input class="score-num-inline${av!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${av}" id="sa-${ev.id}" oninput="pickScore('${ev.id}','a',this.value)"></div>`;
   } else if(hasRes){
-    midSection=`<div class="ev-score">${ev.res.h}–${ev.res.a}</div>`;
-  } else if(comp.mode==='score'&&!isOpen&&hasPred){
-    midSection=`<div class="ev-score" style="font-size:12px;color:var(--text-2);">${pred.h??'-'}–${pred.a??'-'}</div>`;
-  } else {midSection='<div class="ev-vs">vs</div>';}
+    midSection=`<div class="ev-score">${ev.res.h}\u2013${ev.res.a}</div>`;
+  } else if(comp.mode==='score'&&hasPred&&!hasRes){
+    midSection=`<div class="ev-score" style="font-size:12px;color:var(--comp-color);">${pred.h??'-'}\u2013${pred.a??'-'}</div>`;
+  } else {
+    midSection='<div class="ev-vs">vs</div>';
+  }
 
-  let html=`<div class="${cls}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${comp.name}</span><span class="event-kickoff">${ev.kickoff||''}${hasRes?' · FT: '+ev.res.h+'–'+ev.res.a:''}</span></div><div class="event-teams"><div class="ev-team">${teamBadge(ev.homeLogo,ev.home)}<span class="ev-name">${ev.home}</span></div>${midSection}<div class="ev-team away">${teamBadge(ev.awayLogo,ev.away)}<span class="ev-name">${ev.away}</span></div></div></div><div class="pred-area">`;
+  let html=`<div class="${cls}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${comp.name}</span><span class="event-kickoff">${ev.kickoff||''}${hasRes?' \u00b7 FT: '+ev.res.h+'\u2013'+ev.res.a:''}</span></div><div class="event-teams"><div class="ev-team">${teamBadge(ev.homeLogo,ev.home)}<span class="ev-name">${ev.home}</span></div>${midSection}<div class="ev-team away">${teamBadge(ev.awayLogo,ev.away)}<span class="ev-name">${ev.away}</span></div></div></div><div class="pred-area">`;
 
-  if(isOpen){
+  if(canPredict){
+    // Open for prediction
     if(comp.mode==='lms'){
       html+=`<div class="btns-1x2"><button class="btn-1x2${pred==='H'?' selected home':''}" onclick="pick('${ev.id}','H')">Home Win</button><button class="btn-1x2${pred==='D'?' selected draw':''}" onclick="pick('${ev.id}','D')">X</button><button class="btn-1x2${pred==='A'?' selected away':''}" onclick="pick('${ev.id}','A')">Away</button></div>`;
     } else if(comp.mode==='score'){
-      html+='<div style="font-size:11px;color:var(--text-3);text-align:center;padding:2px 0;">Enter scores above ↑</div>';
+      html+='<div style="font-size:11px;color:var(--text-3);text-align:center;padding:2px 0;">Enter scores above \u2191</div>';
     } else if(comp.mode==='betting'){
       const markets=comp.markets||[];const mpred=(pred&&typeof pred==='object')?pred:{};
       html+='<div style="display:flex;flex-direction:column;gap:8px;">';
@@ -493,16 +520,20 @@ function renderEventCard(ev,comp,isOpen){
       html+='</div>';
     }
   } else if(hasPred){
+    // Locked — show pick and optionally points
     let pl='';
     if(comp.mode==='lms')pl=pred==='H'?ev.home+' (Home)':pred==='D'?'Draw':ev.away+' (Away)';
-    else if(comp.mode==='score')pl=(pred.h??'-')+' – '+(pred.a??'-');
-    else if(comp.mode==='betting'&&pred&&typeof pred==='object')pl=Object.entries(pred).map(([k,v])=>k.toUpperCase()+': '+v).join(' · ');
-    if(comp.mode==='score'&&earnedPts!=null){
-      html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div><span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'✗ 0 pts'}</span></div>`;
+    else if(comp.mode==='score')pl=(pred.h??'-')+' \u2013 '+(pred.a??'-');
+    else if(comp.mode==='betting'&&typeof pred==='object')pl=Object.entries(pred).map(([k,v])=>k.toUpperCase()+': '+v).join(' \u00b7 ');
+
+    if(hasRes&&comp.mode==='score'&&earnedPts!=null){
+      html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div><span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'\u2717 0 pts'}</span></div>`;
       if(pointsBreakdown)html+=`<div style="font-size:10px;color:${earnedPts>0?'var(--green)':'var(--text-3)'};margin-top:4px;font-weight:600;">${pointsBreakdown}</div>`;
+    } else if(hasRes&&correct!=null){
+      html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div><span class="pred-correct ${correct?'yes':'no'}">${correct?'\u2713 Correct':'\u2717 Wrong'}</span></div>`;
     } else {
-      let rb=correct!=null?`<span class="pred-correct ${correct?'yes':'no'}">${correct?'✓ Correct':'✗ Wrong'}</span>`:'';
-      html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div>${rb}</div>`;
+      // Predicted but no result yet — pending
+      html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div><span style="font-size:10px;color:var(--amber);font-weight:600;">\u23f3 Awaiting result</span></div>`;
     }
   } else {
     html+='<div style="font-size:12px;color:var(--text-3);">No prediction made.</div>';
@@ -510,7 +541,7 @@ function renderEventCard(ev,comp,isOpen){
   html+='</div></div>';return html;
 }
 
-// ── PICKS (simulation — no login needed) ──────────────────────────────────
+// ── PICKS ─────────────────────────────────────────────────────────────────
 function pick(id,val){preds[id]=val;renderPredict();}
 function pickScore(id,side,val){
   if(!preds[id]||typeof preds[id]!=='object')preds[id]={};
@@ -526,9 +557,9 @@ function changeRound(idx){selectedRound[currentCompIdx]=parseInt(idx);renderPred
 function submitScorePreds(){
   const comp=COMPS[currentCompIdx],round=comp.rounds[selectedRound[currentCompIdx]];
   if(!round)return;
-  const events=round.eventIds.map(id=>({id,...EVENTS[id]})).filter(e=>e.home);
+  const events=round.eventIds.map(id=>({id,...EVENTS[id]})).filter(e=>e.home&&!e.res&&!e.locked);
   const done=events.filter(ev=>{const p=preds[ev.id];return p&&p.h!==undefined&&p.a!==undefined;}).length;
-  toast('✓ '+done+' of '+events.length+' predictions saved');
+  toast('\u2713 '+done+' of '+events.length+' predictions saved');
 }
 
 // ── LEADERBOARD ───────────────────────────────────────────────────────────
@@ -536,16 +567,33 @@ function renderLeaderboardPane(comp){
   if(lbSelection[currentCompIdx]===undefined)lbSelection[currentCompIdx]=getDefaultRoundIdx(comp);
   const sel=lbSelection[currentCompIdx],isOverall=sel==='overall';
   const round=isOverall?null:comp.rounds[sel];
-  let html=`<div class="lb-week-row"><select class="lb-week-select" style="font-size:11px;padding:4px 8px;max-width:180px;" onchange="changeLBSelection(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}" ${(!isOverall&&sel===i)?'selected':''}>${r.label}${r.status==='open'?' (Current)':''}</option>`).join('')}<option value="overall" ${isOverall?'selected':''}>Overall — Season</option></select></div>`;
+  const ri=selectedRound[currentCompIdx]??0;
+
+  // Same combined bar as predictions pane
+  let html=`<div class="round-bar">
+    <select class="lb-week-select" style="font-size:11px;padding:4px 8px;max-width:180px;border:1px solid var(--border);border-radius:5px;font-family:var(--mono);" onchange="changeLBSelection(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}" ${(!isOverall&&sel===i)?'selected':''}>${r.label}${r.status==='open'?' (Current)':''}</option>`).join('')}<option value="overall" ${isOverall?'selected':''}>Overall</option></select>
+    <div class="round-bar-spacer"></div>
+    <div class="predict-subtabs">
+      <button class="ps-tab" onclick="switchPredictSubTab('predictions')">Predictions</button>
+      <button class="ps-tab active" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
+    </div>
+    <div class="predict-subtabs-mobile">
+      <select onchange="switchPredictSubTab(this.value)">
+        <option value="predictions">Predictions</option>
+        <option value="leaderboard" selected>Leaderboard</option>
+      </select>
+    </div>
+  </div>`;
+
   const cData=LB_DATA[comp.id];
   const rKey=isOverall?'overall':(round?.id||'');
   let rows=cData?.[rKey]||[];
-  if(!rows.length){html+=`<div class="empty"><div class="empty-icon">🏆</div><div class="empty-title">No predictions yet</div></div>`;return html;}
+  if(!rows.length){html+='<div class="empty"><div class="empty-icon">\u{1F3C6}</div><div class="empty-title">No predictions yet</div></div>';return html;}
   let rank=1;
   if(comp.mode==='score'||comp.mode==='betting'){
     rows.sort((a,b)=>b.points-a.points);
     rows.forEach((r,i)=>{if(i>0&&rows[i].points<rows[i-1].points)rank=i+1;r.rank=rank;});
-    html+=buildLBTable(comp.name,isOverall?'Overall — total points':round.label,rows,r=>`<td class="lb-num">${r.points} pts</td>`,'<th class="r">Points</th>');
+    html+=buildLBTable(comp.name,isOverall?'Overall':round.label,rows,r=>`<td class="lb-num">${r.points} pts</td>`,'<th class="r">Points</th>');
   } else {
     if(isOverall){rows.sort((a,b)=>b.survived-a.survived);rows.forEach((r,i)=>{if(i>0&&rows[i].survived<rows[i-1].survived)rank=i+1;r.rank=rank;});html+=buildLBTable(comp.name,'Overall',rows,r=>`<td class="lb-num">${r.survived}</td>`,'<th class="r">Rounds</th>');}
     else{rows.sort((a,b)=>b.predictions-a.predictions);rows.forEach((r,i)=>{if(i>0&&rows[i].predictions<rows[i-1].predictions)rank=i+1;r.rank=rank;});html+=buildLBTable(comp.name,round.label,rows,r=>`<td class="lb-num">${r.predictions}</td>`,'<th class="r">Picks</th>');}
@@ -564,8 +612,8 @@ function buildLBTable(title,sub,rows,cellFn,colHeader){
 function renderProfile(){
   document.getElementById('profile-content').innerHTML=`
     <div class="profile-header"><div class="profile-av">DE</div><div class="profile-name">demo_user</div><div class="profile-joined">Demo account</div></div>
-    <div class="profile-stats"><div class="profile-stat"><div class="ps-val">${Object.keys(preds).length}</div><div class="ps-label">Predictions</div></div><div class="profile-stat"><div class="ps-val">${COMPS.length}</div><div class="ps-label">Competitions</div></div><div class="profile-stat"><div class="ps-val">${COMPS.filter(c=>c.rounds.some(r=>r.status==='open')).length}</div><div class="ps-label">Open</div></div></div>
-    <div class="profile-section"><div class="profile-section-title">Account</div><div style="font-size:12px;color:var(--text-2);margin-bottom:14px;">Username: <strong>demo_user</strong><br>Email: <strong>demo@gameweek.cloud</strong></div><div style="font-size:11px;color:var(--text-3);background:var(--bg);padding:10px;border-radius:6px;">This is a demo account. In the live embed, users register with their own email and password.</div></div>`;
+    <div class="profile-stats"><div class="profile-stat"><div class="ps-val">${Object.keys(preds).length}</div><div class="ps-label">Predictions</div></div><div class="profile-stat"><div class="ps-val">${COMPS.length}</div><div class="ps-label">Competitions</div></div></div>
+    <div class="profile-section"><div class="profile-section-title">Account</div><div style="font-size:12px;color:var(--text-2);margin-bottom:14px;">Username: <strong>demo_user</strong><br>Email: <strong>demo@gameweek.cloud</strong></div><div style="font-size:11px;color:var(--text-3);background:var(--bg);padding:10px;border-radius:6px;">This is a demo. In the live embed, users register with their own email and password.</div></div>`;
 }
 
 // ── TOAST ──────────────────────────────────────────────────────────────────
