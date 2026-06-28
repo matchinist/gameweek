@@ -71,26 +71,20 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .round-status.open{background:var(--green-light);color:var(--green);}
 .round-status.completed{background:var(--bg);color:var(--text-3);}
 .round-bar-right{margin-left:auto;display:flex;align-items:center;gap:4px;}
+.predict-subtabs{display:flex;gap:3px;flex-shrink:0;}
+.predict-subtabs-mobile{display:none;}
+.predict-subtabs-mobile select{font-family:var(--mono);font-size:10px;font-weight:700;border:1px solid var(--border);background:var(--white);padding:4px 8px;border-radius:4px;cursor:pointer;outline:none;color:var(--text);text-transform:uppercase;}
+.ps-tab{padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:0.3px;text-transform:uppercase;color:var(--text-3);background:var(--bg);border:1px solid var(--border);border-radius:4px;cursor:pointer;transition:all 0.13s;white-space:nowrap;min-width:90px;text-align:center;}
+.ps-tab:hover{color:var(--text);}
+.ps-tab.active{background:var(--comp-color);border-color:var(--comp-color);color:white;}
 @media(max-width:480px){
-  .predict-subtabs{display:none;}
-  .predict-subtabs-mobile{display:block;}
+  .predict-subtabs{display:none !important;}
+  .predict-subtabs-mobile{display:block !important;}
   .events-list{padding:10px 4px;}
   .event-card-top{padding:11px 10px;}
   .pred-area{padding:9px 10px;}
   .round-bar{padding:8px 8px;}
 }
-@media(min-width:481px){
-  .predict-subtabs-mobile{display:none;}
-}
-.predict-subtabs-mobile select{font-family:var(--mono);font-size:10px;font-weight:700;border:1px solid var(--border);background:var(--white);padding:4px 8px;border-radius:4px;cursor:pointer;outline:none;color:var(--text);text-transform:uppercase;}
-/* ── PREDICT HEADER ROW: tournament labels left, tabs right ── */
-
-.predict-subtabs{display:flex;gap:3px;flex-shrink:0;}
-.ps-tab{padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:0.3px;text-transform:uppercase;color:var(--text-3);background:var(--bg);border:1px solid var(--border);border-radius:4px;cursor:pointer;transition:all 0.13s;white-space:nowrap;min-width:90px;text-align:center;}
-.ps-tab:hover{color:var(--text);}
-.ps-tab.active{background:var(--comp-color);border-color:var(--comp-color);color:white;}
-.predict-tournament-labels{display:flex;flex-wrap:wrap;gap:4px;flex:1;min-width:0;}
-.predict-tournament-label{font-size:10px;font-weight:600;background:var(--bg);border:1px solid var(--border);color:var(--text-2);padding:3px 9px;border-radius:12px;white-space:nowrap;}
 /* ── INLINE SCORE INPUTS ── */
 .score-num-inline{width:38px;height:34px;border:1px solid var(--border);border-radius:6px;text-align:center;font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);outline:none;-moz-appearance:textfield;transition:border-color 0.13s;flex-shrink:0;background:var(--white);}
 .score-num-inline::-webkit-inner-spin-button,.score-num-inline::-webkit-outer-spin-button{-webkit-appearance:none;}
@@ -307,26 +301,26 @@ const COMPS=[
 const EVENTS={
   // Score Predictor — 5 events, different states:
   // 1-2: resulted (kickoff past, has result)
-  e1:{home:'Arsenal',away:'Wolves',homeLogo:lg('Arsenal'),awayLogo:lg('Wolves'),kickoff:'30 Aug \u00b7 15:00',res:{h:3,a:0},locked:true},
-  e2:{home:'Man City',away:'Chelsea',homeLogo:lg('Man City'),awayLogo:lg('Chelsea'),kickoff:'30 Aug \u00b7 17:30',res:{h:2,a:1},locked:true},
+  e1:{home:'Arsenal',away:'Wolves',homeLogo:lg('Arsenal'),awayLogo:lg('Wolves'),tournament:'Premier League',kickoff:'30 Aug \u00b7 15:00',res:{h:3,a:0},locked:true},
+  e2:{home:'Man City',away:'Chelsea',homeLogo:lg('Man City'),awayLogo:lg('Chelsea'),tournament:'Premier League',kickoff:'30 Aug \u00b7 17:30',res:{h:2,a:1},locked:true},
   // 3: predicted, locked, waiting for result
-  e3:{home:'Liverpool',away:'Man Utd',homeLogo:lg('Liverpool'),awayLogo:lg('Man Utd'),kickoff:'31 Aug \u00b7 14:00',res:null,locked:true},
+  e3:{home:'Liverpool',away:'Man Utd',homeLogo:lg('Liverpool'),awayLogo:lg('Man Utd'),tournament:'Premier League',kickoff:'31 Aug \u00b7 14:00',res:null,locked:true},
   // 4-5: open for prediction
-  e4:{home:'Chelsea',away:'Spurs',homeLogo:lg('Chelsea'),awayLogo:lg('Spurs'),kickoff:'31 Aug \u00b7 16:30',res:null,locked:false},
-  e5:{home:'Wolves',away:'Man City',homeLogo:lg('Wolves'),awayLogo:lg('Man City'),kickoff:'01 Sep \u00b7 15:00',res:null,locked:false},
+  e4:{home:'Chelsea',away:'Spurs',homeLogo:lg('Chelsea'),awayLogo:lg('Spurs'),tournament:'Premier League',kickoff:'31 Aug \u00b7 16:30',res:null,locked:false},
+  e5:{home:'Wolves',away:'Man City',homeLogo:lg('Wolves'),awayLogo:lg('Man City'),tournament:'Premier League',kickoff:'01 Sep \u00b7 15:00',res:null,locked:false},
 
   // LMS completed — eliminated at event 3
-  e201:{home:'Real Madrid',away:'Dortmund',homeLogo:lg('Real Madrid'),awayLogo:lg('Dortmund'),kickoff:'17 Sep \u00b7 21:00',res:{h:3,a:1}},
-  e202:{home:'Bayern',away:'Inter',homeLogo:lg('Bayern'),awayLogo:lg('Inter'),kickoff:'17 Sep \u00b7 21:15',res:{h:2,a:0}},
-  e203:{home:'Barcelona',away:'PSG',homeLogo:lg('Barcelona'),awayLogo:lg('PSG'),kickoff:'18 Sep \u00b7 21:00',res:{h:1,a:2}},
+  e201:{tournament:'Champions League',home:'Real Madrid',away:'Dortmund',homeLogo:lg('Real Madrid'),awayLogo:lg('Dortmund'),kickoff:'17 Sep \u00b7 21:00',res:{h:3,a:1}},
+  e202:{tournament:'Champions League',home:'Bayern',away:'Inter',homeLogo:lg('Bayern'),awayLogo:lg('Inter'),kickoff:'17 Sep \u00b7 21:15',res:{h:2,a:0}},
+  e203:{tournament:'Champions League',home:'Barcelona',away:'PSG',homeLogo:lg('Barcelona'),awayLogo:lg('PSG'),kickoff:'18 Sep \u00b7 21:00',res:{h:1,a:2}},
   // LMS open
-  e204:{home:'Real Madrid',away:'Liverpool',homeLogo:lg('Real Madrid'),awayLogo:lg('Liverpool'),kickoff:'01 Oct \u00b7 21:00',res:null},
-  e205:{home:'PSG',away:'Arsenal',homeLogo:lg('PSG'),awayLogo:lg('Arsenal'),kickoff:'01 Oct \u00b7 21:15',res:null},
-  e206:{home:'Atletico',away:'Dortmund',homeLogo:lg('Atletico'),awayLogo:lg('Dortmund'),kickoff:'02 Oct \u00b7 21:00',res:null},
+  e204:{tournament:'Champions League',home:'Real Madrid',away:'Liverpool',homeLogo:lg('Real Madrid'),awayLogo:lg('Liverpool'),kickoff:'01 Oct \u00b7 21:00',res:null},
+  e205:{tournament:'Champions League',home:'PSG',away:'Arsenal',homeLogo:lg('PSG'),awayLogo:lg('Arsenal'),kickoff:'01 Oct \u00b7 21:15',res:null},
+  e206:{tournament:'Champions League',home:'Atletico',away:'Dortmund',homeLogo:lg('Atletico'),awayLogo:lg('Dortmund'),kickoff:'02 Oct \u00b7 21:00',res:null},
 
   // Betting open
-  e303:{home:'Barcelona',away:'Real Madrid',homeLogo:lg('Barcelona'),awayLogo:lg('Real Madrid'),kickoff:'30 Aug \u00b7 21:00',res:null},
-  e304:{home:'Juventus',away:'Inter',homeLogo:lg('Juventus'),awayLogo:lg('Inter'),kickoff:'31 Aug \u00b7 20:45',res:null},
+  e303:{tournament:'La Liga',home:'Barcelona',away:'Real Madrid',homeLogo:lg('Barcelona'),awayLogo:lg('Real Madrid'),kickoff:'30 Aug \u00b7 21:00',res:null},
+  e304:{tournament:'La Liga',home:'Juventus',away:'Inter',homeLogo:lg('Juventus'),awayLogo:lg('Inter'),kickoff:'31 Aug \u00b7 20:45',res:null},
 };
 
 let preds={
@@ -376,9 +370,9 @@ function getDefaultRoundIdx(comp){const idx=comp.rounds.findIndex(r=>r.status===
 function renderPredict(){
   if(selectedRound[currentCompIdx]===undefined)selectedRound[currentCompIdx]=getDefaultRoundIdx(COMPS[currentCompIdx]);
   const comp=COMPS[currentCompIdx];
-  const tlHtml=(comp.tournamentNames||[]).map(l=>'<span class="predict-tournament-label">'+l+'</span>').join('');
-  // Tournament labels on their own row if present
-  let html=tlHtml?`<div style="display:flex;flex-wrap:wrap;gap:4px;padding:10px 16px 0;">${tlHtml}</div>`:'';
+  // Game description + rules button below comp tabs
+  const descriptions={score:'Predict the exact score for each match. Points awarded for correct scores, correct team goals, or correct total.',lms:'Pick a winner for each event. Get it wrong and you are eliminated. Last one standing wins.',betting:'Predict multiple markets per match: result, over/under, both teams to score. Points per correct market.'};
+  let html=`<div style="padding:10px 16px 0;display:flex;align-items:center;gap:8px;"><span style="font-size:11px;color:var(--text-3);flex:1;">${descriptions[comp.mode]||''}</span><button onclick="showRules('${comp.mode}')" style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent);background:none;border:1px solid var(--accent);border-radius:5px;padding:3px 10px;cursor:pointer;white-space:nowrap;">Rules</button></div>`;
   html+=predictSubTab==='predictions'?renderPredictionsPane(comp):renderLeaderboardPane(comp);
   document.getElementById('predict-content').innerHTML=html;
 }
@@ -494,12 +488,12 @@ function renderEventCard(ev,comp,isRoundOpen){
   } else if(hasRes){
     midSection=`<div class="ev-score">${ev.res.h}\u2013${ev.res.a}</div>`;
   } else if(comp.mode==='score'&&hasPred&&!hasRes){
-    midSection=`<div class="ev-score" style="font-size:12px;color:var(--comp-color);">${pred.h??'-'}\u2013${pred.a??'-'}</div>`;
+    midSection=`<div class="ev-score">${pred.h??'-'}\u2013${pred.a??'-'}</div>`;
   } else {
     midSection='<div class="ev-vs">vs</div>';
   }
 
-  let html=`<div class="${cls}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${comp.name}</span><span class="event-kickoff">${ev.kickoff||''}${hasRes?' \u00b7 FT: '+ev.res.h+'\u2013'+ev.res.a:''}</span></div><div class="event-teams"><div class="ev-team">${teamBadge(ev.homeLogo,ev.home)}<span class="ev-name">${ev.home}</span></div>${midSection}<div class="ev-team away">${teamBadge(ev.awayLogo,ev.away)}<span class="ev-name">${ev.away}</span></div></div></div><div class="pred-area">`;
+  let html=`<div class="${cls}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${ev.tournament||comp.name}</span><span class="event-kickoff">${ev.kickoff||''}${hasRes?' \u00b7 FT: '+ev.res.h+'\u2013'+ev.res.a:''}</span></div><div class="event-teams"><div class="ev-team">${teamBadge(ev.homeLogo,ev.home)}<span class="ev-name">${ev.home}</span></div>${midSection}<div class="ev-team away">${teamBadge(ev.awayLogo,ev.away)}<span class="ev-name">${ev.away}</span></div></div></div><div class="pred-area">`;
 
   if(canPredict){
     // Open for prediction
@@ -528,7 +522,7 @@ function renderEventCard(ev,comp,isRoundOpen){
 
     if(hasRes&&comp.mode==='score'&&earnedPts!=null){
       html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div><span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'\u2717 0 pts'}</span></div>`;
-      if(pointsBreakdown)html+=`<div style="font-size:10px;color:${earnedPts>0?'var(--green)':'var(--text-3)'};margin-top:4px;font-weight:600;">${pointsBreakdown}</div>`;
+      if(pointsBreakdown)html+=`<div style="font-size:12px;color:${earnedPts>0?'var(--green)':'var(--text-3)'};margin-top:4px;font-weight:600;">${pointsBreakdown}</div>`;
     } else if(hasRes&&correct!=null){
       html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div><span class="pred-correct ${correct?'yes':'no'}">${correct?'\u2713 Correct':'\u2717 Wrong'}</span></div>`;
     } else {
@@ -606,6 +600,47 @@ function buildLBTable(title,sub,rows,cellFn,colHeader){
   let html=`<div class="lb-wrap"><div class="lb-table-head"><span class="lb-table-head-title">${title}</span><span class="lb-table-head-sub">${sub}</span></div><table class="lb-table"><thead><tr><th style="width:32px;text-align:center">#</th><th>Player</th>${colHeader}</tr></thead><tbody>`;
   rows.forEach(row=>{const isMe=row.u===me,ini=(row.u||'?').slice(0,2).toUpperCase();html+=`<tr class="${isMe?'me':''}"><td class="lb-rank ${row.rank<=3?'top':''}">${row.rank<=3?MEDALS[row.rank-1]:row.rank}</td><td><div class="lb-user"><div class="lb-av ${isMe?'me':''}">${ini}</div><span class="lb-uname ${isMe?'me':''}">${row.u}${isMe?'<span class="you-tag">YOU</span>':''}</span></div></td>${cellFn(row)}</tr>`;});
   html+='</tbody></table></div>';return html;
+}
+
+// ── RULES POPUP ───────────────────────────────────────────────────────────
+function showRules(mode){
+  const rules={
+    score:`<h3 style="margin-bottom:12px;">Score Predictor Rules</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">How to play:</strong> Predict the exact final score for each match before the deadline.</div>
+<div><strong style="color:var(--text);">Points:</strong></div>
+<div style="padding-left:12px;">
+\\u2022 Exact score correct — <strong style="color:var(--green);">+5 pts</strong><br>
+\\u2022 Home team goals correct only — <strong>+2 pts</strong><br>
+\\u2022 Away team goals correct only — <strong>+2 pts</strong><br>
+\\u2022 Total goals correct only — <strong>+1 pt</strong>
+</div>
+<div><strong style="color:var(--text);">Leaderboard:</strong> Players are ranked by total points. Highest score wins.</div>
+</div>`,
+    lms:`<h3 style="margin-bottom:12px;">Last Man Standing Rules</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">How to play:</strong> Predict the outcome (Home Win, Draw, or Away Win) for every event in the round.</div>
+<div><strong style="color:var(--text);">Elimination:</strong> Events are resolved in kick-off order. If your prediction is wrong, you are eliminated at that event. All remaining events are irrelevant.</div>
+<div><strong style="color:var(--text);">Winning:</strong> The last player(s) still standing after all events win the round.</div>
+<div><strong style="color:var(--text);">Note:</strong> You must predict ALL events before the round starts. No two events can share the same kick-off time.</div>
+</div>`,
+    betting:`<h3 style="margin-bottom:12px;">Betting Markets Rules</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">How to play:</strong> For each match, predict multiple markets. Each correct market earns points.</div>
+<div><strong style="color:var(--text);">Markets:</strong></div>
+<div style="padding-left:12px;">
+\\u2022 Match Result (1X2) — Home Win, Draw, or Away Win<br>
+\\u2022 Over/Under 2.5 Goals — Will there be 3+ goals?<br>
+\\u2022 Both Teams to Score — Will both teams find the net?
+</div>
+<div><strong style="color:var(--text);">Points:</strong> Each market has its own points value, set by the competition operator.</div>
+</div>`,
+  };
+  const content=rules[mode]||'';
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML=`<div onclick="this.parentElement.remove()" style="position:absolute;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(2px);"></div><div style="position:relative;background:var(--white);border-radius:14px;max-width:400px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-height:80vh;overflow-y:auto;"><button onclick="this.closest('[style*=fixed]').remove()" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-3);">\\u00d7</button>${content}</div>`;
+  document.body.appendChild(overlay);
 }
 
 // ── PROFILE ───────────────────────────────────────────────────────────────
