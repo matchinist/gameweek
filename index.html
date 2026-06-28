@@ -1276,7 +1276,7 @@
 <script>
   const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
   const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
-  const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+  const supa = supabase.createClient(SUPA_URL, SUPA_KEY, {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'gw-operator'}});
 
   // ── Pick button cycle ──────────────────────────────────────────────────
   const picks = ['H', 'D', 'A'];
