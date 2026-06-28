@@ -286,7 +286,7 @@ table.lb-table{width:100%;border-collapse:collapse;}
 // ── SUPABASE CLIENT ───────────────────────────────────────────────────────────
 const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
-const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY, {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
 
 const CLIENT_PARAM = new URLSearchParams(location.search).get('client') || 'demo';
 
@@ -591,11 +591,12 @@ function renderPredictionsPane(comp){
   html+='</div>';
 
   if(isOpen&&events.length){
-    const predCount=events.filter(ev=>{ const p=preds[ev.id]; if(!p)return false; if(comp.mode==='score')return p.h!==undefined&&p.a!==undefined; if(comp.mode==='betting')return typeof p==='object'&&Object.keys(p).length>0; return!!p; }).length;
-    const pct=events.length?Math.round(predCount/events.length*100):0;
+    const openEvents=events.filter(ev=>!ev.res);
+    const predCount=openEvents.filter(ev=>{ const p=preds[ev.id]; if(!p)return false; if(comp.mode==='score')return p.h!==undefined&&p.a!==undefined; if(comp.mode==='betting')return typeof p==='object'&&Object.keys(p).length>0; return!!p; }).length;
+    if(openEvents.length){
+    const pct=Math.round(predCount/openEvents.length*100);
     html+=`<div class="progress-wrap"><div class="progress-meta"><span>${predCount} of ${events.length} predictions made</span><span class="progress-pct">${pct}%</span></div><div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:var(--comp-color);"></div></div></div>`;
-    if(comp.mode==='score'){
-      html+=`<button class="submit-preds-btn" onclick="submitScorePreds()">${predCount===events.length?'✓ All predictions saved':'Save Predictions ('+predCount+'/'+events.length+')'}</button>`;
+    html+=`<button class="submit-preds-btn" onclick="submitPreds()">${predCount===events.length?'✓ All predictions saved':'Save Predictions ('+predCount+'/'+events.length+')'}</button>`;
     }
   }
   return html;
@@ -609,10 +610,11 @@ function teamBadge(logo,name){
 function renderEventCard(ev,comp,isOpen){
   const pred=preds[ev.id]??null;
   const hasRes=!!ev.res;
+  const canPredict=isOpen&&!hasRes;
   const hasPred=comp.mode==='score'?(pred&&pred.h!==undefined&&pred.a!==undefined):comp.mode==='betting'?(pred&&typeof pred==='object'&&Object.keys(pred).length>0):(pred!==null&&pred!==undefined);
 
   let correct=null,earnedPts=null,pointsBreakdown='';
-  if(!isOpen&&hasRes&&hasPred){
+  if(hasRes&&hasPred){
     if(comp.mode==='lms'){ const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D'; correct=pred===actual; }
     else if(comp.mode==='score'){
       const s=comp.scoring||{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1};
@@ -626,24 +628,24 @@ function renderEventCard(ev,comp,isOpen){
     else if(comp.mode==='ou'){ correct=(pred==='O'&&(ev.res.h+ev.res.a)>2.5)||(pred==='U'&&(ev.res.h+ev.res.a)<=2.5); }
   }
 
-  let cls='event-card';if(isOpen&&hasPred)cls+=' predicted';if(!isOpen)cls+=' locked-pred';
+  let cls='event-card';if(canPredict&&hasPred)cls+=' predicted';if(!canPredict)cls+=' locked-pred';
   const hv=(pred&&pred.h!==undefined)?pred.h:'';
   const av=(pred&&pred.a!==undefined)?pred.a:'';
 
   let midSection;
-  if(comp.mode==='score'&&isOpen){
+  if(comp.mode==='score'&&canPredict){
     midSection=`<div class="score-inline-mid"><input class="score-num-inline${hv!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${hv}" id="sh-${ev.id}" oninput="pickScore('${ev.id}','h',this.value)"><span class="score-inline-dash">–</span><input class="score-num-inline${av!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${av}" id="sa-${ev.id}" oninput="pickScore('${ev.id}','a',this.value)"></div>`;
   } else if(hasRes){
     midSection=`<div class="ev-score">${ev.res.h}–${ev.res.a}</div>`;
-  } else if(comp.mode==='score'&&!isOpen&&hasPred){
-    midSection=`<div class="ev-score" style="font-size:12px;color:var(--text-2);">${pred.h??'-'}–${pred.a??'-'}</div>`;
+  } else if(comp.mode==='score'&&hasPred){
+    midSection=`<div class="ev-score">${pred.h??'-'}–${pred.a??'-'}</div>`;
   } else {
     midSection='<div class="ev-vs">vs</div>';
   }
 
   let html=`<div class="${cls}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${comp.name}</span><span class="event-kickoff">${ev.kickoff||''}${hasRes?` · FT: ${ev.res.h}–${ev.res.a}`:''}</span></div><div class="event-teams"><div class="ev-team">${teamBadge(ev.homeLogo||'',ev.home)}<span class="ev-name">${ev.home}</span></div>${midSection}<div class="ev-team away">${teamBadge(ev.awayLogo||'',ev.away)}<span class="ev-name">${ev.away}</span></div></div></div><div class="pred-area">`;
 
-  if(isOpen){
+  if(canPredict){
     if(comp.mode==='lms'||comp.mode==='result'){
       html+=`<div class="btns-1x2"><button class="btn-1x2${pred==='H'?' selected home':''}" onclick="pick('${ev.id}','H')">Home Win</button><button class="btn-1x2${pred==='D'?' selected draw':''}" onclick="pick('${ev.id}','D')">X</button><button class="btn-1x2${pred==='A'?' selected away':''}" onclick="pick('${ev.id}','A')">Away</button></div>`;
     } else if(comp.mode==='score'){
@@ -694,7 +696,7 @@ function pickMarket(evId,market,val){
   preds[evId][market]=val; savePred(evId,preds[evId]); renderPredict();
 }
 function changeRound(idx){ selectedRound[currentCompIdx]=parseInt(idx); renderPredict(); }
-function submitScorePreds(){
+function submitPreds(){
   if(!currentPlayer){
     // Prompt login here; entered scores are preserved in `preds` and saved after login
     openAuthModal('Sign in to save your predictions');
@@ -882,8 +884,20 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
 // ── INIT ──────────────────────────────────────────────────────────────────────
 (async()=>{
   try{
-    // Restore Supabase session
-    const {data:{session}} = await supa.auth.getSession();
+    // Wait for Supabase to fully restore session from storage
+    const session = await new Promise(resolve => {
+      const {data:{subscription}} = supa.auth.onAuthStateChange((event, sess) => {
+        if(event === 'INITIAL_SESSION'){
+          subscription.unsubscribe();
+          resolve(sess);
+        }
+      });
+      setTimeout(async ()=>{
+        subscription.unsubscribe();
+        const {data:{session:s}} = await supa.auth.getSession();
+        resolve(s);
+      }, 3000);
+    });
     if(session){
       const {data:player} = await supa.from('gw_players').select('*').eq('auth_id',session.user.id).eq('client_key',CLIENT_PARAM).single();
       if(player){ currentPlayer=player; try{ await loadPlayerPreds(); }catch(e){} }

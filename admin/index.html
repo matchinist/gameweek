@@ -930,7 +930,7 @@ tbody tr:hover td{background:var(--bg);}
 // ── SUPABASE ──────────────────────────────────────────────────────────────
 const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
-const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY, {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
 
 // ── AUTH ─────────────────────────────────────────────────────────────────
 let currentOperator = null;
@@ -1330,12 +1330,12 @@ function createComp(){
   };
   state.competitions.push(c);
   closeModal('modal-create-comp');
-  document.getElementById('new-comp-longterm').checked=false;
   document.getElementById('new-comp-mode').value='lms';
   updateModeDescription();
   saveAdminState();
-  renderCompList();
-  nav('competitions');
+  state.currentComp = c.id;
+  nav('comp-detail', c.name);
+  renderCompDetail();
   toast('Competition created');
 }
 
@@ -1766,13 +1766,22 @@ function initOperatorChrome(){
 }
 
 (async ()=>{
-  // Check Supabase Auth session — try refresh if expired
-  let {data:{session}} = await supa.auth.getSession();
-  if(!session){
-    // Token might be expired — try refreshing
-    const {data:refreshed} = await supa.auth.refreshSession();
-    session = refreshed?.session;
-  }
+  // Wait for Supabase to fully restore session from storage
+  const session = await new Promise(resolve => {
+    const {data:{subscription}} = supa.auth.onAuthStateChange((event, sess) => {
+      if(event === 'INITIAL_SESSION'){
+        subscription.unsubscribe();
+        resolve(sess);
+      }
+    });
+    // Fallback: if INITIAL_SESSION doesn't fire in 3s, try getSession
+    setTimeout(async ()=>{
+      subscription.unsubscribe();
+      const {data:{session:s}} = await supa.auth.getSession();
+      resolve(s);
+    }, 3000);
+  });
+
   if(!session){ window.location.href='/'; return; }
 
   // Load operator profile

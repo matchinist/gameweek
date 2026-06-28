@@ -327,32 +327,43 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 <!-- Create Tournament -->
 <!-- Score Entry Modal -->
 <div class="modal-overlay" id="modal-score-entry">
-  <div class="modal" style="max-width:320px;">
+  <div class="modal" style="max-width:340px;">
     <div class="modal-header">
       <div class="modal-title" id="score-modal-title">Enter Result</div>
       <button class="modal-close" onclick="closeModal('modal-score-entry')">×</button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="score-modal-eid">
-      <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:16px 0;">
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-select" id="score-modal-status">
+          <option value="upcoming">Not Started</option>
+          <option value="live">Live</option>
+          <option value="completed">Finished</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 0;">
         <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
           <label class="form-label" id="score-modal-home-label" style="text-align:center;">Home</label>
-          <input class="form-input" type="number" id="score-modal-h" min="0" max="30" placeholder="0"
+          <input class="form-input" type="number" id="score-modal-h" min="0" max="30" placeholder="—"
             style="text-align:center;font-family:var(--mono);font-size:28px;font-weight:700;padding:8px;width:80px;"
             onkeydown="if(event.key==='Enter')saveScore()">
         </div>
         <div style="font-family:var(--mono);font-size:22px;color:var(--text-3);font-weight:700;padding-top:22px;">–</div>
         <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
           <label class="form-label" id="score-modal-away-label" style="text-align:center;">Away</label>
-          <input class="form-input" type="number" id="score-modal-a" min="0" max="30" placeholder="0"
+          <input class="form-input" type="number" id="score-modal-a" min="0" max="30" placeholder="—"
             style="text-align:center;font-family:var(--mono);font-size:28px;font-weight:700;padding:8px;width:80px;"
             onkeydown="if(event.key==='Enter')saveScore()">
         </div>
       </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-score-entry')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveScore()">Save Result</button>
+    <div class="modal-footer" style="justify-content:space-between;">
+      <button class="btn btn-ghost" onclick="clearScore()" style="color:var(--red);">Clear Result</button>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-ghost" onclick="closeModal('modal-score-entry')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveScore()">Save</button>
+      </div>
     </div>
   </div>
 </div>
@@ -395,7 +406,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 // ── SUPABASE ──────────────────────────────────────────────────────────────
 const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
-const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY, {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
 
 // ── AUTH GUARD ────────────────────────────────────────────────────────────
 let currentAdmin = null;
@@ -657,8 +668,9 @@ function renderRoundItem(r,i,season,t,isOpen){
 function renderEventMini(eid){
   const ev=S.events[eid];if(!ev)return '';
   const home=getTeam(ev.homeId),away=getTeam(ev.awayId);if(!home||!away)return '';
-  const st=ev.result&&ev.result.h!==null&&ev.result.a!==null?'completed':(ev.status||'upcoming');
-  const score=st==='completed'?`${ev.result.h}–${ev.result.a}`:'—';
+  const st=ev.status||'upcoming';
+  const score=(st==='completed'&&ev.result)?`${ev.result.h}–${ev.result.a}`:(st==='live'&&ev.result)?`${ev.result.h}–${ev.result.a}`:'—';
+  const statusLabel=st==='completed'?'✓ FT':st==='live'?'● Live':'—';
   return `<div class="event-mini" id="evmini-${eid}">
     <div class="tni-badge" style="background:${home.color};width:20px;height:20px;border-radius:50%;font-size:6px;">${home.short}</div>
     <div class="em-teams">${home.name}<span class="sep">vs</span>${away.name}</div>
@@ -814,6 +826,7 @@ function openScoreModal(eid){
   document.getElementById('score-modal-a').value=ev.result?.a??'';
   document.getElementById('score-modal-home-label').textContent=home?.name||'Home';
   document.getElementById('score-modal-away-label').textContent=away?.name||'Away';
+  document.getElementById('score-modal-status').value=ev.status||'upcoming';
   document.getElementById('modal-score-entry').classList.add('open');
   setTimeout(()=>document.getElementById('score-modal-h').focus(),80);
 }
@@ -822,16 +835,36 @@ function saveScore(){
   const eid=document.getElementById('score-modal-eid').value;
   const h=document.getElementById('score-modal-h').value;
   const a=document.getElementById('score-modal-a').value;
+  const status=document.getElementById('score-modal-status').value;
   const ev=S.events[eid];if(!ev)return;
-  if(h===''||a===''){toast('Enter both scores');return;}
-  ev.result={h:parseInt(h),a:parseInt(a)};
-  ev.status='completed';
+
+  if(status==='completed'&&(h===''||a==='')){toast('Enter both scores for a finished match');return;}
+
+  ev.status=status;
+  if(h!==''&&a!==''){
+    ev.result={h:parseInt(h),a:parseInt(a)};
+  } else {
+    ev.result=null;
+  }
+
   save();
   closeModal('modal-score-entry');
-  // Refresh the event mini display
   const el=document.getElementById('evmini-'+eid);
   if(el)el.outerHTML=renderEventMini(eid);
-  toast(`Result saved: ${h}–${a}`);
+  toast(status==='completed'?`Result saved: ${h}–${a}`:'Status updated: '+status);
+}
+
+function clearScore(){
+  const eid=document.getElementById('score-modal-eid').value;
+  const ev=S.events[eid];if(!ev)return;
+  if(!confirm('Clear result and reset status? All points from this event will be recalculated as if it never happened.'))return;
+  ev.result=null;
+  ev.status='upcoming';
+  save();
+  closeModal('modal-score-entry');
+  const el=document.getElementById('evmini-'+eid);
+  if(el)el.outerHTML=renderEventMini(eid);
+  toast('Result cleared');
 }
 
 function removeEventFromRound(eid){
@@ -884,12 +917,20 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 // ── INIT ──────────────────────────────────────────────────────────────────
 async function bootDataManager(){
   // Check Supabase Auth session
-  // Check Supabase Auth session — try refresh if expired
-  let {data:{session}} = await supa.auth.getSession();
-  if(!session){
-    const {data:refreshed} = await supa.auth.refreshSession();
-    session = refreshed?.session;
-  }
+  // Wait for Supabase to fully restore session from storage
+  const session = await new Promise(resolve => {
+    const {data:{subscription}} = supa.auth.onAuthStateChange((event, sess) => {
+      if(event === 'INITIAL_SESSION'){
+        subscription.unsubscribe();
+        resolve(sess);
+      }
+    });
+    setTimeout(async ()=>{
+      subscription.unsubscribe();
+      const {data:{session:s}} = await supa.auth.getSession();
+      resolve(s);
+    }, 3000);
+  });
   if(!session){ showDMLogin(); return; }
 
   // Check if this auth user is a platform admin
