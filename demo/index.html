@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gameweek</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Gameweek Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --bg:#F7F8FA;--white:#FFFFFF;--border:#E2E4EA;
@@ -19,50 +21,25 @@
 }
 html,body{height:100%;overflow:hidden;}
 body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;}
-
-/* ── APP SHELL ── */
 .app{display:flex;flex-direction:column;height:100vh;max-width:860px;margin:0 auto;width:100%;background:var(--white);position:relative;}
-
-/* ── HEADER ── */
 .app-header{background:var(--white);border-bottom:1px solid var(--border);flex-shrink:0;z-index:50;}
 .header-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;}
-.header-logo{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text);letter-spacing:-0.5px;}
+.header-logo{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--text);letter-spacing:-0.5px;}
 .header-logo span{color:var(--accent);}
 .header-user{display:flex;align-items:center;gap:8px;cursor:pointer;}
 .header-avatar{width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:700;color:white;}
 .header-username{font-size:12px;font-weight:500;color:var(--text-2);}
-
-/* ── BOTTOM NAV ── */
 .bottom-nav{background:var(--white);border-top:1px solid var(--border);display:flex;flex-shrink:0;}
 .bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px;cursor:pointer;border:none;background:none;transition:all 0.13s;gap:3px;}
 .bnav-icon{font-size:18px;line-height:1;}
 .bnav-label{font-size:10px;font-weight:600;color:var(--text-3);letter-spacing:0.3px;}
 .bnav-item.active .bnav-label{color:var(--accent);}
-.bnav-item.active .bnav-icon{filter:none;}
-
-/* ── SCROLL AREA ── */
 .scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;}
 ::-webkit-scrollbar{width:3px;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
-
-/* ── SCREENS ── */
 .screen{display:none;padding:16px;}
 .screen.active{display:block;}
-
-/* ── AUTH SCREEN ── */
-.auth-wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px 16px;}
-.auth-card{width:100%;max-width:340px;}
-.auth-logo{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--text);text-align:center;margin-bottom:4px;}
-.auth-logo span{color:var(--accent);}
-.auth-tagline{font-size:12px;color:var(--text-3);text-align:center;margin-bottom:28px;}
 .auth-toggle{display:flex;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:3px;margin-bottom:20px;}
-/* ── AUTH MODAL OVERLAY ── */
-.auth-modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,17,23,0.5);backdrop-filter:blur(2px);z-index:200;align-items:center;justify-content:center;padding:16px;}
-.auth-modal-overlay.open{display:flex;}
-.auth-modal{background:var(--white);border-radius:14px;width:100%;max-width:320px;box-shadow:0 20px 60px rgba(0,0,0,0.2);padding:24px;}
-.auth-modal-logo{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);text-align:center;margin-bottom:2px;}
-.auth-modal-logo span{color:var(--accent);}
-.auth-modal-reason{font-size:11px;color:var(--text-3);text-align:center;margin-bottom:18px;}
 .auth-tab{flex:1;padding:7px;text-align:center;font-size:12px;font-weight:600;border-radius:5px;cursor:pointer;color:var(--text-2);transition:all 0.13s;border:none;background:none;}
 .auth-tab.active{background:var(--white);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.08);}
 .form-group{margin-bottom:12px;}
@@ -72,46 +49,60 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .form-input::placeholder{color:var(--text-3);}
 .auth-btn{width:100%;padding:11px;background:var(--accent);color:white;border:none;border-radius:7px;font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;transition:background 0.13s;margin-top:4px;letter-spacing:0.3px;}
 .auth-btn:hover{background:var(--accent-2);}
-.auth-error{font-size:11px;color:var(--red);text-align:center;margin-top:8px;min-height:16px;}
+.auth-error{display:none;}
+.btn-spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:btnspin 0.6s linear infinite;vertical-align:middle;margin-right:6px;}
+@keyframes btnspin{to{transform:rotate(360deg);}}
+@keyframes authshake{10%,90%{transform:translateX(-1px);}20%,80%{transform:translateX(2px);}30%,50%,70%{transform:translateX(-4px);}40%,60%{transform:translateX(4px);}}
+.auth-modal.shake{animation:authshake 0.4s;}
 .auth-terms{font-size:11px;color:var(--text-3);text-align:center;margin-top:14px;line-height:1.5;}
-
-/* ── COMP TABS ── */
 .comp-tabs{display:flex;gap:0;overflow-x:auto;border-bottom:1px solid var(--border);padding:0 16px;-webkit-overflow-scrolling:touch;}
 .comp-tabs::-webkit-scrollbar{display:none;}
 .comp-tab{padding:10px 14px;font-size:12px;font-weight:500;color:var(--text-2);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:all 0.13s;display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex-shrink:0;}
 .comp-tab:hover{color:var(--text);}
 .comp-tab.active{color:var(--comp-color);border-bottom-color:var(--comp-color);}
-.comp-tab-name{font-size:12px;font-weight:600;}
+.comp-tab-name{font-size:15px;font-weight:700;}
 .comp-tab-mode{font-family:var(--mono);font-size:9px;color:var(--text-3);font-weight:700;letter-spacing:0.3px;}
 .comp-tab.active .comp-tab-mode{color:var(--comp-color);opacity:0.7;}
-
-/* ── ROUND SELECTOR ── */
-.round-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--white);border-bottom:1px solid var(--border);}
-
-/* ── PREDICT SUB-TABS ── */
-.predict-subtabs{display:flex;gap:6px;padding:12px 16px 0;}
-.ps-tab{flex:1;text-align:center;padding:8px 4px;font-size:12px;font-weight:600;color:var(--text-2);background:var(--bg);border:1px solid var(--border);border-radius:7px;cursor:pointer;transition:all 0.13s;}
+.round-bar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--white);border-bottom:1px solid var(--border);}
+.round-select{font-family:var(--mono);font-size:11px;border:1px solid var(--border);background:var(--white);padding:5px 8px;border-radius:5px;cursor:pointer;outline:none;color:var(--text);}
+.round-select:focus{border-color:var(--accent);}
+.round-status{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+.round-status.open{background:var(--green-light);color:var(--green);}
+.round-status.completed{background:var(--bg);color:var(--text-3);}
+.round-bar-right{margin-left:auto;display:flex;align-items:center;gap:4px;}
+@media(max-width:480px){
+  .predict-header-row{flex-direction:column;gap:4px;padding:8px 10px 0;}
+  .predict-tournament-labels{width:100%;}
+  .predict-subtabs{width:100%;}
+  .ps-tab{flex:1;}
+  .events-list{padding:10px 10px;}
+  .event-card-top{padding:11px 10px;}
+  .pred-area{padding:9px 10px;}
+}
+/* ── PREDICT HEADER ROW: tournament labels left, tabs right ── */
+.predict-header-row{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 0;gap:8px;}
+.predict-subtabs{display:flex;gap:3px;flex-shrink:0;}
+.ps-tab{padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:0.3px;text-transform:uppercase;color:var(--text-3);background:var(--bg);border:1px solid var(--border);border-radius:4px;cursor:pointer;transition:all 0.13s;white-space:nowrap;min-width:90px;text-align:center;}
 .ps-tab:hover{color:var(--text);}
 .ps-tab.active{background:var(--comp-color);border-color:var(--comp-color);color:white;}
-
-/* ── LEADERBOARD WEEK SELECT ── */
+.predict-tournament-labels{display:flex;flex-wrap:wrap;gap:4px;flex:1;min-width:0;}
+.predict-tournament-label{font-size:10px;font-weight:600;background:var(--bg);border:1px solid var(--border);color:var(--text-2);padding:3px 9px;border-radius:12px;white-space:nowrap;}
+/* ── INLINE SCORE INPUTS ── */
+.score-num-inline{width:38px;height:34px;border:1px solid var(--border);border-radius:6px;text-align:center;font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);outline:none;-moz-appearance:textfield;transition:border-color 0.13s;flex-shrink:0;background:var(--white);}
+.score-num-inline::-webkit-inner-spin-button,.score-num-inline::-webkit-outer-spin-button{-webkit-appearance:none;}
+.score-num-inline:focus{border-color:var(--comp-color);}
+.score-num-inline.has{border-color:var(--comp-color);background:var(--accent-light);color:var(--comp-color);}
+.score-inline-mid{display:flex;align-items:center;gap:4px;flex-shrink:0;min-width:95px;justify-content:center;}
+.score-inline-dash{font-family:var(--mono);font-size:13px;color:var(--text-3);font-weight:700;}
+/* ── SUBMIT BUTTON ── */
+.submit-preds-btn{display:block;width:calc(100% - 28px);margin:12px 14px;padding:12px;background:var(--comp-color);color:white;border:none;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;transition:opacity 0.13s;}
+.submit-preds-btn:hover{opacity:0.88;}
 .lb-week-row{padding:14px 16px 0;}
 .lb-week-select{width:100%;font-family:var(--mono);font-size:11px;border:1px solid var(--border);background:var(--white);padding:8px 10px;border-radius:6px;outline:none;color:var(--text);}
 .lb-week-select:focus{border-color:var(--comp-color);}
 .lb-pane{padding:14px 16px;}
-.round-name{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);}
-.round-status{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;}
-.round-status.open{background:var(--green-light);color:var(--green);}
-.round-status.completed{background:var(--bg);color:var(--text-3);}
-.round-status.locked{background:var(--amber-light);color:var(--amber);}
-.round-select{font-family:var(--mono);font-size:10px;border:1px solid var(--border);background:var(--white);padding:5px 8px;border-radius:5px;cursor:pointer;outline:none;color:var(--text);}
-.round-select:focus{border-color:var(--accent);}
-
-/* ── DEADLINE BANNER ── */
 .deadline-banner{background:var(--accent-light);border-bottom:1px solid #C7D2FE;padding:8px 16px;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--accent-2);}
 .deadline-banner strong{font-family:var(--mono);font-size:10px;}
-
-/* ── LMS PARTICIPATION BAR ── */
 .survival-tracker{padding:12px 16px;background:var(--bg);border-bottom:1px solid var(--border);}
 .st-label{font-size:10px;font-weight:600;color:var(--text-3);margin-bottom:8px;letter-spacing:0.3px;}
 .st-bar-wrap{display:flex;flex-direction:column;gap:6px;}
@@ -122,17 +113,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .st-bar-fill.participated{background:var(--accent);}
 .st-bar-fill.survived{background:var(--green);}
 .st-bar-count{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);min-width:36px;text-align:right;}
-.st-alive{font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;margin-left:8px;}
-.st-alive.alive{background:var(--green-light);color:var(--green);}
-.st-alive.out{background:var(--red-light);color:var(--red);}
-
-/* ── EVENT CARDS ── */
 .events-list{display:flex;flex-direction:column;gap:8px;padding:12px 16px;}
-.ev-participants{font-size:10px;color:var(--text-2);display:flex;align-items:center;gap:5px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
-.ev-participants strong{font-family:var(--mono);color:#333;font-size:11px;}
-.ev-pred-bar{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
-.ev-pred-bar-fill{height:3px;background:var(--comp-color);border-radius:2px;opacity:0.4;}
-
 .event-card{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color 0.13s;}
 .event-card.predicted{border-color:var(--comp-color);}
 .event-card.locked-pred{border-color:var(--border);opacity:0.85;}
@@ -141,11 +122,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .event-league{font-size:10px;font-weight:700;color:var(--text-2);letter-spacing:0.5px;text-transform:uppercase;}
 .event-kickoff{font-family:var(--mono);font-size:10px;color:var(--text-2);}
 .event-teams{display:flex;align-items:center;gap:8px;}
-.ev-team{flex:1;display:flex;align-items:center;gap:9px;}
+.ev-team{flex:1;display:flex;align-items:center;gap:9px;min-width:0;}
 .ev-team.away{flex-direction:row-reverse;}
 .ev-badge{width:32px;height:32px;border-radius:50%;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:8px;font-weight:700;color:var(--text-2);flex-shrink:0;overflow:hidden;}
 .ev-badge img{width:100%;height:100%;object-fit:contain;}
-.ev-name{font-family:var(--mono);font-size:13px;font-weight:700;color:#000;}
+.ev-name{font-family:var(--mono);font-size:13px;font-weight:700;color:#000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ev-vs{font-family:var(--mono);font-size:11px;color:var(--text-3);text-align:center;min-width:28px;}
 .ev-score{font-family:var(--mono);font-size:15px;font-weight:700;color:#000;text-align:center;min-width:42px;}
 .pred-area{border-top:1px solid var(--border);padding:11px 14px;}
@@ -157,29 +138,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .btn-1x2.selected.home{border-color:#2563EB;background:#2563EB;color:white;}
 .btn-1x2.selected.draw{border-color:#D97706;background:#D97706;color:white;}
 .btn-1x2.selected.away{border-color:#DC2626;background:#DC2626;color:white;}
-/* ── INLINE SCORE ── */
-.score-num-inline{width:38px;height:34px;border:1px solid var(--border);border-radius:6px;text-align:center;font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);outline:none;-moz-appearance:textfield;transition:border-color 0.13s;flex-shrink:0;background:var(--white);}
-.score-num-inline::-webkit-inner-spin-button,.score-num-inline::-webkit-outer-spin-button{-webkit-appearance:none;}
-.score-num-inline:focus{border-color:var(--comp-color);}
-.score-num-inline.has{border-color:var(--comp-color);background:var(--accent-light);color:var(--comp-color);}
-.score-inline-mid{display:flex;align-items:center;gap:4px;flex-shrink:0;}
-.score-inline-dash{font-family:var(--mono);font-size:13px;color:var(--text-3);font-weight:700;}
-/* ── SUBMIT BUTTON ── */
-.submit-preds-btn{display:block;width:calc(100% - 28px);margin:12px 14px;padding:12px;background:var(--comp-color);color:white;border:none;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;transition:opacity 0.13s;}
-.submit-preds-btn:hover{opacity:0.88;}
-/* ── PREDICT HEADER ROW ── */
-.predict-header-row{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 0;gap:8px;}
-.predict-subtabs{display:flex;gap:3px;flex-shrink:0;}
-.ps-tab{padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:0.3px;text-transform:uppercase;color:var(--text-3);background:var(--bg);border:1px solid var(--border);border-radius:4px;cursor:pointer;transition:all 0.13s;white-space:nowrap;min-width:90px;text-align:center;}
-.ps-tab:hover{color:var(--text);}
-.ps-tab.active{background:var(--comp-color);border-color:var(--comp-color);color:white;}
-.predict-tournament-labels{display:flex;flex-wrap:wrap;gap:4px;flex:1;min-width:0;}
-.predict-tournament-label{font-size:10px;font-weight:600;background:var(--bg);border:1px solid var(--border);color:var(--text-2);padding:3px 9px;border-radius:12px;white-space:nowrap;}
-/* ── AUTH LOADING ── */
-.btn-spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:btnspin 0.6s linear infinite;vertical-align:middle;margin-right:6px;}
-@keyframes btnspin{to{transform:rotate(360deg);}}
-@keyframes authshake{10%,90%{transform:translateX(-1px);}20%,80%{transform:translateX(2px);}30%,50%,70%{transform:translateX(-4px);}40%,60%{transform:translateX(4px);}}
-.auth-modal.shake{animation:authshake 0.4s;}
 .pred-result-row{display:flex;align-items:center;justify-content:space-between;}
 .pred-made{font-size:12px;color:#333;}
 .pred-made strong{font-family:var(--mono);color:#000;}
@@ -188,34 +146,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .pred-correct.no{color:var(--red);}
 .ev-participants{font-size:10px;color:var(--text-2);display:flex;align-items:center;gap:5px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
 .ev-participants strong{font-family:var(--mono);color:#333;font-size:11px;}
-
-/* Score */
-.score-pred{display:flex;align-items:center;gap:8px;}
-.score-side{display:flex;align-items:center;gap:7px;flex:1;}
-.score-side.right{flex-direction:row-reverse;}
-.score-side-name{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:72px;}
-.score-num{width:44px;height:38px;border:1px solid var(--border);border-radius:6px;text-align:center;font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text);outline:none;-moz-appearance:textfield;transition:border-color 0.13s;flex-shrink:0;}
-.score-num::-webkit-inner-spin-button,.score-num::-webkit-outer-spin-button{-webkit-appearance:none;}
-.score-num:focus{border-color:var(--comp-color);}
-.score-num.has{border-color:var(--comp-color);background:var(--accent-light);color:var(--comp-color);}
-.score-dash{font-family:var(--mono);font-size:14px;color:var(--text-3);font-weight:700;}
-
-/* O/U */
-.btns-ou{display:flex;gap:6px;}
-.btn-ou{flex:1;padding:9px 4px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;transition:all 0.13s;text-align:center;line-height:1.3;}
-.btn-ou .sub{display:block;font-size:8px;font-weight:400;opacity:0.6;margin-top:2px;}
-.btn-ou.over:hover,.btn-ou.over.selected{border-color:var(--green);background:var(--green-light);color:var(--green);}
-.btn-ou.under:hover,.btn-ou.under.selected{border-color:var(--red);background:var(--red-light);color:var(--red);}
-
-/* Completed pred display */
-.pred-result-row{display:flex;align-items:center;justify-content:space-between;}
-.pred-made{font-size:11px;color:var(--text-2);}
-.pred-made strong{font-family:var(--mono);color:var(--text);}
-.pred-correct{font-size:11px;font-weight:700;}
-.pred-correct.yes{color:var(--green);}
-.pred-correct.no{color:var(--red);}
-
-/* ── PROGRESS ── */
 .progress-wrap{padding:12px 16px;border-top:1px solid var(--border);background:var(--white);}
 .progress-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--text-2);margin-bottom:6px;}
 .progress-pct{font-family:var(--mono);font-size:11px;color:var(--comp-color);}
@@ -225,13 +155,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .submit-hint{font-size:11px;color:var(--text-3);}
 .submit-btn{font-family:var(--mono);font-size:11px;font-weight:700;padding:9px 20px;background:var(--comp-color);color:white;border:none;border-radius:6px;cursor:pointer;transition:background 0.13s;letter-spacing:0.3px;}
 .submit-btn:disabled{background:var(--bg);color:var(--text-3);cursor:not-allowed;}
-
-/* ── LEADERBOARD ── */
 .lb-wrap{background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
 .lb-table-head{padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:space-between;}
 .lb-table-head-title{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);}
 .lb-table-head-sub{font-size:10px;color:var(--text-3);}
-
 table.lb-table{width:100%;border-collapse:collapse;}
 .lb-table th{font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:7px 14px;text-align:left;border-bottom:1px solid var(--border);}
 .lb-table th.r{text-align:right;}
@@ -239,7 +166,6 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .lb-table tbody tr:last-child td{border-bottom:none;}
 .lb-table tbody tr:hover td{background:var(--bg);}
 .lb-table tbody tr.me td{background:var(--accent-light);}
-
 .lb-rank{font-family:var(--mono);font-size:11px;color:var(--text-3);text-align:center;width:32px;}
 .lb-rank.top{font-size:15px;}
 .lb-user{display:flex;align-items:center;gap:8px;}
@@ -253,85 +179,66 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .alive-tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;}
 .alive-tag.alive{background:var(--green-light);color:var(--green);}
 .alive-tag.out{background:var(--red-light);color:var(--red);}
-
-/* ── PROFILE ── */
 .profile-header{background:var(--accent);padding:24px 16px;text-align:center;}
 .profile-av{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:16px;font-weight:700;color:white;margin:0 auto 10px;}
 .profile-name{font-family:var(--mono);font-size:16px;font-weight:700;color:white;margin-bottom:2px;}
 .profile-joined{font-size:11px;color:rgba(255,255,255,0.6);}
-
 .profile-stats{display:grid;grid-template-columns:repeat(3,1fr);background:var(--white);border-bottom:1px solid var(--border);}
 .profile-stat{padding:14px 8px;text-align:center;border-right:1px solid var(--border);}
 .profile-stat:last-child{border-right:none;}
 .ps-val{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--text);}
 .ps-label{font-size:10px;color:var(--text-3);margin-top:2px;}
-
 .profile-section{padding:14px 16px;border-bottom:1px solid var(--border);}
 .profile-section-title{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:0.6px;text-transform:uppercase;margin-bottom:12px;}
-.profile-comp-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
-.profile-comp-row:last-child{border-bottom:none;}
-.pcr-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-.pcr-name{font-size:12px;font-weight:500;color:var(--text);flex:1;}
-.pcr-rank{font-family:var(--mono);font-size:11px;color:var(--text-2);}
-.pcr-pts{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);}
-
 .logout-btn{width:100%;padding:11px;background:var(--bg);color:var(--text-2);border:1px solid var(--border);border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.13s;margin-top:4px;}
 .logout-btn:hover{border-color:var(--red);color:var(--red);}
-
-/* ── TOAST ── */
 #toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--text);color:white;font-family:var(--mono);font-size:11px;padding:9px 18px;border-radius:6px;z-index:999;transition:transform 0.25s ease;pointer-events:none;white-space:nowrap;}
 #toast.show{transform:translateX(-50%) translateY(0);}
-
-/* ── EMPTY ── */
 .empty{text-align:center;padding:40px 20px;color:var(--text-3);}
 .empty-icon{font-size:28px;margin-bottom:10px;}
 .empty-title{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text-2);margin-bottom:5px;}
 .empty-sub{font-size:11px;line-height:1.6;}
+/* ── SCORE ── */
+.score-pred{display:flex;align-items:center;gap:8px;}
+.score-side{display:flex;align-items:center;gap:7px;flex:1;}
+.score-side.right{flex-direction:row-reverse;}
+.score-side-name{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:72px;}
+.score-num{width:44px;height:38px;border:1px solid var(--border);border-radius:6px;text-align:center;font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text);outline:none;-moz-appearance:textfield;transition:border-color 0.13s;flex-shrink:0;}
+.score-num::-webkit-inner-spin-button,.score-num::-webkit-outer-spin-button{-webkit-appearance:none;}
+.score-num:focus{border-color:var(--comp-color);}
+.score-num.has{border-color:var(--comp-color);background:var(--accent-light);color:var(--comp-color);}
+.score-dash{font-family:var(--mono);font-size:14px;color:var(--text-3);font-weight:700;}
+/* ── O/U ── */
+.btns-ou{display:flex;gap:6px;}
+.btn-ou{flex:1;padding:9px 4px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;transition:all 0.13s;text-align:center;line-height:1.3;}
+.btn-ou .sub{display:block;font-size:8px;font-weight:400;opacity:0.6;margin-top:2px;}
+.btn-ou.over:hover,.btn-ou.over.selected{border-color:var(--green);background:var(--green-light);color:var(--green);}
+.btn-ou.under:hover,.btn-ou.under.selected{border-color:var(--red);background:var(--red-light);color:var(--red);}
+/* ── AUTH MODAL ── */
+.auth-modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,17,23,0.5);backdrop-filter:blur(2px);z-index:200;align-items:center;justify-content:center;padding:16px;}
+.auth-modal-overlay.open{display:flex;}
+.auth-modal{background:var(--white);border-radius:14px;width:100%;max-width:320px;box-shadow:0 20px 60px rgba(0,0,0,0.2);padding:24px;}
+.auth-modal-logo{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--text);text-align:center;margin-bottom:2px;}
+.auth-modal-logo span{color:var(--accent);}
+.auth-modal-reason{font-size:11px;color:var(--text-3);text-align:center;margin-bottom:18px;}
+
 </style>
 </head>
 <body>
 <div class="app" id="app">
-
-  <!-- ── AUTH MODAL (overlay, triggered on action) ── -->
-  <div class="auth-modal-overlay" id="auth-modal-overlay" onclick="if(event.target===this)closeAuthModal()">
-    <div class="auth-modal">
-      <div class="auth-modal-logo">game<span>week</span></div>
-      <div class="auth-modal-reason" id="auth-modal-reason">Sign in to make predictions</div>
-      <div class="auth-toggle">
-        <button class="auth-tab active" id="tab-login" onclick="switchAuth('login')">Sign in</button>
-        <button class="auth-tab" id="tab-register" onclick="switchAuth('register')">Register</button>
-      </div>
-      <div id="form-login">
-        <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="login-username" placeholder="your username" autocomplete="username" /></div>
-        <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" /></div>
-        <button class="auth-btn" onclick="doLogin()">Sign in →</button>
-      </div>
-      <div id="form-register" style="display:none;">
-        <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="reg-username" placeholder="choose a username" autocomplete="username" /></div>
-        <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="reg-email" placeholder="your@email.com" autocomplete="email" /></div>
-        <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="reg-password" placeholder="min 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()" /></div>
-        <button class="auth-btn" onclick="doRegister()">Create account →</button>
-        <div class="auth-terms">Free to play. No deposit required.</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── APP (always visible) ── -->
   <div id="screen-app" style="flex:1;min-height:0;display:flex;flex-direction:column;">
-
     <div class="app-header">
       <div class="header-top">
         <div class="header-logo">game<span>week</span></div>
-        <div class="header-user" onclick="headerUserClick()">
-          <div class="header-avatar" id="hdr-avatar">?</div>
-          <div class="header-username" id="hdr-username">Sign in</div>
+        <div class="header-user" onclick="goTab('profile')">
+          <div class="header-avatar" id="hdr-avatar">DE</div>
+          <div class="header-username" id="hdr-username">demo_user</div>
         </div>
       </div>
       <div id="comp-tabs-wrap">
         <div class="comp-tabs" id="comp-tabs"></div>
       </div>
     </div>
-
     <div class="scroll-area" id="scroll-area">
       <div class="screen active" id="tab-predict">
         <div id="predict-content" style="padding:0;"></div>
@@ -340,172 +247,122 @@ table.lb-table{width:100%;border-collapse:collapse;}
         <div id="profile-content"></div>
       </div>
     </div>
-
     <div class="bottom-nav">
-      <button class="bnav-item active" id="bnav-predict" onclick="goTab('predict')">
-        <div class="bnav-icon">⚽</div>
-        <div class="bnav-label">PREDICT</div>
-      </button>
-      <button class="bnav-item" id="bnav-profile" onclick="goTab('profile')">
-        <div class="bnav-icon">👤</div>
-        <div class="bnav-label">PROFILE</div>
-      </button>
+      <button class="bnav-item active" id="bnav-predict" onclick="goTab('predict')"><div class="bnav-icon">⚽</div><div class="bnav-label">PREDICT</div></button>
+      <button class="bnav-item" id="bnav-profile" onclick="goTab('profile')"><div class="bnav-icon">👤</div><div class="bnav-label">PROFILE</div></button>
     </div>
-
   </div>
 </div>
-
 <div id="toast"></div>
 
 <script>
-// ── FAKE DATA ─────────────────────────────────────────────────────────────
-const MODE_LABELS = {lms:'Last Man Standing',score:'Score Predictor',betting:'Betting Markets'};
-const MEDALS = ['🥇','🥈','🥉'];
+const MODE_LABELS={lms:'Last Man Standing',score:'Score Predictor',betting:'Betting Markets'};
+const MEDALS=['🥇','🥈','🥉'];
 
-const COMPS = [
-  {
-    id:'c1', name:'Score Predictor', mode:'score', color:'#4F46E5',
+// ── LOGOS ──────────────────────────────────────────────────────────────────
+const LOGO={
+  'Arsenal':'https://upload.wikimedia.org/wikipedia/en/5/53/Arsenal_FC.svg',
+  'Chelsea':'https://upload.wikimedia.org/wikipedia/en/c/cc/Chelsea_FC.svg',
+  'Liverpool':'https://upload.wikimedia.org/wikipedia/en/0/0c/Liverpool_FC.svg',
+  'Man City':'https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg',
+  'Man Utd':'https://upload.wikimedia.org/wikipedia/en/7/7a/Manchester_United_FC_crest.svg',
+  'Spurs':'https://upload.wikimedia.org/wikipedia/en/b/b4/Tottenham_Hotspur.svg',
+  'Wolves':'https://upload.wikimedia.org/wikipedia/en/f/fc/Wolverhampton_Wanderers.svg',
+  'Real Madrid':'https://upload.wikimedia.org/wikipedia/en/5/56/Real_Madrid_CF.svg',
+  'Barcelona':'https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg',
+  'Bayern':'https://upload.wikimedia.org/wikipedia/commons/1/1b/FC_Bayern_M%C3%BCnchen_logo_%282017%29.svg',
+  'PSG':'https://upload.wikimedia.org/wikipedia/en/a/a7/Paris_Saint-Germain_F.C..svg',
+  'Inter':'https://upload.wikimedia.org/wikipedia/commons/0/05/FC_Internazionale_Milano_2021.svg',
+  'Juventus':'https://upload.wikimedia.org/wikipedia/commons/a/a8/Juventus_FC_-_pictogram.svg',
+  'Atletico':'https://upload.wikimedia.org/wikipedia/en/f/f9/Atletico_Madrid_Logo_2024.svg',
+  'Dortmund':'https://upload.wikimedia.org/wikipedia/commons/6/67/Borussia_Dortmund_logo.svg',
+};
+
+// ── FAKE DATA ─────────────────────────────────────────────────────────────
+const COMPS=[
+  {id:'c1',name:'Score Predictor',mode:'score',color:'#4F46E5',
     scoring:{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1},
     tournamentNames:['Premier League'],
     rounds:[
       {id:'r1',label:'Gameweek 1',status:'completed',deadline:'2026-08-16T14:00',eventIds:['e101','e102','e103']},
       {id:'r2',label:'Gameweek 2',status:'open',deadline:'2026-08-30T14:00',eventIds:['e104','e105','e106','e107']},
-    ],
-  },
-  {
-    id:'c2', name:'Last Man Standing', mode:'lms', color:'#DC2626',
+    ]},
+  {id:'c2',name:'Last Man Standing',mode:'lms',color:'#DC2626',
     tournamentNames:['Champions League'],
     rounds:[
       {id:'r3',label:'Matchday 1',status:'completed',deadline:'2026-09-17T17:00',eventIds:['e201','e202','e203']},
       {id:'r4',label:'Matchday 2',status:'open',deadline:'2026-10-01T17:00',eventIds:['e204','e205','e206']},
-    ],
-  },
-  {
-    id:'c3', name:'Betting Markets', mode:'betting', color:'#059669',
+    ]},
+  {id:'c3',name:'Betting Markets',mode:'betting',color:'#059669',
     markets:[{type:'1x2',label:'Match Result',points:3},{type:'ou25',label:'Over / Under 2.5',points:2},{type:'btts',label:'Both Teams to Score',points:2}],
     tournamentNames:['La Liga','Serie A'],
     rounds:[
       {id:'r5',label:'Round 1',status:'completed',deadline:'2026-08-16T17:00',eventIds:['e301','e302']},
       {id:'r6',label:'Round 2',status:'open',deadline:'2026-08-30T17:00',eventIds:['e303','e304']},
-    ],
-  }
+    ]},
 ];
 
-const EVENTS = {
-  // Score Predictor — GW1 completed (with results + predictions)
-  e101:{home:'Arsenal',away:'Wolves',homeLogo:'',awayLogo:'',kickoff:'16 Aug · 15:00',res:{h:3,a:0}},
-  e102:{home:'Man City',away:'Chelsea',homeLogo:'',awayLogo:'',kickoff:'16 Aug · 17:30',res:{h:2,a:1}},
-  e103:{home:'Liverpool',away:'Brentford',homeLogo:'',awayLogo:'',kickoff:'17 Aug · 14:00',res:{h:1,a:1}},
-  // Score Predictor — GW2 open (no results, some predicted)
-  e104:{home:'Arsenal',away:'Man City',homeLogo:'',awayLogo:'',kickoff:'30 Aug · 15:00',res:null},
-  e105:{home:'Liverpool',away:'Man Utd',homeLogo:'',awayLogo:'',kickoff:'30 Aug · 17:30',res:null},
-  e106:{home:'Chelsea',away:'Spurs',homeLogo:'',awayLogo:'',kickoff:'31 Aug · 14:00',res:null},
-  e107:{home:'Wolves',away:'Everton',homeLogo:'',awayLogo:'',kickoff:'31 Aug · 16:30',res:null},
-
-  // LMS — Matchday 1 completed (elimination demo)
-  e201:{home:'Real Madrid',away:'Stuttgart',homeLogo:'',awayLogo:'',kickoff:'17 Sep · 21:00',res:{h:3,a:1}},
-  e202:{home:'Bayern',away:'Dinamo Zagreb',homeLogo:'',awayLogo:'',kickoff:'17 Sep · 21:15',res:{h:9,a:2}},
-  e203:{home:'Man City',away:'Inter',homeLogo:'',awayLogo:'',kickoff:'18 Sep · 21:00',res:{h:0,a:0}},
-  // LMS — Matchday 2 open
-  e204:{home:'Barcelona',away:'Young Boys',homeLogo:'',awayLogo:'',kickoff:'01 Oct · 21:00',res:null},
-  e205:{home:'PSG',away:'Arsenal',homeLogo:'',awayLogo:'',kickoff:'01 Oct · 21:15',res:null},
-  e206:{home:'Atletico',away:'Dortmund',homeLogo:'',awayLogo:'',kickoff:'02 Oct · 21:00',res:null},
-
-  // Betting — Round 1 completed
-  e301:{home:'Real Madrid',away:'Valladolid',homeLogo:'',awayLogo:'',kickoff:'25 Aug · 21:00',res:{h:3,a:0}},
-  e302:{home:'Inter',away:'Genoa',homeLogo:'',awayLogo:'',kickoff:'25 Aug · 18:00',res:{h:2,a:2}},
-  // Betting — Round 2 open
-  e303:{home:'Atletico',away:'Sevilla',homeLogo:'',awayLogo:'',kickoff:'30 Aug · 18:30',res:null},
-  e304:{home:'Juventus',away:'Napoli',homeLogo:'',awayLogo:'',kickoff:'31 Aug · 20:45',res:null},
+const lg=n=>LOGO[n]||'';
+const EVENTS={
+  // Score GW1: completed with results
+  e101:{home:'Arsenal',away:'Wolves',homeLogo:lg('Arsenal'),awayLogo:lg('Wolves'),kickoff:'16 Aug · 15:00',res:{h:3,a:0}},
+  e102:{home:'Man City',away:'Chelsea',homeLogo:lg('Man City'),awayLogo:lg('Chelsea'),kickoff:'16 Aug · 17:30',res:{h:2,a:1}},
+  e103:{home:'Liverpool',away:'Spurs',homeLogo:lg('Liverpool'),awayLogo:lg('Spurs'),kickoff:'17 Aug · 14:00',res:{h:1,a:1}},
+  // Score GW2: open — 2 predicted, 2 not yet
+  e104:{home:'Arsenal',away:'Man City',homeLogo:lg('Arsenal'),awayLogo:lg('Man City'),kickoff:'30 Aug · 15:00',res:null},
+  e105:{home:'Liverpool',away:'Man Utd',homeLogo:lg('Liverpool'),awayLogo:lg('Man Utd'),kickoff:'30 Aug · 17:30',res:null},
+  e106:{home:'Chelsea',away:'Spurs',homeLogo:lg('Chelsea'),awayLogo:lg('Spurs'),kickoff:'31 Aug · 14:00',res:null},
+  e107:{home:'Wolves',away:'Man City',homeLogo:lg('Wolves'),awayLogo:lg('Man City'),kickoff:'31 Aug · 16:30',res:null},
+  // LMS MD1: completed — eliminated at event 3
+  e201:{home:'Real Madrid',away:'Dortmund',homeLogo:lg('Real Madrid'),awayLogo:lg('Dortmund'),kickoff:'17 Sep · 21:00',res:{h:3,a:1}},
+  e202:{home:'Bayern',away:'Inter',homeLogo:lg('Bayern'),awayLogo:lg('Inter'),kickoff:'17 Sep · 21:15',res:{h:2,a:0}},
+  e203:{home:'Barcelona',away:'PSG',homeLogo:lg('Barcelona'),awayLogo:lg('PSG'),kickoff:'18 Sep · 21:00',res:{h:1,a:2}},
+  // LMS MD2: open
+  e204:{home:'Real Madrid',away:'Liverpool',homeLogo:lg('Real Madrid'),awayLogo:lg('Liverpool'),kickoff:'01 Oct · 21:00',res:null},
+  e205:{home:'PSG',away:'Arsenal',homeLogo:lg('PSG'),awayLogo:lg('Arsenal'),kickoff:'01 Oct · 21:15',res:null},
+  e206:{home:'Atletico',away:'Dortmund',homeLogo:lg('Atletico'),awayLogo:lg('Dortmund'),kickoff:'02 Oct · 21:00',res:null},
+  // Betting R1: completed
+  e301:{home:'Real Madrid',away:'Atletico',homeLogo:lg('Real Madrid'),awayLogo:lg('Atletico'),kickoff:'25 Aug · 21:00',res:{h:3,a:0}},
+  e302:{home:'Inter',away:'Juventus',homeLogo:lg('Inter'),awayLogo:lg('Juventus'),kickoff:'25 Aug · 18:00',res:{h:2,a:2}},
+  // Betting R2: open
+  e303:{home:'Barcelona',away:'Real Madrid',homeLogo:lg('Barcelona'),awayLogo:lg('Real Madrid'),kickoff:'30 Aug · 21:00',res:null},
+  e304:{home:'Juventus',away:'Inter',homeLogo:lg('Juventus'),awayLogo:lg('Inter'),kickoff:'31 Aug · 20:45',res:null},
 };
 
-// Fake predictions for completed rounds (user "demo_user")
-const PAST_PREDS = {
-  // Score GW1: exact match on e101, home goals correct on e102, wrong on e103
+// Fake predictions — mix of correct, wrong, pending
+let preds={
+  // Score GW1: exact, home goals only, wrong
   e101:{h:3,a:0}, e102:{h:2,a:0}, e103:{h:2,a:0},
-  // LMS MD1: correct, correct, then wrong (eliminated at e203)
+  // Score GW2: 2 predicted, 2 empty
+  e104:{h:2,a:1}, e105:{h:1,a:0},
+  // LMS MD1: correct, correct, wrong (eliminated)
   e201:'H', e202:'H', e203:'H',
-  // Betting R1
+  // LMS MD2: 1 predicted
+  e204:'H',
+  // Betting R1: predicted
   e301:{'1x2':'H','ou25':'O','btts':'N'}, e302:{'1x2':'D','ou25':'O','btts':'Y'},
+  // Betting R2: 1 predicted
+  e303:{'1x2':'H','ou25':'U','btts':'Y'},
 };
 
-// Fake leaderboard data
-const LB_DATA = {
-  c1:{
-    r1:[{u:'footy_oracle',points:12},{u:'stadyum76',points:9},{u:'bvb_predictor',points:7},{u:'demo_user',points:7},{u:'xavi_8',points:3},{u:'matchday_man',points:2}],
-    r2:[{u:'bvb_predictor',points:5},{u:'footy_oracle',points:3},{u:'stadyum76',points:2}],
-    overall:[{u:'footy_oracle',points:27},{u:'stadyum76',points:22},{u:'bvb_predictor',points:19},{u:'demo_user',points:14},{u:'xavi_8',points:10},{u:'matchday_man',points:8}],
-  },
-  c2:{
-    r3:[{u:'footy_oracle',predictions:3},{u:'stadyum76',predictions:3},{u:'bvb_predictor',predictions:3},{u:'demo_user',predictions:3},{u:'matchday_man',predictions:2}],
-    r4:[{u:'footy_oracle',predictions:2},{u:'stadyum76',predictions:1}],
-    overall:[{u:'footy_oracle',survived:2},{u:'stadyum76',survived:2},{u:'bvb_predictor',survived:1},{u:'demo_user',survived:1},{u:'matchday_man',survived:1}],
-  },
-  c3:{
-    r5:[{u:'xavi_8',points:14},{u:'matchday_man',points:10},{u:'stadyum76',points:8},{u:'demo_user',points:7}],
-    r6:[],
-    overall:[{u:'xavi_8',points:22},{u:'matchday_man',points:18},{u:'stadyum76',points:16},{u:'demo_user',points:12}],
-  }
+const LB_DATA={
+  c1:{r1:[{u:'footy_oracle',points:12},{u:'demo_user',points:9},{u:'stadyum76',points:7},{u:'bvb_predictor',points:5},{u:'xavi_8',points:3}],
+      r2:[{u:'bvb_predictor',points:5},{u:'footy_oracle',points:3},{u:'demo_user',points:2}],
+      overall:[{u:'footy_oracle',points:27},{u:'demo_user',points:18},{u:'stadyum76',points:16},{u:'bvb_predictor',points:14},{u:'xavi_8',points:10}]},
+  c2:{r3:[{u:'footy_oracle',predictions:3},{u:'stadyum76',predictions:3},{u:'demo_user',predictions:3},{u:'matchday_man',predictions:2}],
+      r4:[{u:'footy_oracle',predictions:2},{u:'demo_user',predictions:1}],
+      overall:[{u:'footy_oracle',survived:2},{u:'stadyum76',survived:1},{u:'demo_user',survived:1}]},
+  c3:{r5:[{u:'xavi_8',points:14},{u:'demo_user',points:10},{u:'stadyum76',points:8}],
+      r6:[{u:'demo_user',points:3}],
+      overall:[{u:'xavi_8',points:22},{u:'demo_user',points:16},{u:'stadyum76',points:12}]},
 };
 
 // ── STATE ─────────────────────────────────────────────────────────────────
-let currentUser = null;
-let currentCompIdx = 0;
-let selectedRound = {0:1, 1:1, 2:1}; // default to open rounds
-let preds = {};
-let predictSubTab = 'predictions';
-let lbSelection = {};
-
-// ── AUTH ──────────────────────────────────────────────────────────────────
-function switchAuth(tab){
-  document.getElementById('tab-login').classList.toggle('active',tab==='login');
-  document.getElementById('tab-register').classList.toggle('active',tab==='register');
-  document.getElementById('form-login').style.display=tab==='login'?'block':'none';
-  document.getElementById('form-register').style.display=tab==='register'?'block':'none';
-}
-function shakeAuth(){const m=document.querySelector('.auth-modal');if(m){m.classList.remove('shake');void m.offsetWidth;m.classList.add('shake');}}
-
-function doLogin(){
-  const u=document.getElementById('login-username').value.trim();
-  const p=document.getElementById('login-password').value;
-  if(!u||!p){shakeAuth();return;}
-  loginUser(u);
-}
-function doRegister(){
-  const u=document.getElementById('reg-username').value.trim();
-  const e=document.getElementById('reg-email').value.trim();
-  const p=document.getElementById('reg-password').value;
-  if(!u||!e||!p){shakeAuth();return;}
-  if(u.length<3||p.length<6){shakeAuth();return;}
-  loginUser(u);
-}
-function loginUser(u){
-  currentUser=u;
-  localStorage.setItem('gw_demo_session',u);
-  preds=JSON.parse(localStorage.getItem('gw_demo_preds_'+u)||'{}');
-  // Merge in past predictions for demo
-  Object.entries(PAST_PREDS).forEach(([k,v])=>{if(!preds[k])preds[k]=v;});
-  closeAuthModal();updateHeaderUser();renderPredict();
-}
-function doLogout(){
-  currentUser=null;localStorage.removeItem('gw_demo_session');preds={};
-  updateHeaderUser();renderPredict();
-}
-function savePreds(){if(currentUser)localStorage.setItem('gw_demo_preds_'+currentUser,JSON.stringify(preds));}
-function openAuthModal(reason){
-  document.getElementById('auth-modal-reason').textContent=reason||'Sign in to make predictions';
-  switchAuth('login');document.getElementById('auth-modal-overlay').classList.add('open');
-}
-function closeAuthModal(){document.getElementById('auth-modal-overlay').classList.remove('open');}
-function headerUserClick(){if(currentUser)goTab('profile');else openAuthModal('Sign in or create a free account');}
-function updateHeaderUser(){
-  if(currentUser){document.getElementById('hdr-avatar').textContent=currentUser.slice(0,2).toUpperCase();document.getElementById('hdr-username').textContent=currentUser;}
-  else{document.getElementById('hdr-avatar').textContent='?';document.getElementById('hdr-username').textContent='Sign in';}
-}
+const currentUser='demo_user';
+let currentCompIdx=0, selectedRound={0:1,1:1,2:1}, predictSubTab='predictions', lbSelection={};
 
 // ── TABS ──────────────────────────────────────────────────────────────────
 function goTab(tab){
-  if(tab==='profile'&&!currentUser){openAuthModal('Sign in to view your profile');return;}
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
@@ -516,17 +373,14 @@ function goTab(tab){
   if(tab==='profile')renderProfile();
 }
 
-// ── COMP TABS ─────────────────────────────────────────────────────────────
 function renderCompTabs(){
   const el=document.getElementById('comp-tabs');
-  if(!COMPS.length){el.innerHTML='';return;}
-  if(currentCompIdx>=COMPS.length)currentCompIdx=0;
-  el.innerHTML=COMPS.map((c,i)=>`<button class="comp-tab${i===currentCompIdx?' active':''}" onclick="switchComp(${i})" style="${i===currentCompIdx?'--comp-color:'+c.color:''}"><span class="comp-tab-name">${MODE_LABELS[c.mode]||c.mode}</span></button>`).join('');
+  el.innerHTML=COMPS.map((c,i)=>`<button class="comp-tab${i===currentCompIdx?' active':''}" onclick="switchComp(${i})" style="${i===currentCompIdx?'--comp-color:'+c.color:''}"><span class="comp-tab-name">${MODE_LABELS[c.mode]}</span></button>`).join('');
   document.documentElement.style.setProperty('--comp-color',COMPS[currentCompIdx].color);
 }
 function switchComp(idx){currentCompIdx=idx;predictSubTab='predictions';document.documentElement.style.setProperty('--comp-color',COMPS[idx].color);renderCompTabs();renderPredict();}
 
-// ── PREDICT ───────────────────────────────────────────────────────────────
+// ── RENDER ────────────────────────────────────────────────────────────────
 function getDefaultRoundIdx(comp){const idx=comp.rounds.findIndex(r=>r.status==='open');return idx>=0?idx:Math.max(0,comp.rounds.length-1);}
 
 function renderPredict(){
@@ -544,22 +398,15 @@ function renderPredictionsPane(comp){
   const round=comp.rounds[ri];if(!round)return'';
   const isOpen=round.status==='open';
   let events=round.eventIds.map(id=>({id,...EVENTS[id]})).filter(e=>e.home);
-
-  // LMS: sort by kickoff, compute elimination
   let eliminatedAtIdx=-1;
   if(comp.mode==='lms'&&!isOpen){
     for(let i=0;i<events.length;i++){
       const p=preds[events[i].id];
-      if(events[i].res&&p){
-        const actual=events[i].res.h>events[i].res.a?'H':events[i].res.h<events[i].res.a?'A':'D';
-        if(p!==actual){eliminatedAtIdx=i;break;}
-      }
+      if(events[i].res&&p){const actual=events[i].res.h>events[i].res.a?'H':events[i].res.h<events[i].res.a?'A':'D';if(p!==actual){eliminatedAtIdx=i;break;}}
     }
   }
-
-  let html=`<div class="round-bar"><div style="display:flex;align-items:center;gap:8px;"><span class="round-name">${round.label}</span><span class="round-status ${round.status}">${isOpen?'● Open':'✓ Done'}</span></div><select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select></div>`;
+  let html=`<div class="round-bar"><select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select><span class="round-status ${round.status}">${isOpen?'● Open':'✓ Done'}</span></div>`;
   if(isOpen&&round.deadline){const dl=new Date(round.deadline);html+=`<div class="deadline-banner">⏱ &nbsp;Predictions lock <strong>${dl.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})} · ${dl.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</strong></div>`;}
-
   html+='<div class="events-list">';
   events.forEach((ev,i)=>{
     const isEliminated=eliminatedAtIdx>=0&&i>eliminatedAtIdx;
@@ -570,18 +417,17 @@ function renderPredictionsPane(comp){
     html+=`<div style="opacity:${isEliminated?'0.4':'1'};">${renderEventCard(ev,comp,isOpen)}</div>`;
   });
   html+='</div>';
-
   if(isOpen&&events.length){
     const predCount=events.filter(ev=>{const p=preds[ev.id];if(!p)return false;if(comp.mode==='score')return p.h!==undefined&&p.a!==undefined;if(comp.mode==='betting')return typeof p==='object'&&Object.keys(p).length>0;return!!p;}).length;
     const pct=events.length?Math.round(predCount/events.length*100):0;
     html+=`<div class="progress-wrap"><div class="progress-meta"><span>${predCount} of ${events.length} predictions made</span><span class="progress-pct">${pct}%</span></div><div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:var(--comp-color);"></div></div></div>`;
-    if(comp.mode==='score') html+=`<button class="submit-preds-btn" onclick="submitScorePreds()">${predCount===events.length?'✓ All predictions saved':'Save Predictions ('+predCount+'/'+events.length+')'}</button>`;
+    if(comp.mode==='score')html+=`<button class="submit-preds-btn" onclick="submitScorePreds()">${predCount===events.length?'✓ All predictions saved':'Save Predictions ('+predCount+'/'+events.length+')'}</button>`;
   }
   return html;
 }
 
 function teamBadge(logo,name){
-  if(logo)return'<div class="ev-badge"><img src="'+logo+'" alt="'+name+'" onerror="this.parentElement.textContent=\''+name.slice(0,3).toUpperCase()+'\'"></div>';
+  if(logo)return'<div class="ev-badge"><img src="'+logo+'" alt="'+name+'"></div>';
   return'<div class="ev-badge">'+(name||'?').split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase()+'</div>';
 }
 
@@ -600,17 +446,14 @@ function renderEventCard(ev,comp,isOpen){
   const pred=preds[ev.id]??null;
   const hasRes=!!ev.res;
   const hasPred=comp.mode==='score'?(pred&&pred.h!==undefined&&pred.a!==undefined):comp.mode==='betting'?(pred&&typeof pred==='object'&&Object.keys(pred).length>0):(pred!==null&&pred!==undefined);
-
   let correct=null,earnedPts=null,pointsBreakdown='';
   if(!isOpen&&hasRes&&hasPred){
     if(comp.mode==='lms'){const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';correct=pred===actual;}
     else if(comp.mode==='score'){[earnedPts,pointsBreakdown]=scorePoints(pred,ev.res,comp.scoring);correct=earnedPts>0;}
   }
-
   let cls='event-card';if(isOpen&&hasPred)cls+=' predicted';if(!isOpen)cls+=' locked-pred';
   const hv=(pred&&pred.h!==undefined)?pred.h:'';
   const av=(pred&&pred.a!==undefined)?pred.a:'';
-
   let midSection;
   if(comp.mode==='score'&&isOpen){
     midSection=`<div class="score-inline-mid"><input class="score-num-inline${hv!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${hv}" id="sh-${ev.id}" oninput="pickScore('${ev.id}','h',this.value)"><span class="score-inline-dash">–</span><input class="score-num-inline${av!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${av}" id="sa-${ev.id}" oninput="pickScore('${ev.id}','a',this.value)"></div>`;
@@ -618,11 +461,9 @@ function renderEventCard(ev,comp,isOpen){
     midSection=`<div class="ev-score">${ev.res.h}–${ev.res.a}</div>`;
   } else if(comp.mode==='score'&&!isOpen&&hasPred){
     midSection=`<div class="ev-score" style="font-size:12px;color:var(--text-2);">${pred.h??'-'}–${pred.a??'-'}</div>`;
-  } else {
-    midSection='<div class="ev-vs">vs</div>';
-  }
+  } else {midSection='<div class="ev-vs">vs</div>';}
 
-  let html=`<div class="${cls}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${comp.name}</span><span class="event-kickoff">${ev.kickoff||''}${hasRes?' · FT: '+ev.res.h+'–'+ev.res.a:''}</span></div><div class="event-teams"><div class="ev-team">${teamBadge(ev.homeLogo||'',ev.home)}<span class="ev-name">${ev.home}</span></div>${midSection}<div class="ev-team away">${teamBadge(ev.awayLogo||'',ev.away)}<span class="ev-name">${ev.away}</span></div></div></div><div class="pred-area">`;
+  let html=`<div class="${cls}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${comp.name}</span><span class="event-kickoff">${ev.kickoff||''}${hasRes?' · FT: '+ev.res.h+'–'+ev.res.a:''}</span></div><div class="event-teams"><div class="ev-team">${teamBadge(ev.homeLogo,ev.home)}<span class="ev-name">${ev.home}</span></div>${midSection}<div class="ev-team away">${teamBadge(ev.awayLogo,ev.away)}<span class="ev-name">${ev.away}</span></div></div></div><div class="pred-area">`;
 
   if(isOpen){
     if(comp.mode==='lms'){
@@ -636,7 +477,7 @@ function renderEventCard(ev,comp,isOpen){
         html+=`<div><div class="pred-label" style="margin-bottom:5px;">${mkt.label} <span style="font-family:var(--mono);font-size:9px;color:var(--accent);">+${mkt.points}pts</span></div>`;
         if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${mpred['1x2']==='H'?' selected home':''}" onclick="pickMarket('${ev.id}','1x2','H')">Home Win</button><button class="btn-1x2${mpred['1x2']==='D'?' selected draw':''}" onclick="pickMarket('${ev.id}','1x2','D')">X</button><button class="btn-1x2${mpred['1x2']==='A'?' selected away':''}" onclick="pickMarket('${ev.id}','1x2','A')">Away</button></div>`;
         else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['ou25']==='O'?' selected':''}" onclick="pickMarket('${ev.id}','ou25','O')">OVER<span class="sub">2.5+</span></button><button class="btn-ou under${mpred['ou25']==='U'?' selected':''}" onclick="pickMarket('${ev.id}','ou25','U')">UNDER<span class="sub">2.5-</span></button></div>`;
-        else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['btts']==='Y'?' selected':''}" onclick="pickMarket('${ev.id}','btts','Y')">YES<span class="sub">Both score</span></button><button class="btn-ou under${mpred['btts']==='N'?' selected':''}" onclick="pickMarket('${ev.id}','btts','N')">NO<span class="sub">Clean sheet</span></button></div>`;
+        else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['btts']==='Y'?' selected':''}" onclick="pickMarket('${ev.id}','btts','Y')">YES</button><button class="btn-ou under${mpred['btts']==='N'?' selected':''}" onclick="pickMarket('${ev.id}','btts','N')">NO</button></div>`;
         html+='</div>';
       });
       html+='</div>';
@@ -659,23 +500,20 @@ function renderEventCard(ev,comp,isOpen){
   html+='</div></div>';return html;
 }
 
-// ── PICKS ─────────────────────────────────────────────────────────────────
-function pick(id,val){if(!currentUser){openAuthModal('Sign in to make predictions');return;}preds[id]=val;savePreds();renderPredict();}
+// ── PICKS (simulation — no login needed) ──────────────────────────────────
+function pick(id,val){preds[id]=val;renderPredict();}
 function pickScore(id,side,val){
   if(!preds[id]||typeof preds[id]!=='object')preds[id]={};
   preds[id][side]=val===''?undefined:parseInt(val);
-  if(currentUser)savePreds();
   const input=document.getElementById((side==='h'?'sh-':'sa-')+id);
   if(input)input.classList.toggle('has',val!=='');
 }
 function pickMarket(evId,market,val){
-  if(!currentUser){openAuthModal('Sign in to make predictions');return;}
   if(!preds[evId]||typeof preds[evId]!=='object')preds[evId]={};
-  preds[evId][market]=val;savePreds();renderPredict();
+  preds[evId][market]=val;renderPredict();
 }
 function changeRound(idx){selectedRound[currentCompIdx]=parseInt(idx);renderPredict();}
 function submitScorePreds(){
-  if(!currentUser){openAuthModal('Sign in to save your predictions');return;}
   const comp=COMPS[currentCompIdx],round=comp.rounds[selectedRound[currentCompIdx]];
   if(!round)return;
   const events=round.eventIds.map(id=>({id,...EVENTS[id]})).filter(e=>e.home);
@@ -688,34 +526,23 @@ function renderLeaderboardPane(comp){
   if(lbSelection[currentCompIdx]===undefined)lbSelection[currentCompIdx]=getDefaultRoundIdx(comp);
   const sel=lbSelection[currentCompIdx],isOverall=sel==='overall';
   const round=isOverall?null:comp.rounds[sel];
-
   let html=`<div class="lb-week-row"><select class="lb-week-select" style="font-size:11px;padding:4px 8px;max-width:180px;" onchange="changeLBSelection(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}" ${(!isOverall&&sel===i)?'selected':''}>${r.label}${r.status==='open'?' (Current)':''}</option>`).join('')}<option value="overall" ${isOverall?'selected':''}>Overall — Season</option></select></div>`;
-
   const cData=LB_DATA[comp.id];
   const rKey=isOverall?'overall':(round?.id||'');
   let rows=cData?.[rKey]||[];
   if(!rows.length){html+=`<div class="empty"><div class="empty-icon">🏆</div><div class="empty-title">No predictions yet</div></div>`;return html;}
-
   let rank=1;
   if(comp.mode==='score'||comp.mode==='betting'){
     rows.sort((a,b)=>b.points-a.points);
     rows.forEach((r,i)=>{if(i>0&&rows[i].points<rows[i-1].points)rank=i+1;r.rank=rank;});
     html+=buildLBTable(comp.name,isOverall?'Overall — total points':round.label,rows,r=>`<td class="lb-num">${r.points} pts</td>`,'<th class="r">Points</th>');
-  } else if(comp.mode==='lms'){
-    if(isOverall){
-      rows.sort((a,b)=>b.survived-a.survived);
-      rows.forEach((r,i)=>{if(i>0&&rows[i].survived<rows[i-1].survived)rank=i+1;r.rank=rank;});
-      html+=buildLBTable(comp.name,'Overall',rows,r=>`<td class="lb-num">${r.survived}</td>`,'<th class="r">Rounds</th>');
-    } else {
-      rows.sort((a,b)=>b.predictions-a.predictions);
-      rows.forEach((r,i)=>{if(i>0&&rows[i].predictions<rows[i-1].predictions)rank=i+1;r.rank=rank;});
-      html+=buildLBTable(comp.name,round.label,rows,r=>`<td class="lb-num">${r.predictions}</td>`,'<th class="r">Picks</th>');
-    }
+  } else {
+    if(isOverall){rows.sort((a,b)=>b.survived-a.survived);rows.forEach((r,i)=>{if(i>0&&rows[i].survived<rows[i-1].survived)rank=i+1;r.rank=rank;});html+=buildLBTable(comp.name,'Overall',rows,r=>`<td class="lb-num">${r.survived}</td>`,'<th class="r">Rounds</th>');}
+    else{rows.sort((a,b)=>b.predictions-a.predictions);rows.forEach((r,i)=>{if(i>0&&rows[i].predictions<rows[i-1].predictions)rank=i+1;r.rank=rank;});html+=buildLBTable(comp.name,round.label,rows,r=>`<td class="lb-num">${r.predictions}</td>`,'<th class="r">Picks</th>');}
   }
   return html;
 }
 function changeLBSelection(val){lbSelection[currentCompIdx]=val==='overall'?'overall':parseInt(val);renderPredict();}
-
 function buildLBTable(title,sub,rows,cellFn,colHeader){
   const me=currentUser;
   let html=`<div class="lb-wrap"><div class="lb-table-head"><span class="lb-table-head-title">${title}</span><span class="lb-table-head-sub">${sub}</span></div><table class="lb-table"><thead><tr><th style="width:32px;text-align:center">#</th><th>Player</th>${colHeader}</tr></thead><tbody>`;
@@ -725,25 +552,18 @@ function buildLBTable(title,sub,rows,cellFn,colHeader){
 
 // ── PROFILE ───────────────────────────────────────────────────────────────
 function renderProfile(){
-  if(!currentUser)return;
   document.getElementById('profile-content').innerHTML=`
-    <div class="profile-header"><div class="profile-av">${currentUser.slice(0,2).toUpperCase()}</div><div class="profile-name">${currentUser}</div><div class="profile-joined">Demo account</div></div>
-    <div class="profile-stats"><div class="profile-stat"><div class="ps-val">${Object.keys(preds).length}</div><div class="ps-label">Predictions</div></div><div class="profile-stat"><div class="ps-val">${COMPS.length}</div><div class="ps-label">Competitions</div></div></div>
-    <div class="profile-section"><div class="profile-section-title">Account</div><div style="font-size:12px;color:var(--text-2);margin-bottom:14px;">Username: <strong>${currentUser}</strong></div><button class="logout-btn" onclick="doLogout()">Sign out</button></div>`;
+    <div class="profile-header"><div class="profile-av">DE</div><div class="profile-name">demo_user</div><div class="profile-joined">Demo account</div></div>
+    <div class="profile-stats"><div class="profile-stat"><div class="ps-val">${Object.keys(preds).length}</div><div class="ps-label">Predictions</div></div><div class="profile-stat"><div class="ps-val">${COMPS.length}</div><div class="ps-label">Competitions</div></div><div class="profile-stat"><div class="ps-val">${COMPS.filter(c=>c.rounds.some(r=>r.status==='open')).length}</div><div class="ps-label">Open</div></div></div>
+    <div class="profile-section"><div class="profile-section-title">Account</div><div style="font-size:12px;color:var(--text-2);margin-bottom:14px;">Username: <strong>demo_user</strong><br>Email: <strong>demo@gameweek.cloud</strong></div><div style="font-size:11px;color:var(--text-3);background:var(--bg);padding:10px;border-radius:6px;">This is a demo account. In the live embed, users register with their own email and password.</div></div>`;
 }
 
-// ── TOAST ─────────────────────────────────────────────────────────────────
+// ── TOAST ──────────────────────────────────────────────────────────────────
 let toastT;
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2200);}
 
 // ── INIT ──────────────────────────────────────────────────────────────────
-const session=localStorage.getItem('gw_demo_session');
-if(session){
-  currentUser=session;
-  preds=JSON.parse(localStorage.getItem('gw_demo_preds_'+session)||'{}');
-  Object.entries(PAST_PREDS).forEach(([k,v])=>{if(!preds[k])preds[k]=v;});
-}
-updateHeaderUser();renderCompTabs();goTab('predict');
+renderCompTabs();goTab('predict');
 </script>
 </body>
 </html>

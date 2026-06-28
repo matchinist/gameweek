@@ -61,7 +61,22 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .comp-tab-name{font-size:15px;font-weight:700;}
 .comp-tab-mode{font-family:var(--mono);font-size:9px;color:var(--text-3);font-weight:700;letter-spacing:0.3px;}
 .comp-tab.active .comp-tab-mode{color:var(--comp-color);opacity:0.7;}
-.round-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--white);border-bottom:1px solid var(--border);}
+.round-bar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--white);border-bottom:1px solid var(--border);}
+.round-select{font-family:var(--mono);font-size:11px;border:1px solid var(--border);background:var(--white);padding:5px 8px;border-radius:5px;cursor:pointer;outline:none;color:var(--text);}
+.round-select:focus{border-color:var(--accent);}
+.round-status{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+.round-status.open{background:var(--green-light);color:var(--green);}
+.round-status.completed{background:var(--bg);color:var(--text-3);}
+.round-bar-right{margin-left:auto;display:flex;align-items:center;gap:4px;}
+@media(max-width:480px){
+  .predict-header-row{flex-direction:column;gap:4px;padding:8px 10px 0;}
+  .predict-tournament-labels{width:100%;}
+  .predict-subtabs{width:100%;}
+  .ps-tab{flex:1;}
+  .events-list{padding:10px 10px;}
+  .event-card-top{padding:11px 10px;}
+  .pred-area{padding:9px 10px;}
+}
 /* ── PREDICT HEADER ROW: tournament labels left, tabs right ── */
 .predict-header-row{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 0;gap:8px;}
 .predict-subtabs{display:flex;gap:3px;flex-shrink:0;}
@@ -75,7 +90,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .score-num-inline::-webkit-inner-spin-button,.score-num-inline::-webkit-outer-spin-button{-webkit-appearance:none;}
 .score-num-inline:focus{border-color:var(--comp-color);}
 .score-num-inline.has{border-color:var(--comp-color);background:var(--accent-light);color:var(--comp-color);}
-.score-inline-mid{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.score-inline-mid{display:flex;align-items:center;gap:4px;flex-shrink:0;min-width:95px;justify-content:center;}
 .score-inline-dash{font-family:var(--mono);font-size:13px;color:var(--text-3);font-weight:700;}
 /* ── SUBMIT BUTTON ── */
 .submit-preds-btn{display:block;width:calc(100% - 28px);margin:12px 14px;padding:12px;background:var(--comp-color);color:white;border:none;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;transition:opacity 0.13s;}
@@ -84,12 +99,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .lb-week-select{width:100%;font-family:var(--mono);font-size:11px;border:1px solid var(--border);background:var(--white);padding:8px 10px;border-radius:6px;outline:none;color:var(--text);}
 .lb-week-select:focus{border-color:var(--comp-color);}
 .lb-pane{padding:14px 16px;}
-.round-name{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);}
-.round-status{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;}
-.round-status.open{background:var(--green-light);color:var(--green);}
-.round-status.completed{background:var(--bg);color:var(--text-3);}
-.round-select{font-family:var(--mono);font-size:10px;border:1px solid var(--border);background:var(--white);padding:5px 8px;border-radius:5px;cursor:pointer;outline:none;color:var(--text);}
-.round-select:focus{border-color:var(--accent);}
 .deadline-banner{background:var(--accent-light);border-bottom:1px solid #C7D2FE;padding:8px 16px;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--accent-2);}
 .deadline-banner strong{font-family:var(--mono);font-size:10px;}
 .survival-tracker{padding:12px 16px;background:var(--bg);border-bottom:1px solid var(--border);}
@@ -111,11 +120,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .event-league{font-size:10px;font-weight:700;color:var(--text-2);letter-spacing:0.5px;text-transform:uppercase;}
 .event-kickoff{font-family:var(--mono);font-size:10px;color:var(--text-2);}
 .event-teams{display:flex;align-items:center;gap:8px;}
-.ev-team{flex:1;display:flex;align-items:center;gap:9px;}
+.ev-team{flex:1;display:flex;align-items:center;gap:9px;min-width:0;}
 .ev-team.away{flex-direction:row-reverse;}
 .ev-badge{width:32px;height:32px;border-radius:50%;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:8px;font-weight:700;color:var(--text-2);flex-shrink:0;overflow:hidden;}
 .ev-badge img{width:100%;height:100%;object-fit:contain;}
-.ev-name{font-family:var(--mono);font-size:13px;font-weight:700;color:#000;}
+.ev-name{font-family:var(--mono);font-size:13px;font-weight:700;color:#000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ev-vs{font-family:var(--mono);font-size:11px;color:var(--text-3);text-align:center;min-width:28px;}
 .ev-score{font-family:var(--mono);font-size:15px;font-weight:700;color:#000;text-align:center;min-width:42px;}
 .pred-area{border-top:1px solid var(--border);padding:11px 14px;}
@@ -565,7 +574,7 @@ function renderPredictionsPane(comp){
     }
   }
 
-  let html=`<div class="round-bar"><div style="display:flex;align-items:center;gap:8px;"><span class="round-name">${round.label}</span><span class="round-status ${round.status}">${isOpen?'● Open':'✓ Done'}</span></div><select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select></div>`;
+  let html=`<div class="round-bar"><select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select><span class="round-status ${round.status}">${isOpen?'● Open':'✓ Done'}</span></div>`;
   if(isOpen&&round.deadline){ const dl=new Date(round.deadline); html+=`<div class="deadline-banner">⏱ &nbsp;Predictions lock <strong>${dl.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})} · ${dl.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</strong></div>`; }
 
   html+='<div class="events-list">';
