@@ -69,14 +69,18 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .round-status.completed{background:var(--bg);color:var(--text-3);}
 .round-bar-right{margin-left:auto;display:flex;align-items:center;gap:4px;}
 @media(max-width:480px){
-  .predict-header-row{flex-direction:column;gap:4px;padding:8px 10px 0;}
-  .predict-tournament-labels{width:100%;}
-  .predict-subtabs{width:100%;}
-  .ps-tab{flex:1;}
-  .events-list{padding:10px 10px;}
+  .predict-header-row{flex-direction:row;gap:4px;padding:8px 6px 0;}
+  .predict-tournament-labels{flex:1;min-width:0;}
+  .predict-subtabs{display:none;}
+  .predict-subtabs-mobile{display:block;}
+  .events-list{padding:10px 6px;}
   .event-card-top{padding:11px 10px;}
   .pred-area{padding:9px 10px;}
 }
+@media(min-width:481px){
+  .predict-subtabs-mobile{display:none;}
+}
+.predict-subtabs-mobile select{font-family:var(--mono);font-size:10px;font-weight:700;border:1px solid var(--border);background:var(--white);padding:4px 8px;border-radius:4px;cursor:pointer;outline:none;color:var(--text);text-transform:uppercase;}
 /* ── PREDICT HEADER ROW: tournament labels left, tabs right ── */
 .predict-header-row{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 0;gap:8px;}
 .predict-subtabs{display:flex;gap:3px;flex-shrink:0;}
@@ -549,7 +553,7 @@ function renderPredict(){
   if(selectedRound[currentCompIdx]===undefined) selectedRound[currentCompIdx]=getDefaultRoundIdx(COMPS[currentCompIdx]);
   const comp=COMPS[currentCompIdx];
   const tlHtml=renderTournamentLabels(comp);
-  let html='<div class="predict-header-row"><div class="predict-tournament-labels">'+tlHtml+'</div><div class="predict-subtabs"><button class="ps-tab'+(predictSubTab==='predictions'?' active':'')+`" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab`+(predictSubTab==='leaderboard'?' active':'')+`" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button></div></div>`;
+  let html=`<div class="predict-header-row"><div class="predict-tournament-labels">${tlHtml}</div><div class="predict-subtabs"><button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button></div><div class="predict-subtabs-mobile"><select onchange="switchPredictSubTab(this.value)"><option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option><option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option></select></div></div>`;
   html+=predictSubTab==='predictions'?renderPredictionsPane(comp):renderLeaderboardShell(comp);
   document.getElementById('predict-content').innerHTML=html;
   if(predictSubTab==='leaderboard') loadAndRenderLeaderboard(comp);

@@ -71,14 +71,18 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .round-status.completed{background:var(--bg);color:var(--text-3);}
 .round-bar-right{margin-left:auto;display:flex;align-items:center;gap:4px;}
 @media(max-width:480px){
-  .predict-header-row{flex-direction:column;gap:4px;padding:8px 10px 0;}
-  .predict-tournament-labels{width:100%;}
-  .predict-subtabs{width:100%;}
-  .ps-tab{flex:1;}
-  .events-list{padding:10px 10px;}
+  .predict-header-row{flex-direction:row;gap:4px;padding:8px 6px 0;}
+  .predict-tournament-labels{flex:1;min-width:0;}
+  .predict-subtabs{display:none;}
+  .predict-subtabs-mobile{display:block;}
+  .events-list{padding:10px 6px;}
   .event-card-top{padding:11px 10px;}
   .pred-area{padding:9px 10px;}
 }
+@media(min-width:481px){
+  .predict-subtabs-mobile{display:none;}
+}
+.predict-subtabs-mobile select{font-family:var(--mono);font-size:10px;font-weight:700;border:1px solid var(--border);background:var(--white);padding:4px 8px;border-radius:4px;cursor:pointer;outline:none;color:var(--text);text-transform:uppercase;}
 /* ── PREDICT HEADER ROW: tournament labels left, tabs right ── */
 .predict-header-row{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 0;gap:8px;}
 .predict-subtabs{display:flex;gap:3px;flex-shrink:0;}
@@ -247,10 +251,6 @@ table.lb-table{width:100%;border-collapse:collapse;}
         <div id="profile-content"></div>
       </div>
     </div>
-    <div class="bottom-nav">
-      <button class="bnav-item active" id="bnav-predict" onclick="goTab('predict')"><div class="bnav-icon">⚽</div><div class="bnav-label">PREDICT</div></button>
-      <button class="bnav-item" id="bnav-profile" onclick="goTab('profile')"><div class="bnav-icon">👤</div><div class="bnav-label">PROFILE</div></button>
-    </div>
   </div>
 </div>
 <div id="toast"></div>
@@ -359,14 +359,12 @@ const LB_DATA={
 
 // ── STATE ─────────────────────────────────────────────────────────────────
 const currentUser='demo_user';
-let currentCompIdx=0, selectedRound={0:1,1:1,2:1}, predictSubTab='predictions', lbSelection={};
+let currentCompIdx=0, selectedRound={0:0,1:0,2:0}, predictSubTab='predictions', lbSelection={};
 
 // ── TABS ──────────────────────────────────────────────────────────────────
 function goTab(tab){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-'+tab).classList.add('active');
-  document.getElementById('bnav-'+tab)?.classList.add('active');
+  document.getElementById('tab-'+tab)?.classList.add('active');
   document.getElementById('comp-tabs-wrap').style.display=tab==='predict'?'block':'none';
   document.getElementById('scroll-area').scrollTop=0;
   if(tab==='predict')renderPredict();
@@ -387,7 +385,7 @@ function renderPredict(){
   if(selectedRound[currentCompIdx]===undefined)selectedRound[currentCompIdx]=getDefaultRoundIdx(COMPS[currentCompIdx]);
   const comp=COMPS[currentCompIdx];
   const tlHtml=(comp.tournamentNames||[]).map(l=>'<span class="predict-tournament-label">'+l+'</span>').join('');
-  let html=`<div class="predict-header-row"><div class="predict-tournament-labels">${tlHtml}</div><div class="predict-subtabs"><button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button></div></div>`;
+  let html=`<div class="predict-header-row"><div class="predict-tournament-labels">${tlHtml}</div><div class="predict-subtabs"><button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button></div><div class="predict-subtabs-mobile"><select onchange="switchPredictSubTab(this.value)"><option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option><option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option></select></div></div>`;
   html+=predictSubTab==='predictions'?renderPredictionsPane(comp):renderLeaderboardPane(comp);
   document.getElementById('predict-content').innerHTML=html;
 }
@@ -417,6 +415,18 @@ function renderPredictionsPane(comp){
     html+=`<div style="opacity:${isEliminated?'0.4':'1'};">${renderEventCard(ev,comp,isOpen)}</div>`;
   });
   html+='</div>';
+  // LMS survival tracker for completed rounds
+  if(comp.mode==='lms'&&!isOpen&&events.length){
+    const totalPlayers=7;
+    const survived=[7,5,3];
+    html+='<div class="survival-tracker"><div class="st-label">SURVIVAL TRACKER</div><div class="st-bar-wrap">';
+    events.forEach((ev,i)=>{
+      const s=survived[i]||0;const pct=Math.round(s/totalPlayers*100);
+      const col=s>totalPlayers*0.6?'var(--green)':s>totalPlayers*0.3?'var(--amber)':'var(--red)';
+      html+=`<div class="st-bar-row"><span class="st-bar-label">Event ${i+1}</span><div class="st-bar-track"><div class="st-bar-fill" style="width:${pct}%;background:${col};"></div></div><span style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-2);min-width:32px;text-align:right;">${s}/${totalPlayers}</span></div>`;
+    });
+    html+='</div></div>';
+  }
   if(isOpen&&events.length){
     const predCount=events.filter(ev=>{const p=preds[ev.id];if(!p)return false;if(comp.mode==='score')return p.h!==undefined&&p.a!==undefined;if(comp.mode==='betting')return typeof p==='object'&&Object.keys(p).length>0;return!!p;}).length;
     const pct=events.length?Math.round(predCount/events.length*100):0;
