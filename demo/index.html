@@ -80,7 +80,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 @media(max-width:480px){
   .predict-subtabs{display:none !important;}
   .predict-subtabs-mobile{display:block !important;}
-  .events-list{padding:10px 4px;}
+  .events-list{padding:10px 2px;}
   .event-card-top{padding:11px 10px;}
   .pred-area{padding:9px 10px;}
   .round-bar{padding:8px 8px;}
@@ -111,7 +111,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .st-bar-fill.participated{background:var(--accent);}
 .st-bar-fill.survived{background:var(--green);}
 .st-bar-count{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);min-width:36px;text-align:right;}
-.events-list{display:flex;flex-direction:column;gap:8px;padding:12px 16px;}
+.events-list{display:flex;flex-direction:column;gap:8px;padding:12px 8px;}
 .event-card{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color 0.13s;}
 .event-card.predicted{border-color:var(--comp-color);}
 .event-card.locked-pred{border-color:var(--border);opacity:0.85;}
@@ -372,7 +372,7 @@ function renderPredict(){
   const comp=COMPS[currentCompIdx];
   // Game description + rules button below comp tabs
   const descriptions={score:'Predict the exact score for each match. Points awarded for correct scores, correct team goals, or correct total.',lms:'Pick a winner for each event. Get it wrong and you are eliminated. Last one standing wins.',betting:'Predict multiple markets per match: result, over/under, both teams to score. Points per correct market.'};
-  let html=`<div style="padding:10px 16px 0;display:flex;align-items:center;gap:8px;"><span style="font-size:11px;color:var(--text-3);flex:1;">${descriptions[comp.mode]||''}</span><button onclick="showRules('${comp.mode}')" style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent);background:none;border:1px solid var(--accent);border-radius:5px;padding:3px 10px;cursor:pointer;white-space:nowrap;">Rules</button></div>`;
+  let html=`<div style="padding:10px 16px 0;display:flex;align-items:center;gap:8px;"><span style="font-size:12px;color:var(--text-2);flex:1;font-weight:600;">${descriptions[comp.mode]||''}</span><button onclick="showRules('${comp.mode}')" style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent);background:none;border:1px solid var(--accent);border-radius:5px;padding:3px 10px;cursor:pointer;white-space:nowrap;">Rules</button></div>`;
   html+=predictSubTab==='predictions'?renderPredictionsPane(comp):renderLeaderboardPane(comp);
   document.getElementById('predict-content').innerHTML=html;
 }
@@ -610,10 +610,10 @@ function showRules(mode){
 <div><strong style="color:var(--text);">How to play:</strong> Predict the exact final score for each match before the deadline.</div>
 <div><strong style="color:var(--text);">Points:</strong></div>
 <div style="padding-left:12px;">
-\\u2022 Exact score correct — <strong style="color:var(--green);">+5 pts</strong><br>
-\\u2022 Home team goals correct only — <strong>+2 pts</strong><br>
-\\u2022 Away team goals correct only — <strong>+2 pts</strong><br>
-\\u2022 Total goals correct only — <strong>+1 pt</strong>
+• Exact score correct — <strong style="color:var(--green);">+5 pts</strong><br>
+• Home team goals correct only — <strong>+2 pts</strong><br>
+• Away team goals correct only — <strong>+2 pts</strong><br>
+• Total goals correct only — <strong>+1 pt</strong>
 </div>
 <div><strong style="color:var(--text);">Leaderboard:</strong> Players are ranked by total points. Highest score wins.</div>
 </div>`,
@@ -629,9 +629,9 @@ function showRules(mode){
 <div><strong style="color:var(--text);">How to play:</strong> For each match, predict multiple markets. Each correct market earns points.</div>
 <div><strong style="color:var(--text);">Markets:</strong></div>
 <div style="padding-left:12px;">
-\\u2022 Match Result (1X2) — Home Win, Draw, or Away Win<br>
-\\u2022 Over/Under 2.5 Goals — Will there be 3+ goals?<br>
-\\u2022 Both Teams to Score — Will both teams find the net?
+• Match Result (1X2) — Home Win, Draw, or Away Win<br>
+• Over/Under 2.5 Goals — Will there be 3+ goals?<br>
+• Both Teams to Score — Will both teams find the net?
 </div>
 <div><strong style="color:var(--text);">Points:</strong> Each market has its own points value, set by the competition operator.</div>
 </div>`,
@@ -639,7 +639,7 @@ function showRules(mode){
   const content=rules[mode]||'';
   const overlay=document.createElement('div');
   overlay.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
-  overlay.innerHTML=`<div onclick="this.parentElement.remove()" style="position:absolute;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(2px);"></div><div style="position:relative;background:var(--white);border-radius:14px;max-width:400px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-height:80vh;overflow-y:auto;"><button onclick="this.closest('[style*=fixed]').remove()" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-3);">\\u00d7</button>${content}</div>`;
+  overlay.innerHTML=`<div onclick="this.parentElement.remove()" style="position:absolute;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(2px);"></div><div style="position:relative;background:var(--white);border-radius:14px;max-width:400px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-height:80vh;overflow-y:auto;"><button onclick="this.closest('[style*=fixed]').remove()" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-3);">×</button>${content}</div>`;
   document.body.appendChild(overlay);
 }
 
