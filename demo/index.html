@@ -645,10 +645,67 @@ function showRules(mode){
 
 // ── PROFILE ───────────────────────────────────────────────────────────────
 function renderProfile(){
+  const totalPreds=Object.keys(preds).length;
+  const hitCount=Object.entries(preds).reduce((acc,[eid,pred])=>{
+    const ev=EVENTS[eid];if(!ev||!ev.res)return acc;
+    if(typeof pred==='object'&&pred.h!==undefined){
+      if(parseInt(pred.h)==ev.res.h&&parseInt(pred.a)==ev.res.a)return acc+1;
+    } else if(typeof pred==='string'){
+      const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
+      if(pred===actual)return acc+1;
+    }
+    return acc;
+  },0);
+  const resultedPreds=Object.entries(preds).filter(([eid])=>EVENTS[eid]?.res).length;
+  const hitRate=resultedPreds>0?Math.round(hitCount/resultedPreds*100):0;
+
+  // Fake competition data for demo
+  const activeComps=[
+    {name:'Score Predictor',mode:'score',points:18,rank:2,total:6},
+    {name:'Betting Markets',mode:'betting',points:10,rank:3,total:5},
+  ];
+  const endedComps=[
+    {name:'Last Man Standing',mode:'lms',points:0,rank:4,total:7,note:'Eliminated MD1'},
+  ];
+
   document.getElementById('profile-content').innerHTML=`
     <div class="profile-header"><div class="profile-av">DE</div><div class="profile-name">demo_user</div><div class="profile-joined">Demo account</div></div>
-    <div class="profile-stats"><div class="profile-stat"><div class="ps-val">${Object.keys(preds).length}</div><div class="ps-label">Predictions</div></div><div class="profile-stat"><div class="ps-val">${COMPS.length}</div><div class="ps-label">Competitions</div></div></div>
-    <div class="profile-section"><div class="profile-section-title">Account</div><div style="font-size:12px;color:var(--text-2);margin-bottom:14px;">Username: <strong>demo_user</strong><br>Email: <strong>demo@gameweek.cloud</strong></div><div style="font-size:11px;color:var(--text-3);background:var(--bg);padding:10px;border-radius:6px;">This is a demo. In the live embed, users register with their own email and password.</div></div>`;
+    <div class="profile-stats">
+      <div class="profile-stat"><div class="ps-val">${totalPreds}</div><div class="ps-label">Total Predictions</div></div>
+      <div class="profile-stat"><div class="ps-val">${hitRate}%</div><div class="ps-label">Hit Rate</div></div>
+      <div class="profile-stat"><div class="ps-val">${COMPS.length}</div><div class="ps-label">Competitions</div></div>
+    </div>
+    <div class="profile-section">
+      <div class="profile-section-title">Active Competitions</div>
+      ${activeComps.map(c=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+        <div style="width:4px;height:32px;border-radius:2px;background:${c.mode==='score'?'#4F46E5':c.mode==='lms'?'#DC2626':'#059669'};flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">${c.name}</div>
+          <div style="font-size:10px;color:var(--text-3);">${MODE_LABELS[c.mode]}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:var(--mono);font-size:14px;font-weight:800;color:var(--text);">${c.points} pts</div>
+          <div style="font-size:10px;color:var(--text-3);">#${c.rank} of ${c.total}</div>
+        </div>
+      </div>`).join('')}
+    </div>
+    <div class="profile-section">
+      <div class="profile-section-title">Ended Competitions</div>
+      ${endedComps.map(c=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);opacity:0.7;">
+        <div style="width:4px;height:32px;border-radius:2px;background:${c.mode==='score'?'#4F46E5':c.mode==='lms'?'#DC2626':'#059669'};flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">${c.name}</div>
+          <div style="font-size:10px;color:var(--text-3);">${c.note||MODE_LABELS[c.mode]}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:var(--mono);font-size:14px;font-weight:800;color:var(--text);">${c.points} pts</div>
+          <div style="font-size:10px;color:var(--text-3);">#${c.rank} of ${c.total}</div>
+        </div>
+      </div>`).join('')}
+    </div>
+    <div class="profile-section" style="padding-top:8px;">
+      <div style="font-size:11px;color:var(--text-3);background:var(--bg);padding:10px;border-radius:6px;">This is a demo. In the live embed, users register with their own email and password.</div>
+    </div>`;
 }
 
 // ── TOAST ──────────────────────────────────────────────────────────────────
