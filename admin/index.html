@@ -624,7 +624,7 @@ tbody tr:hover td{background:var(--bg);}
               </div>
               <div style="display:flex;justify-content:space-between;">
                 <span style="color:var(--text-2);">Per MAU rate</span>
-                <span style="font-family:var(--mono);font-weight:600;">$0.10</span>
+                <span style="font-family:var(--mono);font-weight:600;">$0.40</span>
               </div>
             </div>
           </div>
@@ -655,7 +655,7 @@ tbody tr:hover td{background:var(--bg);}
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
             <div>
               <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;" id="billing-plan-name">Gameweek Standard</div>
-              <div style="font-size:12px;color:var(--text-3);">$50/month · includes 100 MAU · $0.10 per additional user · all game modes · unlimited competitions</div>
+              <div style="font-size:12px;color:var(--text-3);">$50/month base · $0.40 per active user · all game modes · unlimited competitions</div>
             </div>
             <div style="display:flex;gap:8px;">
               <button class="btn btn-outline btn-sm" onclick="toast('Payment portal coming soon')">Manage Payment</button>
@@ -1056,7 +1056,7 @@ async function renderBilling(){
     document.getElementById('billing-total').textContent   = '$'+total.toFixed(2);
     document.getElementById('billing-flat').textContent    = '$'+flat.toFixed(2);
     document.getElementById('billing-included').textContent= included;
-    document.getElementById('billing-overage').textContent = overage > 0 ? overage+' × $0.10 = $'+(overage*0.1).toFixed(2) : '0';
+    document.getElementById('billing-overage').textContent = overage > 0 ? overage+' × $0.40 = $'+(overage*0.4).toFixed(2) : '0';
     document.getElementById('billing-mau').textContent     = mau;
     document.getElementById('billing-mau-limit').textContent = '/ '+included+' included';
     document.getElementById('billing-mau-bar').style.width = pct+'%';
