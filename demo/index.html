@@ -99,6 +99,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .submit-preds-btn:hover{opacity:0.88;}
 .submit-preds-btn.disabled{opacity:0.4;cursor:default;pointer-events:none;}
 .rank-item:active{cursor:grabbing;}
+.rank-item.dragging{opacity:0.5;background:var(--accent-light) !important;border-color:var(--accent) !important;transform:scale(0.98);}
+.rank-item.drag-over{border-top:3px solid var(--accent) !important;margin-top:-2px;}
 .rank-item .drag-handle{cursor:grab;}
 .rank-item:active .drag-handle{cursor:grabbing;}
 .lb-week-row{padding:14px 16px 0;}
@@ -680,7 +682,7 @@ function renderEventCard(ev,comp,isRoundOpen){
       html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div><span class="pred-correct ${correct?'yes':'no'}">${correct?'\u2713 Correct':'\u2717 Wrong'}</span></div>`;
     } else {
       // Predicted but no result yet — pending
-      html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div><span style="font-size:10px;color:var(--amber);font-weight:600;">\u23f3 Awaiting result</span></div>`;
+      html+=`<div><div class="pred-made">Your pick: <strong>${pl}</strong></div><div style="margin-top:4px;"><span style="font-size:11px;color:var(--amber);font-weight:600;">\u23f3 Awaiting result</span></div></div>`;
     }
   } else {
     html+='<div style="font-size:12px;color:var(--text-3);">No prediction made.</div>';
@@ -715,6 +717,9 @@ function pickScore(id,side,val){
   preds[id][side]=val===''?undefined:parseInt(val);
   const input=document.getElementById((side==='h'?'sh-':'sa-')+id);
   if(input)input.classList.toggle('has',val!=='');
+  // Activate submit button
+  const btn=document.querySelector('.submit-preds-btn');
+  if(btn&&predsDirty){btn.classList.remove('disabled');}
 }
 function pickMarket(evId,market,val){
   predsDirty=true;
@@ -744,7 +749,7 @@ function initDragSort(){
       dragItem=item;
       startY=e.touches[0].clientY;
       itemH=item.offsetHeight;
-      item.style.opacity='0.6';
+      item.classList.add('dragging');
       item.style.zIndex='100';
       e.preventDefault();
     },{passive:false});
@@ -753,10 +758,10 @@ function initDragSort(){
     item.addEventListener('dragstart',e=>{
       dragItem=item;
       e.dataTransfer.effectAllowed='move';
-      setTimeout(()=>item.style.opacity='0.4',0);
+      setTimeout(()=>item.classList.add('dragging'),0);
     });
     item.addEventListener('dragend',()=>{
-      if(dragItem)dragItem.style.opacity='1';
+      if(dragItem){dragItem.classList.remove('dragging');}
       dragItem=null;
     });
     item.addEventListener('dragover',e=>{
@@ -775,23 +780,32 @@ function initDragSort(){
     e.preventDefault();
     const touch=e.touches[0];
     const items=[...list.querySelectorAll('.rank-item')];
+    items.forEach(it=>it.classList.remove('drag-over'));
     for(const it of items){
       if(it===dragItem)continue;
       const rect=it.getBoundingClientRect();
       const mid=rect.top+rect.height/2;
-      if(touch.clientY<mid){list.insertBefore(dragItem,it);break;}
+      if(touch.clientY<mid){
+        it.classList.add('drag-over');
+        list.insertBefore(dragItem,it);
+        break;
+      }
       if(it===items[items.length-1])list.appendChild(dragItem);
     }
   },{passive:false});
 
   list.addEventListener('touchend',()=>{
     if(!dragItem)return;
-    dragItem.style.opacity='1';
+    dragItem.classList.remove('dragging');
     dragItem.style.zIndex='';
+    list.querySelectorAll('.rank-item').forEach(el=>el.classList.remove('drag-over'));
     dragItem=null;
     // Save new order
     const newOrder=[...list.querySelectorAll('.rank-item')].map(el=>el.dataset.tid);
     preds[roundId+'_ranking']=newOrder;
+    predsDirty=true;
+    const btn=document.querySelector('.submit-preds-btn');
+    if(btn){btn.classList.remove('disabled');}
     // Update rank numbers
     list.querySelectorAll('.rank-item').forEach((el,i)=>{
       const num=el.querySelector('span:nth-child(2)');
@@ -801,9 +815,12 @@ function initDragSort(){
 
   list.addEventListener('drop',e=>{
     e.preventDefault();
-    if(dragItem)dragItem.style.opacity='1';
+    if(dragItem){dragItem.classList.remove('dragging');}
     const newOrder=[...list.querySelectorAll('.rank-item')].map(el=>el.dataset.tid);
     preds[roundId+'_ranking']=newOrder;
+    predsDirty=true;
+    const sbtn=document.querySelector('.submit-preds-btn');
+    if(sbtn){sbtn.classList.remove('disabled');}
     list.querySelectorAll('.rank-item').forEach((el,i)=>{
       const num=el.querySelector('span:nth-child(2)');
       if(num)num.textContent='#'+(i+1);
@@ -813,6 +830,8 @@ function initDragSort(){
 }
 function submitPreds(){
   predsDirty=false;
+  const btn=document.querySelector('.submit-preds-btn');
+  if(btn){btn.classList.add('disabled');btn.textContent='\u2713 Saved';}
   const comp=COMPS[currentCompIdx],round=comp.rounds[selectedRound[currentCompIdx]];
   if(!round)return;
   const events=round.eventIds.map(id=>({id,...EVENTS[id]})).filter(e=>e.home&&!e.res&&!e.locked);

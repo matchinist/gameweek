@@ -699,6 +699,7 @@ function renderEventCard(ev,comp,isOpen){
     if(comp.mode==='score'&&earnedPts!=null){ rb=`<span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'✗ 0 pts'}</span>`; }
     else if(correct!=null){ rb=`<span class="pred-correct ${correct?'yes':'no'}">${correct?'✓ Correct':'✗ Wrong'}</span>`; }
     html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div>${rb}</div>`;
+    if(!rb&&!hasRes) html+=`<div style="margin-top:4px;"><span style="font-size:11px;color:var(--amber);font-weight:600;">\u23f3 Awaiting result</span></div>`;
     if(pointsBreakdown) html+=`<div style="font-size:10px;color:${earnedPts>0?'var(--green)':'var(--text-3)'};margin-top:4px;font-weight:600;">${pointsBreakdown}</div>`;
   } else {
     html+='<div style="font-size:12px;color:var(--text-3);">No prediction made.</div>';
@@ -826,6 +827,8 @@ function pickMarket(evId,market,val){
 function changeRound(idx){ selectedRound[currentCompIdx]=parseInt(idx); renderPredict(); }
 function submitPreds(){
   predsDirty=false;
+  const btn=document.querySelector('.submit-preds-btn');
+  if(btn){btn.classList.add('disabled');btn.textContent='\u2713 Saved';}
   if(!currentPlayer){
     // Prompt login here; entered scores are preserved in `preds` and saved after login
     openAuthModal('Sign in to save your predictions');
