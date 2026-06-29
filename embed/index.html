@@ -97,7 +97,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .score-inline-mid{display:flex;align-items:center;gap:4px;flex-shrink:0;min-width:95px;justify-content:center;}
 .score-inline-dash{font-family:var(--mono);font-size:13px;color:var(--text-3);font-weight:700;}
 /* ── SUBMIT BUTTON ── */
-.submit-preds-btn{display:block;width:calc(100% - 28px);margin:12px 14px;padding:12px;background:var(--comp-color);color:white;border:none;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;transition:opacity 0.13s;}
+.submit-preds-btn{display:block;width:calc(100% - 28px);margin:12px 14px 24px;padding:12px;background:var(--comp-color);color:white;border:none;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;transition:opacity 0.13s;}
 .submit-preds-btn:hover{opacity:0.88;}
 .lb-week-row{padding:14px 16px 0;}
 .lb-week-select{width:100%;font-family:var(--mono);font-size:11px;border:1px solid var(--border);background:var(--white);padding:8px 10px;border-radius:6px;outline:none;color:var(--text);}
@@ -659,7 +659,7 @@ function renderEventCard(ev,comp,isOpen){
     midSection='<div class="ev-vs">vs</div>';
   }
 
-  let html=`<div class="${cls}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${comp.name}</span><span class="event-kickoff">${ev.kickoff||''}${hasRes?` · FT: ${ev.res.h}–${ev.res.a}`:''}</span></div><div class="event-teams"><div class="ev-team">${teamBadge(ev.homeLogo||'',ev.home)}<span class="ev-name">${ev.home}</span></div>${midSection}<div class="ev-team away">${teamBadge(ev.awayLogo||'',ev.away)}<span class="ev-name">${ev.away}</span></div></div></div><div class="pred-area">`;
+  let html=`<div class="${cls}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${comp.name}</span><span class="event-kickoff">${ev.kickoff||''}</span></div><div class="event-teams"><div class="ev-team">${teamBadge(ev.homeLogo||'',ev.home)}<span class="ev-name">${ev.home}</span></div>${midSection}<div class="ev-team away">${teamBadge(ev.awayLogo||'',ev.away)}<span class="ev-name">${ev.away}</span></div></div></div><div class="pred-area">`;
 
   if(canPredict){
     if(comp.mode==='lms'||comp.mode==='result'){

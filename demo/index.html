@@ -93,7 +93,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .score-inline-mid{display:flex;align-items:center;gap:4px;flex-shrink:0;min-width:95px;justify-content:center;}
 .score-inline-dash{font-family:var(--mono);font-size:13px;color:var(--text-3);font-weight:700;}
 /* ── SUBMIT BUTTON ── */
-.submit-preds-btn{display:block;width:calc(100% - 28px);margin:12px 14px;padding:12px;background:var(--comp-color);color:white;border:none;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;transition:opacity 0.13s;}
+.submit-preds-btn{display:block;width:calc(100% - 28px);margin:12px 14px 24px;padding:12px;background:var(--comp-color);color:white;border:none;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;transition:opacity 0.13s;}
 .submit-preds-btn:hover{opacity:0.88;}
 .lb-week-row{padding:14px 16px 0;}
 .lb-week-select{width:100%;font-family:var(--mono);font-size:11px;border:1px solid var(--border);background:var(--white);padding:8px 10px;border-radius:6px;outline:none;color:var(--text);}
@@ -284,6 +284,8 @@ const COMPS=[
     scoring:{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1},
     tournamentNames:['Premier League'],
     rounds:[
+      {id:'r0a',label:'Gameweek 1',status:'completed',deadline:'2026-08-16T14:00',eventIds:['e0a','e0b','e0c','e0d']},
+      {id:'r0b',label:'Gameweek 2',status:'completed',deadline:'2026-08-23T14:00',eventIds:['e0e','e0f','e0g','e0h']},
       {id:'r1',label:'Gameweek 3',status:'open',deadline:'2026-08-31T14:00',eventIds:['e1','e2','e3','e4','e5']},
     ]},
   {id:'c2',name:'Last Man Standing',mode:'lms',color:'#DC2626',
@@ -323,7 +325,17 @@ const COMPS=[
 ];
 
 const EVENTS={
-  // Score Predictor — 5 events, different states:
+  // GW1 — all resulted
+  e0a:{home:'Arsenal',away:'Newcastle',homeLogo:lg('Arsenal'),awayLogo:lg('Newcastle'),tournament:'Premier League',kickoff:'16 Aug · 15:00',res:{h:2,a:0},locked:true},
+  e0b:{home:'Man City',away:'Everton',homeLogo:lg('Man City'),awayLogo:lg('Everton'),tournament:'Premier League',kickoff:'16 Aug · 17:30',res:{h:4,a:1},locked:true},
+  e0c:{home:'Liverpool',away:'Chelsea',homeLogo:lg('Liverpool'),awayLogo:lg('Chelsea'),tournament:'Premier League',kickoff:'17 Aug · 14:00',res:{h:1,a:1},locked:true},
+  e0d:{home:'Spurs',away:'Man Utd',homeLogo:lg('Spurs'),awayLogo:lg('Man Utd'),tournament:'Premier League',kickoff:'17 Aug · 16:30',res:{h:3,a:2},locked:true},
+  // GW2 — all resulted
+  e0e:{home:'Chelsea',away:'Arsenal',homeLogo:lg('Chelsea'),awayLogo:lg('Arsenal'),tournament:'Premier League',kickoff:'23 Aug · 15:00',res:{h:0,a:1},locked:true},
+  e0f:{home:'Man Utd',away:'Liverpool',homeLogo:lg('Man Utd'),awayLogo:lg('Liverpool'),tournament:'Premier League',kickoff:'23 Aug · 17:30',res:{h:2,a:3},locked:true},
+  e0g:{home:'Everton',away:'Spurs',homeLogo:lg('Everton'),awayLogo:lg('Spurs'),tournament:'Premier League',kickoff:'24 Aug · 14:00',res:{h:1,a:1},locked:true},
+  e0h:{home:'Wolves',away:'Man City',homeLogo:lg('Wolves'),awayLogo:lg('Man City'),tournament:'Premier League',kickoff:'24 Aug · 16:30',res:{h:0,a:3},locked:true},
+  // GW3 — mixed states
   // 1-2: resulted (kickoff past, has result)
   e1:{home:'Arsenal',away:'Wolves',homeLogo:lg('Arsenal'),awayLogo:lg('Wolves'),tournament:'Premier League',kickoff:'30 Aug \u00b7 15:00',res:{h:3,a:0},locked:true},
   e2:{home:'Man City',away:'Chelsea',homeLogo:lg('Man City'),awayLogo:lg('Chelsea'),tournament:'Premier League',kickoff:'30 Aug \u00b7 17:30',res:{h:2,a:1},locked:true},
@@ -350,7 +362,11 @@ const EVENTS={
 };
 
 let preds={
-  // Score: events 1-3 predicted
+  // GW1 predictions
+  e0a:{h:2,a:0}, e0b:{h:3,a:0}, e0c:{h:2,a:1}, e0d:{h:3,a:2},
+  // GW2 predictions
+  e0e:{h:1,a:1}, e0f:{h:1,a:2}, e0g:{h:1,a:1}, e0h:{h:0,a:2},
+  // GW3: events 1-3 predicted
   e1:{h:3,a:0}, e2:{h:2,a:0}, e3:{h:1,a:0},
   // LMS: first correct (resulted), second predicted (open)
   e201:'H', e202:'H',
@@ -362,14 +378,16 @@ let preds={
 };
 
 const LB_DATA={
-  c1:{r1:[{u:'footy_oracle',points:12},{u:'demo_user',points:9},{u:'stadyum76',points:7},{u:'bvb_predictor',points:5},{u:'xavi_8',points:3}],
-      overall:[{u:'footy_oracle',points:27},{u:'demo_user',points:18},{u:'stadyum76',points:16}]},
-  c2:{r3:[{u:'footy_oracle',predictions:3},{u:'demo_user',predictions:2},{u:'stadyum76',predictions:2}],
-      overall:[{u:'footy_oracle',survived:1},{u:'demo_user',survived:1},{u:'stadyum76',survived:1}]},
-  c3:{r5:[{u:'demo_user',points:3},{u:'xavi_8',points:5}],
-      overall:[{u:'xavi_8',points:14},{u:'demo_user',points:10}]},
-  c4:{r7:[],r8:[{u:'demo_user',points:9},{u:'footy_oracle',points:7},{u:'stadyum76',points:5}],
-      overall:[{u:'demo_user',points:9},{u:'footy_oracle',points:7},{u:'stadyum76',points:5}]},
+  c1:{r0a:[{u:'footy_oracle',points:14},{u:'demo_user',points:9},{u:'stadyum76',points:7},{u:'bvb_predictor',points:5}],
+      r0b:[{u:'demo_user',points:11},{u:'footy_oracle',points:8},{u:'stadyum76',points:6},{u:'bvb_predictor',points:4}],
+      r1:[{u:'footy_oracle',points:7},{u:'demo_user',points:7},{u:'stadyum76',points:4}],
+      overall:[{u:'footy_oracle',points:29},{u:'demo_user',points:27},{u:'stadyum76',points:17},{u:'bvb_predictor',points:9}]},
+  c2:{r3:[{u:'footy_oracle',predictions:3,correct:3},{u:'demo_user',predictions:2,correct:1},{u:'stadyum76',predictions:2,correct:1},{u:'matchday_man',predictions:3,correct:0},{u:'xavi_8',predictions:1,correct:1}],
+      overall:[{u:'footy_oracle',survived:1,correct:3},{u:'demo_user',survived:1,correct:1},{u:'stadyum76',survived:1,correct:1},{u:'matchday_man',survived:0,correct:0}]},
+  c3:{r5:[{u:'xavi_8',points:7},{u:'demo_user',points:5},{u:'stadyum76',points:5},{u:'footy_oracle',points:3},{u:'matchday_man',points:2},{u:'bvb_predictor',points:1}],
+      overall:[{u:'xavi_8',points:14},{u:'demo_user',points:10},{u:'stadyum76',points:9},{u:'footy_oracle',points:7},{u:'matchday_man',points:5},{u:'bvb_predictor',points:3}]},
+  c4:{r7:[],r8:[{u:'demo_user',points:9,correct:4},{u:'footy_oracle',points:7,correct:3},{u:'stadyum76',points:5,correct:2}],
+      overall:[{u:'demo_user',points:9,correct:4},{u:'footy_oracle',points:7,correct:3},{u:'stadyum76',points:5,correct:2}]},
 };
 
 // ── STATE ─────────────────────────────────────────────────────────────────
@@ -496,21 +514,21 @@ function renderPredictionsPane(comp){
       if(correctCount===teams.length) html+=`<div style="text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--green);padding:8px;">🎯 Perfect ranking! +${comp.rankingConfig?.perfectBonus||5} bonus pts</div>`;
     } else {
       html+=`<div style="padding:4px 8px 12px;font-size:11px;color:var(--text-3);">Drag teams to sort from <strong>highest</strong> to <strong>lowest</strong> expected ${comp.rankingConfig?.metric||'xG'}</div>`;
+      html+=`<div id="ranking-list" data-roundid="${round.id}">`;
       userOrder.forEach((tid,i)=>{
         const t=teamMap[tid];
-        html+=`<div style="display:flex;align-items:center;gap:6px;padding:8px;margin-bottom:4px;background:var(--white);border-radius:8px;border:1px solid var(--border);">
+        html+=`<div class="rank-item" data-tid="${tid}" draggable="true" style="display:flex;align-items:center;gap:6px;padding:8px;margin-bottom:4px;background:var(--white);border-radius:8px;border:1px solid var(--border);cursor:grab;user-select:none;touch-action:none;">
+          <span style="font-size:14px;color:var(--text-3);cursor:grab;flex-shrink:0;">☰</span>
           <span style="font-family:var(--mono);font-size:12px;font-weight:800;color:var(--accent);width:20px;text-align:center;">#${i+1}</span>
           <div class="ev-badge" style="width:24px;height:24px;font-size:7px;">${t.logo?'<img src="'+t.logo+'" alt="'+t.name+'">':t.name.slice(0,3).toUpperCase()}</div>
           <div style="flex:1;min-width:0;">
             <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
             <div style="font-size:9px;color:var(--text-3);">${t.opponent}</div>
           </div>
-          <div style="display:flex;gap:2px;">
-            <button onclick="moveRank('${round.id}','${tid}',-1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:5px;background:var(--bg);cursor:pointer;font-size:12px;color:var(--text-2);${i===0?'opacity:0.3;cursor:default;':''}" ${i===0?'disabled':''}>▲</button>
-            <button onclick="moveRank('${round.id}','${tid}',1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:5px;background:var(--bg);cursor:pointer;font-size:12px;color:var(--text-2);${i===userOrder.length-1?'opacity:0.3;cursor:default;':''}" ${i===userOrder.length-1?'disabled':''}>▼</button>
-          </div>
         </div>`;
       });
+      html+='</div>';
+      setTimeout(()=>initDragSort(),50);
       html+=`<button class="submit-preds-btn" onclick="toast('✓ Ranking saved')">Save Ranking</button>`;
     }
     html+='</div>';
@@ -610,7 +628,7 @@ function renderEventCard(ev,comp,isRoundOpen){
     midSection='<div class="ev-vs">vs</div>';
   }
 
-  let html=`<div class="${cls}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${ev.tournament||comp.name}</span><span class="event-kickoff">${ev.kickoff||''}${hasRes?' \u00b7 FT: '+ev.res.h+'\u2013'+ev.res.a:''}</span></div><div class="event-teams"><div class="ev-team">${teamBadge(ev.homeLogo,ev.home)}<span class="ev-name">${ev.home}</span></div>${midSection}<div class="ev-team away">${teamBadge(ev.awayLogo,ev.away)}<span class="ev-name">${ev.away}</span></div></div></div><div class="pred-area">`;
+  let html=`<div class="${cls}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${ev.tournament||comp.name}</span><span class="event-kickoff">${ev.kickoff||''}</span></div><div class="event-teams"><div class="ev-team">${teamBadge(ev.homeLogo,ev.home)}<span class="ev-name">${ev.home}</span></div>${midSection}<div class="ev-team away">${teamBadge(ev.awayLogo,ev.away)}<span class="ev-name">${ev.away}</span></div></div></div><div class="pred-area">`;
 
   if(canPredict){
     // Open for prediction
@@ -693,6 +711,86 @@ function moveRank(roundId,teamId,dir){
   [order[idx],order[newIdx]]=[order[newIdx],order[idx]];
   renderPredict();
 }
+
+function initDragSort(){
+  const list=document.getElementById('ranking-list');
+  if(!list)return;
+  const roundId=list.dataset.roundid;
+  let dragItem=null, placeholder=null, startY=0, itemH=0;
+
+  list.querySelectorAll('.rank-item').forEach(item=>{
+    // Touch events
+    item.addEventListener('touchstart',e=>{
+      dragItem=item;
+      startY=e.touches[0].clientY;
+      itemH=item.offsetHeight;
+      item.style.opacity='0.6';
+      item.style.zIndex='100';
+      e.preventDefault();
+    },{passive:false});
+
+    // Mouse drag
+    item.addEventListener('dragstart',e=>{
+      dragItem=item;
+      e.dataTransfer.effectAllowed='move';
+      setTimeout(()=>item.style.opacity='0.4',0);
+    });
+    item.addEventListener('dragend',()=>{
+      if(dragItem)dragItem.style.opacity='1';
+      dragItem=null;
+    });
+    item.addEventListener('dragover',e=>{
+      e.preventDefault();
+      if(!dragItem||dragItem===item)return;
+      const rect=item.getBoundingClientRect();
+      const mid=rect.top+rect.height/2;
+      if(e.clientY<mid)list.insertBefore(dragItem,item);
+      else list.insertBefore(dragItem,item.nextSibling);
+    });
+  });
+
+  // Touch move/end on list
+  list.addEventListener('touchmove',e=>{
+    if(!dragItem)return;
+    e.preventDefault();
+    const touch=e.touches[0];
+    const items=[...list.querySelectorAll('.rank-item')];
+    for(const it of items){
+      if(it===dragItem)continue;
+      const rect=it.getBoundingClientRect();
+      const mid=rect.top+rect.height/2;
+      if(touch.clientY<mid){list.insertBefore(dragItem,it);break;}
+      if(it===items[items.length-1])list.appendChild(dragItem);
+    }
+  },{passive:false});
+
+  list.addEventListener('touchend',()=>{
+    if(!dragItem)return;
+    dragItem.style.opacity='1';
+    dragItem.style.zIndex='';
+    dragItem=null;
+    // Save new order
+    const newOrder=[...list.querySelectorAll('.rank-item')].map(el=>el.dataset.tid);
+    preds[roundId+'_ranking']=newOrder;
+    // Update rank numbers
+    list.querySelectorAll('.rank-item').forEach((el,i)=>{
+      const num=el.querySelector('span:nth-child(2)');
+      if(num)num.textContent='#'+(i+1);
+    });
+  });
+
+  list.addEventListener('drop',e=>{
+    e.preventDefault();
+    if(dragItem)dragItem.style.opacity='1';
+    const newOrder=[...list.querySelectorAll('.rank-item')].map(el=>el.dataset.tid);
+    preds[roundId+'_ranking']=newOrder;
+    list.querySelectorAll('.rank-item').forEach((el,i)=>{
+      const num=el.querySelector('span:nth-child(2)');
+      if(num)num.textContent='#'+(i+1);
+    });
+    dragItem=null;
+  });
+}
 function submitPreds(){
   const comp=COMPS[currentCompIdx],round=comp.rounds[selectedRound[currentCompIdx]];
   if(!round)return;
@@ -733,9 +831,14 @@ function renderLeaderboardPane(comp){
     rows.sort((a,b)=>b.points-a.points);
     rows.forEach((r,i)=>{if(i>0&&rows[i].points<rows[i-1].points)rank=i+1;r.rank=rank;});
     html+=buildLBTable(comp.name,isOverall?'Overall':round.label,rows,r=>`<td class="lb-num">${r.points} pts</td>`,'<th class="r">Points</th>');
+  } else if(comp.mode==='ranking'){
+    rows.sort((a,b)=>b.points-a.points);
+    rows.forEach((r,i)=>{if(i>0&&rows[i].points<rows[i-1].points)rank=i+1;r.rank=rank;});
+    html+=buildLBTable(comp.name,isOverall?'Overall':round.label,rows,r=>`<td class="lb-num">${r.correct||0}</td><td class="lb-num">${r.points} pts</td>`,'<th class="r">Correct</th><th class="r">Points</th>');
   } else {
-    if(isOverall){rows.sort((a,b)=>b.survived-a.survived);rows.forEach((r,i)=>{if(i>0&&rows[i].survived<rows[i-1].survived)rank=i+1;r.rank=rank;});html+=buildLBTable(comp.name,'Overall',rows,r=>`<td class="lb-num">${r.survived}</td>`,'<th class="r">Rounds</th>');}
-    else{rows.sort((a,b)=>b.predictions-a.predictions);rows.forEach((r,i)=>{if(i>0&&rows[i].predictions<rows[i-1].predictions)rank=i+1;r.rank=rank;});html+=buildLBTable(comp.name,round.label,rows,r=>`<td class="lb-num">${r.predictions}</td>`,'<th class="r">Picks</th>');}
+    rows.sort((a,b)=>(b.correct||0)-(a.correct||0)||(b.predictions||0)-(a.predictions||0));
+    rows.forEach((r,i)=>{if(i>0&&((rows[i].correct||0)<(rows[i-1].correct||0)))rank=i+1;r.rank=rank;});
+    html+=buildLBTable(comp.name,isOverall?'Overall':round.label,rows,r=>`<td class="lb-num">${r.correct||0}</td><td class="lb-num">${isOverall?r.survived:r.predictions}</td>`,isOverall?'<th class="r">Correct</th><th class="r">Rounds</th>':'<th class="r">Correct</th><th class="r">Picks</th>');
   }
   return html;
 }
