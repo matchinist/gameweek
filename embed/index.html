@@ -55,6 +55,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .auth-terms{font-size:11px;color:var(--text-3);text-align:center;margin-top:14px;line-height:1.5;}
 .comp-tabs{display:flex;gap:0;overflow-x:auto;border-bottom:1px solid var(--border);padding:0 16px;-webkit-overflow-scrolling:touch;}
 .comp-tabs::-webkit-scrollbar{display:none;}
+.comp-tabs::-webkit-scrollbar{display:none;}
+.comp-tabs{-ms-overflow-style:none;scrollbar-width:none;}
 .comp-tab{padding:10px 14px;font-size:12px;font-weight:500;color:var(--text-2);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:all 0.13s;display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex-shrink:0;}
 .comp-tab:hover{color:var(--text);}
 .comp-tab.active{color:var(--comp-color);border-bottom-color:var(--comp-color);}
@@ -99,6 +101,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 /* ── SUBMIT BUTTON ── */
 .submit-preds-btn{display:block;width:calc(100% - 28px);margin:12px 14px 40px;padding:12px;background:var(--comp-color);color:white;border:none;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;transition:opacity 0.13s;}
 .submit-preds-btn:hover{opacity:0.88;}
+.submit-preds-btn.disabled{opacity:0.4;cursor:default;pointer-events:none;}
 .lb-week-row{padding:14px 16px 0;}
 .lb-week-select{width:100%;font-family:var(--mono);font-size:11px;border:1px solid var(--border);background:var(--white);padding:8px 10px;border-radius:6px;outline:none;color:var(--text);}
 .lb-week-select:focus{border-color:var(--comp-color);}
@@ -257,7 +260,7 @@ table.lb-table{width:100%;border-collapse:collapse;}
     <div class="app-header">
       <div class="header-top">
         <div class="header-logo">game<span>week</span><span id="hdr-operator-badge" style="font-family:var(--sans);font-weight:500;color:var(--text-3);font-size:11px;margin-left:6px;"></span></div>
-        <div class="header-user" onclick="headerUserClick()">
+        <div class="header-user" onclick="toggleProfile()">
           <div class="header-avatar" id="hdr-avatar">?</div>
           <div class="header-username" id="hdr-username">Sign in</div>
         </div>
@@ -346,7 +349,7 @@ async function buildCompsFromRealData(){
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let currentPlayer=null; // {id, auth_id, username, email, client_key}
 let preds={};
-let currentCompIdx=0, selectedRound={}, predictSubTab='predictions', lbSelection={};
+let currentCompIdx=0, selectedRound={}, predictSubTab='predictions', lbSelection={}, predsDirty=false;
 const MEDALS=['🥇','🥈','🥉'];
 const MODE_LABELS={lms:'Last Man Standing',score:'Score Predictor',ou:'Over / Under',betting:'Betting Markets'};
 
@@ -509,6 +512,12 @@ function goTab(tab){
   if(tab==='predict') renderPredict();
   if(tab==='profile') renderProfile();
 }
+function toggleProfile(){
+  if(!currentPlayer){ openAuthModal('Sign in to view your profile'); return; }
+  const profileEl=document.getElementById('tab-profile');
+  if(profileEl.classList.contains('active')){goTab('predict');}
+  else{goTab('profile');}
+}
 
 // ── COMP TABS ─────────────────────────────────────────────────────────────────
 function renderCompTabs(){
@@ -612,7 +621,7 @@ function renderPredictionsPane(comp){
     if(openEvents.length){
     const pct=Math.round(predCount/openEvents.length*100);
     html+=`<div class="progress-wrap"><div class="progress-meta"><span>${predCount} of ${events.length} predictions made</span><span class="progress-pct">${pct}%</span></div><div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:var(--comp-color);"></div></div></div>`;
-    html+=`<button class="submit-preds-btn" onclick="submitPreds()">${predCount===events.length?'✓ All predictions saved':'Save Predictions ('+predCount+'/'+events.length+')'}</button>`;
+    html+=`<button class="submit-preds-btn${predsDirty?'':' disabled'}" onclick="submitPreds()">${predCount===events.length?'✓ All predictions saved':'Save Predictions ('+predCount+'/'+events.length+')'}</button>`;
     }
   }
   return html;
@@ -798,8 +807,9 @@ function showRules(mode){
   document.body.appendChild(overlay);
 }
 
-function pick(id,val){ if(!currentPlayer){openAuthModal('Sign in to make predictions');return;} preds[id]=val; savePred(id,val); renderPredict(); }
+function pick(id,val){ predsDirty=true; if(!currentPlayer){openAuthModal('Sign in to make predictions');return;} preds[id]=val; savePred(id,val); renderPredict(); }
 function pickScore(id,side,val){
+  predsDirty=true;
   // Score entry does NOT require login — store locally; login is prompted on submit
   if(!preds[id]||typeof preds[id]!=='object') preds[id]={};
   preds[id][side]=val===''?undefined:parseInt(val);
@@ -808,12 +818,14 @@ function pickScore(id,side,val){
   if(input) input.classList.toggle('has',val!=='');
 }
 function pickMarket(evId,market,val){
+  predsDirty=true;
   if(!currentPlayer){openAuthModal('Sign in to make predictions');return;}
   if(!preds[evId]||typeof preds[evId]!=='object') preds[evId]={};
   preds[evId][market]=val; savePred(evId,preds[evId]); renderPredict();
 }
 function changeRound(idx){ selectedRound[currentCompIdx]=parseInt(idx); renderPredict(); }
 function submitPreds(){
+  predsDirty=false;
   if(!currentPlayer){
     // Prompt login here; entered scores are preserved in `preds` and saved after login
     openAuthModal('Sign in to save your predictions');
@@ -976,6 +988,7 @@ async function renderProfile(){
   }
 
   document.getElementById('profile-content').innerHTML=`
+    <div style="padding:10px 16px 0;"><button onclick="goTab('predict')" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--accent);font-weight:700;font-family:var(--mono);">← Back to predictions</button></div>
     <div class="profile-header"><div class="profile-av">${ini}</div><div class="profile-name">${currentPlayer.username}</div><div class="profile-joined">Joined ${joined}</div></div>
     <div class="profile-stats">
       <div class="profile-stat"><div class="ps-val">${totalPreds}</div><div class="ps-label">Total Predictions</div></div>
