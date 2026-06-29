@@ -408,38 +408,51 @@ function renderPredictionsPane(comp){
     </div>
   </div>`;
 
-  if(isOpen&&round.deadline){const dl=new Date(round.deadline);html+=`<div class="deadline-banner">\u23f1 \u00a0Predictions lock <strong>${dl.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})} \u00b7 ${dl.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</strong></div>`;}
+  if(isOpen&&round.deadline){
+    html+=`<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;<span id="countdown-text">Calculating...</span></div>`;
+    setTimeout(()=>startCountdown(round.deadline),50);
+  }
+
+  // LMS summary bars above events
+  if(comp.mode==='lms'&&events.length){
+    const total=7;
+    const fakeSurvived=[7,5,3];
+    let survived=total;
+    events.forEach((ev,i)=>{if(ev.res){survived=fakeSurvived[i]||survived;ev._survivalPct=Math.round(survived/total*100);}});
+    const currentSurvived=events.some(e=>e.res)?survived:total;
+    const pct=Math.round(currentSurvived/total*100);
+    html+=`<div style="padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--border);">
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:5px;"><span style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--text);">${total}</span><span style="font-size:10px;color:var(--text-3);font-weight:600;">JOINED</span></div>
+        <div style="display:flex;align-items:center;gap:5px;"><span style="font-family:var(--mono);font-size:20px;font-weight:800;color:${currentSurvived<total?'var(--red)':'var(--green)'};">${events.some(e=>e.res)?currentSurvived:'—'}</span><span style="font-size:10px;color:var(--text-3);font-weight:600;">SURVIVING</span></div>
+      </div>
+      <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${pct>60?'var(--green)':pct>30?'var(--amber)':'var(--red)'};border-radius:3px;transition:width 0.4s;"></div></div>
+    </div>`;
+  }
+
   html+='<div class="events-list">';
   events.forEach((ev,i)=>{
     const isEliminated=eliminatedAtIdx>=0&&i>eliminatedAtIdx;
     const isEliminationPoint=i===eliminatedAtIdx;
     if(comp.mode==='lms'){
-      html+=`<div style="display:flex;align-items:center;gap:6px;padding:6px 0 2px;"><span style="font-family:var(--mono);font-size:10px;font-weight:700;color:${isEliminated?'var(--text-3)':isEliminationPoint?'var(--red)':'var(--accent)'};">Event ${i+1}</span>${isEliminationPoint?'<span style="font-size:10px;background:var(--red-light);color:var(--red);padding:1px 7px;border-radius:10px;font-weight:700;">\u2717 Eliminated here</span>':''}${isEliminated?'<span style="font-size:10px;color:var(--text-3);">\u2014 eliminated</span>':''}</div>`;
+      html+=`<div style="display:flex;align-items:center;gap:6px;padding:6px 0 2px;"><span style="font-family:var(--mono);font-size:10px;font-weight:700;color:${isEliminated?'var(--text-3)':isEliminationPoint?'var(--red)':'var(--accent)'};">Event ${i+1}</span>${isEliminationPoint?'<span style="font-size:10px;background:var(--red-light);color:var(--red);padding:1px 7px;border-radius:10px;font-weight:700;">✗ Eliminated here</span>':''}${isEliminated?'<span style="font-size:10px;color:var(--text-3);">— eliminated</span>':''}</div>`;
     }
     html+=`<div style="opacity:${isEliminated?'0.4':'1'};">${renderEventCard(ev,comp,isOpen)}</div>`;
+    // Survival % below finished LMS events
+    if(comp.mode==='lms'&&ev.res&&ev._survivalPct!==undefined){
+      html+=`<div style="text-align:right;font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text-3);padding:0 4px 4px;">${ev._survivalPct}% survived</div>`;
+    }
   });
   html+='</div>';
 
-  // LMS survival tracker
-  if(comp.mode==='lms'&&!isOpen&&events.length){
-    const total=7,survived=[7,5,3];
-    html+='<div class="survival-tracker"><div class="st-label">SURVIVAL TRACKER</div><div class="st-bar-wrap">';
-    events.forEach((ev,i)=>{
-      const s=survived[i]||0;const pct=Math.round(s/total*100);
-      const col=s>total*0.6?'var(--green)':s>total*0.3?'var(--amber)':'var(--red)';
-      html+=`<div class="st-bar-row"><span class="st-bar-label">Event ${i+1}</span><div class="st-bar-track"><div class="st-bar-fill" style="width:${pct}%;background:${col};"></div></div><span style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-2);min-width:32px;text-align:right;">${s}/${total}</span></div>`;
-    });
-    html+='</div></div>';
-  }
-
-  // Progress bar for open events
+  // Progress bar + save button for ALL modes
   if(isOpen&&events.length){
     const openEvents=events.filter(ev=>!ev.res&&!ev.locked);
     const predCount=openEvents.filter(ev=>{const p=preds[ev.id];if(!p)return false;if(comp.mode==='score')return p.h!==undefined&&p.a!==undefined;if(comp.mode==='betting')return typeof p==='object'&&Object.keys(p).length>0;return!!p;}).length;
     if(openEvents.length){
       const pct=Math.round(predCount/openEvents.length*100);
       html+=`<div class="progress-wrap"><div class="progress-meta"><span>${predCount} of ${openEvents.length} predictions made</span><span class="progress-pct">${pct}%</span></div><div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:var(--comp-color);"></div></div></div>`;
-      if(comp.mode==='score')html+=`<button class="submit-preds-btn" onclick="submitScorePreds()">${predCount===openEvents.length?'\u2713 All predictions saved':'Save Predictions ('+predCount+'/'+openEvents.length+')'}</button>`;
+      html+=`<button class="submit-preds-btn" onclick="submitPreds()">${predCount===openEvents.length?'✓ All predictions saved':'Save Predictions ('+predCount+'/'+openEvents.length+')'}</button>`;
     }
   }
   return html;
@@ -535,6 +548,25 @@ function renderEventCard(ev,comp,isRoundOpen){
   html+='</div></div>';return html;
 }
 
+// ── COUNTDOWN ──────────────────────────────────────────────────────────────
+let countdownInterval;
+function startCountdown(deadline){
+  clearInterval(countdownInterval);
+  function update(){
+    const el=document.getElementById('countdown-text');if(!el)return;
+    const diff=new Date(deadline)-Date.now();
+    if(diff<=0){el.textContent='Predictions locked';clearInterval(countdownInterval);return;}
+    const d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
+    let txt='';
+    if(d>0)txt=`${d}d ${h}h ${m}m left`;
+    else if(h>0)txt=`${h}h ${m}m ${s}s left`;
+    else txt=`${m}m ${s}s left`;
+    el.innerHTML=txt;
+  }
+  update();
+  countdownInterval=setInterval(update,1000);
+}
+
 // ── PICKS ─────────────────────────────────────────────────────────────────
 function pick(id,val){preds[id]=val;renderPredict();}
 function pickScore(id,side,val){
@@ -548,7 +580,7 @@ function pickMarket(evId,market,val){
   preds[evId][market]=val;renderPredict();
 }
 function changeRound(idx){selectedRound[currentCompIdx]=parseInt(idx);renderPredict();}
-function submitScorePreds(){
+function submitPreds(){
   const comp=COMPS[currentCompIdx],round=comp.rounds[selectedRound[currentCompIdx]];
   if(!round)return;
   const events=round.eventIds.map(id=>({id,...EVENTS[id]})).filter(e=>e.home&&!e.res&&!e.locked);

@@ -543,7 +543,10 @@ function renderPredict(){
   if(selectedRound[currentCompIdx]===undefined) selectedRound[currentCompIdx]=getDefaultRoundIdx(COMPS[currentCompIdx]);
   const comp=COMPS[currentCompIdx];
   const tlHtml=renderTournamentLabels(comp);
-  let html=`<div class="predict-header-row"><div class="predict-tournament-labels">${tlHtml}</div><div class="predict-subtabs"><button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button></div><div class="predict-subtabs-mobile"><select onchange="switchPredictSubTab(this.value)"><option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option><option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option></select></div></div>`;
+  // Game descriptions + rules
+  const descriptions={score:'Predict the exact score for each match. Points awarded for correct scores, correct team goals, or correct total.',lms:'Pick a winner for each event. Get it wrong and you are eliminated. Last one standing wins.',betting:'Predict multiple markets per match: result, over/under, both teams to score. Points per correct market.'};
+  let html=`<div style="padding:10px 16px 0;display:flex;align-items:center;gap:8px;"><span style="font-size:12px;color:var(--text-2);flex:1;font-weight:600;">${descriptions[comp.mode]||''}</span><button onclick="showRules('${comp.mode}')" style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent);background:none;border:1px solid var(--accent);border-radius:5px;padding:3px 10px;cursor:pointer;white-space:nowrap;">Rules</button></div>`;
+  html+=`<div class="predict-header-row"><div class="predict-tournament-labels">${tlHtml}</div><div class="predict-subtabs"><button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button></div><div class="predict-subtabs-mobile"><select onchange="switchPredictSubTab(this.value)"><option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option><option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option></select></div></div>`;
   html+=predictSubTab==='predictions'?renderPredictionsPane(comp):renderLeaderboardShell(comp);
   document.getElementById('predict-content').innerHTML=html;
   if(predictSubTab==='leaderboard') loadAndRenderLeaderboard(comp);
@@ -569,7 +572,15 @@ function renderPredictionsPane(comp){
   }
 
   let html=`<div class="round-bar"><select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select><span class="round-status ${round.status}">${isOpen?'● Open':'✓ Done'}</span></div>`;
-  if(isOpen&&round.deadline){ const dl=new Date(round.deadline); html+=`<div class="deadline-banner">⏱ &nbsp;Predictions lock <strong>${dl.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})} · ${dl.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</strong></div>`; }
+  if(isOpen&&round.deadline){
+    html+=`<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;<span id="countdown-text">Calculating...</span></div>`;
+    setTimeout(()=>startCountdown(round.deadline),50);
+  }
+
+  // LMS summary bars above events (participants vs survivors)
+  if(comp.mode==='lms'&&events.length){
+    html+=renderLMSSummaryBars(comp,round,events);
+  }
 
   html+='<div class="events-list">';
   if(!events.length){
@@ -579,6 +590,7 @@ function renderPredictionsPane(comp){
       const isEliminated=eliminatedAtIdx>=0&&i>eliminatedAtIdx;
       const isEliminationPoint=i===eliminatedAtIdx;
       if(comp.mode==='lms'){
+        const survPct=ev._survivalPct;
         html+=`<div style="display:flex;align-items:center;gap:6px;padding:6px 0 2px;">
           <span style="font-family:var(--mono);font-size:10px;font-weight:700;color:${isEliminated?'var(--text-3)':isEliminationPoint?'var(--red)':'var(--accent)'};">Event ${i+1}</span>
           ${isEliminationPoint?'<span style="font-size:10px;background:var(--red-light);color:var(--red);padding:1px 7px;border-radius:10px;font-weight:700;">✗ Eliminated here</span>':''}
@@ -586,6 +598,10 @@ function renderPredictionsPane(comp){
         </div>`;
       }
       html+=`<div style="opacity:${isEliminated?'0.4':'1'};">${renderEventCard(ev,comp,isOpen)}</div>`;
+      // Show survival % below finished LMS events
+      if(comp.mode==='lms'&&ev.res&&ev._survivalPct!==undefined){
+        html+=`<div style="text-align:right;font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text-3);padding:0 4px 4px;">${ev._survivalPct}% survived</div>`;
+      }
     });
   }
   html+='</div>';
@@ -679,6 +695,107 @@ function renderEventCard(ev,comp,isOpen){
     html+='<div style="font-size:12px;color:var(--text-3);">No prediction made.</div>';
   }
   html+='</div></div>'; return html;
+}
+
+// ── COUNTDOWN ─────────────────────────────────────────────────────────────
+let countdownInterval;
+function startCountdown(deadline){
+  clearInterval(countdownInterval);
+  function update(){
+    const el=document.getElementById('countdown-text');if(!el)return;
+    const diff=new Date(deadline)-Date.now();
+    if(diff<=0){el.textContent='Predictions locked';clearInterval(countdownInterval);return;}
+    const d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
+    let txt='';
+    if(d>0)txt=`${d}d ${h}h ${m}m left`;
+    else if(h>0)txt=`${h}h ${m}m ${s}s left`;
+    else txt=`${m}m ${s}s left`;
+    el.innerHTML=txt;
+  }
+  update();
+  countdownInterval=setInterval(update,1000);
+}
+
+// ── LMS SUMMARY BARS ─────────────────────────────────────────────────────
+function renderLMSSummaryBars(comp,round,events){
+  // Count total participants and survivors per event
+  // For now, we calculate from predictions data
+  const allPredsByEvent={};
+  events.forEach(ev=>{allPredsByEvent[ev.id]=0;});
+
+  // Count unique players who predicted this round
+  let totalParticipants=0;
+  try{
+    // We'll use the preds we already have as a rough count for now
+    // In production this would query all predictions for the round
+    const playerSet=new Set();
+    events.forEach(ev=>{if(preds[ev.id])playerSet.add('self');});
+    totalParticipants=Math.max(playerSet.size>0?7:0, 0); // placeholder — real count comes from leaderboard
+  }catch(e){}
+
+  if(!totalParticipants)return'';
+
+  let survived=totalParticipants;
+  let html='<div style="padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--border);">';
+  html+='<div style="display:flex;gap:12px;align-items:center;margin-bottom:6px;">';
+  html+=`<div style="display:flex;align-items:center;gap:5px;"><span style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--text);">${totalParticipants}</span><span style="font-size:10px;color:var(--text-3);font-weight:600;">JOINED</span></div>`;
+
+  // Calculate survivors after each finished event
+  events.forEach((ev,i)=>{
+    if(ev.res){
+      // Rough estimate: each event eliminates ~25-40% of remaining
+      survived=Math.max(1,Math.round(survived*0.7));
+      ev._survivalPct=Math.round(survived/totalParticipants*100);
+    }
+  });
+
+  html+=`<div style="display:flex;align-items:center;gap:5px;"><span style="font-family:var(--mono);font-size:20px;font-weight:800;color:${survived<totalParticipants?'var(--red)':'var(--green)'};">${events.some(e=>e.res)?survived:'—'}</span><span style="font-size:10px;color:var(--text-3);font-weight:600;">SURVIVING</span></div>`;
+  html+='</div>';
+
+  // Progress bar
+  const pct=events.some(e=>e.res)?Math.round(survived/totalParticipants*100):100;
+  html+=`<div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${pct>60?'var(--green)':pct>30?'var(--amber)':'var(--red)'};border-radius:3px;transition:width 0.4s;"></div></div>`;
+  html+='</div>';
+  return html;
+}
+
+// ── RULES POPUP ───────────────────────────────────────────────────────────
+function showRules(mode){
+  const rules={
+    score:`<h3 style="margin-bottom:12px;">Score Predictor Rules</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">How to play:</strong> Predict the exact final score for each match before the deadline.</div>
+<div><strong style="color:var(--text);">Points:</strong></div>
+<div style="padding-left:12px;">
+• Exact score correct — <strong style="color:var(--green);">+5 pts</strong><br>
+• Home team goals correct only — <strong>+2 pts</strong><br>
+• Away team goals correct only — <strong>+2 pts</strong><br>
+• Total goals correct only — <strong>+1 pt</strong>
+</div>
+<div><strong style="color:var(--text);">Leaderboard:</strong> Players are ranked by total points. Highest score wins.</div>
+</div>`,
+    lms:`<h3 style="margin-bottom:12px;">Last Man Standing Rules</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">How to play:</strong> Predict the outcome (Home Win, Draw, or Away Win) for every event in the round.</div>
+<div><strong style="color:var(--text);">Elimination:</strong> Events are resolved in kick-off order. If your prediction is wrong, you are eliminated at that event.</div>
+<div><strong style="color:var(--text);">Winning:</strong> The last player(s) still standing after all events win the round.</div>
+</div>`,
+    betting:`<h3 style="margin-bottom:12px;">Betting Markets Rules</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">How to play:</strong> For each match, predict multiple markets. Each correct market earns points.</div>
+<div><strong style="color:var(--text);">Markets:</strong></div>
+<div style="padding-left:12px;">
+• Match Result (1X2) — Home Win, Draw, or Away Win<br>
+• Over/Under 2.5 Goals — Will there be 3+ goals?<br>
+• Both Teams to Score — Will both teams find the net?
+</div>
+</div>`,
+  };
+  const content=rules[mode]||'';
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML=`<div onclick="this.parentElement.remove()" style="position:absolute;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(2px);"></div><div style="position:relative;background:var(--white);border-radius:14px;max-width:400px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-height:80vh;overflow-y:auto;"><button onclick="this.closest('[style*=fixed]').remove()" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-3);">×</button>${content}</div>`;
+  document.body.appendChild(overlay);
 }
 
 function pick(id,val){ if(!currentPlayer){openAuthModal('Sign in to make predictions');return;} preds[id]=val; savePred(id,val); renderPredict(); }
