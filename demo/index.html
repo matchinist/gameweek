@@ -253,7 +253,7 @@ table.lb-table{width:100%;border-collapse:collapse;}
 <div id="toast"></div>
 
 <script>
-const MODE_LABELS={lms:'Last Man Standing',score:'Score Predictor',betting:'Betting Markets'};
+const MODE_LABELS={lms:'Last Man Standing',score:'Score Predictor',betting:'Betting Markets',ranking:'Ranking'};
 const MEDALS=['\u{1F947}','\u{1F948}','\u{1F949}'];
 
 const LOGO={
@@ -272,6 +272,8 @@ const LOGO={
   'Juventus':'https://upload.wikimedia.org/wikipedia/commons/a/a8/Juventus_FC_-_pictogram.svg',
   'Atletico':'https://upload.wikimedia.org/wikipedia/en/f/f9/Atletico_Madrid_Logo_2024.svg',
   'Dortmund':'https://upload.wikimedia.org/wikipedia/commons/6/67/Borussia_Dortmund_logo.svg',
+  'Everton':'https://upload.wikimedia.org/wikipedia/en/7/7c/Everton_FC_logo.svg',
+  'Newcastle':'https://upload.wikimedia.org/wikipedia/en/5/56/Newcastle_United_Logo.svg',
 };
 const lg=n=>LOGO[n]||'';
 
@@ -287,14 +289,36 @@ const COMPS=[
   {id:'c2',name:'Last Man Standing',mode:'lms',color:'#DC2626',
     tournamentNames:['Champions League'],
     rounds:[
-      {id:'r3',label:'Matchday 1',status:'completed',deadline:'2026-09-17T17:00',eventIds:['e201','e202','e203']},
-      {id:'r4',label:'Matchday 2',status:'open',deadline:'2026-10-01T17:00',eventIds:['e204','e205','e206']},
+      {id:'r3',label:'Matchday 1',status:'open',deadline:'2026-10-01T17:00',eventIds:['e201','e202','e203']},
     ]},
   {id:'c3',name:'Betting Markets',mode:'betting',color:'#059669',
     markets:[{type:'1x2',label:'Match Result',points:3},{type:'ou25',label:'Over / Under 2.5',points:2},{type:'btts',label:'Both Teams to Score',points:2}],
     tournamentNames:['La Liga','Serie A'],
     rounds:[
-      {id:'r5',label:'Round 1',status:'open',deadline:'2026-08-30T17:00',eventIds:['e303','e304']},
+      {id:'r5',label:'Round 1',status:'open',deadline:'2026-08-30T17:00',eventIds:['e301','e303','e304']},
+    ]},
+  {id:'c4',name:'Ranking',mode:'ranking',color:'#8B5CF6',
+    tournamentNames:['Premier League'],
+    rankingConfig:{metric:'xG',pointsPerCorrect:2,perfectBonus:5},
+    rounds:[
+      {id:'r7',label:'Gameweek 3',status:'open',deadline:'2026-08-31T14:00',
+        rankingTeams:[
+          {id:'rt1',name:'Arsenal',logo:lg('Arsenal'),opponent:'vs Wolves',actualXG:null},
+          {id:'rt2',name:'Man City',logo:lg('Man City'),opponent:'vs Chelsea',actualXG:null},
+          {id:'rt3',name:'Liverpool',logo:lg('Liverpool'),opponent:'vs Man Utd',actualXG:null},
+          {id:'rt4',name:'Chelsea',logo:lg('Chelsea'),opponent:'vs Spurs',actualXG:null},
+          {id:'rt5',name:'Spurs',logo:lg('Spurs'),opponent:'vs Everton',actualXG:null},
+          {id:'rt6',name:'Man Utd',logo:lg('Man Utd'),opponent:'vs Newcastle',actualXG:null},
+        ]},
+      {id:'r8',label:'Gameweek 2',status:'completed',deadline:'2026-08-24T14:00',
+        rankingTeams:[
+          {id:'rt1',name:'Arsenal',logo:lg('Arsenal'),opponent:'vs Newcastle',actualXG:2.4},
+          {id:'rt2',name:'Man City',logo:lg('Man City'),opponent:'vs Wolves',actualXG:3.1},
+          {id:'rt3',name:'Liverpool',logo:lg('Liverpool'),opponent:'vs Everton',actualXG:1.8},
+          {id:'rt4',name:'Chelsea',logo:lg('Chelsea'),opponent:'vs Man Utd',actualXG:1.2},
+          {id:'rt5',name:'Spurs',logo:lg('Spurs'),opponent:'vs Liverpool',actualXG:2.0},
+          {id:'rt6',name:'Man Utd',logo:lg('Man Utd'),opponent:'vs Chelsea',actualXG:0.9},
+        ]},
     ]},
 ];
 
@@ -318,30 +342,34 @@ const EVENTS={
   e205:{tournament:'Champions League',home:'PSG',away:'Arsenal',homeLogo:lg('PSG'),awayLogo:lg('Arsenal'),kickoff:'01 Oct \u00b7 21:15',res:null},
   e206:{tournament:'Champions League',home:'Atletico',away:'Dortmund',homeLogo:lg('Atletico'),awayLogo:lg('Dortmund'),kickoff:'02 Oct \u00b7 21:00',res:null},
 
+  // Betting — first event resulted
+  e301:{tournament:'La Liga',home:'Real Madrid',away:'Atletico',homeLogo:lg('Real Madrid'),awayLogo:lg('Atletico'),kickoff:'25 Aug · 21:00',res:{h:3,a:0},locked:true},
   // Betting open
   e303:{tournament:'La Liga',home:'Barcelona',away:'Real Madrid',homeLogo:lg('Barcelona'),awayLogo:lg('Real Madrid'),kickoff:'30 Aug \u00b7 21:00',res:null},
-  e304:{tournament:'La Liga',home:'Juventus',away:'Inter',homeLogo:lg('Juventus'),awayLogo:lg('Inter'),kickoff:'31 Aug \u00b7 20:45',res:null},
+  e304:{tournament:'Serie A',home:'Everton',away:'Liverpool',homeLogo:lg('Everton'),awayLogo:lg('Liverpool'),kickoff:'31 Aug \u00b7 20:45',res:null},
 };
 
 let preds={
   // Score: events 1-3 predicted
   e1:{h:3,a:0}, e2:{h:2,a:0}, e3:{h:1,a:0},
-  // LMS: correct, correct, wrong
-  e201:'H', e202:'H', e203:'H',
-  // LMS open: 1 predicted
-  e204:'H',
-  // Betting: 1 predicted
+  // LMS: first correct (resulted), second predicted (open)
+  e201:'H', e202:'H',
+  // Betting: e301 predicted (resulted), e303 predicted (open)
+  e301:{'1x2':'H','ou25':'O','btts':'N'},
   e303:{'1x2':'H','ou25':'U','btts':'Y'},
+  // Ranking GW2: user predicted order
+  r8_ranking:['rt2','rt1','rt5','rt3','rt4','rt6'],
 };
 
 const LB_DATA={
   c1:{r1:[{u:'footy_oracle',points:12},{u:'demo_user',points:9},{u:'stadyum76',points:7},{u:'bvb_predictor',points:5},{u:'xavi_8',points:3}],
       overall:[{u:'footy_oracle',points:27},{u:'demo_user',points:18},{u:'stadyum76',points:16}]},
-  c2:{r3:[{u:'footy_oracle',predictions:3},{u:'demo_user',predictions:3},{u:'stadyum76',predictions:3}],
-      r4:[{u:'footy_oracle',predictions:2},{u:'demo_user',predictions:1}],
-      overall:[{u:'footy_oracle',survived:2},{u:'demo_user',survived:1},{u:'stadyum76',survived:1}]},
+  c2:{r3:[{u:'footy_oracle',predictions:3},{u:'demo_user',predictions:2},{u:'stadyum76',predictions:2}],
+      overall:[{u:'footy_oracle',survived:1},{u:'demo_user',survived:1},{u:'stadyum76',survived:1}]},
   c3:{r5:[{u:'demo_user',points:3},{u:'xavi_8',points:5}],
       overall:[{u:'xavi_8',points:14},{u:'demo_user',points:10}]},
+  c4:{r7:[],r8:[{u:'demo_user',points:9},{u:'footy_oracle',points:7},{u:'stadyum76',points:5}],
+      overall:[{u:'demo_user',points:9},{u:'footy_oracle',points:7},{u:'stadyum76',points:5}]},
 };
 
 // ── STATE ─────────────────────────────────────────────────────────────────
@@ -371,7 +399,7 @@ function renderPredict(){
   if(selectedRound[currentCompIdx]===undefined)selectedRound[currentCompIdx]=getDefaultRoundIdx(COMPS[currentCompIdx]);
   const comp=COMPS[currentCompIdx];
   // Game description + rules button below comp tabs
-  const descriptions={score:'Predict the exact score for each match. Points awarded for correct scores, correct team goals, or correct total.',lms:'Pick a winner for each event. Get it wrong and you are eliminated. Last one standing wins.',betting:'Predict multiple markets per match: result, over/under, both teams to score. Points per correct market.'};
+  const descriptions={score:'Predict the exact score for each match. Points awarded for correct scores, correct team goals, or correct total.',lms:'Pick a winner for each event. Get it wrong and you are eliminated. Last one standing wins.',betting:'Predict multiple markets per match: result, over/under, both teams to score. Points per correct market.',ranking:'Rank teams from highest to lowest expected goals (xG) for the gameweek. Points for each correct position.'};
   let html=`<div style="padding:10px 16px 0;display:flex;align-items:center;gap:8px;"><span style="font-size:12px;color:var(--text-2);flex:1;font-weight:600;">${descriptions[comp.mode]||''}</span><button onclick="showRules('${comp.mode}')" style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent);background:none;border:1px solid var(--accent);border-radius:5px;padding:3px 10px;cursor:pointer;white-space:nowrap;">Rules</button></div>`;
   html+=predictSubTab==='predictions'?renderPredictionsPane(comp):renderLeaderboardPane(comp);
   document.getElementById('predict-content').innerHTML=html;
@@ -413,10 +441,86 @@ function renderPredictionsPane(comp){
     setTimeout(()=>startCountdown(round.deadline),50);
   }
 
+  // ── RANKING MODE ────────────────────────────────────────────────────────
+  if(comp.mode==='ranking'&&round.rankingTeams){
+    const teams=round.rankingTeams;
+    const predKey=round.id+'_ranking';
+    const isCompleted=round.status==='completed';
+    let userOrder=preds[predKey]||null;
+    if(!userOrder){
+      userOrder=teams.map(t=>t.id);
+      preds[predKey]=userOrder;
+    }
+
+    // Get actual order for completed rounds
+    let actualOrder=null;
+    if(isCompleted){
+      actualOrder=[...teams].sort((a,b)=>(b.actualXG||0)-(a.actualXG||0)).map(t=>t.id);
+    }
+
+    const teamMap={};teams.forEach(t=>{teamMap[t.id]=t;});
+
+    // Calculate points for completed
+    let totalPts=0,correctCount=0;
+    if(actualOrder){
+      userOrder.forEach((tid,i)=>{if(tid===actualOrder[i])correctCount++;});
+      totalPts=correctCount*(comp.rankingConfig?.pointsPerCorrect||2);
+      if(correctCount===teams.length)totalPts+=(comp.rankingConfig?.perfectBonus||5);
+    }
+
+    html+=`<div style="padding:12px 8px;">`;
+    if(isCompleted&&actualOrder){
+      html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 8px 12px;">
+        <span style="font-size:13px;font-weight:700;color:var(--text);">Your prediction vs Actual (${comp.rankingConfig?.metric||'xG'})</span>
+        <span style="font-family:var(--mono);font-size:14px;font-weight:800;color:${correctCount===teams.length?'var(--green)':'var(--accent)'};">${totalPts} pts</span>
+      </div>`;
+      // Show results comparison
+      userOrder.forEach((tid,i)=>{
+        const t=teamMap[tid];const actualIdx=actualOrder.indexOf(tid);
+        const isCorrect=tid===actualOrder[i];
+        const actualT=teamMap[actualOrder[i]];
+        html+=`<div style="display:flex;align-items:center;gap:8px;padding:8px;margin-bottom:4px;background:${isCorrect?'var(--green-light)':'var(--bg)'};border-radius:8px;border:1px solid ${isCorrect?'var(--green)':'var(--border)'};">
+          <span style="font-family:var(--mono);font-size:12px;font-weight:800;color:${isCorrect?'var(--green)':'var(--text-3)'};width:20px;text-align:center;">#${i+1}</span>
+          <div class="ev-badge" style="width:24px;height:24px;font-size:7px;">${t.logo?'<img src="'+t.logo+'" alt="'+t.name+'">':t.name.slice(0,3).toUpperCase()}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
+            <div style="font-size:9px;color:var(--text-3);">${t.opponent}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-family:var(--mono);font-size:13px;font-weight:800;color:var(--text);">${t.actualXG?.toFixed(1)||'—'}</div>
+            <div style="font-size:9px;color:var(--text-3);">xG</div>
+          </div>
+          <span style="font-size:14px;">${isCorrect?'✓':'✗'}</span>
+        </div>`;
+      });
+      if(correctCount===teams.length) html+=`<div style="text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--green);padding:8px;">🎯 Perfect ranking! +${comp.rankingConfig?.perfectBonus||5} bonus pts</div>`;
+    } else {
+      html+=`<div style="padding:4px 8px 12px;font-size:11px;color:var(--text-3);">Drag teams to sort from <strong>highest</strong> to <strong>lowest</strong> expected ${comp.rankingConfig?.metric||'xG'}</div>`;
+      userOrder.forEach((tid,i)=>{
+        const t=teamMap[tid];
+        html+=`<div style="display:flex;align-items:center;gap:6px;padding:8px;margin-bottom:4px;background:var(--white);border-radius:8px;border:1px solid var(--border);">
+          <span style="font-family:var(--mono);font-size:12px;font-weight:800;color:var(--accent);width:20px;text-align:center;">#${i+1}</span>
+          <div class="ev-badge" style="width:24px;height:24px;font-size:7px;">${t.logo?'<img src="'+t.logo+'" alt="'+t.name+'">':t.name.slice(0,3).toUpperCase()}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
+            <div style="font-size:9px;color:var(--text-3);">${t.opponent}</div>
+          </div>
+          <div style="display:flex;gap:2px;">
+            <button onclick="moveRank('${round.id}','${tid}',-1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:5px;background:var(--bg);cursor:pointer;font-size:12px;color:var(--text-2);" ${i===0?'disabled style="opacity:0.3;width:28px;height:28px;border:1px solid var(--border);border-radius:5px;background:var(--bg);cursor:default;font-size:12px;color:var(--text-2);"':''}>▲</button>
+            <button onclick="moveRank('${round.id}','${tid}',1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:5px;background:var(--bg);cursor:pointer;font-size:12px;color:var(--text-2);" ${i===userOrder.length-1?'disabled style="opacity:0.3;width:28px;height:28px;border:1px solid var(--border);border-radius:5px;background:var(--bg);cursor:default;font-size:12px;color:var(--text-2);"':''}>▼</button>
+          </div>
+        </div>`;
+      });
+      html+=`<button class="submit-preds-btn" onclick="toast('✓ Ranking saved')">Save Ranking</button>`;
+    }
+    html+='</div>';
+    return html;
+  }
+
   // LMS summary bars above events
   if(comp.mode==='lms'&&events.length){
-    const total=7;
-    const fakeSurvived=[7,5,3];
+    const total=125;
+    const fakeSurvived=[78,52,31];
     let survived=total;
     events.forEach((ev,i)=>{if(ev.res){survived=fakeSurvived[i]||survived;ev._survivalPct=Math.round(survived/total*100);}});
     const currentSurvived=events.some(e=>e.res)?survived:total;
@@ -580,6 +684,15 @@ function pickMarket(evId,market,val){
   preds[evId][market]=val;renderPredict();
 }
 function changeRound(idx){selectedRound[currentCompIdx]=parseInt(idx);renderPredict();}
+function moveRank(roundId,teamId,dir){
+  const key=roundId+'_ranking';
+  const order=preds[key];if(!order)return;
+  const idx=order.indexOf(teamId);if(idx<0)return;
+  const newIdx=idx+dir;
+  if(newIdx<0||newIdx>=order.length)return;
+  [order[idx],order[newIdx]]=[order[newIdx],order[idx]];
+  renderPredict();
+}
 function submitPreds(){
   const comp=COMPS[currentCompIdx],round=comp.rounds[selectedRound[currentCompIdx]];
   if(!round)return;
@@ -655,6 +768,16 @@ function showRules(mode){
 <div><strong style="color:var(--text);">Elimination:</strong> Events are resolved in kick-off order. If your prediction is wrong, you are eliminated at that event. All remaining events are irrelevant.</div>
 <div><strong style="color:var(--text);">Winning:</strong> The last player(s) still standing after all events win the round.</div>
 <div><strong style="color:var(--text);">Note:</strong> You must predict ALL events before the round starts. No two events can share the same kick-off time.</div>
+</div>`,
+    ranking:`<h3 style="margin-bottom:12px;">Ranking Rules</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">How to play:</strong> Sort the selected teams from highest to lowest expected goals (xG) for the gameweek.</div>
+<div><strong style="color:var(--text);">Points:</strong></div>
+<div style="padding-left:12px;">
+• Each team in the correct position — <strong style="color:var(--green);">+2 pts</strong><br>
+• All teams in perfect order — <strong style="color:var(--green);">+5 bonus pts</strong>
+</div>
+<div><strong style="color:var(--text);">Tip:</strong> Think about which teams are playing at home, their recent form, and the quality of their opponents.</div>
 </div>`,
     betting:`<h3 style="margin-bottom:12px;">Betting Markets Rules</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">

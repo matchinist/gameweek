@@ -711,6 +711,7 @@ tbody tr:hover td{background:var(--bg);}
           <option value="lms">Last Man Standing</option>
           <option value="score">Score Predictor</option>
           <option value="betting">Betting Markets</option>
+                  <option value="ranking">Ranking</option>
         </select>
         <div id="mode-description" style="margin-top:10px;padding:12px;background:var(--bg);border-radius:6px;border-left:3px solid var(--accent);">
           <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;">Last Man Standing</div>
@@ -987,8 +988,8 @@ function getDMEvents(){ return dmState.events||{}; }
 function getDMTeams(){ return dmState.teams||[]; }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
-const modeLabel = {lms:'Last Man Standing', score:'Score Predictor', betting:'Betting Markets'};
-const modeChip  = {lms:'LMS', score:'SCORE', betting:'BET'};
+const modeLabel = {lms:'Last Man Standing', score:'Score Predictor', betting:'Betting Markets', ranking:'Ranking'};
+const modeChip  = {lms:'LMS', score:'SCORE', betting:'BET', ranking:'RANK'};
 
 function getEvent(id){ return state.events.find(e=>e.id===id); }
 function getComp(id){ return state.competitions.find(c=>c.id===id); }
@@ -1227,6 +1228,7 @@ function renderCompDetail(){
               <option value="lms" ${c.mode==='lms'?'selected':''}>Last Man Standing</option>
               <option value="score" ${c.mode==='score'?'selected':''}>Score Predictor</option>
               <option value="betting" ${c.mode==='betting'?'selected':''}>Betting Markets</option>
+              <option value="ranking" ${c.mode==='ranking'?'selected':''}>Ranking</option>
             </select>
             <div style="font-size:11px;color:var(--amber);background:var(--amber-light);padding:7px 10px;border-radius:5px;margin-top:6px;">
               Game mode cannot be changed after creation. To use a different mode, create a new competition from scratch.
