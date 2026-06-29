@@ -17,9 +17,9 @@
   --mono:'Space Mono',monospace;--sans:'Inter',sans-serif;
   --comp-color:#4F46E5;
 }
-html,body{height:100%;overflow:hidden;}
+html,body{height:100%;}
 body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;}
-.app{display:flex;flex-direction:column;height:100vh;max-width:860px;margin:0 auto;width:100%;background:var(--white);position:relative;}
+.app{display:flex;flex-direction:column;height:100vh;overflow-y:auto;max-width:860px;margin:0 auto;width:100%;background:var(--white);position:relative;}
 .app-header{background:var(--white);border-bottom:1px solid var(--border);flex-shrink:0;z-index:50;}
 .header-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;}
 .header-logo{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--text);letter-spacing:-0.5px;}
@@ -97,7 +97,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .score-inline-mid{display:flex;align-items:center;gap:4px;flex-shrink:0;min-width:95px;justify-content:center;}
 .score-inline-dash{font-family:var(--mono);font-size:13px;color:var(--text-3);font-weight:700;}
 /* ── SUBMIT BUTTON ── */
-.submit-preds-btn{display:block;width:calc(100% - 28px);margin:12px 14px 24px;padding:12px;background:var(--comp-color);color:white;border:none;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;transition:opacity 0.13s;}
+.submit-preds-btn{display:block;width:calc(100% - 28px);margin:12px 14px 40px;padding:12px;background:var(--comp-color);color:white;border:none;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;transition:opacity 0.13s;}
 .submit-preds-btn:hover{opacity:0.88;}
 .lb-week-row{padding:14px 16px 0;}
 .lb-week-select{width:100%;font-family:var(--mono);font-size:11px;border:1px solid var(--border);background:var(--white);padding:8px 10px;border-radius:6px;outline:none;color:var(--text);}
@@ -600,7 +600,7 @@ function renderPredictionsPane(comp){
       html+=`<div style="opacity:${isEliminated?'0.4':'1'};">${renderEventCard(ev,comp,isOpen)}</div>`;
       // Show survival % below finished LMS events
       if(comp.mode==='lms'&&ev.res&&ev._survivalPct!==undefined){
-        html+=`<div style="text-align:right;font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text-3);padding:0 4px 4px;">${ev._survivalPct}% survived</div>`;
+        html+=`<div style="text-align:left;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text-2);padding:2px 8px 6px;">${ev._survivalPct}% survived</div>`;
       }
     });
   }
