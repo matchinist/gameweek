@@ -101,6 +101,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 /* ── SUBMIT BUTTON ── */
 .submit-preds-btn{display:block;width:calc(100% - 28px);margin:12px 14px 40px;padding:12px;background:var(--comp-color);color:white;border:none;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;transition:opacity 0.13s;}
 .submit-preds-btn:hover{opacity:0.88;}
+.rank-item{touch-action:none;-webkit-user-select:none;user-select:none;}
+.rank-item.dragging{opacity:0.5;background:var(--accent-light) !important;border-color:var(--accent) !important;transform:scale(0.98);}
+.rank-item.drag-over{border-top:3px solid var(--accent) !important;margin-top:-2px;}
 .submit-preds-btn.disabled{opacity:0.4;cursor:default;pointer-events:none;}
 .lb-week-row{padding:14px 16px 0;}
 .lb-week-select{width:100%;font-family:var(--mono);font-size:11px;border:1px solid var(--border);background:var(--white);padding:8px 10px;border-radius:6px;outline:none;color:var(--text);}
@@ -567,7 +570,7 @@ function renderPredictionsPane(comp){
   if(!comp.rounds.length) return '<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No rounds yet</div></div>';
   const round=comp.rounds[ri]; if(!round) return '';
   const isOpen=round.status==='open';
-  let events=round.eventIds.map(id=>({id,...EVENTS[id]})).filter(e=>e.home);
+  let events=(round.eventIds||[]).map(id=>({id,...EVENTS[id]})).filter(e=>e.home);
 
   let eliminatedAtIdx=-1;
   if(comp.mode==='lms'){
@@ -591,6 +594,49 @@ function renderPredictionsPane(comp){
     html+=renderLMSSummaryBars(comp,round,events);
   }
 
+
+  // ── RANKING MODE ────────────────────────────────────────────────────────
+  if(comp.mode==='ranking'&&round.rankingTeams){
+    const teams=round.rankingTeams;
+    const predKey=round.id+'_ranking';
+    const isCompleted=round.status==='completed';
+    let userOrder=preds[predKey]||null;
+    if(!userOrder){
+      userOrder=teams.map(t=>t.id);
+      preds[predKey]=userOrder;
+    }
+    let actualOrder=null;
+    if(isCompleted){
+      actualOrder=[...teams].sort((a,b)=>(b.actualXG||0)-(a.actualXG||0)).map(t=>t.id);
+    }
+    const teamMap={};teams.forEach(t=>{teamMap[t.id]=t;});
+    let totalPts=0,correctCount=0;
+    if(actualOrder){
+      userOrder.forEach((tid,i)=>{if(tid===actualOrder[i])correctCount++;});
+      totalPts=correctCount*(comp.rankingConfig?.pointsPerCorrect||2);
+      if(correctCount===teams.length)totalPts+=(comp.rankingConfig?.perfectBonus||5);
+    }
+    html+=`<div style="padding:12px 8px;">`;
+    if(isCompleted&&actualOrder){
+      html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 8px 12px;"><span style="font-size:13px;font-weight:700;color:var(--text);">Your prediction vs Actual (${comp.rankingConfig?.metric||'xG'})</span><span style="font-family:var(--mono);font-size:14px;font-weight:800;color:${correctCount===teams.length?'var(--green)':'var(--accent)'};">${totalPts} pts</span></div>`;
+      userOrder.forEach((tid,i)=>{
+        const t=teamMap[tid];const isCorrect=tid===actualOrder[i];
+        html+=`<div style="display:flex;align-items:center;gap:8px;padding:8px;margin-bottom:4px;background:${isCorrect?'var(--green-light)':'var(--bg)'};border-radius:8px;border:1px solid ${isCorrect?'var(--green)':'var(--border)'};"><span style="font-family:var(--mono);font-size:12px;font-weight:800;color:${isCorrect?'var(--green)':'var(--text-3)'};width:20px;text-align:center;">#${i+1}</span><div class="ev-badge" style="width:24px;height:24px;font-size:7px;">${t.logo?'<img src="'+t.logo+'" alt="'+t.name+'">':t.name.slice(0,3).toUpperCase()}</div><div style="flex:1;min-width:0;"><div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div><div style="font-size:11px;color:var(--text-2);font-weight:600;">${t.opponent||''}</div></div><div style="text-align:right;"><div style="font-family:var(--mono);font-size:13px;font-weight:800;color:var(--text);">${t.actualXG?.toFixed(1)||'—'}</div><div style="font-size:9px;color:var(--text-3);">xG</div></div><span style="font-size:14px;">${isCorrect?'✓':'✗'}</span></div>`;
+      });
+    } else {
+      html+=`<div style="padding:8px 8px 12px;font-size:13px;color:var(--text);font-weight:700;">Drag teams to sort from highest to lowest expected ${comp.rankingConfig?.metric||'xG'}</div>`;
+      html+=`<div id="ranking-list" data-roundid="${round.id}">`;
+      userOrder.forEach((tid,i)=>{
+        const t=teamMap[tid];
+        html+=`<div class="rank-item" data-tid="${tid}" draggable="true" style="display:flex;align-items:center;gap:6px;padding:8px;margin-bottom:4px;background:var(--white);border-radius:8px;border:1px solid var(--border);cursor:grab;"><span style="font-size:14px;color:var(--text-3);cursor:grab;flex-shrink:0;">☰</span><span style="font-family:var(--mono);font-size:12px;font-weight:800;color:var(--accent);width:20px;text-align:center;">#${i+1}</span><div class="ev-badge" style="width:24px;height:24px;font-size:7px;">${t.logo?'<img src="'+t.logo+'" alt="'+t.name+'">':t.name.slice(0,3).toUpperCase()}</div><div style="flex:1;min-width:0;"><div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div><div style="font-size:11px;color:var(--text-2);font-weight:600;">${t.opponent||''}</div></div></div>`;
+      });
+      html+='</div>';
+      html+=`<button class="submit-preds-btn${predsDirty?'':' disabled'}" onclick="submitRanking('${round.id}')">Save Ranking</button>`;
+      setTimeout(()=>initDragSort(),50);
+    }
+    html+='</div>';
+    return html;
+  }
   html+='<div class="events-list">';
   if(!events.length){
     html+='<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">No events yet</div></div>';
@@ -806,6 +852,75 @@ function showRules(mode){
   overlay.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
   overlay.innerHTML=`<div onclick="this.parentElement.remove()" style="position:absolute;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(2px);"></div><div style="position:relative;background:var(--white);border-radius:14px;max-width:400px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-height:80vh;overflow-y:auto;"><button onclick="this.closest('[style*=fixed]').remove()" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-3);">×</button>${content}</div>`;
   document.body.appendChild(overlay);
+}
+
+function moveRank(roundId,teamId,dir){
+  const key=roundId+'_ranking';const order=preds[key];if(!order)return;
+  const idx=order.indexOf(teamId);if(idx<0)return;
+  const newIdx=idx+dir;if(newIdx<0||newIdx>=order.length)return;
+  [order[idx],order[newIdx]]=[order[newIdx],order[idx]];
+  renderPredict();
+}
+
+function initDragSort(){
+  const list=document.getElementById('ranking-list');if(!list)return;
+  const roundId=list.dataset.roundid;
+  let dragItem=null;
+  list.querySelectorAll('.rank-item').forEach(item=>{
+    item.addEventListener('touchstart',e=>{
+      dragItem=item;item.classList.add('dragging');item.style.zIndex='100';e.preventDefault();
+    },{passive:false});
+    item.addEventListener('dragstart',e=>{
+      dragItem=item;e.dataTransfer.effectAllowed='move';setTimeout(()=>item.classList.add('dragging'),0);
+    });
+    item.addEventListener('dragend',()=>{if(dragItem){dragItem.classList.remove('dragging');}dragItem=null;});
+    item.addEventListener('dragover',e=>{
+      e.preventDefault();if(!dragItem||dragItem===item)return;
+      const rect=item.getBoundingClientRect();const mid=rect.top+rect.height/2;
+      if(e.clientY<mid)list.insertBefore(dragItem,item);else list.insertBefore(dragItem,item.nextSibling);
+    });
+  });
+  list.addEventListener('touchmove',e=>{
+    if(!dragItem)return;e.preventDefault();
+    const touch=e.touches[0];const items=[...list.querySelectorAll('.rank-item')];
+    items.forEach(it=>it.classList.remove('drag-over'));
+    for(const it of items){if(it===dragItem)continue;const rect=it.getBoundingClientRect();const mid=rect.top+rect.height/2;
+      if(touch.clientY<mid){it.classList.add('drag-over');list.insertBefore(dragItem,it);break;}
+      if(it===items[items.length-1])list.appendChild(dragItem);
+    }
+  },{passive:false});
+  list.addEventListener('touchend',()=>{
+    if(!dragItem)return;dragItem.classList.remove('dragging');dragItem.style.zIndex='';
+    list.querySelectorAll('.rank-item').forEach(el=>el.classList.remove('drag-over'));
+    dragItem=null;
+    const newOrder=[...list.querySelectorAll('.rank-item')].map(el=>el.dataset.tid);
+    preds[roundId+'_ranking']=newOrder;predsDirty=true;
+    const btn=document.querySelector('.submit-preds-btn');if(btn)btn.classList.remove('disabled');
+    list.querySelectorAll('.rank-item').forEach((el,i)=>{const num=el.querySelector('span:nth-child(2)');if(num)num.textContent='#'+(i+1);});
+  });
+  list.addEventListener('drop',e=>{
+    e.preventDefault();if(dragItem)dragItem.classList.remove('dragging');
+    const newOrder=[...list.querySelectorAll('.rank-item')].map(el=>el.dataset.tid);
+    preds[roundId+'_ranking']=newOrder;predsDirty=true;
+    list.querySelectorAll('.rank-item').forEach((el,i)=>{const num=el.querySelector('span:nth-child(2)');if(num)num.textContent='#'+(i+1);});
+    dragItem=null;
+  });
+}
+
+async function submitRanking(roundId){
+  if(!currentPlayer){openAuthModal('Sign in to save your ranking');return;}
+  predsDirty=false;
+  const btn=document.querySelector('.submit-preds-btn');if(btn){btn.classList.add('disabled');btn.textContent='✓ Saved';}
+  const comp=COMPS[currentCompIdx];
+  const order=preds[roundId+'_ranking'];
+  if(order){
+    await supa.from('gw_predictions').upsert({
+      client_key:CLIENT_PARAM,player_id:currentPlayer.id,username:currentPlayer.username,
+      competition_id:comp.id,round_id:roundId,event_id:roundId+'_ranking',
+      prediction:{value:order}
+    },{onConflict:'player_id,competition_id,event_id'});
+  }
+  toast('✓ Ranking saved');
 }
 
 function pick(id,val){ predsDirty=true; if(!currentPlayer){openAuthModal('Sign in to make predictions');return;} preds[id]=val; savePred(id,val); renderPredict(); }
