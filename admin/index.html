@@ -803,6 +803,25 @@ tbody tr:hover td{background:var(--bg);}
           </label>
         </div>
       </div>
+
+      <!-- Ranking config -->
+      <div id="ranking-config" style="display:none;">
+        <div class="divider"></div>
+        <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:12px;">Ranking Configuration</div>
+        <div class="form-group">
+          <label class="form-label">Metric to rank by</label>
+          <select class="form-select" id="ranking-metric">
+            <option value="xG" selected>xG (Expected Goals)</option>
+            <option value="totalShots">Total Shots</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px 14px;margin-top:12px;">
+          <label class="form-label" style="margin:0;">Points per correct position</label>
+          <input class="form-input" type="number" id="ranking-pts-correct" value="2" min="0" max="99" style="width:64px;text-align:center;font-family:var(--mono);font-weight:700;" />
+          <label class="form-label" style="margin:0;">Bonus for perfect ranking</label>
+          <input class="form-input" type="number" id="ranking-pts-bonus" value="5" min="0" max="99" style="width:64px;text-align:center;font-family:var(--mono);font-weight:700;" />
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-create-comp')">Cancel</button>
@@ -1328,7 +1347,8 @@ function saveResult(){
 const MODE_DESCRIPTIONS = {
   lms:     { title:'Last Man Standing',  text:'Users predict the result (Home / Draw / Away) for each event in the round. A wrong prediction eliminates them. Events resolve in kick-off order — tension builds with every result. The last survivor wins.' },
   score:   { title:'Score Predictor',    text:'Users predict the exact scoreline for every match. An exact score earns maximum points; partial credit for getting individual team goals right.' },
-  betting: { title:'Betting Markets',    text:'Users predict multiple markets per event — choose from 1X2, Over/Under 2.5, and Both Teams to Score. Each market earns its own points.' }
+  betting: { title:'Betting Markets',    text:'Users predict multiple markets per event — choose from 1X2, Over/Under 2.5, and Both Teams to Score. Each market earns its own points.' },
+  ranking: { title:'Ranking',            text:'Users rank selected teams from highest to lowest for a chosen metric (e.g. xG or Total Shots) in a gameweek. Points for each correct position, bonus for a perfect ranking.' }
 };
 function updateModeDescription(){
   const mode = document.getElementById('new-comp-mode')?.value;
@@ -1337,6 +1357,7 @@ function updateModeDescription(){
   if(el && d) el.innerHTML = `<div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;">${d.title}</div><div style="font-size:12px;color:var(--text-2);line-height:1.6;">${d.text}</div>`;
   document.getElementById('score-points-config').style.display   = mode==='score'   ? 'block' : 'none';
   document.getElementById('betting-markets-config').style.display = mode==='betting' ? 'block' : 'none';
+  document.getElementById('ranking-config').style.display         = mode==='ranking' ? 'block' : 'none';
 }
 
 function createComp(){
@@ -1358,10 +1379,18 @@ function createComp(){
     if(document.getElementById('mkt-btts').checked) markets.push({type:'btts', label:'Both Teams to Score', points: parseInt(document.getElementById('pts-btts').value)||2});
     if(!markets.length){ toast('Select at least one market'); return; }
   }
+  let rankingConfig = null;
+  if(mode==='ranking'){
+    rankingConfig = {
+      metric: document.getElementById('ranking-metric').value || 'xG',
+      pointsPerCorrect: parseInt(document.getElementById('ranking-pts-correct').value) || 2,
+      perfectBonus: parseInt(document.getElementById('ranking-pts-bonus').value) || 5,
+    };
+  }
   const c = {
-    id: 'c'+uid(), name, mode, scoring, markets,
+    id: 'c'+uid(), name, mode, scoring, markets, rankingConfig,
     longTerm: false,
-    status: 'draft', color: '#4F46E5', users: 0, predictions: 0, rounds: []
+    status: 'draft', color: '#8B5CF6', users: 0, predictions: 0, rounds: []
   };
   state.competitions.push(c);
   closeModal('modal-create-comp');

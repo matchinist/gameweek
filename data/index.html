@@ -370,6 +370,18 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
             style="text-align:center;font-family:var(--mono);font-size:16px;font-weight:600;padding:6px;">
         </div>
       </div>
+      <div style="display:flex;gap:12px;">
+        <div class="form-group" style="flex:1;">
+          <label class="form-label" style="text-align:center;">Home Shots</label>
+          <input class="form-input" type="number" id="score-modal-hshots" min="0" max="50" placeholder="—"
+            style="text-align:center;font-family:var(--mono);font-size:16px;font-weight:600;padding:6px;">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label class="form-label" style="text-align:center;">Away Shots</label>
+          <input class="form-input" type="number" id="score-modal-ashots" min="0" max="50" placeholder="—"
+            style="text-align:center;font-family:var(--mono);font-size:16px;font-weight:600;padding:6px;">
+        </div>
+      </div>
     </div>
     <div class="modal-footer" style="justify-content:space-between;">
       <button class="btn btn-ghost" onclick="clearScore()" style="color:var(--red);">Clear Result</button>
@@ -839,6 +851,8 @@ function openScoreModal(eid){
   document.getElementById('score-modal-a').value=ev.result?.a??'';
   document.getElementById('score-modal-hxg').value=ev.result?.home_xg??'';
   document.getElementById('score-modal-axg').value=ev.result?.away_xg??'';
+  document.getElementById('score-modal-hshots').value=ev.result?.home_shots??'';
+  document.getElementById('score-modal-ashots').value=ev.result?.away_shots??'';
   document.getElementById('score-modal-home-label').textContent=home?.name||'Home';
   document.getElementById('score-modal-away-label').textContent=away?.name||'Away';
   document.getElementById('score-modal-status').value=ev.status||'upcoming';
@@ -852,6 +866,8 @@ function saveScore(){
   const a=document.getElementById('score-modal-a').value;
   const hxg=document.getElementById('score-modal-hxg').value;
   const axg=document.getElementById('score-modal-axg').value;
+  const hshots=document.getElementById('score-modal-hshots').value;
+  const ashots=document.getElementById('score-modal-ashots').value;
   const status=document.getElementById('score-modal-status').value;
   const ev=S.events[eid];if(!ev)return;
 
@@ -862,6 +878,8 @@ function saveScore(){
     ev.result={h:parseInt(h),a:parseInt(a)};
     if(hxg!=='')ev.result.home_xg=parseFloat(hxg);
     if(axg!=='')ev.result.away_xg=parseFloat(axg);
+    if(hshots!=='')ev.result.home_shots=parseInt(hshots);
+    if(ashots!=='')ev.result.away_shots=parseInt(ashots);
   } else {
     ev.result=null;
   }
