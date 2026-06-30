@@ -1462,8 +1462,6 @@
     if(modal){ modal.classList.remove('shake'); void modal.offsetWidth; modal.classList.add('shake'); }
   }
 
-  // Auto-open login modal if redirected from admin
-  if(new URLSearchParams(window.location.search).get('login')==='1'){openAuthModal('login');window.history.replaceState({},'','/');}
   // If already signed in, swap nav to dashboard link
   (function(){
     const session = localStorage.getItem('gw_op_session');

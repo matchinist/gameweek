@@ -675,6 +675,28 @@ tbody tr:hover td{background:var(--bg);}
 </div><!-- /main -->
 
 <!-- ── SUBSCRIPTION PAYWALL ── -->
+<!-- ── OPERATOR LOGIN OVERLAY ── -->
+<div id="admin-login-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:#0f1117;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:14px;max-width:360px;width:100%;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;text-align:center;margin-bottom:2px;">game<span style="color:#4F46E5;">week</span></div>
+    <div style="text-align:center;font-size:11px;color:#9CA3AF;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Client Dashboard</div>
+    <div style="text-align:center;font-size:13px;color:#6B7280;margin-bottom:22px;">Sign in with your credentials</div>
+    <div style="margin-bottom:14px;">
+      <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;">Email</label>
+      <input type="email" id="admin-login-email" placeholder="you@company.com" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;" />
+    </div>
+    <div style="margin-bottom:18px;">
+      <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;">Password</label>
+      <input type="password" id="admin-login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;" />
+    </div>
+    <button id="admin-login-btn" onclick="adminLogin()" style="width:100%;padding:12px;background:#4F46E5;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">Sign in</button>
+    <div id="admin-login-msg" style="text-align:center;font-size:12px;color:#9CA3AF;margin-top:12px;min-height:16px;"></div>
+    <div style="text-align:center;margin-top:16px;">
+      <a href="/" style="font-size:12px;color:#9CA3AF;text-decoration:none;">← Back to gameweek.cloud</a>
+    </div>
+  </div>
+</div>
+
 <div id="paywall-overlay" style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;padding:20px;overflow-y:auto;">
   <div style="position:absolute;inset:0;backdrop-filter:blur(8px);background:rgba(17,19,23,0.45);"></div>
   <div style="position:relative;background:var(--white);border-radius:16px;max-width:520px;width:100%;padding:32px;box-shadow:0 24px 70px rgba(0,0,0,0.3);text-align:center;">
@@ -1737,6 +1759,27 @@ function toast(msg){
   toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
 }
 
+function showAdminLogin(msg){
+  document.getElementById('admin-login-overlay').style.display='flex';
+  if(msg) document.getElementById('admin-login-msg').textContent=msg;
+  setTimeout(()=>document.getElementById('admin-login-email')?.focus(),80);
+}
+
+async function adminLogin(){
+  const email=document.getElementById('admin-login-email').value.trim().toLowerCase();
+  const password=document.getElementById('admin-login-password').value;
+  const btn=document.getElementById('admin-login-btn');
+  const msg=document.getElementById('admin-login-msg');
+  if(!email||!password){msg.textContent='Enter email and password.';return;}
+  btn.disabled=true;btn.textContent='Signing in…';msg.textContent='';
+
+  const {error:authErr}=await supa.auth.signInWithPassword({email,password});
+  if(authErr){btn.disabled=false;btn.textContent='Sign in';msg.textContent='Incorrect email or password.';return;}
+
+  document.getElementById('admin-login-overlay').style.display='none';
+  location.reload();
+}
+
 function showPaywall(){
   // Check if returning from Stripe checkout
   const params = new URLSearchParams(window.location.search);
@@ -1838,8 +1881,9 @@ function initOperatorChrome(){
   }catch(e){ console.error('Session restore error:', e); }
 
   if(!session){
-    console.warn('GW: No session found, redirecting to login');
-    window.location.href='/?login=1'; return;
+    console.warn('GW: No session found, showing login');
+    showAdminLogin();
+    return;
   }
   console.log('GW: Session restored for', session.user.email);
 
@@ -1853,16 +1897,8 @@ function initOperatorChrome(){
   }
   if(!op){
     console.error('GW: No operator profile found', opErr?.message);
-    // Don't redirect silently — show what happened
-    document.body.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui;text-align:center;padding:20px;">
-      <div>
-        <div style="font-size:32px;margin-bottom:12px;">⚠️</div>
-        <h2 style="margin-bottom:8px;">Account not found</h2>
-        <p style="color:#666;font-size:14px;margin-bottom:16px;">Logged in as <strong>${session.user.email}</strong> but no operator profile exists for this account.</p>
-        <a href="/" style="color:#4F46E5;font-weight:600;text-decoration:none;">← Sign up or log in with a different account</a>
-        <br><a href="#" onclick="supa.auth.signOut().then(()=>location.reload())" style="color:#999;font-size:12px;text-decoration:none;display:inline-block;margin-top:12px;">Sign out</a>
-      </div>
-    </div>`;
+    await supa.auth.signOut();
+    showAdminLogin('No operator account found for this email.');
     return;
   }
   console.log('GW: Operator loaded', op.company_name);
