@@ -925,6 +925,13 @@ tbody tr:hover td{background:var(--bg);}
         <div id="edit-round-added-list" style="display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto;border:1px solid var(--green);border-radius:6px;padding:8px;background:var(--green-light);"></div>
       </div>
 
+      <!-- Ranking: team picker for edit -->
+      <div id="edit-round-ranking-teams" style="display:none;">
+        <label class="form-label">Teams in this ranking round</label>
+        <div id="edit-ranking-team-list" style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:8px;display:flex;flex-direction:column;gap:4px;"></div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:6px;" id="edit-ranking-team-count">0 teams selected</div>
+      </div>
+
     </div>
     <div class="modal-footer">
       <div style="font-size:11px;color:var(--text-3);">Changes do not affect submitted predictions.</div>
@@ -1690,19 +1697,47 @@ function openEditRound(roundId){
   if(!r) return;
   document.getElementById('edit-round-id').value = roundId;
   document.getElementById('edit-round-name').value = r.label;
-  // Pre-populate added events from the round
-  const dmEvents = getDMEvents();
-  const teams = getDMTeams();
-  const teamById = id => teams.find(t=>t.id===id);
-  roundAddedEvents = (r.eventIds||[]).map(eid=>{
-    const ev=dmEvents[eid]; if(!ev) return null;
-    const home=teamById(ev.homeId), away=teamById(ev.awayId);
-    const tName=(r.tournamentNames||[])[0]||'';
-    return {id:eid, home:home?.name||eid, away:away?.name||eid, kickoff:ev.kickoff||'', tName};
-  }).filter(Boolean);
-  populateTournamentDropdown('edit');
-  renderAddedEvents('edit');
+  
+  const isRanking = comp.mode === 'ranking';
+  
+  // Show/hide sections based on mode
+  document.getElementById('edit-round-tournament-select').closest('.form-group').style.display = isRanking ? 'none' : 'block';
+  document.getElementById('edit-round-available-wrap').style.display = 'none';
+  document.getElementById('edit-round-added-wrap').style.display = isRanking ? 'none' : 'block';
+  document.getElementById('edit-round-ranking-teams').style.display = isRanking ? 'block' : 'none';
+  
+  if(isRanking){
+    // Populate team picker with pre-selected teams
+    const allTeams = getDMTeams();
+    const selectedIds = new Set((r.rankingTeams||[]).map(t=>t.id));
+    const list = document.getElementById('edit-ranking-team-list');
+    list.innerHTML = allTeams.map(t=>`
+      <label style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg);border-radius:6px;cursor:pointer;">
+        <input type="checkbox" class="edit-ranking-team-cb" value="${t.id}" data-name="${t.name}" data-logo="${t.logo||''}" ${selectedIds.has(t.id)?'checked':''} style="accent-color:var(--accent);width:16px;height:16px;" onchange="updateEditRankingTeamCount()">
+        ${t.logo?'<img src="'+t.logo+'" style="width:24px;height:24px;border-radius:50%;object-fit:contain;">':''}
+        <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text);">${t.name}</span>
+      </label>`).join('');
+    updateEditRankingTeamCount();
+  } else {
+    // Pre-populate added events from the round
+    const dmEvents = getDMEvents();
+    const teams = getDMTeams();
+    const teamById = id => teams.find(t=>t.id===id);
+    roundAddedEvents = (r.eventIds||[]).map(eid=>{
+      const ev=dmEvents[eid]; if(!ev) return null;
+      const home=teamById(ev.homeId), away=teamById(ev.awayId);
+      const tName=(r.tournamentNames||[])[0]||'';
+      return {id:eid, home:home?.name||eid, away:away?.name||eid, kickoff:ev.kickoff||'', tName};
+    }).filter(Boolean);
+    populateTournamentDropdown('edit');
+    renderAddedEvents('edit');
+  }
   document.getElementById('modal-edit-round').classList.add('open');
+}
+
+function updateEditRankingTeamCount(){
+  const checked = document.querySelectorAll('.edit-ranking-team-cb:checked').length;
+  document.getElementById('edit-ranking-team-count').textContent = checked + ' team' + (checked!==1?'s':'') + ' selected';
 }
 
 function saveRoundEdit(){
@@ -1710,11 +1745,26 @@ function saveRoundEdit(){
   const comp = getComp(state.currentComp);
   const r = comp.rounds.find(r=>r.id===rid);
   if(!r){ toast('Round not found'); return; }
+  
+  r.label = document.getElementById('edit-round-name').value.trim()||r.label;
+  
+  if(comp.mode==='ranking'){
+    const checked = document.querySelectorAll('.edit-ranking-team-cb:checked');
+    if(checked.length < 2){ toast('Select at least 2 teams'); return; }
+    r.rankingTeams = [...checked].map(cb=>({
+      id: cb.value,
+      name: cb.dataset.name,
+      logo: cb.dataset.logo || '',
+    }));
+    closeModal('modal-edit-round');
+    saveAdminState(); renderCompDetail(); toast('Round updated with '+r.rankingTeams.length+' teams');
+    return;
+  }
+  
   const warnEl = document.getElementById('edit-round-overlap-warn');
   if(warnEl&&warnEl.style.display!=='none'){ toast('Fix the overlap conflict before saving'); return; }
   const dmEvents = getDMEvents();
   const kickoffs = roundAddedEvents.map(e=>dmEvents[e.id]?.kickoff).filter(Boolean).map(k=>new Date(k).getTime());
-  r.label = document.getElementById('edit-round-name').value.trim()||r.label;
   r.deadline = kickoffs.length ? new Date(Math.min(...kickoffs)-60*60*1000).toISOString().slice(0,16) : r.deadline;
   r.tournamentNames = [...new Set(roundAddedEvents.map(e=>e.tName))];
   r.eventIds = roundAddedEvents.map(e=>e.id);
