@@ -936,7 +936,7 @@
     <a href="#pricing" class="btn-ghost">Pricing</a>
     <a href="/demo" class="btn-ghost">Demo</a>
     <span id="nav-auth-actions">
-      <a href="#" class="btn-ghost" onclick="openAuthModal('login');return false;">Log in</a>
+      <a href="/admin" class="btn-ghost">Go to dashboard</a>
       <a href="mailto:gameweek.cloud@gmail.com?subject=Interested%20in%20Gameweek&body=Hi%20Gameweek%20team%2C%0A%0AI%27m%20interested%20in%20setting%20up%20a%20free-to-play%20prediction%20game%20on%20my%20site.%0A%0AMy%20website%3A%20%0AExpected%20users%3A%20%0A%0ALooking%20forward%20to%20hearing%20from%20you." class="btn-primary">Contact us</a>
     </span>
   </div>
@@ -950,7 +950,7 @@
   <a href="#how" onclick="closeMobileNav()">How it works</a>
   <a href="/demo" onclick="closeMobileNav()">Demo</a>
   <span id="nav-mobile-auth">
-    <a href="#" onclick="openAuthModal('login');closeMobileNav();return false;">Log in</a>
+    <a href="/admin" onclick="closeMobileNav()">Go to dashboard</a>
     <a href="mailto:gameweek.cloud@gmail.com?subject=Interested%20in%20Gameweek&body=Hi%20Gameweek%20team%2C%0A%0AI%27m%20interested%20in%20setting%20up%20a%20free-to-play%20prediction%20game%20on%20my%20site.%0A%0AMy%20website%3A%20%0AExpected%20users%3A%20%0A%0ALooking%20forward%20to%20hearing%20from%20you." class="btn-primary" onclick="closeMobileNav()">Contact us</a>
   </span>
 </div>
@@ -1138,7 +1138,7 @@
       <div style="display:flex;flex-direction:column;gap:16px;">
         <div style="display:flex;gap:12px;align-items:flex-start;">
           <span style="font-size:18px;flex-shrink:0;width:28px;text-align:center;">🎮</span>
-          <div><div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px;">All 3 game modes</div><div style="font-size:13px;color:var(--text-2);line-height:1.5;">Last Man Standing, Score Predictor, and Betting Markets. No feature gating — every operator gets the full product.</div></div>
+          <div><div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px;">All 4 game modes</div><div style="font-size:13px;color:var(--text-2);line-height:1.5;">Last Man Standing, Score Predictor, and Betting Markets. No feature gating — every operator gets the full product.</div></div>
         </div>
 
         <div style="display:flex;gap:12px;align-items:flex-start;">
@@ -1462,6 +1462,8 @@
     if(modal){ modal.classList.remove('shake'); void modal.offsetWidth; modal.classList.add('shake'); }
   }
 
+  // Auto-open login modal if redirected from admin
+  if(new URLSearchParams(window.location.search).get('login')==='1'){openAuthModal('login');window.history.replaceState({},'','/');}
   // If already signed in, swap nav to dashboard link
   (function(){
     const session = localStorage.getItem('gw_op_session');

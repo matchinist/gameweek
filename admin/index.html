@@ -508,7 +508,7 @@ tbody tr:hover td{background:var(--bg);}
               </div>
               <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--text-2);">
                 <div>✓ Unlimited competitions</div>
-                <div>✓ All 3 game modes</div>
+                <div>✓ All 4 game modes</div>
                 <div>✓ Analytics dashboard</div>
                 <div>✓ Up to 3 allowed domains</div>
               </div>
@@ -1839,7 +1839,7 @@ function initOperatorChrome(){
 
   if(!session){
     console.warn('GW: No session found, redirecting to login');
-    window.location.href='/'; return;
+    window.location.href='/?login=1'; return;
   }
   console.log('GW: Session restored for', session.user.email);
 
