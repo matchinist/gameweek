@@ -337,11 +337,14 @@ async function buildCompsFromRealData(){
         const evIds = r.event_ids||[];
         const allDone = evIds.length>0 && evIds.every(eid=>EVENTS[eid]?.res!==null);
         return {id:r.id, label:r.label, deadline:r.deadline||'',
-          status: r.status==='completed'?'completed':(allDone?'completed':'open'),
-          eventIds:evIds, tournamentNames:r.tournament_names||[]};
+          status: r.status==='completed'?'completed':(allDone&&evIds.length?'completed':'open'),
+          eventIds:evIds, tournamentNames:r.tournament_names||[],
+          rankingTeams:r.ranking_teams||null};
       });
       COMPS.push({id:c.id, name:c.name, mode:c.mode||'lms', color:c.color||'#4F46E5',
-        scoring:c.scoring||null, markets:c.markets||[], rounds:cRounds,
+        scoring:c.scoring||null, markets:c.markets||[],
+        rankingConfig:c.ranking_config||null,
+        rounds:cRounds,
         tournamentNames:[...new Set(cRounds.flatMap(r=>r.tournamentNames||[]).filter(Boolean))]
       });
     });

@@ -1025,6 +1025,7 @@ async function saveAdminState(){
         id:c.id, client_key:CLIENT_KEY, name:c.name, mode:c.mode,
         color:c.color, status:c.status, long_term:c.longTerm||false,
         scoring:c.scoring||null, markets:c.markets||null,
+        ranking_config:c.rankingConfig||null,
         users:c.users||0, predictions:c.predictions||0
       }));
       await supa.from('gw_competitions').upsert(compRows,{onConflict:'id'});
@@ -1035,7 +1036,8 @@ async function saveAdminState(){
         id:r.id, competition_id:c.id, client_key:CLIENT_KEY,
         label:r.label, status:r.status, deadline:r.deadline||'',
         event_ids:r.eventIds||[], tournament_ids:r.tournamentIds||[],
-        tournament_names:r.tournamentNames||[], sort_order:ri
+        tournament_names:r.tournamentNames||[], sort_order:ri,
+        ranking_teams:r.rankingTeams||null
       }))
     );
     if(allRounds.length) await supa.from('gw_rounds').upsert(allRounds,{onConflict:'id'});
@@ -1267,7 +1269,7 @@ function renderCompDetail(){
               <div class="round-item">
                 <div style="flex:1;">
                   <div class="round-item-name">${r.label}</div>
-                  <div class="round-item-meta">${r.eventIds.length} events · deadline ${fmtDt(r.deadline)}${r.tournamentId?` · ${r.tournamentName||r.tournamentId}`:''}</div>
+                  <div class="round-item-meta">${r.rankingTeams?r.rankingTeams.length+' teams':r.eventIds.length+' events'} · deadline ${fmtDt(r.deadline)}${r.tournamentId?` · ${r.tournamentName||r.tournamentId}`:''}</div>
                 </div>
                 ${statusBadge(r.status)}
                 <button class="btn btn-ghost btn-sm" onclick="openEditRound('${r.id}')">Edit</button>
@@ -2020,11 +2022,13 @@ function initOperatorChrome(){
   state.competitions = (comps||[]).map(c=>({
     id:c.id, name:c.name, mode:c.mode, color:c.color, status:c.status,
     longTerm:c.long_term, scoring:c.scoring, markets:c.markets,
+    rankingConfig:c.ranking_config||null,
     users:c.users, predictions:c.predictions,
     rounds: (rounds||[]).filter(r=>r.competition_id===c.id).map(r=>({
       id:r.id, label:r.label, status:r.status, deadline:r.deadline||'',
       eventIds:r.event_ids||[], tournamentIds:r.tournament_ids||[],
-      tournamentNames:r.tournament_names||[]
+      tournamentNames:r.tournament_names||[],
+      rankingTeams:r.ranking_teams||null
     }))
   }));
 
