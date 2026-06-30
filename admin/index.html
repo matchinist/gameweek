@@ -683,11 +683,22 @@ tbody tr:hover td{background:var(--bg);}
     <h2 style="font-size:22px;font-weight:800;color:var(--text);margin-bottom:8px;">Activate your plan to continue</h2>
     <p style="font-size:14px;color:var(--text-2);margin-bottom:24px;line-height:1.6;">Your account is created, but you'll need an active subscription to build competitions and go live.</p>
 
-    <script async src="https://js.stripe.com/v3/pricing-table.js"></script>
-    <stripe-pricing-table
-      pricing-table-id="prctbl_1TlsWIR3NbpQTjwaPHnXAOhS"
-      publishable-key="pk_live_51TlREtR3NbpQTjwa0mq4Yvh5XoExt92D0SmhkorCEAYq6lL2IQynrHXM0g2GL6VlwEJGjwHoYYJKBUoOv75pUq6E00Zzbgu0OI">
-    </stripe-pricing-table>
+    <div style="background:var(--sidebar);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:22px;text-align:left;">
+      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:14px;">
+        <span style="font-size:34px;font-weight:800;font-family:var(--mono);color:var(--text);">$50</span>
+        <span style="font-size:14px;color:var(--text-3);">/month base</span>
+      </div>
+      <div style="font-size:13px;color:var(--text-2);margin-bottom:16px;">+ $0.40 per active user / month</div>
+      <div style="display:flex;flex-direction:column;gap:9px;font-size:13px;color:var(--text);">
+        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> All 4 game modes</div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> Unlimited competitions</div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> Full branding control</div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> No setup fees, no contracts</div>
+      </div>
+    </div>
+
+    <a href="mailto:gameweek.cloud@gmail.com?subject=Activate%20my%20Gameweek%20subscription" class="btn btn-primary" style="width:100%;justify-content:center;padding:13px;font-size:14px;margin-bottom:10px;text-decoration:none;display:block;text-align:center;">Contact us to activate →</a>
+    <div style="font-size:11px;color:var(--text-3);margin-bottom:16px;">We'll set up your account and have you live within 24 hours.</div>
 
     <div style="margin-top:16px;">
       <a href="#" onclick="signOutOperator();return false;" style="font-size:12px;color:var(--text-3);text-decoration:none;">Sign out</a>
@@ -1727,8 +1738,40 @@ function toast(msg){
 }
 
 function showPaywall(){
+  // Check if returning from Stripe checkout
+  const params = new URLSearchParams(window.location.search);
+  if(params.get('subscribed')==='1'){
+    showActivationPending();
+    // Clean the URL
+    window.history.replaceState({}, '', '/admin');
+    return;
+  }
   const el=document.getElementById('paywall-overlay');
   if(el){ el.style.display='flex'; document.body.style.overflow='hidden'; }
+}
+
+function showActivationPending(){
+  const el=document.getElementById('paywall-overlay');
+  if(!el)return;
+  el.style.display='flex';
+  document.body.style.overflow='hidden';
+  el.querySelector('div[style*="position:relative"]').innerHTML=`
+    <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;">game<span style="color:var(--accent);">week</span></div>
+    <div style="display:inline-block;background:var(--green-light);color:var(--green);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;margin-bottom:18px;letter-spacing:0.5px;">PAYMENT RECEIVED</div>
+    <div style="font-size:48px;margin-bottom:16px;">✓</div>
+    <h2 style="font-size:22px;font-weight:800;color:var(--text);margin-bottom:8px;">Thank you for subscribing!</h2>
+    <p style="font-size:14px;color:var(--text-2);margin-bottom:12px;line-height:1.6;">Your payment has been received. We are activating your account now.</p>
+    <p style="font-size:13px;color:var(--text-3);margin-bottom:24px;line-height:1.6;">You will have full access within a few hours. We will notify you by email once your dashboard is ready.</p>
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:20px;">
+      <div style="font-size:12px;color:var(--text-2);line-height:1.7;">
+        <strong style="color:var(--text);">What happens next?</strong><br>
+        1. We verify your payment<br>
+        2. Your dashboard is unlocked<br>
+        3. You start building competitions
+      </div>
+    </div>
+    <a href="#" onclick="signOutOperator();return false;" style="font-size:12px;color:var(--text-3);text-decoration:none;">Sign out</a>
+  `;
 }
 function startSubscription(){
   // Redirect to landing page pricing / Stripe checkout

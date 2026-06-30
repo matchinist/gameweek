@@ -937,7 +937,7 @@
     <a href="/demo" class="btn-ghost">Demo</a>
     <span id="nav-auth-actions">
       <a href="#" class="btn-ghost" onclick="openAuthModal('login');return false;">Log in</a>
-      <a href="#" class="btn-primary" onclick="openAuthModal('signup');return false;">Sign up →</a>
+      <a href="mailto:gameweek.cloud@gmail.com?subject=Interested%20in%20Gameweek&body=Hi%20Gameweek%20team%2C%0A%0AI%27m%20interested%20in%20setting%20up%20a%20free-to-play%20prediction%20game%20on%20my%20site.%0A%0AMy%20website%3A%20%0AExpected%20users%3A%20%0A%0ALooking%20forward%20to%20hearing%20from%20you." class="btn-primary">Contact us</a>
     </span>
   </div>
   <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Menu">
@@ -951,7 +951,7 @@
   <a href="/demo" onclick="closeMobileNav()">Demo</a>
   <span id="nav-mobile-auth">
     <a href="#" onclick="openAuthModal('login');closeMobileNav();return false;">Log in</a>
-    <a href="#" class="btn-primary" onclick="openAuthModal('signup');closeMobileNav();return false;">Sign up →</a>
+    <a href="mailto:gameweek.cloud@gmail.com?subject=Interested%20in%20Gameweek&body=Hi%20Gameweek%20team%2C%0A%0AI%27m%20interested%20in%20setting%20up%20a%20free-to-play%20prediction%20game%20on%20my%20site.%0A%0AMy%20website%3A%20%0AExpected%20users%3A%20%0A%0ALooking%20forward%20to%20hearing%20from%20you." class="btn-primary" onclick="closeMobileNav()">Contact us</a>
   </span>
 </div>
 
@@ -967,7 +967,7 @@
       Your users predict, compete, and return — week after week, across every competition you cover.
     </p>
     <div class="hero-actions">
-      <a href="#" class="btn-hero-primary" onclick="openAuthModal('signup');return false;">Sign up →</a>
+      <a href="mailto:gameweek.cloud@gmail.com?subject=Interested%20in%20Gameweek&body=Hi%20Gameweek%20team%2C%0A%0AI%27m%20interested%20in%20setting%20up%20a%20free-to-play%20prediction%20game%20on%20my%20site.%0A%0AMy%20website%3A%20%0AExpected%20users%3A%20%0A%0ALooking%20forward%20to%20hearing%20from%20you." class="btn-hero-primary">Contact us →</a>
       <a href="/demo" class="btn-hero-ghost">Try the demo</a>
     </div>
   </div>
@@ -1179,13 +1179,23 @@
       </div>
     </div>
 
-    <!-- RIGHT — Stripe pricing table -->
-    <div>
-      <script async src="https://js.stripe.com/v3/pricing-table.js"></script>
-      <stripe-pricing-table
-        pricing-table-id="prctbl_1TlsWIR3NbpQTjwaPHnXAOhS"
-        publishable-key="pk_live_51TlREtR3NbpQTjwa0mq4Yvh5XoExt92D0SmhkorCEAYq6lL2IQynrHXM0g2GL6VlwEJGjwHoYYJKBUoOv75pUq6E00Zzbgu0OI">
-      </stripe-pricing-table>
+    <!-- RIGHT — Pricing card -->
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:340px;">
+      <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px;">Gameweek Standard</div>
+      <div style="font-size:13px;color:var(--text-2);margin-bottom:20px;line-height:1.6;">Everything you need to run free-to-play prediction games on your site.</div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px;">
+        <span style="font-size:38px;font-weight:800;font-family:var(--mono);color:var(--text);">$50</span>
+        <span style="font-size:14px;color:var(--text-3);">/month base</span>
+      </div>
+      <div style="font-size:13px;color:var(--text-2);margin-bottom:20px;">+ $0.40 per active user / month</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--text);margin-bottom:24px;">
+        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> All 4 game modes</div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> Unlimited competitions</div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> Full branding control</div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> Setup in less than a day</div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> No setup fees, no contracts</div>
+      </div>
+      <a href="mailto:gameweek.cloud@gmail.com?subject=Interested%20in%20Gameweek&body=Hi%20Gameweek%20team%2C%0A%0AI%27m%20interested%20in%20setting%20up%20a%20free-to-play%20prediction%20game%20on%20my%20site.%0A%0AMy%20website%3A%20%0AExpected%20users%3A%20%0A%0ALooking%20forward%20to%20hearing%20from%20you." style="display:block;text-align:center;background:var(--accent);color:white;padding:13px;border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;">Contact us →</a>
     </div>
 
   </div>
@@ -1195,10 +1205,10 @@
 <div class="cta-section">
   <div class="cta-inner">
     <h2 class="cta-title">Ready before the<br><span class="accent">season starts?</span></h2>
-    <p class="cta-sub">The 2026/27 season kicks off soon. Setup takes less than a day. Try the demo, then get in touch and we'll have you live before Gameweek 1.</p>
+    <p class="cta-sub">The 2026/27 season kicks off soon. Setup takes less than a day. Try the demo, then reach out at gameweek.cloud@gmail.com — we'll have you live before Gameweek 1.</p>
     <div class="cta-actions">
-      <a href="#" class="btn-cta-primary" onclick="openAuthModal('signup');return false;">Sign up →</a>
-      <a href="mailto:hello@gameweek.gg" class="btn-cta-ghost">hello@gameweek.gg</a>
+      <a href="mailto:gameweek.cloud@gmail.com?subject=Interested%20in%20Gameweek&body=Hi%20Gameweek%20team%2C%0A%0AI%27m%20interested%20in%20setting%20up%20a%20free-to-play%20prediction%20game%20on%20my%20site.%0A%0AMy%20website%3A%20%0AExpected%20users%3A%20%0A%0ALooking%20forward%20to%20hearing%20from%20you." class="btn-cta-primary">Contact us →</a>
+      <a href="mailto:gameweek.cloud@gmail.com" class="btn-cta-ghost">gameweek.cloud@gmail.com</a>
     </div>
   </div>
 </div>
