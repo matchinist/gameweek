@@ -559,7 +559,7 @@ function renderPredict(){
   const comp=COMPS[currentCompIdx];
   const tlHtml=renderTournamentLabels(comp);
   // Game descriptions + rules
-  const descriptions={score:'Predict the exact score for each match. Points awarded for correct scores, correct team goals, or correct total.',lms:'Pick a winner for each event. Get it wrong and you are eliminated. Last one standing wins.',betting:'Predict multiple markets per match: result, over/under, both teams to score. Points per correct market.'};
+  const descriptions={score:'Predict the exact score for each match. Points awarded for correct scores, correct team goals, or correct total.',lms:'Pick a winner for each event. Get it wrong and you are eliminated. Last one standing wins.',betting:'Predict multiple markets per match: result, over/under, both teams to score. Points per correct market.',ranking:'Rank teams from highest to lowest expected goals (xG) for the gameweek. Points for each correct position.'};
   let html=`<div style="padding:10px 16px 0;display:flex;align-items:center;gap:8px;"><span style="font-size:12px;color:var(--text-2);flex:1;font-weight:600;">${descriptions[comp.mode]||''}</span><button onclick="showRules('${comp.mode}')" style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent);background:none;border:1px solid var(--accent);border-radius:5px;padding:3px 10px;cursor:pointer;white-space:nowrap;">Rules</button></div>`;
   html+=`<div class="predict-header-row"><div class="predict-tournament-labels">${tlHtml}</div><div class="predict-subtabs"><button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button></div><div class="predict-subtabs-mobile"><select onchange="switchPredictSubTab(this.value)"><option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option><option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option></select></div></div>`;
   html+=predictSubTab==='predictions'?renderPredictionsPane(comp):renderLeaderboardShell(comp);
@@ -634,7 +634,7 @@ function renderPredictionsPane(comp){
         html+=`<div class="rank-item" data-tid="${tid}" draggable="true" style="display:flex;align-items:center;gap:6px;padding:8px;margin-bottom:4px;background:var(--white);border-radius:8px;border:1px solid var(--border);cursor:grab;"><span style="font-size:14px;color:var(--text-3);cursor:grab;flex-shrink:0;">☰</span><span style="font-family:var(--mono);font-size:12px;font-weight:800;color:var(--accent);width:20px;text-align:center;">#${i+1}</span><div class="ev-badge" style="width:24px;height:24px;font-size:7px;">${t.logo?'<img src="'+t.logo+'" alt="'+t.name+'">':t.name.slice(0,3).toUpperCase()}</div><div style="flex:1;min-width:0;"><div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div><div style="font-size:11px;color:var(--text-2);font-weight:600;">${t.opponent||''}</div></div></div>`;
       });
       html+='</div>';
-      html+=`<button class="submit-preds-btn${predsDirty?'':' disabled'}" onclick="submitRanking('${round.id}')">Save Ranking</button>`;
+      html+=`<button class="submit-preds-btn" onclick="submitRanking('${round.id}')">Save Ranking</button>`;
       setTimeout(()=>initDragSort(),50);
     }
     html+='</div>';
@@ -838,6 +838,16 @@ function showRules(mode){
 <div><strong style="color:var(--text);">How to play:</strong> Predict the outcome (Home Win, Draw, or Away Win) for every event in the round.</div>
 <div><strong style="color:var(--text);">Elimination:</strong> Events are resolved in kick-off order. If your prediction is wrong, you are eliminated at that event.</div>
 <div><strong style="color:var(--text);">Winning:</strong> The last player(s) still standing after all events win the round.</div>
+</div>`,
+    ranking:`<h3 style="margin-bottom:12px;">Ranking Rules</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">How to play:</strong> Sort the selected teams from highest to lowest expected goals (xG) for the gameweek.</div>
+<div><strong style="color:var(--text);">Points:</strong></div>
+<div style="padding-left:12px;">
+• Each team in the correct position — <strong style="color:var(--green);">+2 pts</strong><br>
+• All teams in perfect order — <strong style="color:var(--green);">+5 bonus pts</strong>
+</div>
+<div><strong style="color:var(--text);">Tip:</strong> Think about which teams are playing at home, their recent form, and the quality of their opponents.</div>
 </div>`,
     betting:`<h3 style="margin-bottom:12px;">Betting Markets Rules</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">

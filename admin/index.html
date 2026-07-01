@@ -1462,16 +1462,18 @@ async function openModal(id){
     await refreshDMState();
     const comp = getComp(state.currentComp);
     const isRanking = comp?.mode === 'ranking';
-    // Show/hide sections based on mode
-    document.getElementById('new-round-tournament-select').closest('.form-group').style.display = isRanking ? 'none' : 'block';
+    // For ranking: show tournament+events flow (same as others), teams are derived from events
+    document.getElementById('new-round-tournament-select').closest('.form-group').style.display = 'block';
     document.getElementById('new-round-available-wrap').style.display = 'none';
     document.getElementById('new-round-added-wrap').style.display = 'none';
-    document.getElementById('new-round-ranking-teams').style.display = isRanking ? 'block' : 'none';
+    document.getElementById('new-round-ranking-teams').style.display = 'none';
+    populateTournamentDropdown('new');
+    renderAddedEvents('new');
     if(isRanking){
-      populateRankingTeamPicker();
-    } else {
-      populateTournamentDropdown('new');
-      renderAddedEvents('new');
+      // Show a hint about how ranking works
+      document.getElementById('new-round-ranking-teams').style.display = 'block';
+      document.getElementById('ranking-team-list').innerHTML = '<div style="padding:10px;font-size:12px;color:var(--text-3);">Select events above — teams will be extracted automatically with their opponents.</div>';
+      document.getElementById('ranking-team-count').textContent = 'Add events to populate teams';
     }
   }
   document.getElementById(id)?.classList.add('open');
@@ -1650,22 +1652,39 @@ function createRound(){
 
   const comp = getComp(state.currentComp);
   
-  // Ranking mode: collect selected teams
+  // Ranking mode: derive teams from selected events
   if(comp.mode==='ranking'){
-    const checked = document.querySelectorAll('.ranking-team-cb:checked');
-    if(checked.length < 2){ toast('Select at least 2 teams'); return; }
-    const rankingTeams = [...checked].map(cb=>({
-      id: cb.value,
-      name: cb.dataset.name,
-      logo: cb.dataset.logo || '',
-    }));
+    if(!roundAddedEvents.length){ toast('Add events to derive ranking teams'); return; }
+    const dmEvents = getDMEvents();
+    const allTeams = getDMTeams();
+    const teamById = id => allTeams.find(t=>t.id===id);
+    const rankingTeams = [];
+    const seenTeams = new Set();
+    roundAddedEvents.forEach(ev=>{
+      const dmEv = dmEvents[ev.id];
+      if(!dmEv) return;
+      const home = teamById(dmEv.homeId);
+      const away = teamById(dmEv.awayId);
+      if(home && !seenTeams.has(home.id)){
+        seenTeams.add(home.id);
+        rankingTeams.push({id:home.id, name:home.name, logo:home.logo||'', opponent:'vs '+away?.name+' · '+fmtDt(dmEv.kickoff)});
+      }
+      if(away && !seenTeams.has(away.id)){
+        seenTeams.add(away.id);
+        rankingTeams.push({id:away.id, name:away.name, logo:away.logo||'', opponent:'vs '+home?.name+' · '+fmtDt(dmEv.kickoff)});
+      }
+    });
+    if(rankingTeams.length<2){ toast('Need at least 2 teams'); return; }
+    const kickoffs = roundAddedEvents.map(e=>dmEvents[e.id]?.kickoff).filter(Boolean).map(k=>new Date(k).getTime());
+    const deadline = kickoffs.length ? new Date(Math.min(...kickoffs)-60*60*1000).toISOString().slice(0,16) : '';
     const r = {
-      id:'r'+uid(), label:name, status:'open', deadline:'',
-      rankingTeams, eventIds:[]
+      id:'r'+uid(), label:name, status:'open', deadline,
+      rankingTeams, eventIds:roundAddedEvents.map(e=>e.id)
     };
     comp.rounds.push(r);
     closeModal('modal-create-round');
     document.getElementById('new-round-name').value='';
+    roundAddedEvents=[];
     saveAdminState(); renderCompDetail(); toast('Ranking round created with '+rankingTeams.length+' teams');
     return;
   }
@@ -1707,17 +1726,33 @@ function openEditRound(roundId){
   document.getElementById('edit-round-ranking-teams').style.display = isRanking ? 'block' : 'none';
   
   if(isRanking){
-    // Populate team picker with pre-selected teams
-    const allTeams = getDMTeams();
-    const selectedIds = new Set((r.rankingTeams||[]).map(t=>t.id));
+    // For ranking: show events flow + display derived teams
+    document.getElementById('edit-round-ranking-teams').style.display = 'block';
+    // Pre-populate events from the round
+    const dmEvents = getDMEvents();
+    const teamList = getDMTeams();
+    const teamById = id => teamList.find(t=>t.id===id);
+    roundAddedEvents = (r.eventIds||[]).map(eid=>{
+      const ev=dmEvents[eid]; if(!ev) return null;
+      const home=teamById(ev.homeId), away=teamById(ev.awayId);
+      const tName=(r.tournamentNames||[])[0]||'';
+      return {id:eid, home:home?.name||eid, away:away?.name||eid, kickoff:ev.kickoff||'', tName};
+    }).filter(Boolean);
+    populateTournamentDropdown('edit');
+    renderAddedEvents('edit');
+    // Show current ranking teams
     const list = document.getElementById('edit-ranking-team-list');
-    list.innerHTML = allTeams.map(t=>`
-      <label style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg);border-radius:6px;cursor:pointer;">
-        <input type="checkbox" class="edit-ranking-team-cb" value="${t.id}" data-name="${t.name}" data-logo="${t.logo||''}" ${selectedIds.has(t.id)?'checked':''} style="accent-color:var(--accent);width:16px;height:16px;" onchange="updateEditRankingTeamCount()">
-        ${t.logo?'<img src="'+t.logo+'" style="width:24px;height:24px;border-radius:50%;object-fit:contain;">':''}
-        <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text);">${t.name}</span>
-      </label>`).join('');
-    updateEditRankingTeamCount();
+    if(r.rankingTeams&&r.rankingTeams.length){
+      list.innerHTML = r.rankingTeams.map(t=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg);border-radius:6px;">
+          ${t.logo?'<img src="'+t.logo+'" style="width:24px;height:24px;border-radius:50%;object-fit:contain;">':''}
+          <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text);">${t.name}</span>
+          <span style="font-size:10px;color:var(--text-3);">${t.opponent||''}</span>
+        </div>`).join('');
+      document.getElementById('edit-ranking-team-count').textContent = r.rankingTeams.length + ' teams from selected events';
+    } else {
+      list.innerHTML = '<div style="padding:10px;font-size:12px;color:var(--text-3);">No teams yet — add events above.</div>';
+    }
   } else {
     // Pre-populate added events from the round
     const dmEvents = getDMEvents();
@@ -1749,15 +1784,30 @@ function saveRoundEdit(){
   r.label = document.getElementById('edit-round-name').value.trim()||r.label;
   
   if(comp.mode==='ranking'){
-    const checked = document.querySelectorAll('.edit-ranking-team-cb:checked');
-    if(checked.length < 2){ toast('Select at least 2 teams'); return; }
-    r.rankingTeams = [...checked].map(cb=>({
-      id: cb.value,
-      name: cb.dataset.name,
-      logo: cb.dataset.logo || '',
-    }));
+    if(!roundAddedEvents.length){ toast('Add events to derive ranking teams'); return; }
+    const dmEvents = getDMEvents();
+    const allTeams = getDMTeams();
+    const teamById = id => allTeams.find(t=>t.id===id);
+    const rankingTeams = [];
+    const seenTeams = new Set();
+    roundAddedEvents.forEach(ev=>{
+      const dmEv = dmEvents[ev.id];
+      if(!dmEv) return;
+      const home = teamById(dmEv.homeId);
+      const away = teamById(dmEv.awayId);
+      if(home && !seenTeams.has(home.id)){
+        seenTeams.add(home.id);
+        rankingTeams.push({id:home.id, name:home.name, logo:home.logo||'', opponent:'vs '+away?.name+' · '+fmtDt(dmEv.kickoff)});
+      }
+      if(away && !seenTeams.has(away.id)){
+        seenTeams.add(away.id);
+        rankingTeams.push({id:away.id, name:away.name, logo:away.logo||'', opponent:'vs '+home?.name+' · '+fmtDt(dmEv.kickoff)});
+      }
+    });
+    r.rankingTeams = rankingTeams;
+    r.eventIds = roundAddedEvents.map(e=>e.id);
     closeModal('modal-edit-round');
-    saveAdminState(); renderCompDetail(); toast('Round updated with '+r.rankingTeams.length+' teams');
+    saveAdminState(); renderCompDetail(); toast('Round updated with '+rankingTeams.length+' teams');
     return;
   }
   
