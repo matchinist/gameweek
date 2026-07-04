@@ -1058,7 +1058,7 @@ function getDMTeams(){ return dmState.teams||[]; }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
 const modeLabel = {lms:'Last Man Standing', score:'Score Predictor', betting:'Betting Markets', ranking:'Ranking'};
-const modeChip  = {lms:'LMS', score:'SCORE', betting:'BET', ranking:'RANK'};
+const modeChip  = {lms:'LMS', score:'SCORE', betting:'BET', ranking:'RANKING'};
 
 function getEvent(id){ return state.events.find(e=>e.id===id); }
 function getComp(id){ return state.competitions.find(c=>c.id===id); }
@@ -1606,7 +1606,7 @@ function renderAddedEvents(prefix){
   const wrap = document.getElementById(prefix+'-round-added-wrap');
   const list = document.getElementById(prefix+'-round-added-list');
   const count = document.getElementById(prefix+'-round-added-count');
-  if(!roundAddedEvents.length){ wrap.style.display='none'; return; }
+  if(!roundAddedEvents.length){ wrap.style.display='none'; updateRankingTeamPreview(prefix); return; }
   const comp = getComp(state.currentComp);
   const isLMS = comp?.mode==='lms';
   wrap.style.display='block';
@@ -1622,6 +1622,53 @@ function renderAddedEvents(prefix){
       <button onclick="roundRemoveEvent('${prefix}','${ev.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:16px;padding:0 4px;">×</button>
     </div>`;
   }).join('');
+  updateRankingTeamPreview(prefix);
+}
+
+function updateRankingTeamPreview(prefix){
+  const comp = getComp(state.currentComp);
+  if(!comp || comp.mode!=='ranking') return;
+  const teamListEl = document.getElementById(prefix+'-round-ranking-teams');
+  const listEl = document.getElementById(prefix==='new'?'ranking-team-list':'edit-ranking-team-list');
+  const countEl = document.getElementById(prefix==='new'?'ranking-team-count':'edit-ranking-team-count');
+  if(!teamListEl||!listEl) return;
+  teamListEl.style.display='block';
+
+  if(!roundAddedEvents.length){
+    listEl.innerHTML='<div style="padding:10px;font-size:12px;color:var(--text-3);">Select events above — teams will be extracted automatically with their opponents.</div>';
+    countEl.textContent='Add events to populate teams';
+    return;
+  }
+
+  const dmEvents = getDMEvents();
+  const allTeams = getDMTeams();
+  const teamById = id => allTeams.find(t=>t.id===id);
+  const derivedTeams = [];
+  const seen = new Set();
+  roundAddedEvents.forEach(ev=>{
+    const dmEv = dmEvents[ev.id]; if(!dmEv) return;
+    const home = teamById(dmEv.homeId), away = teamById(dmEv.awayId);
+    const ko = dmEv.kickoff ? new Date(dmEv.kickoff).toLocaleDateString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+    if(home && !seen.has(home.id)){
+      seen.add(home.id);
+      derivedTeams.push({id:home.id, name:home.name, logo:home.logo||'', opponent:'vs '+(away?.name||'?')+' · '+ko});
+    }
+    if(away && !seen.has(away.id)){
+      seen.add(away.id);
+      derivedTeams.push({id:away.id, name:away.name, logo:away.logo||'', opponent:'vs '+(home?.name||'?')+' · '+ko});
+    }
+  });
+
+  listEl.innerHTML = derivedTeams.map(t=>`
+    <label style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg);border-radius:6px;cursor:pointer;">
+      <input type="checkbox" class="${prefix}-ranking-team-cb" value="${t.id}" data-name="${t.name}" data-logo="${t.logo}" data-opponent="${t.opponent}" checked style="accent-color:var(--accent);width:16px;height:16px;">
+      ${t.logo?'<img src="'+t.logo+'" style="width:24px;height:24px;border-radius:50%;object-fit:contain;">':''}
+      <div style="flex:1;">
+        <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text);">${t.name}</span>
+        <div style="font-size:10px;color:var(--text-3);">${t.opponent}</div>
+      </div>
+    </label>`).join('');
+  countEl.textContent = derivedTeams.length + ' teams — uncheck any you want to exclude';
 }
 
 function validateRoundOverlap(prefix){
@@ -1652,31 +1699,20 @@ function createRound(){
 
   const comp = getComp(state.currentComp);
   
-  // Ranking mode: derive teams from selected events
+  // Ranking mode: derive teams from selected events, filtered by checkboxes
   if(comp.mode==='ranking'){
     if(!roundAddedEvents.length){ toast('Add events to derive ranking teams'); return; }
+    const checked = document.querySelectorAll('.new-ranking-team-cb:checked');
+    if(checked.length < 2){ toast('Select at least 2 teams'); return; }
+    const rankingTeams = [...checked].map(cb=>({
+      id: cb.value,
+      name: cb.dataset.name,
+      logo: cb.dataset.logo || '',
+      opponent: cb.dataset.opponent || '',
+    }));
     const dmEvents = getDMEvents();
-    const allTeams = getDMTeams();
-    const teamById = id => allTeams.find(t=>t.id===id);
-    const rankingTeams = [];
-    const seenTeams = new Set();
-    roundAddedEvents.forEach(ev=>{
-      const dmEv = dmEvents[ev.id];
-      if(!dmEv) return;
-      const home = teamById(dmEv.homeId);
-      const away = teamById(dmEv.awayId);
-      if(home && !seenTeams.has(home.id)){
-        seenTeams.add(home.id);
-        rankingTeams.push({id:home.id, name:home.name, logo:home.logo||'', opponent:'vs '+away?.name+' · '+fmtDt(dmEv.kickoff)});
-      }
-      if(away && !seenTeams.has(away.id)){
-        seenTeams.add(away.id);
-        rankingTeams.push({id:away.id, name:away.name, logo:away.logo||'', opponent:'vs '+home?.name+' · '+fmtDt(dmEv.kickoff)});
-      }
-    });
-    if(rankingTeams.length<2){ toast('Need at least 2 teams'); return; }
     const kickoffs = roundAddedEvents.map(e=>dmEvents[e.id]?.kickoff).filter(Boolean).map(k=>new Date(k).getTime());
-    const deadline = kickoffs.length ? new Date(Math.min(...kickoffs)-60*60*1000).toISOString().slice(0,16) : '';
+    const deadline = kickoffs.length ? new Date(Math.min(...kickoffs)-2*60*60*1000).toISOString().slice(0,16) : '';
     const r = {
       id:'r'+uid(), label:name, status:'open', deadline,
       rankingTeams, eventIds:roundAddedEvents.map(e=>e.id)
@@ -1695,7 +1731,7 @@ function createRound(){
   if(warnEl&&warnEl.style.display!=='none'){ toast('Fix the overlap conflict before saving'); return; }
   const dmEvents = getDMEvents();
   const kickoffs = roundAddedEvents.map(e=>dmEvents[e.id]?.kickoff).filter(Boolean).map(k=>new Date(k).getTime());
-  const deadline = kickoffs.length ? new Date(Math.min(...kickoffs)-60*60*1000).toISOString().slice(0,16) : '';
+  const deadline = kickoffs.length ? new Date(Math.min(...kickoffs)-2*60*60*1000).toISOString().slice(0,16) : '';
   const tNames = [...new Set(roundAddedEvents.map(e=>e.tName))];
   const r = {
     id:'r'+uid(), label:name, status:'open', deadline,
@@ -1740,19 +1776,8 @@ function openEditRound(roundId){
     }).filter(Boolean);
     populateTournamentDropdown('edit');
     renderAddedEvents('edit');
-    // Show current ranking teams
-    const list = document.getElementById('edit-ranking-team-list');
-    if(r.rankingTeams&&r.rankingTeams.length){
-      list.innerHTML = r.rankingTeams.map(t=>`
-        <div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg);border-radius:6px;">
-          ${t.logo?'<img src="'+t.logo+'" style="width:24px;height:24px;border-radius:50%;object-fit:contain;">':''}
-          <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text);">${t.name}</span>
-          <span style="font-size:10px;color:var(--text-3);">${t.opponent||''}</span>
-        </div>`).join('');
-      document.getElementById('edit-ranking-team-count').textContent = r.rankingTeams.length + ' teams from selected events';
-    } else {
-      list.innerHTML = '<div style="padding:10px;font-size:12px;color:var(--text-3);">No teams yet — add events above.</div>';
-    }
+    // Show derived teams with checkboxes
+    updateRankingTeamPreview('edit');
   } else {
     // Pre-populate added events from the round
     const dmEvents = getDMEvents();
@@ -1785,29 +1810,17 @@ function saveRoundEdit(){
   
   if(comp.mode==='ranking'){
     if(!roundAddedEvents.length){ toast('Add events to derive ranking teams'); return; }
-    const dmEvents = getDMEvents();
-    const allTeams = getDMTeams();
-    const teamById = id => allTeams.find(t=>t.id===id);
-    const rankingTeams = [];
-    const seenTeams = new Set();
-    roundAddedEvents.forEach(ev=>{
-      const dmEv = dmEvents[ev.id];
-      if(!dmEv) return;
-      const home = teamById(dmEv.homeId);
-      const away = teamById(dmEv.awayId);
-      if(home && !seenTeams.has(home.id)){
-        seenTeams.add(home.id);
-        rankingTeams.push({id:home.id, name:home.name, logo:home.logo||'', opponent:'vs '+away?.name+' · '+fmtDt(dmEv.kickoff)});
-      }
-      if(away && !seenTeams.has(away.id)){
-        seenTeams.add(away.id);
-        rankingTeams.push({id:away.id, name:away.name, logo:away.logo||'', opponent:'vs '+home?.name+' · '+fmtDt(dmEv.kickoff)});
-      }
-    });
-    r.rankingTeams = rankingTeams;
+    const checked = document.querySelectorAll('.edit-ranking-team-cb:checked');
+    if(checked.length < 2){ toast('Select at least 2 teams'); return; }
+    r.rankingTeams = [...checked].map(cb=>({
+      id: cb.value,
+      name: cb.dataset.name,
+      logo: cb.dataset.logo || '',
+      opponent: cb.dataset.opponent || '',
+    }));
     r.eventIds = roundAddedEvents.map(e=>e.id);
     closeModal('modal-edit-round');
-    saveAdminState(); renderCompDetail(); toast('Round updated with '+rankingTeams.length+' teams');
+    saveAdminState(); renderCompDetail(); toast('Round updated with '+r.rankingTeams.length+' teams');
     return;
   }
   
@@ -1815,7 +1828,7 @@ function saveRoundEdit(){
   if(warnEl&&warnEl.style.display!=='none'){ toast('Fix the overlap conflict before saving'); return; }
   const dmEvents = getDMEvents();
   const kickoffs = roundAddedEvents.map(e=>dmEvents[e.id]?.kickoff).filter(Boolean).map(k=>new Date(k).getTime());
-  r.deadline = kickoffs.length ? new Date(Math.min(...kickoffs)-60*60*1000).toISOString().slice(0,16) : r.deadline;
+  r.deadline = kickoffs.length ? new Date(Math.min(...kickoffs)-2*60*60*1000).toISOString().slice(0,16) : r.deadline;
   r.tournamentNames = [...new Set(roundAddedEvents.map(e=>e.tName))];
   r.eventIds = roundAddedEvents.map(e=>e.id);
   closeModal('modal-edit-round');
