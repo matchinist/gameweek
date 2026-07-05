@@ -682,7 +682,9 @@ function renderPredictionsPane(comp){
       html+=`<div style="opacity:${isEliminated?'0.4':'1'};">${renderEventCard(ev,comp,isOpen)}</div>`;
       // Show survival % below finished LMS events
       if(comp.mode==='lms'&&ev.res&&ev._survivalPct!==undefined){
-        html+=`<div style="text-align:left;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text-2);padding:2px 8px 6px;">${ev._survivalPct}% survived</div>`;
+        html+=`<div data-surv-ev="${ev.id}" style="text-align:left;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text-2);padding:2px 8px 6px;">${ev._survivalPct}% survived</div>`;
+      } else if(comp.mode==='lms'&&ev.res){
+        html+=`<div data-surv-ev="${ev.id}" style="text-align:left;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text-2);padding:2px 8px 6px;">—</div>`;
       }
     });
   }
@@ -801,45 +803,85 @@ function startCountdown(deadline){
 
 // ── LMS SUMMARY BARS ─────────────────────────────────────────────────────
 function renderLMSSummaryBars(comp,round,events){
-  // Count total participants and survivors per event
-  // For now, we calculate from predictions data
-  const allPredsByEvent={};
-  events.forEach(ev=>{allPredsByEvent[ev.id]=0;});
+  // Render placeholder, then load real data async
+  const wrapperId='lms-summary-'+round.id;
+  setTimeout(()=>loadLMSSummary(wrapperId,comp,round,events),50);
+  return `<div id="${wrapperId}" style="padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--border);">
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:6px;">
+      <div style="display:flex;align-items:center;gap:5px;"><span style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--text);">—</span><span style="font-size:10px;color:var(--text-3);font-weight:600;">JOINED</span></div>
+      <div style="display:flex;align-items:center;gap:5px;"><span style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--text);">—</span><span style="font-size:10px;color:var(--text-3);font-weight:600;">SURVIVING</span></div>
+    </div>
+    <div style="height:6px;background:var(--border);border-radius:3px;"></div>
+  </div>`;
+}
 
-  // Count unique players who predicted this round
-  let totalParticipants=0;
+async function loadLMSSummary(wrapperId,comp,round,events){
   try{
-    // We'll use the preds we already have as a rough count for now
-    // In production this would query all predictions for the round
-    const playerSet=new Set();
-    events.forEach(ev=>{if(preds[ev.id])playerSet.add('self');});
-    totalParticipants=Math.max(playerSet.size>0?7:0, 0); // placeholder — real count comes from leaderboard
-  }catch(e){}
+    const eventIds=events.map(ev=>ev.id);
+    if(!eventIds.length)return;
+    // Load ALL predictions for this round's events
+    const {data:allPreds}=await supa.from('gw_predictions').select('player_id,event_id,prediction').in('event_id',eventIds).eq('competition_id',comp.id);
+    if(!allPreds||!allPreds.length)return;
 
-  if(!totalParticipants)return'';
+    // Group predictions by player
+    const playerPreds={};
+    allPreds.forEach(p=>{
+      if(!playerPreds[p.player_id])playerPreds[p.player_id]={};
+      playerPreds[p.player_id][p.event_id]=typeof p.prediction==='object'&&p.prediction.value?p.prediction.value:p.prediction;
+    });
 
-  let survived=totalParticipants;
-  let html='<div style="padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--border);">';
-  html+='<div style="display:flex;gap:12px;align-items:center;margin-bottom:6px;">';
-  html+=`<div style="display:flex;align-items:center;gap:5px;"><span style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--text);">${totalParticipants}</span><span style="font-size:10px;color:var(--text-3);font-weight:600;">JOINED</span></div>`;
+    const joined=Object.keys(playerPreds).length;
 
-  // Calculate survivors after each finished event
-  events.forEach((ev,i)=>{
-    if(ev.res){
-      // Rough estimate: each event eliminates ~25-40% of remaining
-      survived=Math.max(1,Math.round(survived*0.7));
-      ev._survivalPct=Math.round(survived/totalParticipants*100);
-    }
-  });
+    // Calculate survivors: player survives if they never got a resulted event wrong
+    let surviving=0;
+    const resultedEvents=events.filter(ev=>ev.res);
+    Object.values(playerPreds).forEach(pp=>{
+      let alive=true;
+      for(const ev of resultedEvents){
+        const pick=pp[ev.id];
+        if(!pick){alive=false;break;}
+        const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
+        if(pick!==actual){alive=false;break;}
+      }
+      if(alive)surviving++;
+    });
 
-  html+=`<div style="display:flex;align-items:center;gap:5px;"><span style="font-family:var(--mono);font-size:20px;font-weight:800;color:${survived<totalParticipants?'var(--red)':'var(--green)'};">${events.some(e=>e.res)?survived:'—'}</span><span style="font-size:10px;color:var(--text-3);font-weight:600;">SURVIVING</span></div>`;
-  html+='</div>';
+    // If no results yet, surviving = joined
+    if(!resultedEvents.length)surviving=joined;
 
-  // Progress bar
-  const pct=events.some(e=>e.res)?Math.round(survived/totalParticipants*100):100;
-  html+=`<div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${pct>60?'var(--green)':pct>30?'var(--amber)':'var(--red)'};border-radius:3px;transition:width 0.4s;"></div></div>`;
-  html+='</div>';
-  return html;
+    // Also set per-event survival %
+    events.forEach(ev=>{
+      if(!ev.res)return;
+      let evSurvived=0;
+      Object.values(playerPreds).forEach(pp=>{
+        let alive=true;
+        for(const e2 of events){
+          if(!e2.res)break;
+          const pick=pp[e2.id];
+          if(!pick){alive=false;break;}
+          const actual=e2.res.h>e2.res.a?'H':e2.res.h<e2.res.a?'A':'D';
+          if(pick!==actual){alive=false;break;}
+          if(e2.id===ev.id)break;
+        }
+        if(alive)evSurvived++;
+      });
+      ev._survivalPct=joined>0?Math.round(evSurvived/joined*100):0;
+      // Update the survival % display
+      const survEl=document.querySelector(`[data-surv-ev="${ev.id}"]`);
+      if(survEl)survEl.textContent=ev._survivalPct+'% survived';
+    });
+
+    // Update the DOM
+    const pct=joined>0?Math.round(surviving/joined*100):100;
+    const el=document.getElementById(wrapperId);
+    if(!el)return;
+    el.innerHTML=`
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:5px;"><span style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--text);">${joined}</span><span style="font-size:10px;color:var(--text-3);font-weight:600;">JOINED</span></div>
+        <div style="display:flex;align-items:center;gap:5px;"><span style="font-family:var(--mono);font-size:20px;font-weight:800;color:${surviving<joined?'var(--red)':'var(--green)'};">${resultedEvents.length?surviving:'—'}</span><span style="font-size:10px;color:var(--text-3);font-weight:600;">SURVIVING</span></div>
+      </div>
+      <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${pct>60?'var(--green)':pct>30?'var(--amber)':'var(--red)'};border-radius:3px;transition:width 0.4s;"></div></div>`;
+  }catch(e){console.error('LMS summary:',e);}
 }
 
 // ── RULES POPUP ───────────────────────────────────────────────────────────
