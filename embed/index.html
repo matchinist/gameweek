@@ -600,7 +600,23 @@ function renderPredictionsPane(comp){
 
   // ── RANKING MODE ────────────────────────────────────────────────────────
   if(comp.mode==='ranking'&&round.rankingTeams){
-    const teams=round.rankingTeams;
+    // Enrich ranking teams with match results from EVENTS
+    const teams=round.rankingTeams.map(t=>{
+      const copy={...t};
+      // Find the event this team plays in
+      (round.eventIds||[]).forEach(eid=>{
+        const ev=EVENTS[eid];if(!ev)return;
+        if(ev.home===t.name||ev.away===t.name){
+          if(ev.res){
+            copy.matchResult=ev.res.h+'-'+ev.res.a;
+            const isHome=ev.home===t.name;
+            copy.matchXG=isHome?(ev.res.home_xg||'—'):(ev.res.away_xg||'—');
+            if(!copy.actualXG&&copy.matchXG!=='—') copy.actualXG=parseFloat(copy.matchXG);
+          }
+        }
+      });
+      return copy;
+    });
     const predKey=round.id+'_ranking';
     const isCompleted=round.status==='completed';
     let userOrder=preds[predKey]||null;
@@ -624,14 +640,14 @@ function renderPredictionsPane(comp){
       html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 8px 12px;"><span style="font-size:13px;font-weight:700;color:var(--text);">Your prediction vs Actual (${comp.rankingConfig?.metric||'xG'})</span><span style="font-family:var(--mono);font-size:14px;font-weight:800;color:${correctCount===teams.length?'var(--green)':'var(--accent)'};">${totalPts} pts</span></div>`;
       userOrder.forEach((tid,i)=>{
         const t=teamMap[tid];const isCorrect=tid===actualOrder[i];
-        html+=`<div style="display:flex;align-items:center;gap:8px;padding:8px;margin-bottom:4px;background:${isCorrect?'var(--green-light)':'var(--bg)'};border-radius:8px;border:1px solid ${isCorrect?'var(--green)':'var(--border)'};"><span style="font-family:var(--mono);font-size:12px;font-weight:800;color:${isCorrect?'var(--green)':'var(--text-3)'};width:20px;text-align:center;">#${i+1}</span><div class="ev-badge" style="width:24px;height:24px;font-size:7px;">${t.logo?'<img src="'+t.logo+'" alt="'+t.name+'">':t.name.slice(0,3).toUpperCase()}</div><div style="flex:1;min-width:0;"><div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div><div style="font-size:11px;color:var(--text-2);font-weight:600;">${t.opponent||''}</div></div><div style="text-align:right;"><div style="font-family:var(--mono);font-size:13px;font-weight:800;color:var(--text);">${t.actualXG?.toFixed(1)||'—'}</div><div style="font-size:9px;color:var(--text-3);">xG</div></div><span style="font-size:14px;">${isCorrect?'✓':'✗'}</span></div>`;
+        html+=`<div style="display:flex;align-items:center;gap:8px;padding:8px;margin-bottom:4px;background:${isCorrect?'var(--green-light)':'var(--bg)'};border-radius:8px;border:1px solid ${isCorrect?'var(--green)':'var(--border)'};"><span style="font-family:var(--mono);font-size:12px;font-weight:800;color:${isCorrect?'var(--green)':'var(--text-3)'};width:20px;text-align:center;">#${i+1}</span><div class="ev-badge" style="width:24px;height:24px;font-size:7px;">${t.logo?'<img src="'+t.logo+'" alt="'+t.name+'">':t.name.slice(0,3).toUpperCase()}</div><div style="flex:1;min-width:0;"><div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div><div style="font-size:11px;color:var(--text-2);font-weight:600;">${t.opponent||''}${t.matchResult?' · <span style=font-family:var(--mono);font-weight:800;>'+t.matchResult+'</span>':''}</div></div><div style="text-align:right;"><div style="font-family:var(--mono);font-size:13px;font-weight:800;color:var(--text);">${t.actualXG?.toFixed(1)||'—'}</div><div style="font-size:9px;color:var(--text-3);">xG</div></div><span style="font-size:14px;">${isCorrect?'✓':'✗'}</span></div>`;
       });
     } else {
       html+=`<div style="padding:8px 8px 12px;font-size:13px;color:var(--text);font-weight:700;">Drag teams to sort from highest to lowest expected ${comp.rankingConfig?.metric||'xG'}</div>`;
       html+=`<div id="ranking-list" data-roundid="${round.id}">`;
       userOrder.forEach((tid,i)=>{
         const t=teamMap[tid];
-        html+=`<div class="rank-item" data-tid="${tid}" draggable="true" style="display:flex;align-items:center;gap:6px;padding:8px;margin-bottom:4px;background:var(--white);border-radius:8px;border:1px solid var(--border);cursor:grab;"><span style="font-size:14px;color:var(--text-3);cursor:grab;flex-shrink:0;">☰</span><span style="font-family:var(--mono);font-size:12px;font-weight:800;color:var(--accent);width:20px;text-align:center;">#${i+1}</span><div class="ev-badge" style="width:24px;height:24px;font-size:7px;">${t.logo?'<img src="'+t.logo+'" alt="'+t.name+'">':t.name.slice(0,3).toUpperCase()}</div><div style="flex:1;min-width:0;"><div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div><div style="font-size:11px;color:var(--text-2);font-weight:600;">${t.opponent||''}</div></div></div>`;
+        html+=`<div class="rank-item" data-tid="${tid}" draggable="true" style="display:flex;align-items:center;gap:6px;padding:8px;margin-bottom:4px;background:var(--white);border-radius:8px;border:1px solid var(--border);cursor:grab;"><span style="font-size:14px;color:var(--text-3);cursor:grab;flex-shrink:0;">☰</span><span style="font-family:var(--mono);font-size:12px;font-weight:800;color:var(--accent);width:20px;text-align:center;">#${i+1}</span><div class="ev-badge" style="width:24px;height:24px;font-size:7px;">${t.logo?'<img src="'+t.logo+'" alt="'+t.name+'">':t.name.slice(0,3).toUpperCase()}</div><div style="flex:1;min-width:0;"><div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div><div style="font-size:11px;color:var(--text-2);font-weight:600;">${t.opponent||''}${t.matchResult?' · <span style=font-family:var(--mono);font-weight:800;>'+t.matchResult+'</span> · '+t.matchXG+' xG':''}</div></div></div>`;
       });
       html+='</div>';
       html+=`<button class="submit-preds-btn" onclick="submitRanking('${round.id}')">Save Ranking</button>`;
