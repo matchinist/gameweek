@@ -335,6 +335,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
     <div class="modal-body">
       <input type="hidden" id="score-modal-eid">
       <div class="form-group">
+        <label class="form-label">Kickoff Date & Time</label>
+        <input class="form-input" type="datetime-local" id="score-modal-kickoff" style="font-family:var(--mono);font-size:13px;">
+      </div>
+      <div class="form-group">
         <label class="form-label">Status</label>
         <select class="form-select" id="score-modal-status">
           <option value="upcoming">Not Started</option>
@@ -856,6 +860,7 @@ function openScoreModal(eid){
   document.getElementById('score-modal-home-label').textContent=home?.name||'Home';
   document.getElementById('score-modal-away-label').textContent=away?.name||'Away';
   document.getElementById('score-modal-status').value=ev.status||'upcoming';
+  document.getElementById('score-modal-kickoff').value=ev.kickoff?ev.kickoff.slice(0,16):'';
   document.getElementById('modal-score-entry').classList.add('open');
   setTimeout(()=>document.getElementById('score-modal-h').focus(),80);
 }
@@ -869,11 +874,13 @@ function saveScore(){
   const hshots=document.getElementById('score-modal-hshots').value;
   const ashots=document.getElementById('score-modal-ashots').value;
   const status=document.getElementById('score-modal-status').value;
+  const kickoff=document.getElementById('score-modal-kickoff').value;
   const ev=S.events[eid];if(!ev)return;
 
   if(status==='completed'&&(h===''||a==='')){toast('Enter both scores for a finished match');return;}
 
   ev.status=status;
+  if(kickoff)ev.kickoff=kickoff;
   if(h!==''&&a!==''){
     ev.result={h:parseInt(h),a:parseInt(a)};
     if(hxg!=='')ev.result.home_xg=parseFloat(hxg);

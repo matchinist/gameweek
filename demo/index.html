@@ -874,7 +874,7 @@ function renderLeaderboardPane(comp){
   } else if(comp.mode==='ranking'){
     rows.sort((a,b)=>b.points-a.points);
     rows.forEach((r,i)=>{if(i>0&&rows[i].points<rows[i-1].points)rank=i+1;r.rank=rank;});
-    html+=buildLBTable(comp.name,isOverall?'Overall':round.label,rows,r=>`<td class="lb-num">${r.correct||0}</td><td class="lb-num">${r.points} pts</td>`,'<th class="r">Correct</th><th class="r">Points</th>');
+    html+=buildLBTable(comp.name,isOverall?'Overall':round.label,rows,r=>`<td class="lb-num">${r.points} pts</td>`,'<th class="r">Points</th>');
   } else {
     rows.sort((a,b)=>(b.correct||0)-(a.correct||0)||(b.predictions||0)-(a.predictions||0));
     rows.forEach((r,i)=>{if(i>0&&((rows[i].correct||0)<(rows[i-1].correct||0)))rank=i+1;r.rank=rank;});

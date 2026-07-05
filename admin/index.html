@@ -264,8 +264,7 @@ tbody tr:hover td{background:var(--bg);}
   <div class="sidebar-bottom">
     <div class="plan-badge">
       <div class="plan-name" id="sidebar-company">—</div>
-      <div class="plan-label" id="sidebar-plan-label">Free trial · no plan selected</div>
-      <a href="#" class="plan-upgrade" onclick="toast('Plan selection is coming soon');return false;">Choose a plan →</a>
+
     </div>
   </div>
 </nav>
@@ -513,7 +512,7 @@ tbody tr:hover td{background:var(--bg);}
                 <div>✓ Up to 3 allowed domains</div>
               </div>
               <div class="divider"></div>
-              <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;" onclick="toast('Plan selection is coming soon')">Choose a plan →</button>
+
             </div>
           </div>
           <div class="card">
@@ -1470,8 +1469,8 @@ async function openModal(id){
     populateTournamentDropdown('new');
     renderAddedEvents('new');
     if(isRanking){
-      // Show a hint about how ranking works
-      document.getElementById('new-round-ranking-teams').style.display = 'block';
+      // Hide until events are added
+      document.getElementById('new-round-ranking-teams').style.display = 'none';
       document.getElementById('ranking-team-list').innerHTML = '<div style="padding:10px;font-size:12px;color:var(--text-3);">Select events above — teams will be extracted automatically with their opponents.</div>';
       document.getElementById('ranking-team-count').textContent = 'Add events to populate teams';
     }
