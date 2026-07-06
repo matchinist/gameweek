@@ -681,11 +681,7 @@ function renderPredictionsPane(comp){
       }
       html+=`<div style="opacity:${isEliminated?'0.4':'1'};">${renderEventCard(ev,comp,isOpen)}</div>`;
       // Show survival % below finished LMS events
-      if(comp.mode==='lms'&&ev.res&&ev._survivalPct!==undefined){
-        html+=`<div data-surv-ev="${ev.id}" style="text-align:left;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text-2);padding:2px 8px 6px;">${ev._survivalPct}% survived</div>`;
-      } else if(comp.mode==='lms'&&ev.res){
-        html+=`<div data-surv-ev="${ev.id}" style="text-align:left;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text-2);padding:2px 8px 6px;">—</div>`;
-      }
+
     });
   }
   html+='</div>';
@@ -1002,7 +998,17 @@ async function submitRanking(roundId){
   toast('✓ Ranking saved');
 }
 
-function pick(id,val){ predsDirty=true; preds[id]=val; renderPredict(); const btn=document.querySelector('.submit-preds-btn');if(btn)btn.classList.remove('disabled'); }
+function pick(id,val){ predsDirty=true; preds[id]=val;
+  document.querySelectorAll('.btn-1x2').forEach(btn=>{
+    const evId=btn.closest('.event-card')?.dataset?.evid;
+    if(!evId)return;
+    const p=preds[evId];
+    btn.classList.remove('selected','home','draw','away');
+    const btnVal=btn.dataset.val;
+    if(p===btnVal){btn.classList.add('selected');if(btnVal==='H')btn.classList.add('home');if(btnVal==='D')btn.classList.add('draw');if(btnVal==='A')btn.classList.add('away');}
+  });
+  const sbtn=document.querySelector('.submit-preds-btn');if(sbtn)sbtn.classList.remove('disabled');
+}
 function pickScore(id,side,val){
   predsDirty=true;
   // Score entry does NOT require login — store locally; login is prompted on submit
