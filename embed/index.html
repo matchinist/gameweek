@@ -1019,20 +1019,44 @@ function pickMarket(evId,market,val){
   preds[evId][market]=val; renderPredict(); const mbtn=document.querySelector('.submit-preds-btn');if(mbtn)mbtn.classList.remove('disabled');
 }
 function changeRound(idx){ selectedRound[currentCompIdx]=parseInt(idx); renderPredict(); }
-function submitPreds(){
-  predsDirty=false;
-  const btn=document.querySelector('.submit-preds-btn');
-  if(btn){btn.classList.add('disabled');btn.textContent='\u2713 Saved';}
+async function submitPreds(){
   if(!currentPlayer){
-    // Prompt login here; entered scores are preserved in `preds` and saved after login
     openAuthModal('Sign in to save your predictions');
     return;
   }
+  predsDirty=false;
+  const btn=document.querySelector('.submit-preds-btn');
+  if(btn){btn.classList.add('disabled');btn.textContent='Saving...';}
+
   const comp=COMPS[currentCompIdx], round=comp?.rounds[selectedRound[currentCompIdx]];
-  if(!round) return;
-  const events=round.eventIds.map(id=>({id,...EVENTS[id]})).filter(e=>e.home);
-  const done=events.filter(ev=>{ const p=preds[ev.id]; return p&&p.h!==undefined&&p.a!==undefined; }).length;
-  toast(`✓ ${done} of ${events.length} predictions saved`);
+  if(!round){toast('No round selected');return;}
+  const events=(round.eventIds||[]).map(id=>({id,...EVENTS[id]})).filter(e=>e.home);
+  const rows=[];
+
+  for(const ev of events){
+    const p=preds[ev.id];
+    if(!p) continue;
+    if(comp.mode==='score'&&(p.h===undefined||p.a===undefined)) continue;
+    const stored=(typeof p==='string'||typeof p==='number')?{value:p}:p;
+    rows.push({
+      client_key:CLIENT_PARAM, player_id:currentPlayer.id,
+      username:currentPlayer.username, competition_id:comp.id,
+      round_id:round.id, event_id:ev.id, prediction:stored
+    });
+  }
+
+  if(!rows.length){toast('No predictions to save');if(btn){btn.classList.remove('disabled');btn.textContent='Save Predictions';}return;}
+
+  const {error}=await supa.from('gw_predictions').upsert(rows,{onConflict:'player_id,competition_id,event_id'});
+  if(error){
+    console.error('Save failed:',error.message);
+    toast('Save failed: '+error.message);
+    if(btn){btn.classList.remove('disabled');btn.textContent='Save Predictions';}
+    return;
+  }
+
+  if(btn) btn.textContent='\u2713 Saved';
+  toast('\u2713 '+rows.length+' prediction'+(rows.length!==1?'s':'')+' saved');
 }
 
 // ── LEADERBOARD ───────────────────────────────────────────────────────────────
