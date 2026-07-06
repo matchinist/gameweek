@@ -22,7 +22,7 @@
 }
 html,body{height:100%;}
 body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;}
-.app{display:flex;flex-direction:column;height:100vh;overflow-y:auto;max-width:860px;margin:0 auto;width:100%;background:var(--white);position:relative;}
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden;max-width:860px;margin:0 auto;width:100%;background:var(--white);position:relative;}
 .app-header{background:var(--white);border-bottom:1px solid var(--border);flex-shrink:0;z-index:50;}
 .header-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;}
 .header-logo{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--text);letter-spacing:-0.5px;}
@@ -35,7 +35,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 
 
 
-.scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;}
+.scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
 ::-webkit-scrollbar{width:3px;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 .screen{display:none;padding:16px;}
@@ -261,7 +261,7 @@ table.lb-table{width:100%;border-collapse:collapse;}
 <div id="toast"></div>
 
 <script>
-const MODE_LABELS={lms:'Last Man Standing',score:'Score Predictor',betting:'Betting Markets',ranking:'Ranking',fantasy:'CS2 Fantasy'};
+const MODE_LABELS={lms:'Last Man Standing',score:'Score Predictor',betting:'Betting Markets',ranking:'Ranking'};
 const MEDALS=['\u{1F947}','\u{1F948}','\u{1F949}'];
 
 const LOGO={
@@ -308,32 +308,6 @@ const COMPS=[
       {id:'r5a',label:'Round 1',status:'completed',deadline:'2026-08-16T17:00',eventIds:['e305','e306']},
       {id:'r5',label:'Round 2',status:'open',deadline:'2026-08-30T17:00',eventIds:['e301','e303','e304']},
     ]},
-  {id:'c5',name:'CS2 Simple Fantasy',mode:'fantasy',color:'#EF4444',
-    tournamentNames:['PGL Major Copenhagen 2026'],
-    fantasyConfig:{budget:50000,rosterSize:5},
-    rounds:[{id:'r9',label:'Playoffs',status:'open',deadline:'2026-09-15T12:00',eventIds:[]}],
-    fantasyData:{
-      teams:[
-        {id:'faze',name:'FaZe',logo:'🟠',players:[{id:'p1',name:'rain',price:9500,kills:47},{id:'p2',name:'ropz',price:11000,kills:52},{id:'p3',name:'frozen',price:10000,kills:44},{id:'p4',name:'broky',price:10500,kills:49},{id:'p5',name:'karrigan',price:7500,kills:31}]},
-        {id:'navi',name:'NAVI',logo:'🟡',players:[{id:'p6',name:'s1mple',price:12500,kills:61},{id:'p7',name:'b1t',price:9000,kills:38},{id:'p8',name:'jL',price:9500,kills:42},{id:'p9',name:'Aleksib',price:8000,kills:29},{id:'p10',name:'iM',price:8500,kills:35}]},
-        {id:'g2',name:'G2',logo:'⚫',players:[{id:'p11',name:'NiKo',price:12000,kills:58},{id:'p12',name:'huNter',price:10000,kills:43},{id:'p13',name:'m0NESY',price:11500,kills:55},{id:'p14',name:'nexa',price:8000,kills:30},{id:'p15',name:'HooXi',price:7000,kills:22}]},
-        {id:'vitality',name:'Vitality',logo:'🐝',players:[{id:'p16',name:'ZywOo',price:12500,kills:59},{id:'p17',name:'apEX',price:7500,kills:28},{id:'p18',name:'flameZ',price:10000,kills:45},{id:'p19',name:'Spinx',price:9500,kills:41},{id:'p20',name:'mezii',price:8500,kills:33}]},
-        {id:'spirit',name:'Spirit',logo:'🔵',players:[{id:'p21',name:'donk',price:11000,kills:53},{id:'p22',name:'sh1ro',price:10500,kills:48},{id:'p23',name:'chopper',price:8000,kills:32},{id:'p24',name:'magixx',price:9000,kills:37},{id:'p25',name:'zont1x',price:8500,kills:34}]},
-        {id:'mouz',name:'MOUZ',logo:'🟢',players:[{id:'p26',name:'torzsi',price:9500,kills:40},{id:'p27',name:'xertioN',price:9000,kills:36},{id:'p28',name:'Jimpphat',price:10000,kills:43},{id:'p29',name:'siuhy',price:7500,kills:26},{id:'p30',name:'Brollan',price:10500,kills:46}]},
-        {id:'heroic',name:'Heroic',logo:'🏴',players:[{id:'p31',name:'stavn',price:10500,kills:44},{id:'p32',name:'TeSeS',price:8500,kills:33},{id:'p33',name:'sjuush',price:8000,kills:30},{id:'p34',name:'jabbi',price:9500,kills:39},{id:'p35',name:'cadiaN',price:7500,kills:27}]},
-        {id:'liquid',name:'Liquid',logo:'🔷',players:[{id:'p36',name:'NAF',price:9000,kills:37},{id:'p37',name:'EliGE',price:10000,kills:42},{id:'p38',name:'oSee',price:8500,kills:34},{id:'p39',name:'nitr0',price:7500,kills:25},{id:'p40',name:'YEKINDAR',price:10500,kills:45}]},
-      ],
-      matches:[
-        {id:'m1',stage:'Quarter-Final',team1:'FaZe',team2:'Liquid',score:'2-0',status:'completed',maps:[{name:'Mirage',score:'16-9'},{name:'Inferno',score:'16-12'}],topFrags:[{name:'ropz',team:'FaZe',kills:47},{name:'YEKINDAR',team:'Liquid',kills:38},{name:'rain',team:'FaZe',kills:36}]},
-        {id:'m2',stage:'Quarter-Final',team1:'NAVI',team2:'Heroic',score:'2-1',status:'completed',maps:[{name:'Nuke',score:'16-14'},{name:'Anubis',score:'12-16'},{name:'Ancient',score:'16-10'}],topFrags:[{name:'s1mple',team:'NAVI',kills:68},{name:'stavn',team:'Heroic',kills:51},{name:'jL',team:'NAVI',kills:44}]},
-        {id:'m3',stage:'Quarter-Final',team1:'G2',team2:'Spirit',score:'2-1',status:'completed',maps:[{name:'Overpass',score:'16-13'},{name:'Mirage',score:'10-16'},{name:'Inferno',score:'16-11'}],topFrags:[{name:'NiKo',team:'G2',kills:62},{name:'donk',team:'Spirit',kills:55},{name:'m0NESY',team:'G2',kills:53}]},
-        {id:'m4',stage:'Quarter-Final',team1:'Vitality',team2:'MOUZ',score:'—',status:'upcoming',maps:[],topFrags:[]},
-        {id:'m5',stage:'Semi-Final',team1:'FaZe',team2:'NAVI',score:'—',status:'upcoming',maps:[],topFrags:[]},
-        {id:'m6',stage:'Semi-Final',team1:'G2 / Vitality',team2:'TBD',score:'—',status:'upcoming',maps:[],topFrags:[]},
-        {id:'m7',stage:'Grand Final',team1:'TBD',team2:'TBD',score:'—',status:'upcoming',maps:[],topFrags:[]},
-      ],
-      userRoster:['p6','p11','p21','p2','p18'],
-    }},
   {id:'c4',name:'Ranking',mode:'ranking',color:'#8B5CF6',
     tournamentNames:['Premier League'],
     rankingConfig:{metric:'xG',pointsPerCorrect:2,perfectBonus:5},
@@ -427,7 +401,6 @@ const LB_DATA={
   c3:{r5a:[{u:'xavi_8',points:5},{u:'demo_user',points:4},{u:'stadyum76',points:3},{u:'footy_oracle',points:3},{u:'matchday_man',points:2},{u:'bvb_predictor',points:1},{u:'arsenal_fan',points:5},{u:'golazo99',points:3},{u:'tipster_pro',points:2},{u:'bet_master',points:1}],
       r5:[{u:'xavi_8',points:7},{u:'demo_user',points:5},{u:'stadyum76',points:5},{u:'footy_oracle',points:3},{u:'matchday_man',points:2},{u:'bvb_predictor',points:1},{u:'arsenal_fan',points:4},{u:'golazo99',points:3},{u:'tipster_pro',points:2},{u:'bet_master',points:0}],
       overall:[{u:'xavi_8',points:14},{u:'demo_user',points:10},{u:'stadyum76',points:9},{u:'footy_oracle',points:7},{u:'matchday_man',points:5},{u:'arsenal_fan',points:5},{u:'bvb_predictor',points:3},{u:'golazo99',points:3},{u:'tipster_pro',points:2},{u:'bet_master',points:1}]},
-  c5:{r9:[{u:'demo_user',points:275},{u:'clutch_king',points:289},{u:'awp_master',points:263},{u:'headshot_hero',points:251},{u:'eco_warrior',points:234},{u:'smoke_criminal',points:228},{u:'entry_fragger',points:219},{u:'flash_assist',points:205},{u:'retake_pro',points:198},{u:'anchor_boy',points:187}],overall:[{u:'clutch_king',points:289},{u:'demo_user',points:275},{u:'awp_master',points:263},{u:'headshot_hero',points:251},{u:'eco_warrior',points:234},{u:'smoke_criminal',points:228},{u:'entry_fragger',points:219},{u:'flash_assist',points:205},{u:'retake_pro',points:198},{u:'anchor_boy',points:187}]},
   c4:{r7:[],r8:[{u:'demo_user',points:9,correct:4},{u:'footy_oracle',points:7,correct:3},{u:'stadyum76',points:5,correct:2},{u:'xavi_8',points:5,correct:2},{u:'matchday_man',points:4,correct:2},{u:'arsenal_fan',points:4,correct:1},{u:'bvb_predictor',points:2,correct:1},{u:'golazo99',points:2,correct:1},{u:'tipster_pro',points:0,correct:0},{u:'bet_master',points:0,correct:0}],
       overall:[{u:'demo_user',points:9,correct:4},{u:'footy_oracle',points:7,correct:3},{u:'stadyum76',points:5,correct:2},{u:'xavi_8',points:5,correct:2},{u:'matchday_man',points:4,correct:2},{u:'arsenal_fan',points:4,correct:1},{u:'bvb_predictor',points:2,correct:1},{u:'golazo99',points:2,correct:1},{u:'tipster_pro',points:0,correct:0},{u:'bet_master',points:0,correct:0}]},
 };
@@ -464,7 +437,7 @@ function renderPredict(){
   if(selectedRound[currentCompIdx]===undefined)selectedRound[currentCompIdx]=getDefaultRoundIdx(COMPS[currentCompIdx]);
   const comp=COMPS[currentCompIdx];
   // Game description + rules button below comp tabs
-  const descriptions={score:'Predict the exact score for each match. Points awarded for correct scores, correct team goals, or correct total.',lms:'Pick a winner for each event. Get it wrong and you are eliminated. Last one standing wins.',betting:'Predict multiple markets per match: result, over/under, both teams to score. Points per correct market.',ranking:'Rank teams from highest to lowest expected goals (xG) for the gameweek. Points for each correct position.',fantasy:'Build a 5-player roster from a $50,000 budget. Earn points based on kills during the tournament playoffs.'};
+  const descriptions={score:'Predict the exact score for each match. Points awarded for correct scores, correct team goals, or correct total.',lms:'Pick a winner for each event. Get it wrong and you are eliminated. Last one standing wins.',betting:'Predict multiple markets per match: result, over/under, both teams to score. Points per correct market.',ranking:'Rank teams from highest to lowest expected goals (xG) for the gameweek. Points for each correct position.'};
   let html=`<div style="padding:10px 16px 0;display:flex;align-items:center;gap:8px;"><span style="font-size:12px;color:var(--text-2);flex:1;font-weight:600;">${descriptions[comp.mode]||''}</span><button onclick="showRules('${comp.mode}')" style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent);background:none;border:1px solid var(--accent);border-radius:5px;padding:3px 10px;cursor:pointer;white-space:nowrap;">Rules</button></div>`;
   html+=predictSubTab==='predictions'?renderPredictionsPane(comp):renderLeaderboardPane(comp);
   document.getElementById('predict-content').innerHTML=html;
