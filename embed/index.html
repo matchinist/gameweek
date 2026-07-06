@@ -592,6 +592,18 @@ function renderPredictionsPane(comp){
     setTimeout(()=>startCountdown(round.deadline),50);
   }
   if(!isOpen&&comp.mode==='lms'){
+    let userAlive=true;
+    events.filter(ev=>ev.res).forEach(ev=>{
+      if(!userAlive)return;
+      const p=preds[ev.id];
+      if(!p){userAlive=false;return;}
+      const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
+      if(p!==actual)userAlive=false;
+    });
+    const statusHtml=events.some(ev=>ev.res)?(userAlive?'<span style="color:var(--green);font-weight:700;"> · ✓ You survived!</span>':'<span style="color:var(--red);font-weight:700;"> · ✗ You failed!</span>'):'';
+    html+=`<div class="deadline-banner" style="background:var(--bg);color:var(--text-2);">🔒 Predictions locked${statusHtml}</div>`;
+  }
+  if(!isOpen&&comp.mode==='lms'){
     let userStatus='';
     const resultedEvs=events.filter(ev=>ev.res);
     if(resultedEvs.length){
@@ -679,24 +691,20 @@ function renderPredictionsPane(comp){
     html+='</div>';
     return html;
   }
+  // Sort events by kickoff for LMS
+  if(comp.mode==='lms') events.sort((a,b)=>(a.kickoff||'').localeCompare(b.kickoff||''));
+
   html+='<div class="events-list">';
   if(!events.length){
     html+='<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">No events yet</div></div>';
   } else {
+    let lmsBlocked=false;
     events.forEach((ev,i)=>{
       const isEliminated=eliminatedAtIdx>=0&&i>eliminatedAtIdx;
       const isEliminationPoint=i===eliminatedAtIdx;
-      if(comp.mode==='lms'){
-        const survPct=ev._survivalPct;
-        html+=`<div style="display:flex;align-items:center;gap:6px;padding:6px 0 2px;">
-          <span style="font-family:var(--mono);font-size:10px;font-weight:700;color:${isEliminated?'var(--text-3)':isEliminationPoint?'var(--red)':'var(--accent)'};">Event ${i+1}</span>
-          ${isEliminationPoint?'<span style="font-size:10px;background:var(--red-light);color:var(--red);padding:1px 7px;border-radius:10px;font-weight:700;">✗ Eliminated here</span>':''}
-          ${isEliminated?'<span style="font-size:10px;color:var(--text-3);">— eliminated</span>':''}
-        </div>`;
-      }
-      html+=`<div style="opacity:${isEliminated?'0.4':'1'};">${renderEventCard(ev,comp,isOpen)}</div>`;
-      // Show survival % below finished LMS events
-
+      if(comp.mode==='lms'&&isEliminated) lmsBlocked=true;
+      const effectiveOpen=comp.mode==='lms'?(isOpen&&!lmsBlocked):isOpen;
+      html+=`<div style="opacity:${isEliminated?'0.4':'1'};">${renderEventCard(ev,comp,effectiveOpen)}</div>`;
     });
   }
   html+='</div>';
@@ -1013,15 +1021,7 @@ async function submitRanking(roundId){
   toast('✓ Ranking saved');
 }
 
-function pick(id,val){ predsDirty=true; preds[id]=val;
-  document.querySelectorAll('.btn-1x2').forEach(btn=>{
-    const evId=btn.closest('.event-card')?.dataset?.evid;
-    if(!evId)return;
-    const p=preds[evId];
-    btn.classList.remove('selected','home','draw','away');
-    const btnVal=btn.dataset.val;
-    if(p===btnVal){btn.classList.add('selected');if(btnVal==='H')btn.classList.add('home');if(btnVal==='D')btn.classList.add('draw');if(btnVal==='A')btn.classList.add('away');}
-  });
+function pick(id,val){ predsDirty=true; preds[id]=val; renderPredict();
   const sbtn=document.querySelector('.submit-preds-btn');if(sbtn)sbtn.classList.remove('disabled');
 }
 function pickScore(id,side,val){
