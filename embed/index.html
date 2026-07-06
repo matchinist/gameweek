@@ -1002,13 +1002,13 @@ async function submitRanking(roundId){
   toast('✓ Ranking saved');
 }
 
-function pick(id,val){ predsDirty=true; if(!currentPlayer){openAuthModal('Sign in to make predictions');return;} preds[id]=val; savePred(id,val); renderPredict(); }
+function pick(id,val){ predsDirty=true; preds[id]=val; renderPredict(); const btn=document.querySelector('.submit-preds-btn');if(btn)btn.classList.remove('disabled'); }
 function pickScore(id,side,val){
   predsDirty=true;
   // Score entry does NOT require login — store locally; login is prompted on submit
   if(!preds[id]||typeof preds[id]!=='object') preds[id]={};
   preds[id][side]=val===''?undefined:parseInt(val);
-  if(currentPlayer) savePred(id,preds[id]);  // persist immediately only if logged in
+  // Stored locally — saved on submit button click
   const input=document.getElementById((side==='h'?'sh-':'sa-')+id);
   if(input) input.classList.toggle('has',val!=='');
 }
@@ -1016,7 +1016,7 @@ function pickMarket(evId,market,val){
   predsDirty=true;
   if(!currentPlayer){openAuthModal('Sign in to make predictions');return;}
   if(!preds[evId]||typeof preds[evId]!=='object') preds[evId]={};
-  preds[evId][market]=val; savePred(evId,preds[evId]); renderPredict();
+  preds[evId][market]=val; renderPredict(); const mbtn=document.querySelector('.submit-preds-btn');if(mbtn)mbtn.classList.remove('disabled');
 }
 function changeRound(idx){ selectedRound[currentCompIdx]=parseInt(idx); renderPredict(); }
 function submitPreds(){
