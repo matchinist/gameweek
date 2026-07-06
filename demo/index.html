@@ -478,6 +478,21 @@ function renderPredictionsPane(comp){
     html+=`<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;<span id="countdown-text">Calculating...</span></div>`;
     setTimeout(()=>startCountdown(round.deadline),50);
   }
+  if(!isOpen&&comp.mode==='lms'){
+    let userStatus='';
+    const resultedEvs=events.filter(ev=>ev.res);
+    if(resultedEvs.length){
+      let alive=true;
+      for(const ev of resultedEvs){
+        const p=preds[ev.id];
+        if(!p){alive=false;break;}
+        const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
+        if(p!==actual){alive=false;break;}
+      }
+      userStatus=alive?'<span style="color:var(--green);font-weight:700;"> · ✓ You survived!</span>':'<span style="color:var(--red);font-weight:700;"> · ✗ You failed!</span>';
+    }
+    html+=`<div class="deadline-banner" style="background:var(--bg);color:var(--text-2);">🔒 Predictions locked${userStatus}</div>`;
+  }
 
   // ── FANTASY MODE ──────────────────────────────────────────────────────────
   if(comp.mode==='fantasy'&&comp.fantasyData){
@@ -722,12 +737,12 @@ function renderEventCard(ev,comp,isRoundOpen){
     midSection='<div class="ev-vs">vs</div>';
   }
 
-  let html=`<div class="${cls}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${ev.tournament||comp.name}</span><span class="event-kickoff">${ev.kickoff||''}</span></div><div class="event-teams"><div class="ev-team">${teamBadge(ev.homeLogo,ev.home)}<span class="ev-name">${ev.home}</span></div>${midSection}<div class="ev-team away">${teamBadge(ev.awayLogo,ev.away)}<span class="ev-name">${ev.away}</span></div></div></div><div class="pred-area">`;
+  let html=`<div class="${cls}" data-evid="${ev.id}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${ev.tournament||comp.name}</span><span class="event-kickoff">${ev.kickoff||''}</span></div><div class="event-teams"><div class="ev-team">${teamBadge(ev.homeLogo,ev.home)}<span class="ev-name">${ev.home}</span></div>${midSection}<div class="ev-team away">${teamBadge(ev.awayLogo,ev.away)}<span class="ev-name">${ev.away}</span></div></div></div><div class="pred-area">`;
 
   if(canPredict){
     // Open for prediction
     if(comp.mode==='lms'){
-      html+=`<div class="btns-1x2"><button class="btn-1x2${pred==='H'?' selected home':''}" onclick="pick('${ev.id}','H')">Home Win</button><button class="btn-1x2${pred==='D'?' selected draw':''}" onclick="pick('${ev.id}','D')">X</button><button class="btn-1x2${pred==='A'?' selected away':''}" onclick="pick('${ev.id}','A')">Away</button></div>`;
+      html+=`<div class="btns-1x2"><button class="btn-1x2${pred==='H'?' selected home':''}" data-val="H" onclick="pick('${ev.id}','H')">Home Win</button><button class="btn-1x2${pred==='D'?' selected draw':''}" data-val="D" onclick="pick('${ev.id}','D')">X</button><button class="btn-1x2${pred==='A'?' selected away':''}" data-val="A" onclick="pick('${ev.id}','A')">Away</button></div>`;
     } else if(comp.mode==='score'){
       html+='<div style="font-size:11px;color:var(--text-3);text-align:center;padding:2px 0;">Enter scores above \u2191</div>';
     } else if(comp.mode==='betting'){
@@ -962,9 +977,9 @@ function renderLeaderboardPane(comp){
     rows.forEach((r,i)=>{if(i>0&&rows[i].points<rows[i-1].points)rank=i+1;r.rank=rank;});
     html+=buildLBTable(comp.name,isOverall?'Overall':round.label,rows,r=>`<td class="lb-num">${r.points} pts</td>`,'<th class="r">Points</th>');
   } else {
-    rows.sort((a,b)=>(b.correct||0)-(a.correct||0)||(b.predictions||0)-(a.predictions||0));
+    rows.sort((a,b)=>(b.correct||0)-(a.correct||0));
     rows.forEach((r,i)=>{if(i>0&&((rows[i].correct||0)<(rows[i-1].correct||0)))rank=i+1;r.rank=rank;});
-    html+=buildLBTable(comp.name,isOverall?'Overall':round.label,rows,r=>`<td class="lb-num">${r.correct||0}</td><td class="lb-num">${isOverall?r.survived:r.predictions}</td>`,isOverall?'<th class="r">Correct</th><th class="r">Rounds</th>':'<th class="r">Correct</th><th class="r">Picks</th>');
+    html+=buildLBTable(comp.name,isOverall?'Overall':round.label,rows,r=>`<td class="lb-num">${r.correct||0}</td>`,'<th class="r">Correct</th>');
   }
   return html;
 }
