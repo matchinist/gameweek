@@ -561,7 +561,7 @@ function renderPredict(){
   // Game descriptions + rules
   const descriptions={score:'Predict the exact score for each match. Points awarded for correct scores, correct team goals, or correct total.',lms:'Pick a winner for each event. Get it wrong and you are eliminated. Last one standing wins.',betting:'Predict multiple markets per match: result, over/under, both teams to score. Points per correct market.',ranking:'Rank teams from highest to lowest expected goals (xG) for the gameweek. Points for each correct position.'};
   let html=`<div style="padding:10px 16px 0;display:flex;align-items:center;gap:8px;"><span style="font-size:12px;color:var(--text-2);flex:1;font-weight:600;">${descriptions[comp.mode]||''}</span><button onclick="showRules('${comp.mode}')" style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent);background:none;border:1px solid var(--accent);border-radius:5px;padding:3px 10px;cursor:pointer;white-space:nowrap;">Rules</button></div>`;
-  html+=`<div class="predict-header-row"><div class="predict-tournament-labels">${tlHtml}</div><div class="predict-subtabs"><button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button></div><div class="predict-subtabs-mobile"><select onchange="switchPredictSubTab(this.value)"><option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option><option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option></select></div></div>`;
+  html+=`<div class="predict-header-row"><div style="display:flex;align-items:center;gap:8px;flex:1;"><select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select><span class="round-status ${round.status}">${isOpen?'● Open':'✓ Done'}</span></div><div class="predict-subtabs"><button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button></div><div class="predict-subtabs-mobile"><select onchange="switchPredictSubTab(this.value)"><option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option><option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option></select></div></div>`;
   html+=predictSubTab==='predictions'?renderPredictionsPane(comp):renderLeaderboardShell(comp);
   document.getElementById('predict-content').innerHTML=html;
   if(predictSubTab==='leaderboard') loadAndRenderLeaderboard(comp);
@@ -573,7 +573,7 @@ function renderPredictionsPane(comp){
   if(!comp.rounds.length) return '<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No rounds yet</div></div>';
   const round=comp.rounds[ri]; if(!round) return '';
   const isOpen=round.status==='open';
-  let events=(round.eventIds||[]).map(id=>({id,...EVENTS[id]})).filter(e=>e.home);
+  let events=(round.eventIds||[]).map(id=>({id,...EVENTS[id],tournament:(round.tournamentNames||[])[0]||''})).filter(e=>e.home);
 
   let eliminatedAtIdx=-1;
   if(comp.mode==='lms'){
@@ -586,7 +586,7 @@ function renderPredictionsPane(comp){
     }
   }
 
-  let html=`<div class="round-bar"><select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select><span class="round-status ${round.status}">${isOpen?'● Open':'✓ Done'}</span></div>`;
+  let html='';
   if(isOpen&&round.deadline){
     html+=`<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;<span id="countdown-text">Calculating...</span></div>`;
     setTimeout(()=>startCountdown(round.deadline),50);
@@ -762,7 +762,7 @@ function renderEventCard(ev,comp,isOpen){
     midSection='<div class="ev-vs">vs</div>';
   }
 
-  let html=`<div class="${cls}" data-evid="${ev.id}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${comp.name}</span><span class="event-kickoff">${ev.kickoff||''}</span></div><div class="event-teams"><div class="ev-team">${teamBadge(ev.homeLogo||'',ev.home)}<span class="ev-name">${ev.home}</span></div>${midSection}<div class="ev-team away">${teamBadge(ev.awayLogo||'',ev.away)}<span class="ev-name">${ev.away}</span></div></div></div><div class="pred-area">`;
+  let html=`<div class="${cls}" data-evid="${ev.id}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${ev.tournament||comp.name}</span><span class="event-kickoff">${ev.kickoff||''}</span></div><div class="event-teams"><div class="ev-team">${teamBadge(ev.homeLogo||'',ev.home)}<span class="ev-name">${ev.home}</span></div>${midSection}<div class="ev-team away">${teamBadge(ev.awayLogo||'',ev.away)}<span class="ev-name">${ev.away}</span></div></div></div><div class="pred-area">`;
 
   if(canPredict){
     if(comp.mode==='lms'||comp.mode==='result'){
