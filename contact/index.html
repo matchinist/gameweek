@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact — Gameweek</title>
+<meta name="description" content="Get in touch with Gameweek. Tell us about your site and we'll help you set up a free-to-play prediction game.">
+<link rel="canonical" href="https://www.gameweek.cloud/contact">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%234F46E5'/><text x='50' y='62' text-anchor='middle' font-family='monospace' font-weight='800' font-size='42' fill='white'>gw</text></svg>">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #FAFAFA; --white: #FFFFFF; --surface: #F3F4F8; --border: #E2E4EA;
+    --text: #0F1117; --text-2: #6B7280; --text-3: #9CA3AF;
+    --accent: #4F46E5; --accent-2: #3730A3; --accent-light: #EEF2FF;
+    --green: #16A34A; --green-light: #DCFCE7; --red: #DC2626; --red-light: #FEE2E2;
+    --mono: 'Space Mono', monospace; --sans: 'Inter', sans-serif;
+  }
+  body { font-family: var(--sans); background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+
+  nav {
+    position: sticky; top: 0; z-index: 200;
+    background: rgba(250,250,250,0.92); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border); padding: 0 40px; height: 58px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo { font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; text-decoration: none; }
+  .logo span { color: var(--accent); }
+  .nav-right { display: flex; align-items: center; gap: 10px; }
+  .btn-ghost {
+    font-size: 13px; font-weight: 500; color: var(--text-2); padding: 7px 14px;
+    border-radius: 6px; border: none; background: none; cursor: pointer;
+    text-decoration: none; transition: all 0.13s;
+  }
+  .btn-ghost:hover { color: var(--text); background: var(--surface); }
+
+  .wrap { max-width: 560px; margin: 0 auto; padding: 64px 24px 80px; }
+
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px; color: var(--accent);
+    letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .eyebrow::before { content: ''; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; }
+
+  h1 {
+    font-family: var(--mono); font-size: clamp(26px, 4vw, 34px); font-weight: 700;
+    letter-spacing: -0.8px; line-height: 1.2; margin-bottom: 12px;
+  }
+  .sub { font-size: 15px; color: var(--text-2); line-height: 1.65; margin-bottom: 40px; max-width: 460px; }
+
+  .card {
+    background: var(--white); border: 1px solid var(--border); border-radius: 14px;
+    padding: 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+  }
+
+  .field { margin-bottom: 18px; }
+  .field label { font-size: 12px; font-weight: 700; color: var(--text); display: block; margin-bottom: 6px; font-family: var(--mono); letter-spacing: 0.2px; }
+  .field label .req { color: var(--accent); margin-left: 2px; }
+  .field input, .field textarea {
+    width: 100%; padding: 11px 13px; border: 1px solid var(--border); border-radius: 8px;
+    font-family: var(--sans); font-size: 14px; color: var(--text); outline: none;
+    transition: border-color 0.13s, box-shadow 0.13s; background: var(--white);
+  }
+  .field input:focus, .field textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+  .field textarea { resize: vertical; min-height: 130px; line-height: 1.5; }
+  .char-count { text-align: right; font-size: 11px; color: var(--text-3); margin-top: 4px; font-family: var(--mono); }
+
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 520px) { .row-2 { grid-template-columns: 1fr; } }
+
+  .submit-btn {
+    width: 100%; padding: 13px; background: var(--accent); color: white; border: none;
+    border-radius: 8px; font-family: var(--mono); font-size: 13px; font-weight: 700;
+    cursor: pointer; letter-spacing: 0.3px; transition: background 0.13s; margin-top: 6px;
+  }
+  .submit-btn:hover { background: var(--accent-2); }
+  .submit-btn:disabled { opacity: 0.6; cursor: default; }
+
+  .note { text-align: center; font-size: 11px; color: var(--text-3); margin-top: 16px; line-height: 1.6; }
+  .note a { color: var(--text-2); }
+
+  .success-state { text-align: center; padding: 20px 0; }
+  .success-icon { font-size: 40px; margin-bottom: 16px; }
+  .success-title { font-family: var(--mono); font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .success-sub { font-size: 13px; color: var(--text-2); margin-bottom: 20px; }
+  .success-back { font-family: var(--mono); font-size: 12px; color: var(--accent); text-decoration: none; font-weight: 700; }
+
+  .error-msg { font-size: 12px; color: var(--red); margin-top: -10px; margin-bottom: 14px; display: none; }
+
+  footer {
+    background: var(--text); border-top: 1px solid #1F2937; padding: 24px 40px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .footer-logo { font-family: var(--mono); font-size: 13px; font-weight: 700; color: #6B7280; text-decoration: none; }
+  .footer-logo span { color: var(--accent); }
+  .footer-note { font-size: 12px; color: #4B5563; }
+  @media (max-width: 680px) { footer { flex-direction: column; gap: 8px; text-align: center; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">game<span>week</span></a>
+  <div class="nav-right">
+    <a href="/#how" class="btn-ghost">How it works</a>
+    <a href="/demo" class="btn-ghost">Demo</a>
+    <a href="/admin" class="btn-ghost">Go to dashboard</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="eyebrow">Contact</div>
+  <h1>Start a conversation<br>with Gameweek.</h1>
+  <p class="sub">Tell us about your site and your audience — we'll get back to you within a day, usually sooner, with next steps to get you live before your next gameweek.</p>
+
+  <div class="card" id="form-card">
+    <form id="contact-form">
+      <div class="field">
+        <label>Name<span class="req">*</span></label>
+        <input type="text" id="cf-name" name="name" placeholder="Your full name" required>
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label>Email<span class="req">*</span></label>
+          <input type="email" id="cf-email" name="email" placeholder="you@company.com" required>
+        </div>
+        <div class="field">
+          <label>Website</label>
+          <input type="text" id="cf-website" name="website" placeholder="yoursite.com">
+        </div>
+      </div>
+      <div class="field">
+        <label>Subject<span class="req">*</span></label>
+        <input type="text" id="cf-subject" name="subject" placeholder="What is this about?" required>
+      </div>
+      <div class="field">
+        <label>Message<span class="req">*</span></label>
+        <textarea id="cf-message" name="message" maxlength="1000" placeholder="Tell us about your site, your audience, and how many users you expect..." required></textarea>
+        <div class="char-count"><span id="char-count">0</span>/1000</div>
+      </div>
+      <div class="error-msg" id="cf-error"></div>
+      <button type="submit" class="submit-btn" id="cf-submit">Send message →</button>
+    </form>
+
+    <div class="success-state" id="success-state" style="display:none;">
+      <div class="success-icon">✓</div>
+      <div class="success-title">Message sent</div>
+      <div class="success-sub">Thanks for reaching out — we'll reply to your email within a day.</div>
+      <a href="/" class="success-back">← Back to home</a>
+    </div>
+  </div>
+
+  <p class="note">We only use your details to reply to this message. No spam, no mailing lists.</p>
+</div>
+
+<footer>
+  <a href="/" class="footer-logo">game<span>week</span></a>
+  <span class="footer-note">© 2026/27 Gameweek · B2B free-to-play prediction platform</span>
+</footer>
+
+<script>
+  const msgEl = document.getElementById('cf-message');
+  const countEl = document.getElementById('char-count');
+  msgEl.addEventListener('input', () => { countEl.textContent = msgEl.value.length; });
+
+  const form = document.getElementById('contact-form');
+  const errEl = document.getElementById('cf-error');
+  const submitBtn = document.getElementById('cf-submit');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errEl.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending…';
+
+    const formData = new FormData(form);
+
+    try {
+      // Formspree endpoint — replace YOUR_FORM_ID with your actual Formspree form ID
+      const res = await fetch('https://formspree.io/f/xojozayk', {
+        method: 'POST',
+        body: formData,
+        headers: { 'Accept': 'application/json' }
+      });
+
+      if (res.ok) {
+        document.getElementById('form-card').querySelector('form').style.display = 'none';
+        document.getElementById('success-state').style.display = 'block';
+      } else {
+        throw new Error('Send failed');
+      }
+    } catch (err) {
+      errEl.textContent = 'Something went wrong — please try again or email gameweek.cloud@gmail.com directly.';
+      errEl.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Send message →';
+    }
+  });
+</script>
+
+</body>
+</html>
