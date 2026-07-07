@@ -357,7 +357,7 @@ let currentPlayer=null; // {id, auth_id, username, email, client_key}
 let preds={};
 let currentCompIdx=0, selectedRound={}, predictSubTab='predictions', lbSelection={}, predsDirty=false;
 const MEDALS=['🥇','🥈','🥉'];
-const MODE_LABELS={lms:'Last Man Standing',score:'Score Predictor',ou:'Over / Under',betting:'Betting Markets'};
+const MODE_LABELS={lms:'Last Man Standing',score:'Score Predictor',ou:'Over / Under',betting:'Betting Markets',ranking:'Ranking'};
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 function switchAuth(tab){
@@ -561,7 +561,6 @@ function renderPredict(){
   // Game descriptions + rules
   const descriptions={score:'Predict the exact score for each match. Points awarded for correct scores, correct team goals, or correct total.',lms:'Pick a winner for each event. Get it wrong and you are eliminated. Last one standing wins.',betting:'Predict multiple markets per match: result, over/under, both teams to score. Points per correct market.',ranking:'Rank teams from highest to lowest expected goals (xG) for the gameweek. Points for each correct position.'};
   let html=`<div style="padding:10px 16px 0;display:flex;align-items:center;gap:8px;"><span style="font-size:12px;color:var(--text-2);flex:1;font-weight:600;">${descriptions[comp.mode]||''}</span><button onclick="showRules('${comp.mode}')" style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent);background:none;border:1px solid var(--accent);border-radius:5px;padding:3px 10px;cursor:pointer;white-space:nowrap;">Rules</button></div>`;
-  html+=`<div class="predict-header-row"><div style="display:flex;align-items:center;gap:8px;flex:1;"><select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select><span class="round-status ${round.status}">${isOpen?'● Open':'✓ Done'}</span></div><div class="predict-subtabs"><button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button></div><div class="predict-subtabs-mobile"><select onchange="switchPredictSubTab(this.value)"><option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option><option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option></select></div></div>`;
   html+=predictSubTab==='predictions'?renderPredictionsPane(comp):renderLeaderboardShell(comp);
   document.getElementById('predict-content').innerHTML=html;
   if(predictSubTab==='leaderboard') loadAndRenderLeaderboard(comp);
@@ -586,7 +585,7 @@ function renderPredictionsPane(comp){
     }
   }
 
-  let html='';
+  let html=`<div class="predict-header-row"><div style="display:flex;align-items:center;gap:8px;flex:1;"><select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select><span class="round-status ${round.status}">${isOpen?'● Open':'✓ Done'}</span></div><div class="predict-subtabs"><button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button></div><div class="predict-subtabs-mobile"><select onchange="switchPredictSubTab(this.value)"><option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option><option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option></select></div></div>`;
   if(isOpen&&round.deadline){
     html+=`<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;<span id="countdown-text">Calculating...</span></div>`;
     setTimeout(()=>startCountdown(round.deadline),50);
@@ -1084,7 +1083,8 @@ async function submitPreds(){
 function renderLeaderboardShell(comp){
   if(lbSelection[currentCompIdx]===undefined) lbSelection[currentCompIdx]=getDefaultRoundIdx(comp);
   const sel=lbSelection[currentCompIdx], isOverall=sel==='overall';
-  return `<div class="lb-week-row"><select class="lb-week-select" style="font-size:11px;padding:4px 8px;max-width:180px;" onchange="changeLBSelection(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}" ${(!isOverall&&sel===i)?'selected':''}>${r.label}${r.status==='open'?' (Current)':''}</option>`).join('')}<option value="overall" ${isOverall?'selected':''}>Overall — Season</option></select></div><div class="lb-pane" id="lb-pane-inner"><div class="empty"><div class="empty-icon" style="font-size:20px;">⏳</div><div class="empty-title">Loading…</div></div></div>`;
+  const tabsHtml=`<div class="predict-header-row"><div style="display:flex;align-items:center;gap:8px;flex:1;"><select class="lb-week-select" style="font-size:11px;padding:4px 8px;max-width:180px;" onchange="changeLBSelection(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}" ${(!isOverall&&sel===i)?'selected':''}>${r.label}${r.status==='open'?' (Current)':''}</option>`).join('')}<option value="overall" ${isOverall?'selected':''}>Overall — Season</option></select></div><div class="predict-subtabs"><button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button></div><div class="predict-subtabs-mobile"><select onchange="switchPredictSubTab(this.value)"><option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option><option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option></select></div></div>`;
+  return tabsHtml+`<div class="lb-pane" id="lb-pane-inner"><div class="empty"><div class="empty-icon" style="font-size:20px;">⏳</div><div class="empty-title">Loading…</div></div></div>`;
 }
 function changeLBSelection(val){ lbSelection[currentCompIdx]=val==='overall'?'overall':parseInt(val); renderPredict(); }
 
