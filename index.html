@@ -930,9 +930,14 @@
       .cta-title { font-size: 22px; }
     }
     .section-cta {
-      display: flex; justify-content: center; gap: 12px; margin-top: 40px; flex-wrap: wrap;
+      display: flex; justify-content: flex-start; gap: 12px; margin-top: 40px; flex-wrap: wrap;
     }
-    @media (max-width: 680px) { .section-cta { flex-direction: column; align-items: stretch; } }
+    @media (max-width: 680px) {
+      .section-cta { flex-direction: row; align-items: center; }
+      .section-cta .btn-hero-primary, .section-cta .btn-hero-ghost {
+        padding: 8px 16px; font-size: 12px;
+      }
+    }
 
     /* ── AUTH MODAL ── */
     .auth-overlay {
@@ -1108,8 +1113,8 @@
     </div>
   </div>
   <div class="section-cta">
-    <a href="/demo" class="btn-hero-ghost">Try the demo</a>
     <a href="/contact" class="btn-hero-primary">Contact us →</a>
+    <a href="/demo" class="btn-hero-ghost">Try the demo</a>
   </div>
 </div>
 
@@ -1201,8 +1206,8 @@
     </div>
   </div>
   <div class="section-cta">
-    <a href="/demo" class="btn-hero-ghost">Try the demo</a>
     <a href="/contact" class="btn-hero-primary">Contact us →</a>
+    <a href="/demo" class="btn-hero-ghost">Try the demo</a>
   </div>
 </div>
 
