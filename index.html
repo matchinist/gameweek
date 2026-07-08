@@ -1016,9 +1016,7 @@
 <div class="nav-mobile-menu" id="nav-mobile-menu">
   <a href="#how" onclick="closeMobileNav()">How it works</a>
   <a href="/demo" onclick="closeMobileNav()">Demo</a>
-  <span id="nav-mobile-auth">
-    <a href="/admin" onclick="closeMobileNav()">Go to dashboard</a>
-  </span>
+  <a href="/admin" onclick="closeMobileNav()">Go to dashboard</a>
 </div>
 
 <!-- ── HERO ── -->
@@ -1359,6 +1357,13 @@
   function closeMobileNav(){
     document.getElementById('nav-mobile-menu').classList.remove('open');
   }
+  document.addEventListener('click', function(e){
+    const menu = document.getElementById('nav-mobile-menu');
+    const hamburger = document.querySelector('.nav-hamburger');
+    if(menu.classList.contains('open') && !menu.contains(e.target) && !hamburger.contains(e.target)){
+      closeMobileNav();
+    }
+  });
 
   function genClientKey(company){
     const slug = (company||'op').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,3) || 'gw';

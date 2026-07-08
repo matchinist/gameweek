@@ -192,6 +192,13 @@
 <script>
   function toggleMobileNav(){ document.getElementById('nav-mobile-menu').classList.toggle('open'); }
   function closeMobileNav(){ document.getElementById('nav-mobile-menu').classList.remove('open'); }
+  document.addEventListener('click', function(e){
+    const menu = document.getElementById('nav-mobile-menu');
+    const hamburger = document.querySelector('.nav-hamburger');
+    if(menu.classList.contains('open') && !menu.contains(e.target) && !hamburger.contains(e.target)){
+      closeMobileNav();
+    }
+  });
 
   const msgEl = document.getElementById('cf-message');
   const countEl = document.getElementById('char-count');
