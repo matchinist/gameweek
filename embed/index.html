@@ -128,7 +128,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .event-card-top{padding:13px 14px;}
 .event-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
 .event-league{font-size:10px;font-weight:700;color:var(--text-2);letter-spacing:0.5px;text-transform:uppercase;}
-.event-kickoff{font-family:var(--mono);font-size:10px;color:var(--text-2);}
+.event-kickoff{font-family:var(--sans);font-size:11px;color:var(--text-2);font-weight:600;}
 .event-teams{display:flex;align-items:center;gap:8px;}
 .ev-team{flex:1;display:flex;align-items:center;gap:9px;min-width:0;}
 .ev-team.away{flex-direction:row-reverse;}
@@ -141,7 +141,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .pred-label{font-size:11px;color:var(--text-2);font-weight:500;margin-bottom:8px;}
 .btns-1x2{display:flex;gap:5px;}
 .btn-1x2{flex:1;padding:11px 4px;border:1px solid var(--border);border-radius:7px;background:var(--white);font-family:var(--mono);font-size:13px;font-weight:700;color:#111;cursor:pointer;transition:all 0.13s;text-align:center;line-height:1.2;}
-.btn-1x2:hover{border-color:var(--comp-color);color:var(--comp-color);}
+@media(hover:hover) and (pointer:fine){.btn-1x2:hover{border-color:var(--comp-color);color:var(--comp-color);}}
 .btn-1x2.selected{border-color:var(--comp-color);background:var(--comp-color);color:white;}
 .btn-1x2.selected.home{border-color:#2563EB;background:#2563EB;color:white;}
 .btn-1x2.selected.draw{border-color:#D97706;background:#D97706;color:white;}
@@ -218,10 +218,10 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .score-dash{font-family:var(--mono);font-size:14px;color:var(--text-3);font-weight:700;}
 /* ── O/U ── */
 .btns-ou{display:flex;gap:6px;}
-.btn-ou{flex:1;padding:9px 4px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;transition:all 0.13s;text-align:center;line-height:1.3;}
+.btn-ou{flex:1;padding:9px 4px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-family:var(--mono);font-size:11px;font-weight:700;color:#111;cursor:pointer;transition:all 0.13s;text-align:center;line-height:1.3;}
 .btn-ou .sub{display:block;font-size:8px;font-weight:400;opacity:0.6;margin-top:2px;}
-.btn-ou.over:hover,.btn-ou.over.selected{border-color:var(--green);background:var(--green-light);color:var(--green);}
-.btn-ou.under:hover,.btn-ou.under.selected{border-color:var(--red);background:var(--red-light);color:var(--red);}
+.btn-ou.over.selected{border-color:var(--green);background:var(--green);color:white;}
+.btn-ou.under.selected{border-color:var(--red);background:var(--red);color:white;}
 /* ── AUTH MODAL ── */
 .auth-modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,17,23,0.5);backdrop-filter:blur(2px);z-index:200;align-items:center;justify-content:center;padding:16px;}
 .auth-modal-overlay.open{display:flex;}
@@ -769,12 +769,12 @@ function renderEventCard(ev,comp,isOpen){
     } else if(comp.mode==='score'){
       html+='<div style="font-size:11px;color:var(--text-3);text-align:center;padding:2px 0;">Enter scores above ↑</div>';
     } else if(comp.mode==='ou'){
-      html+=`<div class="btns-ou"><button class="btn-ou over${pred==='O'?' selected':''}" onclick="pick('${ev.id}','O')">OVER<span class="sub">2.5+ goals</span></button><button class="btn-ou under${pred==='U'?' selected':''}" onclick="pick('${ev.id}','U')">UNDER<span class="sub">2.5 or less</span></button></div>`;
+      html+=`<div class="btns-ou"><button class="btn-ou over${pred==='O'?' selected':''}" onclick="pick('${ev.id}','O')">2.5 Over</button><button class="btn-ou under${pred==='U'?' selected':''}" onclick="pick('${ev.id}','U')">2.5 Under</button></div>`;
     } else if(comp.mode==='betting'){
       const markets=comp.markets||[]; const mpred=(pred&&typeof pred==='object')?pred:{};
       html+='<div style="display:flex;flex-direction:column;gap:8px;">';
       markets.forEach(mkt=>{
-        html+=`<div><div class="pred-label" style="margin-bottom:5px;">${mkt.label} <span style="font-family:var(--mono);font-size:9px;color:var(--accent);">+${mkt.points}pts</span></div>`;
+        html+=`<div><div class="pred-label" style="margin-bottom:5px;">${mkt.label} <span style="font-family:var(--sans);font-size:11px;color:var(--accent);font-weight:700;">+${mkt.points}pts</span></div>`;
         if(mkt.type==='1x2') html+=`<div class="btns-1x2"><button class="btn-1x2${mpred['1x2']==='H'?' selected home':''}" onclick="pickMarket('${ev.id}','1x2','H')">Home Win</button><button class="btn-1x2${mpred['1x2']==='D'?' selected draw':''}" onclick="pickMarket('${ev.id}','1x2','D')">X</button><button class="btn-1x2${mpred['1x2']==='A'?' selected away':''}" onclick="pickMarket('${ev.id}','1x2','A')">Away</button></div>`;
         else if(mkt.type==='ou25') html+=`<div class="btns-ou"><button class="btn-ou over${mpred['ou25']==='O'?' selected':''}" onclick="pickMarket('${ev.id}','ou25','O')">OVER</button><button class="btn-ou under${mpred['ou25']==='U'?' selected':''}" onclick="pickMarket('${ev.id}','ou25','U')">UNDER</button></div>`;
         else if(mkt.type==='btts') html+=`<div class="btns-ou"><button class="btn-ou over${mpred['btts']==='Y'?' selected':''}" onclick="pickMarket('${ev.id}','btts','Y')">YES</button><button class="btn-ou under${mpred['btts']==='N'?' selected':''}" onclick="pickMarket('${ev.id}','btts','N')">NO</button></div>`;
