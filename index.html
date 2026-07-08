@@ -929,6 +929,11 @@
       .hero-title { font-size: 26px; }
       .cta-title { font-size: 22px; }
     }
+    .section-cta {
+      display: flex; justify-content: center; gap: 12px; margin-top: 40px; flex-wrap: wrap;
+    }
+    @media (max-width: 680px) { .section-cta { flex-direction: column; align-items: stretch; } }
+
     /* ── AUTH MODAL ── */
     .auth-overlay {
       display: none;
@@ -1008,7 +1013,6 @@
   <a href="/demo" onclick="closeMobileNav()">Demo</a>
   <span id="nav-mobile-auth">
     <a href="/admin" onclick="closeMobileNav()">Go to dashboard</a>
-    <a href="/contact" class="btn-primary" onclick="closeMobileNav()">Contact us</a>
   </span>
 </div>
 
@@ -1103,13 +1107,17 @@
       <span class="step-tag">weekly habit loop</span>
     </div>
   </div>
+  <div class="section-cta">
+    <a href="/demo" class="btn-hero-ghost">Try the demo</a>
+    <a href="/contact" class="btn-hero-primary">Contact us →</a>
+  </div>
 </div>
 
 <!-- ── GAME MODES ── -->
 <div class="modes-bg">
   <div class="section" id="modes">
     <div class="section-eyebrow">Game modes</div>
-    <h2 class="section-title">Three ways to predict.<br>One platform.</h2>
+    <h2 class="section-title">Four ways to predict.<br>One platform.</h2>
     <p class="section-sub">Every competition runs one of four formats. Pick the one that fits your audience, or run all four simultaneously.</p>
 
     <div class="modes-grid">
@@ -1157,6 +1165,10 @@
         </div>
       </div>
     </div>
+    <div class="section-cta">
+      <a href="/demo" class="btn-hero-ghost">Try the demo</a>
+      <a href="/contact" class="btn-hero-primary">Contact us →</a>
+    </div>
   </div>
 </div>
 
@@ -1187,6 +1199,10 @@
       <div class="why-title">Works alongside your existing product</div>
       <p class="why-desc">Gameweek runs as an embedded iframe. It doesn't replace anything — it sits alongside your existing content, odds, or betting product. One snippet. No dev sprint. Live in an afternoon.</p>
     </div>
+  </div>
+  <div class="section-cta">
+    <a href="/demo" class="btn-hero-ghost">Try the demo</a>
+    <a href="/contact" class="btn-hero-primary">Contact us →</a>
   </div>
 </div>
 

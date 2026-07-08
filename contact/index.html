@@ -35,6 +35,26 @@
   }
   .btn-ghost:hover { color: var(--text); background: var(--surface); }
 
+  .nav-hamburger {
+    display: none; flex-direction: column; gap: 4px; cursor: pointer;
+    background: none; border: none; padding: 4px;
+  }
+  .nav-hamburger span { display: block; width: 20px; height: 2px; background: var(--text); border-radius: 2px; }
+  .nav-mobile-menu {
+    display: none; position: fixed; top: 54px; left: 0; right: 0;
+    background: var(--white); border-bottom: 1px solid var(--border);
+    padding: 12px 20px 20px; flex-direction: column; gap: 4px; z-index: 200;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  }
+  .nav-mobile-menu.open { display: flex; }
+  .nav-mobile-menu a { padding: 10px 8px; font-size: 15px; color: var(--text-2); text-decoration: none; border-radius: 6px; }
+  .nav-mobile-menu a:hover { background: var(--surface); color: var(--text); }
+  @media (max-width: 680px) {
+    .nav-right { display: none; }
+    .nav-hamburger { display: flex; }
+    nav { padding: 0 20px; }
+  }
+
   .wrap { max-width: 560px; margin: 0 auto; padding: 64px 24px 80px; }
 
   .eyebrow {
@@ -108,7 +128,16 @@
     <a href="/demo" class="btn-ghost">Demo</a>
     <a href="/admin" class="btn-ghost">Go to dashboard</a>
   </div>
+  <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+
+<div class="nav-mobile-menu" id="nav-mobile-menu">
+  <a href="/#how" onclick="closeMobileNav()">How it works</a>
+  <a href="/demo" onclick="closeMobileNav()">Demo</a>
+  <a href="/admin" onclick="closeMobileNav()">Go to dashboard</a>
+</div>
 
 <div class="wrap">
   <div class="eyebrow">Contact</div>
@@ -161,6 +190,9 @@
 </footer>
 
 <script>
+  function toggleMobileNav(){ document.getElementById('nav-mobile-menu').classList.toggle('open'); }
+  function closeMobileNav(){ document.getElementById('nav-mobile-menu').classList.remove('open'); }
+
   const msgEl = document.getElementById('cf-message');
   const countEl = document.getElementById('char-count');
   msgEl.addEventListener('input', () => { countEl.textContent = msgEl.value.length; });
