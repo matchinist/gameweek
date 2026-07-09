@@ -984,15 +984,15 @@ function renderLeaderboardPane(comp){
   if(comp.mode==='score'||comp.mode==='betting'){
     rows.sort((a,b)=>b.points-a.points);
     rows.forEach((r,i)=>{if(i>0&&rows[i].points<rows[i-1].points)rank=i+1;r.rank=rank;});
-    html+=buildLBTable(comp.name,isOverall?'Overall':round.label,rows,r=>`<td class="lb-num">${r.points} pts</td>`,'<th class="r">Points</th>',activePrizes);
+    html+=buildLBTable(comp.name,isOverall?'Overall':round.label,rows,r=>`<td class="lb-num">${r.points} pts</td>`,'<th class="r" style="width:80px;">Points</th>',activePrizes);
   } else if(comp.mode==='ranking'){
     rows.sort((a,b)=>b.points-a.points);
     rows.forEach((r,i)=>{if(i>0&&rows[i].points<rows[i-1].points)rank=i+1;r.rank=rank;});
-    html+=buildLBTable(comp.name,isOverall?'Overall':round.label,rows,r=>`<td class="lb-num">${r.points} pts</td>`,'<th class="r">Points</th>',activePrizes);
+    html+=buildLBTable(comp.name,isOverall?'Overall':round.label,rows,r=>`<td class="lb-num">${r.points} pts</td>`,'<th class="r" style="width:80px;">Points</th>',activePrizes);
   } else {
     rows.sort((a,b)=>(b.correct||0)-(a.correct||0));
     rows.forEach((r,i)=>{if(i>0&&((rows[i].correct||0)<(rows[i-1].correct||0)))rank=i+1;r.rank=rank;});
-    html+=buildLBTable(comp.name,isOverall?'Overall':round.label,rows,r=>`<td class="lb-num">${r.correct||0}</td>`,'<th class="r">Correct</th>',activePrizes);
+    html+=buildLBTable(comp.name,isOverall?'Overall':round.label,rows,r=>`<td class="lb-num">${r.correct||0}</td>`,'<th class="r" style="width:80px;">Correct</th>',activePrizes);
   }
   return html;
 }
@@ -1002,11 +1002,11 @@ function buildLBTable(title,sub,rows,cellFn,colHeader,prizes){
   const prizeMap={};
   (prizes||[]).forEach(p=>{prizeMap[p.pos]=p.text;});
   const hasPrizes=Object.keys(prizeMap).length>0;
-  let html=`<div class="lb-wrap"><div class="lb-table-head"><span class="lb-table-head-title">${title}</span><span class="lb-table-head-sub">${sub}</span></div><table class="lb-table"><thead><tr><th style="width:32px;text-align:center">#</th><th>Player</th>${colHeader}${hasPrizes?'<th class="r">Prize</th>':''}</tr></thead><tbody>`;
+  let html=`<div class="lb-wrap"><div class="lb-table-head"><span class="lb-table-head-title">${title}</span><span class="lb-table-head-sub">${sub}</span></div><table class="lb-table" style="table-layout:fixed;"><thead><tr><th style="width:32px;text-align:center">#</th><th style="width:auto;">Player</th>${colHeader}${hasPrizes?'<th style="width:150px;text-align:left;">Prize</th>':''}</tr></thead><tbody>`;
   rows.forEach(row=>{
     const isMe=row.u===me,ini=(row.u||'?').slice(0,2).toUpperCase();
     const prizeText=prizeMap[row.rank];
-    const prizeCell=hasPrizes?`<td class="r" style="font-size:11px;color:${prizeText?'var(--text)':'var(--text-3)'};font-weight:${prizeText?'700':'400'};">${prizeText?'🏆 '+prizeText:'—'}</td>`:'';
+    const prizeCell=hasPrizes?`<td style="width:150px;text-align:left;font-size:11px;color:${prizeText?'var(--text)':'var(--text-3)'};font-weight:${prizeText?'700':'400'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${prizeText||''}">${prizeText?'🏆 '+prizeText:'—'}</td>`:'';
     html+=`<tr class="${isMe?'me':''}"><td class="lb-rank ${row.rank<=3?'top':''}">${row.rank<=3?MEDALS[row.rank-1]:row.rank}</td><td><div class="lb-user"><div class="lb-av ${isMe?'me':''}">${ini}</div><span class="lb-uname ${isMe?'me':''}">${row.u}${isMe?'<span class="you-tag">YOU</span>':''}</span></div></td>${cellFn(row)}${prizeCell}</tr>`;
   });
   html+='</tbody></table></div>';return html;
