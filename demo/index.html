@@ -261,7 +261,7 @@ table.lb-table{width:100%;border-collapse:collapse;}
 <div id="toast"></div>
 
 <script>
-const MODE_LABELS={lms:'Last Man Standing',score:'Score Predictor',betting:'Betting Markets',ranking:'Ranking'};
+const MODE_LABELS={lms:'Last Man Standing',score:'Score Predictor',betting:'Betting Markets',ranking:'Ranking',roulette:'Soccer Roulette'};
 const MEDALS=['\u{1F947}','\u{1F948}','\u{1F949}'];
 
 const LOGO={
@@ -335,6 +335,8 @@ const COMPS=[
           {id:'rt6',name:'Man Utd',logo:lg('Man Utd'),opponent:'vs Chelsea · 23 Aug',actualXG:0.9,matchResult:'0-2',matchXG:'0.9'},
         ]},
     ]},
+  {id:'c6',name:'Soccer Roulette',mode:'roulette',color:'#4F46E5',
+    rounds:[{id:'r_roulette',label:'Arsenal vs Chelsea',status:'open'}]},
 ];
 
 const EVENTS={
@@ -442,7 +444,7 @@ function renderPredict(){
   if(selectedRound[currentCompIdx]===undefined)selectedRound[currentCompIdx]=getDefaultRoundIdx(COMPS[currentCompIdx]);
   const comp=COMPS[currentCompIdx];
   // Game description + rules button below comp tabs
-  const descriptions={score:'Predict the exact score for each match. Points awarded for correct scores, correct team goals, or correct total.',lms:'Pick a winner for each event. Get it wrong and you are eliminated. Last one standing wins.',betting:'Predict multiple markets per match: result, over/under, both teams to score. Points per correct market.',ranking:'Rank teams from highest to lowest expected goals (xG) for the gameweek. Points for each correct position.'};
+  const descriptions={score:'Predict the exact score for each match. Points awarded for correct scores, correct team goals, or correct total.',lms:'Pick a winner for each event. Get it wrong and you are eliminated. Last one standing wins.',betting:'Predict multiple markets per match: result, over/under, both teams to score. Points per correct market.',ranking:'Rank teams from highest to lowest expected goals (xG) for the gameweek. Points for each correct position.',roulette:'Spend 100 coins across a score matrix. Straight, split, and corner bets pay out purely on probability — no odds.'};
   let html=`<div style="padding:10px 16px 0;display:flex;align-items:center;gap:8px;"><span style="font-size:12px;color:var(--text-2);flex:1;font-weight:600;">${descriptions[comp.mode]||''}</span><button onclick="showRules('${comp.mode}')" style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent);background:none;border:1px solid var(--accent);border-radius:5px;padding:3px 10px;cursor:pointer;white-space:nowrap;">Rules</button></div>`;
   html+=predictSubTab==='predictions'?renderPredictionsPane(comp):renderLeaderboardPane(comp);
   document.getElementById('predict-content').innerHTML=html;
@@ -452,6 +454,10 @@ function switchPredictSubTab(tab){predictSubTab=tab;renderPredict();}
 function renderPredictionsPane(comp){
   const ri=selectedRound[currentCompIdx];
   const round=comp.rounds[ri];if(!round)return'';
+  if(comp.mode==='roulette'){
+    setTimeout(()=>initRouletteBoard(),50);
+    return renderRouletteHTML();
+  }
   const isOpen=round.status==='open';
   let events=(round.eventIds||[]).map(id=>({id,...EVENTS[id]})).filter(e=>e.home);
   let eliminatedAtIdx=-1;
@@ -959,6 +965,191 @@ function initDragSort(){
     dragItem=null;
   });
 }
+
+// ── SOCCER ROULETTE ─────────────────────────────────────────────────────────
+let rlRemaining=100, rlStakes={}, rlMeta={};
+const RL_BUDGET=100, RL_STEP=10, RL_CELL=92, RL_GAP=8, RL_PITCH=RL_CELL+RL_GAP;
+const RL_HOME=['0','1','2','3+'], RL_AWAY=['0','1','2','3+'];
+function rlNumVal(v){return v==='3+'?3:parseInt(v);}
+function rlCellType(h,a){const hv=rlNumVal(h),av=rlNumVal(a);if(hv===av)return'draw';return hv>av?'home':'away';}
+function rlCellId(r,c){return 'rlscore_'+RL_HOME[r]+'_'+RL_AWAY[c];}
+function rlScoreLabel(r,c){return RL_HOME[r]+'-'+RL_AWAY[c];}
+
+function renderRouletteHTML(){
+  return `<div style="padding:14px 12px 30px;">
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px;">
+      <div style="padding:12px 16px;background:var(--accent);display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-family:var(--mono);font-size:11px;font-weight:700;color:white;">Premier League · Gameweek 3</span>
+        <span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.75);">Sat 30 Aug · 15:00</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 16px;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:7px;flex:1;">
+          <div style="width:44px;height:44px;border-radius:50%;background:var(--white);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;"><img src="${lg('Arsenal')}" style="width:100%;height:100%;object-fit:contain;padding:5px;"></div>
+          <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">Arsenal</span>
+        </div>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--text-3);padding:0 10px;">vs</span>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:7px;flex:1;">
+          <div style="width:44px;height:44px;border-radius:50%;background:var(--white);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;"><img src="${lg('Chelsea')}" style="width:100%;height:100%;object-fit:contain;padding:5px;"></div>
+          <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">Chelsea</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;background:#1F1B3A;border-radius:12px;padding:14px 18px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:30px;height:30px;border-radius:50%;background:var(--amber);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:13px;color:white;">GW</div>
+        <div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.55);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Coins remaining</div>
+          <div id="rl-coin-value" style="font-family:var(--mono);font-size:22px;font-weight:700;color:white;">100</div>
+        </div>
+      </div>
+      <button onclick="rlClearAll()" style="font-family:var(--mono);font-size:10px;font-weight:700;color:rgba(255,255,255,0.7);background:transparent;border:1px solid rgba(255,255,255,0.25);border-radius:8px;padding:7px 12px;cursor:pointer;">Clear all</button>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin:18px 0 10px 2px;display:flex;justify-content:space-between;">
+      <span>Correct score</span><span style="font-weight:400;text-transform:none;">tap a number, or the dots between</span>
+    </div>
+    <div style="width:fit-content;margin:0 auto;padding:14px;background:var(--white);border-radius:14px;border:1px solid var(--border);">
+      <div style="position:relative;width:${RL_CELL*4+RL_GAP*3}px;height:${RL_CELL*4+RL_GAP*3}px;">
+        <div id="rl-grid" style="position:absolute;top:0;left:0;display:grid;grid-template-columns:repeat(4,${RL_CELL}px);grid-template-rows:repeat(4,${RL_CELL}px);gap:${RL_GAP}px;"></div>
+        <div id="rl-dots" style="position:absolute;top:0;left:0;width:${RL_CELL*4+RL_GAP*3}px;height:${RL_CELL*4+RL_GAP*3}px;pointer-events:none;"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:10px;padding:0 2px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:var(--accent-light);border:1px solid var(--accent);"></span>Arsenal win</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:var(--surface);border:1px solid var(--text-3);"></span>Draw</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:#FFEDD5;border:1px solid #EA580C;"></span>Chelsea win</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:50%;background:var(--white);border:1.5px solid var(--text-3);"></span>Split / corner bet</div>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin:18px 0 10px 2px;">Other markets</div>
+    <div id="rl-side-bets" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+      <div style="font-size:12px;color:var(--text-2);"><strong id="rl-staked-count" style="color:var(--text);font-family:var(--mono);">0</strong> of 100 staked</div>
+      <button id="rl-place-btn" disabled onclick="rlPlaceBets()" style="font-family:var(--mono);font-size:12px;font-weight:700;color:white;background:var(--accent);border:none;border-radius:8px;padding:12px 24px;cursor:pointer;">Place Bets</button>
+    </div>
+    <div id="rl-betslip" style="margin-top:16px;"></div>
+  </div>`;
+}
+
+function initRouletteBoard(){
+  rlRemaining=RL_BUDGET; rlStakes={}; rlMeta={};
+  const gridEl=document.getElementById('rl-grid');
+  const dotsEl=document.getElementById('rl-dots');
+  if(!gridEl||!dotsEl)return;
+  gridEl.innerHTML=''; dotsEl.innerHTML='';
+
+  for(let r=0;r<4;r++){
+    for(let c=0;c<4;c++){
+      const id=rlCellId(r,c);
+      const type=rlCellType(RL_HOME[r],RL_AWAY[c]);
+      const bg=type==='draw'?'var(--surface)':type==='home'?'var(--accent-light)':'#FFEDD5';
+      const div=document.createElement('div');
+      div.id=id; div.dataset.h=RL_HOME[r]; div.dataset.a=RL_AWAY[c];
+      div.style.cssText=`position:relative;border-radius:12px;border:1px solid var(--border);background:${bg};display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;user-select:none;transition:transform .1s,outline .15s;`;
+      div.onclick=()=>rlAddChip(id);
+      div.innerHTML=`<span id="rlminus_${id}" onclick="event.stopPropagation();rlRemoveChip('${id}')" style="position:absolute;top:-7px;right:-7px;width:19px;height:19px;border-radius:50%;background:var(--red);color:white;font-size:12px;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;z-index:6;">−</span>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--text-3);position:absolute;top:6px;right:7px;">×16</span>
+        <span style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);">${rlScoreLabel(r,c)}</span>
+        <span id="rlchip_${id}" style="display:none;margin-top:5px;font-family:var(--mono);font-size:12px;font-weight:700;color:white;background:var(--accent);border-radius:8px;padding:2px 9px;min-width:24px;text-align:center;"></span>`;
+      gridEl.appendChild(div);
+      rlMeta[id]={label:rlScoreLabel(r,c)+' correct score',mult:16,cells:[id]};
+    }
+  }
+
+  const boundary=[1,2,3].map(i=>i*RL_PITCH-RL_GAP/2);
+  const center=i=>i*RL_PITCH+RL_CELL/2;
+
+  function addDot(id,x,y,cells,label){
+    rlMeta[id]={label,mult:Math.round(16/cells.length),cells};
+    const div=document.createElement('div');
+    div.id=id;
+    div.style.cssText=`position:absolute;width:20px;height:20px;border-radius:50%;background:var(--white);border:1.5px solid var(--text-3);z-index:3;display:flex;align-items:center;justify-content:center;cursor:pointer;transform:translate(-50%,-50%);transition:transform .1s,background .15s,border-color .15s;pointer-events:auto;left:${x}px;top:${y}px;`;
+    div.onclick=()=>rlAddChip(id);
+    div.innerHTML=`<span id="rlminus_${id}" onclick="event.stopPropagation();rlRemoveChip('${id}')" style="position:absolute;top:-8px;right:-8px;width:16px;height:16px;border-radius:50%;background:var(--red);color:white;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;z-index:6;">−</span>
+      <span id="rlchip_${id}" style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--text-3);"></span>`;
+    dotsEl.appendChild(div);
+  }
+  for(let r=0;r<4;r++)boundary.forEach((bx,ci)=>addDot('rlhsplit_'+r+'_'+ci,bx,center(r),[rlCellId(r,ci),rlCellId(r,ci+1)],rlScoreLabel(r,ci)+' / '+rlScoreLabel(r,ci+1)));
+  for(let c=0;c<4;c++)boundary.forEach((by,ri)=>addDot('rlvsplit_'+ri+'_'+c,center(c),by,[rlCellId(ri,c),rlCellId(ri+1,c)],rlScoreLabel(ri,c)+' / '+rlScoreLabel(ri+1,c)));
+  boundary.forEach((by,ri)=>boundary.forEach((bx,ci)=>addDot('rlcorner_'+ri+'_'+ci,bx,by,[rlCellId(ri,ci),rlCellId(ri,ci+1),rlCellId(ri+1,ci),rlCellId(ri+1,ci+1)],'4-way: '+rlScoreLabel(ri,ci)+', '+rlScoreLabel(ri,ci+1)+', '+rlScoreLabel(ri+1,ci)+', '+rlScoreLabel(ri+1,ci+1))));
+
+  const SIDE=[
+    {id:'rlbtts_y',label:'BTTS',sub:'Yes',mult:2,match:(h,a)=>rlNumVal(h)>0&&rlNumVal(a)>0},
+    {id:'rlbtts_n',label:'BTTS',sub:'No',mult:2,match:(h,a)=>rlNumVal(h)===0||rlNumVal(a)===0},
+    {id:'rlou_o',label:'2.5',sub:'Over',mult:2,match:(h,a)=>rlNumVal(h)+rlNumVal(a)>=3},
+    {id:'rlou_u',label:'2.5',sub:'Under',mult:2,match:(h,a)=>rlNumVal(h)+rlNumVal(a)<3},
+  ];
+  const sideEl=document.getElementById('rl-side-bets');
+  sideEl.innerHTML='';
+  SIDE.forEach(b=>{
+    rlMeta[b.id]={label:b.label+' '+b.sub,mult:b.mult,cells:[b.id]};
+    const div=document.createElement('div');
+    div.id=b.id;
+    div.style.cssText='border:1px solid var(--border);border-radius:10px;background:var(--white);padding:11px 13px;cursor:pointer;user-select:none;transition:border-color .15s;display:flex;align-items:center;justify-content:space-between;position:relative;';
+    div.onclick=()=>rlAddChip(b.id);
+    div.onmouseenter=()=>rlHighlight(b);
+    div.onmouseleave=rlClearHighlight;
+    div.innerHTML=`<span id="rlminus_${b.id}" onclick="event.stopPropagation();rlRemoveChip('${b.id}')" style="position:absolute;top:-6px;right:-6px;width:19px;height:19px;border-radius:50%;background:var(--red);color:white;font-size:12px;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;z-index:6;">−</span>
+      <div><div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">${b.label}</div><div style="font-size:10px;color:var(--text-3);margin-top:1px;">${b.sub}</div></div>
+      <span id="rlchip_${b.id}" style="display:none;font-family:var(--mono);font-size:11px;font-weight:700;color:white;background:var(--accent);border-radius:8px;padding:2px 9px;min-width:24px;text-align:center;"></span>`;
+    sideEl.appendChild(div);
+  });
+  rlUpdateFooter();
+}
+
+function rlHighlight(bet){document.querySelectorAll('#rl-grid > div').forEach(el=>{if(bet.match(el.dataset.h,el.dataset.a))el.style.outline='2.5px solid var(--amber)';});}
+function rlClearHighlight(){document.querySelectorAll('#rl-grid > div').forEach(el=>{el.style.outline='';});}
+
+function rlAddChip(id){
+  if(rlRemaining<RL_STEP)return;
+  rlStakes[id]=(rlStakes[id]||0)+RL_STEP;
+  rlRemaining-=RL_STEP;
+  rlRender(id);
+}
+function rlRemoveChip(id){
+  if(!rlStakes[id])return;
+  rlStakes[id]-=RL_STEP;
+  rlRemaining+=RL_STEP;
+  if(rlStakes[id]<=0)delete rlStakes[id];
+  rlRender(id);
+}
+function rlClearAll(){
+  Object.keys(rlStakes).forEach(k=>delete rlStakes[k]);
+  rlRemaining=RL_BUDGET;
+  Object.keys(rlMeta).forEach(rlRender);
+}
+function rlRender(id){
+  const chipEl=document.getElementById('rlchip_'+id);
+  const minusEl=document.getElementById('rlminus_'+id);
+  const val=rlStakes[id]||0;
+  if(chipEl){chipEl.textContent=val;chipEl.style.display=val>0?'inline-block':'none';}
+  if(minusEl){minusEl.style.display=val>0?'flex':'none';}
+  rlUpdateFooter();
+}
+function rlUpdateFooter(){
+  const staked=RL_BUDGET-rlRemaining;
+  const coinEl=document.getElementById('rl-coin-value');
+  if(coinEl){coinEl.textContent=rlRemaining;coinEl.style.color=rlRemaining===0?'#F87171':'white';}
+  const stakedEl=document.getElementById('rl-staked-count');
+  if(stakedEl)stakedEl.textContent=staked;
+  const btn=document.getElementById('rl-place-btn');
+  if(btn)btn.disabled=staked===0;
+  rlRenderBetslip();
+}
+function rlRenderBetslip(){
+  const el=document.getElementById('rl-betslip');
+  if(!el)return;
+  const ids=Object.keys(rlStakes);
+  if(!ids.length){el.innerHTML='';return;}
+  el.innerHTML=ids.map(id=>{
+    const m=rlMeta[id],stake=rlStakes[id],payout=stake*m.mult;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;font-size:11px;border-bottom:1px solid var(--surface);"><span style="color:var(--text-2);font-family:var(--mono);">${m.label} — ${stake} coins (×${m.mult})</span><span style="color:var(--green);font-weight:700;font-family:var(--mono);">wins ${payout}</span></div>`;
+  }).join('');
+}
+function rlPlaceBets(){toast('✓ Bets placed (demo — not persisted)');}
+
 function submitPreds(){
   predsDirty=false;
   const btn=document.querySelector('.submit-preds-btn');
@@ -972,6 +1163,9 @@ function submitPreds(){
 
 // ── LEADERBOARD ───────────────────────────────────────────────────────────
 function renderLeaderboardPane(comp){
+  if(comp.mode==='roulette'){
+    return `<div class="empty" style="padding:60px 20px;"><div class="empty-icon">🎰</div><div class="empty-title">Leaderboard coming soon</div><div class="empty-sub">Roulette winnings will rank here in a future update.</div></div>`;
+  }
   if(lbSelection[currentCompIdx]===undefined)lbSelection[currentCompIdx]=getDefaultRoundIdx(comp);
   const sel=lbSelection[currentCompIdx],isOverall=sel==='overall';
   const round=isOverall?null:comp.rounds[sel];
@@ -1068,6 +1262,18 @@ function showRules(mode){
 • All teams in perfect order — <strong style="color:var(--green);">+5 bonus pts</strong>
 </div>
 <div><strong style="color:var(--text);">Tip:</strong> Think about which teams are playing at home, their recent form, and the quality of their opponents.</div>
+</div>`,
+    roulette:`<h3 style="margin-bottom:12px;">Soccer Roulette Rules</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">How to play:</strong> You get 100 coins per match. Place them anywhere on the score grid, or on Both Teams to Score / Over-Under 2.5.</div>
+<div><strong style="color:var(--text);">Bet types:</strong></div>
+<div style="padding-left:12px;">
+• Straight — one exact score — <strong style="color:var(--green);">×16</strong><br>
+• Split — the dot between two adjacent scores, covers both — <strong style="color:var(--green);">×8</strong><br>
+• Corner — the dot where four scores meet, covers all four — <strong style="color:var(--green);">×4</strong><br>
+• BTTS / Over-Under 2.5 — <strong style="color:var(--green);">×2</strong>
+</div>
+<div><strong style="color:var(--text);">Payouts:</strong> Set purely by how many outcomes a bet covers — no bookmaker-style odds shading.</div>
 </div>`,
     betting:`<h3 style="margin-bottom:12px;">Betting Markets Rules</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
