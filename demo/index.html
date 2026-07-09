@@ -640,7 +640,7 @@ function renderPredictionsPane(comp){
         </div>`;
       });
       if(correctCount===teams.length) html+=`<div style="text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--green);padding:8px;">🎯 Perfect ranking! +${comp.rankingConfig?.perfectBonus||5} bonus pts</div>`;
-    } else if(isOpen){
+    } else if(isOpen && !(round.deadline && new Date(round.deadline).getTime()<=Date.now())){
       html+=`<div style="padding:8px 8px 12px;font-size:13px;color:var(--text);font-weight:700;">Drag teams to sort from <strong>highest</strong> to <strong>lowest</strong> expected ${comp.rankingConfig?.metric||'xG'}</div>`;
       html+=`<div id="ranking-list" data-roundid="${round.id}">`;
       userOrder.forEach((tid,i)=>{

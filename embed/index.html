@@ -675,7 +675,9 @@ function renderPredictionsPane(comp){
         html+=`<div style="display:flex;align-items:center;gap:8px;padding:8px;margin-bottom:4px;background:${isCorrect?'var(--green-light)':'var(--bg)'};border-radius:8px;border:1px solid ${isCorrect?'var(--green)':'var(--border)'};"><span style="font-family:var(--mono);font-size:12px;font-weight:800;color:${isCorrect?'var(--green)':'var(--text-3)'};width:20px;text-align:center;">#${i+1}</span><div class="ev-badge" style="width:24px;height:24px;font-size:7px;">${t.logo?'<img src="'+t.logo+'" alt="'+t.name+'">':t.name.slice(0,3).toUpperCase()}</div><div style="flex:1;min-width:0;"><div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div><div style="font-size:11px;color:var(--text-2);font-weight:600;">${t.opponent||''}${t.matchResult?' · <span style=font-family:var(--mono);font-weight:800;>'+t.matchResult+'</span>':''}</div></div><div style="text-align:right;"><div style="font-family:var(--mono);font-size:13px;font-weight:800;color:var(--text);">${t.actualXG?.toFixed(1)||'—'}</div><div style="font-size:9px;color:var(--text-3);">xG</div></div><span style="font-size:14px;">${isCorrect?'✓':'✗'}</span></div>`;
       });
     } else {
-    if(isOpen){
+    const rankingPastDeadline = round.deadline && new Date(round.deadline).getTime()<=Date.now();
+    const rankingCanPredict = isOpen && !rankingPastDeadline;
+    if(rankingCanPredict){
       html+=`<div style="padding:8px 8px 12px;font-size:13px;color:var(--text);font-weight:700;">Drag teams to sort from highest to lowest expected ${comp.rankingConfig?.metric||'xG'}</div>`;
       html+=`<div id="ranking-list" data-roundid="${round.id}">`;
       userOrder.forEach((tid,i)=>{
@@ -1013,9 +1015,15 @@ function initDragSort(){
 
 async function submitRanking(roundId){
   if(!currentPlayer){openAuthModal('Sign in to save your ranking');return;}
+  const comp=COMPS[currentCompIdx];
+  const round=comp?.rounds?.find(r=>r.id===roundId);
+  if(round){
+    const isOpenNow=round.status==='open';
+    const pastDeadline=round.deadline && new Date(round.deadline).getTime()<=Date.now();
+    if(!isOpenNow||pastDeadline){ toast('Predictions are locked for this round'); renderPredict(); return; }
+  }
   predsDirty=false;
   const btn=document.querySelector('.submit-preds-btn');if(btn){btn.classList.add('disabled');btn.textContent='✓ Saved';}
-  const comp=COMPS[currentCompIdx];
   const order=preds[roundId+'_ranking'];
   if(order){
     await supa.from('gw_predictions').upsert({
