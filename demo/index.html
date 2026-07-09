@@ -640,7 +640,7 @@ function renderPredictionsPane(comp){
         </div>`;
       });
       if(correctCount===teams.length) html+=`<div style="text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--green);padding:8px;">🎯 Perfect ranking! +${comp.rankingConfig?.perfectBonus||5} bonus pts</div>`;
-    } else {
+    } else if(isOpen){
       html+=`<div style="padding:8px 8px 12px;font-size:13px;color:var(--text);font-weight:700;">Drag teams to sort from <strong>highest</strong> to <strong>lowest</strong> expected ${comp.rankingConfig?.metric||'xG'}</div>`;
       html+=`<div id="ranking-list" data-roundid="${round.id}">`;
       userOrder.forEach((tid,i)=>{
@@ -658,6 +658,19 @@ function renderPredictionsPane(comp){
       html+='</div>';
       setTimeout(()=>initDragSort(),50);
       html+=`<button class="submit-preds-btn" onclick="toast('✓ Ranking saved')">Save Ranking</button>`;
+    } else {
+      html+=`<div style="padding:8px 8px 12px;font-size:12px;color:var(--text-3);font-weight:600;">🔒 Predictions locked</div>`;
+      userOrder.forEach((tid,i)=>{
+        const t=teamMap[tid];
+        html+=`<div style="display:flex;align-items:center;gap:6px;padding:8px;margin-bottom:4px;background:var(--bg);border-radius:8px;border:1px solid var(--border);opacity:0.7;">
+          <span style="font-family:var(--mono);font-size:12px;font-weight:800;color:var(--text-3);width:20px;text-align:center;">#${i+1}</span>
+          <div class="ev-badge" style="width:24px;height:24px;font-size:7px;">${t.logo?'<img src="'+t.logo+'" alt="'+t.name+'">':t.name.slice(0,3).toUpperCase()}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
+            <div style="font-size:11px;color:var(--text-2);font-weight:600;">${t.opponent}</div>
+          </div>
+        </div>`;
+      });
     }
     html+='</div>';
     return html;
