@@ -69,6 +69,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .round-status{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap;}
 .round-status.open{background:var(--green-light);color:var(--green);}
 .round-status.completed{background:var(--bg);color:var(--text-3);}
+.round-status.upcoming{background:#FEF3C7;color:var(--amber);}
 .round-bar-right{margin-left:auto;display:flex;align-items:center;gap:4px;}
 @media(max-width:480px){
   .predict-header-row{flex-direction:row;gap:4px;padding:8px 6px 0;}
@@ -587,37 +588,40 @@ function renderPredictionsPane(comp){
     }
   }
 
-  let html=`<div class="predict-header-row"><div style="display:flex;align-items:center;gap:8px;flex:1;"><select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select><span class="round-status ${round.status}">${isOpen?'● Open':'✓ Done'}</span></div><div class="predict-subtabs"><button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button></div><div class="predict-subtabs-mobile"><select onchange="switchPredictSubTab(this.value)"><option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option><option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option></select></div></div>`;
-  if(isOpen&&round.deadline){
-    html+=`<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;<span id="countdown-text">Calculating...</span></div>`;
-    setTimeout(()=>startCountdown(round.deadline),50);
+  // LMS: predictions unlock only 1 hour before the first event's kick-off
+  let lmsUnlocked=true, lmsUnlockTime=null;
+  if(comp.mode==='lms'&&events.length){
+    const kickoffTimes=events.map(e=>e.kickoffRaw?new Date(e.kickoffRaw).getTime():null).filter(Boolean);
+    if(kickoffTimes.length){
+      const firstKickoff=Math.min(...kickoffTimes);
+      lmsUnlockTime=firstKickoff-60*60*1000; // 1 hour before
+      lmsUnlocked=Date.now()>=lmsUnlockTime;
+    }
   }
-  if(!isOpen&&comp.mode==='lms'){
+  const lmsWaitingToUnlock=comp.mode==='lms'&&isOpen&&!lmsUnlocked;
+
+  const badgeText = lmsWaitingToUnlock ? '⏳ Opens soon' : (isOpen?'● Open':'✓ Done');
+  const badgeCls = lmsWaitingToUnlock ? 'upcoming' : round.status;
+  let html=`<div class="predict-header-row"><div style="display:flex;align-items:center;gap:8px;flex:1;"><select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select><span class="round-status ${badgeCls}">${badgeText}</span></div><div class="predict-subtabs"><button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button></div><div class="predict-subtabs-mobile"><select onchange="switchPredictSubTab(this.value)"><option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option><option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option></select></div></div>`;
+
+  if(lmsWaitingToUnlock){
+    html+=`<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;Predictions open in <span id="countdown-text">Calculating...</span></div>`;
+    setTimeout(()=>startCountdown(lmsUnlockTime,'unlock'),50);
+  } else if(isOpen&&round.deadline){
+    html+=`<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;<span id="countdown-text">Calculating...</span></div>`;
+    setTimeout(()=>startCountdown(round.deadline,'lock'),50);
+  } else if(!isOpen&&comp.mode==='lms'){
     let userAlive=true;
-    events.filter(ev=>ev.res).forEach(ev=>{
+    const resultedEvs=events.filter(ev=>ev.res);
+    resultedEvs.forEach(ev=>{
       if(!userAlive)return;
       const p=preds[ev.id];
       if(!p){userAlive=false;return;}
       const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
       if(p!==actual)userAlive=false;
     });
-    const statusHtml=events.some(ev=>ev.res)?(userAlive?'<span style="color:var(--green);font-weight:700;"> · ✓ You survived!</span>':'<span style="color:var(--red);font-weight:700;"> · ✗ You failed!</span>'):'';
+    const statusHtml=resultedEvs.length?(userAlive?'<span style="color:var(--green);font-weight:700;"> · ✓ You survived!</span>':'<span style="color:var(--red);font-weight:700;"> · ✗ You failed!</span>'):'';
     html+=`<div class="deadline-banner" style="background:var(--bg);color:var(--text-2);">🔒 Predictions locked${statusHtml}</div>`;
-  }
-  if(!isOpen&&comp.mode==='lms'){
-    let userStatus='';
-    const resultedEvs=events.filter(ev=>ev.res);
-    if(resultedEvs.length){
-      let alive=true;
-      for(const ev of resultedEvs){
-        const p=preds[ev.id];
-        if(!p){alive=false;break;}
-        const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
-        if(p!==actual){alive=false;break;}
-      }
-      userStatus=alive?'<span style="color:var(--green);font-weight:700;"> · ✓ You survived!</span>':'<span style="color:var(--red);font-weight:700;"> · ✗ You failed!</span>';
-    }
-    html+=`<div class="deadline-banner" style="background:var(--bg);color:var(--text-2);">🔒 Predictions locked${userStatus}</div>`;
   }
 
   // LMS summary bars above events (participants vs survivors)
@@ -692,19 +696,8 @@ function renderPredictionsPane(comp){
     html+='</div>';
     return html;
   }
-  // Sort events by real kickoff time for LMS (not the formatted display string)
+  // Sort events by real kickoff time for LMS (not the formatted display string) — already sorted above, but keep list order consistent if reached without prior sort
   if(comp.mode==='lms') events.sort((a,b)=>new Date(a.kickoffRaw||0)-new Date(b.kickoffRaw||0));
-
-  // LMS: predictions unlock only 1 hour before the first event's kick-off
-  let lmsUnlocked=true;
-  if(comp.mode==='lms'&&events.length){
-    const kickoffTimes=events.map(e=>e.kickoffRaw?new Date(e.kickoffRaw).getTime():null).filter(Boolean);
-    if(kickoffTimes.length){
-      const firstKickoff=Math.min(...kickoffTimes);
-      const unlockTime=firstKickoff-60*60*1000; // 1 hour before
-      lmsUnlocked=Date.now()>=unlockTime;
-    }
-  }
 
   html+='<div class="events-list">';
   if(!events.length){
@@ -815,12 +808,13 @@ function renderEventCard(ev,comp,isOpen){
 
 // ── COUNTDOWN ─────────────────────────────────────────────────────────────
 let countdownInterval;
-function startCountdown(deadline){
+function startCountdown(deadline,mode){
   clearInterval(countdownInterval);
+  const endText = mode==='unlock' ? 'Refresh to predict' : 'Predictions locked';
   function update(){
     const el=document.getElementById('countdown-text');if(!el)return;
     const diff=new Date(deadline)-Date.now();
-    if(diff<=0){el.textContent='Predictions locked';clearInterval(countdownInterval);return;}
+    if(diff<=0){el.textContent=endText;clearInterval(countdownInterval);return;}
     const d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
     let txt='';
     if(d>0)txt=`${d}d ${h}h ${m}m left`;
