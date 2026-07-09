@@ -1006,28 +1006,34 @@ function renderRouletteHTML(){
       <button onclick="rlClearAll()" style="font-family:var(--mono);font-size:10px;font-weight:700;color:rgba(255,255,255,0.7);background:transparent;border:1px solid rgba(255,255,255,0.25);border-radius:8px;padding:7px 12px;cursor:pointer;">Clear all</button>
     </div>
 
-    <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin:18px 0 10px 2px;display:flex;justify-content:space-between;">
-      <span>Correct score</span><span style="font-weight:400;text-transform:none;">tap a number, or the dots between</span>
-    </div>
-    <div id="rl-scale-outer" style="width:100%;overflow:hidden;">
-    <div id="rl-scale-inner" style="width:fit-content;transform-origin:top left;">
-    <div style="width:fit-content;margin:0 auto;padding:14px;background:var(--white);border-radius:14px;border:1px solid var(--border);">
-      <div style="position:relative;width:${RL_CELL*4+RL_GAP*3}px;height:${RL_CELL*4+RL_GAP*3}px;">
-        <div id="rl-grid" style="position:absolute;top:0;left:0;display:grid;grid-template-columns:repeat(4,${RL_CELL}px);grid-template-rows:repeat(4,${RL_CELL}px);gap:${RL_GAP}px;"></div>
-        <div id="rl-dots" style="position:absolute;top:0;left:0;width:${RL_CELL*4+RL_GAP*3}px;height:${RL_CELL*4+RL_GAP*3}px;pointer-events:none;"></div>
+    <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;">
+      <div style="flex:0 1 420px;">
+        <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 10px 2px;display:flex;justify-content:space-between;gap:12px;">
+          <span>Correct score</span><span style="font-weight:400;text-transform:none;white-space:nowrap;">tap a number, or the dots between</span>
+        </div>
+        <div id="rl-scale-outer" style="width:100%;overflow:hidden;">
+        <div id="rl-scale-inner" style="width:fit-content;transform-origin:top left;">
+        <div style="width:fit-content;margin:0 auto;padding:14px;background:var(--white);border-radius:14px;border:1px solid var(--border);">
+          <div style="position:relative;width:${RL_CELL*4+RL_GAP*3}px;height:${RL_CELL*4+RL_GAP*3}px;">
+            <div id="rl-grid" style="position:absolute;top:0;left:0;display:grid;grid-template-columns:repeat(4,${RL_CELL}px);grid-template-rows:repeat(4,${RL_CELL}px);gap:${RL_GAP}px;"></div>
+            <div id="rl-dots" style="position:absolute;top:0;left:0;width:${RL_CELL*4+RL_GAP*3}px;height:${RL_CELL*4+RL_GAP*3}px;pointer-events:none;"></div>
+          </div>
+        </div>
+        </div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:10px;padding:0 2px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:var(--accent-light);border:1px solid var(--accent);"></span>Arsenal win</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:var(--surface);border:1px solid var(--text-3);"></span>Draw</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:#FFEDD5;border:1px solid #EA580C;"></span>Chelsea win</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:50%;background:var(--white);border:1.5px solid var(--text-3);"></span>Split / corner bet</div>
+        </div>
+      </div>
+
+      <div style="flex:1 1 200px;min-width:180px;">
+        <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 10px 2px;">Other markets</div>
+        <div id="rl-side-bets" style="display:grid;grid-template-columns:1fr;gap:8px;"></div>
       </div>
     </div>
-    </div>
-    </div>
-    <div style="display:flex;gap:12px;margin-top:10px;padding:0 2px;flex-wrap:wrap;">
-      <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:var(--accent-light);border:1px solid var(--accent);"></span>Arsenal win</div>
-      <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:var(--surface);border:1px solid var(--text-3);"></span>Draw</div>
-      <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:#FFEDD5;border:1px solid #EA580C;"></span>Chelsea win</div>
-      <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:50%;background:var(--white);border:1.5px solid var(--text-3);"></span>Split / corner bet</div>
-    </div>
-
-    <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin:18px 0 10px 2px;">Other markets</div>
-    <div id="rl-side-bets" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
 
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
       <div style="font-size:12px;color:var(--text-2);"><strong id="rl-staked-count" style="color:var(--text);font-family:var(--mono);">0</strong> of 100 staked</div>
