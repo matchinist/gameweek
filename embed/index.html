@@ -326,7 +326,7 @@ async function buildCompsFromRealData(){
       EVENTS[ev.id] = {
         home: home?.name||ev.home_id, away: away?.name||ev.away_id,
         homeLogo: home?.logo||'', awayLogo: away?.logo||'',
-        kickoff: fmtKickoff(ev.kickoff), res: hasResult?ev.result:null
+        kickoff: fmtKickoff(ev.kickoff), kickoffRaw: ev.kickoff||null, res: hasResult?ev.result:null
       };
       EVENTS_RAW[ev.id] = hasResult?ev.result:null;
     });
@@ -578,7 +578,7 @@ function renderPredictionsPane(comp){
 
   let eliminatedAtIdx=-1;
   if(comp.mode==='lms'){
-    events.sort((a,b)=>new Date(a.kickoff||0)-new Date(b.kickoff||0));
+    events.sort((a,b)=>new Date(a.kickoffRaw||0)-new Date(b.kickoffRaw||0));
     if(!isOpen){
       for(let i=0;i<events.length;i++){
         const ev=events[i], p=preds[ev.id];
@@ -692,8 +692,19 @@ function renderPredictionsPane(comp){
     html+='</div>';
     return html;
   }
-  // Sort events by kickoff for LMS
-  if(comp.mode==='lms') events.sort((a,b)=>(a.kickoff||'').localeCompare(b.kickoff||''));
+  // Sort events by real kickoff time for LMS (not the formatted display string)
+  if(comp.mode==='lms') events.sort((a,b)=>new Date(a.kickoffRaw||0)-new Date(b.kickoffRaw||0));
+
+  // LMS: predictions unlock only 1 hour before the first event's kick-off
+  let lmsUnlocked=true;
+  if(comp.mode==='lms'&&events.length){
+    const kickoffTimes=events.map(e=>e.kickoffRaw?new Date(e.kickoffRaw).getTime():null).filter(Boolean);
+    if(kickoffTimes.length){
+      const firstKickoff=Math.min(...kickoffTimes);
+      const unlockTime=firstKickoff-60*60*1000; // 1 hour before
+      lmsUnlocked=Date.now()>=unlockTime;
+    }
+  }
 
   html+='<div class="events-list">';
   if(!events.length){
@@ -704,7 +715,7 @@ function renderPredictionsPane(comp){
       const isEliminated=eliminatedAtIdx>=0&&i>eliminatedAtIdx;
       const isEliminationPoint=i===eliminatedAtIdx;
       if(comp.mode==='lms'&&isEliminated) lmsBlocked=true;
-      const effectiveOpen=comp.mode==='lms'?(isOpen&&!lmsBlocked):isOpen;
+      const effectiveOpen=comp.mode==='lms'?(isOpen&&!lmsBlocked&&lmsUnlocked):isOpen;
       html+=`<div style="opacity:${isEliminated?'0.4':'1'};">${renderEventCard(ev,comp,effectiveOpen)}</div>`;
     });
   }
