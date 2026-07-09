@@ -1103,6 +1103,53 @@ function scorePoints(pred, res, scoring){
   return 0;
 }
 
+// Compute the actual outcome for a single betting market
+function marketActual(type,res){
+  if(!res||res.h==null||res.a==null) return null;
+  if(type==='1x2') return res.h>res.a?'H':(res.h<res.a?'A':'D');
+  if(type==='ou25') return (res.h+res.a)>2.5?'O':'U';
+  if(type==='btts') return (res.h>0&&res.a>0)?'Y':'N';
+  return null;
+}
+// Compute total points for a betting-markets prediction against a result
+function bettingPoints(pred,res,markets){
+  if(!pred||!res) return 0;
+  let total=0;
+  (markets||[]).forEach(m=>{
+    const actual=marketActual(m.type,res);
+    if(actual&&pred[m.type]===actual) total+=(m.points||0);
+  });
+  return total;
+}
+
+// Determine the actual team order for a ranking round (by xG or total shots)
+function getRankingActualOrder(round,metric){
+  const teams=round.rankingTeams||[];
+  if(!teams.length) return null;
+  const values={};
+  for(const t of teams){
+    let val=null;
+    for(const eid of (round.eventIds||[])){
+      const ev=EVENTS[eid]; const raw=EVENTS_RAW[eid];
+      if(!ev||!raw) continue;
+      if(ev.home===t.name){ val = metric==='totalShots'?raw.home_shots:raw.home_xg; break; }
+      if(ev.away===t.name){ val = metric==='totalShots'?raw.away_shots:raw.away_xg; break; }
+    }
+    if(val==null||val===undefined) return null; // not all results in yet
+    values[t.id]=val;
+  }
+  return [...teams].sort((a,b)=>(values[b.id]||0)-(values[a.id]||0)).map(t=>t.id);
+}
+// Compute points + correct-position count for a ranking prediction
+function rankingPoints(userOrder,actualOrder,cfg){
+  if(!userOrder||!actualOrder||!userOrder.length) return {points:0,correct:0};
+  let correct=0;
+  userOrder.forEach((tid,i)=>{ if(tid===actualOrder[i]) correct++; });
+  let points = correct*(cfg?.pointsPerCorrect||2);
+  if(correct===actualOrder.length) points += (cfg?.perfectBonus||5);
+  return {points,correct};
+}
+
 async function loadAndRenderLeaderboard(comp){
   const sel=lbSelection[currentCompIdx], isOverall=sel==='overall';
   const paneEl=document.getElementById('lb-pane-inner'); if(!paneEl) return;
@@ -1125,6 +1172,58 @@ async function loadAndRenderLeaderboard(comp){
         players[p.player_id].played++;
       });
       const rows=Object.values(players).sort((a,b)=>b.points-a.points||b.played-a.played);
+      let rank=1; rows.forEach((r,i)=>{ if(i>0&&rows[i].points<rows[i-1].points)rank=i+1; r.rank=rank; });
+      const subtitle=isOverall?'Overall — total points':comp.rounds[sel].label+' · points';
+      const activePrizes = isOverall ? comp.overallPrizes : comp.rounds[sel]?.prizes;
+      paneEl.innerHTML=buildLBTable(comp.name,subtitle,rows,r=>`<td class="lb-num">${r.points} pts</td>`,'<th class="r">Points</th>',activePrizes);
+      return;
+    }
+
+    // ── BETTING MARKETS: points-based leaderboard ──
+    if(comp.mode==='betting'){
+      let query = supa.from('gw_predictions').select('username,player_id,event_id,prediction,round_id').eq('client_key',CLIENT_PARAM).eq('competition_id',comp.id);
+      if(!isOverall){ const round=comp.rounds[sel]; if(!round){paneEl.innerHTML='';return;} query=query.eq('round_id',round.id); }
+      const {data} = await query;
+      if(!data||!data.length){ paneEl.innerHTML='<div class="empty"><div class="empty-icon">🏆</div><div class="empty-title">No predictions yet</div></div>'; return; }
+
+      const players={};
+      data.forEach(p=>{
+        const res=EVENTS_RAW[p.event_id];
+        const pred=p.prediction;
+        const pts=bettingPoints(pred,res,comp.markets);
+        if(!players[p.player_id]) players[p.player_id]={u:p.username,points:0};
+        players[p.player_id].points+=pts;
+      });
+      const rows=Object.values(players).sort((a,b)=>b.points-a.points);
+      let rank=1; rows.forEach((r,i)=>{ if(i>0&&rows[i].points<rows[i-1].points)rank=i+1; r.rank=rank; });
+      const subtitle=isOverall?'Overall — total points':comp.rounds[sel].label+' · points';
+      const activePrizes = isOverall ? comp.overallPrizes : comp.rounds[sel]?.prizes;
+      paneEl.innerHTML=buildLBTable(comp.name,subtitle,rows,r=>`<td class="lb-num">${r.points} pts</td>`,'<th class="r">Points</th>',activePrizes);
+      return;
+    }
+
+    // ── RANKING: points-based leaderboard (highest xG/shots ordering) ──
+    if(comp.mode==='ranking'){
+      const metric = comp.rankingConfig?.metric || 'xG';
+      const roundsToScore = isOverall ? comp.rounds : [comp.rounds[sel]].filter(Boolean);
+      if(!isOverall && !roundsToScore.length){ paneEl.innerHTML=''; return; }
+
+      const {data} = await supa.from('gw_predictions').select('username,player_id,round_id,event_id,prediction').eq('client_key',CLIENT_PARAM).eq('competition_id',comp.id);
+      if(!data||!data.length){ paneEl.innerHTML='<div class="empty"><div class="empty-icon">🏆</div><div class="empty-title">No predictions yet</div></div>'; return; }
+
+      const players={};
+      roundsToScore.forEach(round=>{
+        const actualOrder=getRankingActualOrder(round,metric);
+        if(!actualOrder) return; // round not fully resolved yet — skip
+        data.filter(p=>p.round_id===round.id && p.event_id===round.id+'_ranking').forEach(p=>{
+          const userOrder = p.prediction?.value || null;
+          const {points}=rankingPoints(userOrder,actualOrder,comp.rankingConfig);
+          if(!players[p.player_id]) players[p.player_id]={u:p.username,points:0};
+          players[p.player_id].points+=points;
+        });
+      });
+      const rows=Object.values(players).sort((a,b)=>b.points-a.points);
+      if(!rows.length){ paneEl.innerHTML='<div class="empty"><div class="empty-icon">🏆</div><div class="empty-title">No results yet</div><div class="empty-sub">Points appear once round results are entered.</div></div>'; return; }
       let rank=1; rows.forEach((r,i)=>{ if(i>0&&rows[i].points<rows[i-1].points)rank=i+1; r.rank=rank; });
       const subtitle=isOverall?'Overall — total points':comp.rounds[sel].label+' · points';
       const activePrizes = isOverall ? comp.overallPrizes : comp.rounds[sel]?.prizes;
