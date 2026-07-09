@@ -834,53 +834,70 @@ tbody tr:hover td{background:var(--bg);}
 <div class="modal-overlay" id="modal-create-round">
   <div class="modal" style="max-width:560px;">
     <div class="modal-header">
-      <div class="modal-title">New Round</div>
+      <div class="modal-title" id="new-round-modal-title">New Round</div>
       <button class="modal-close" onclick="closeModal('modal-create-round')">×</button>
     </div>
     <div class="modal-body">
 
-      <div class="form-group">
-        <label class="form-label">Round Name</label>
-        <input class="form-input" id="new-round-name" placeholder="e.g. Gameweek 4" />
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Select Tournament</label>
-        <select class="form-select" id="new-round-tournament-select" onchange="roundSelectTournament('new')">
-          <option value="">— choose a tournament —</option>
-        </select>
-      </div>
-
-      <div id="new-round-available-wrap" style="display:none;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-          <label class="form-label" style="margin:0;">Available Events</label>
-          <span id="new-round-available-count" style="font-size:11px;color:var(--text-3);"></span>
+      <!-- STEP 1: events/teams -->
+      <div id="new-round-step-1">
+        <div class="form-group">
+          <label class="form-label">Round Name</label>
+          <input class="form-input" id="new-round-name" placeholder="e.g. Gameweek 4" />
         </div>
-        <div id="new-round-available-list" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;"></div>
-      </div>
 
-      <div id="new-round-added-wrap" style="display:none;margin-top:14px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-          <label class="form-label" style="margin:0;color:var(--green);">✓ Added to Round</label>
-          <span id="new-round-added-count" style="font-size:11px;color:var(--text-3);"></span>
+        <div class="form-group">
+          <label class="form-label">Select Tournament</label>
+          <select class="form-select" id="new-round-tournament-select" onchange="roundSelectTournament('new')">
+            <option value="">— choose a tournament —</option>
+          </select>
         </div>
-        <div style="font-size:11px;color:var(--amber);background:var(--amber-light);padding:6px 10px;border-radius:5px;margin-bottom:8px;display:none;" id="new-round-overlap-warn"></div>
-        <div id="new-round-added-list" style="display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto;border:1px solid var(--green);border-radius:6px;padding:8px;background:var(--green-light);"></div>
+
+        <div id="new-round-available-wrap" style="display:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <label class="form-label" style="margin:0;">Available Events</label>
+            <span id="new-round-available-count" style="font-size:11px;color:var(--text-3);"></span>
+          </div>
+          <div id="new-round-available-list" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;"></div>
+        </div>
+
+        <div id="new-round-added-wrap" style="display:none;margin-top:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <label class="form-label" style="margin:0;color:var(--green);">✓ Added to Round</label>
+            <span id="new-round-added-count" style="font-size:11px;color:var(--text-3);"></span>
+          </div>
+          <div style="font-size:11px;color:var(--amber);background:var(--amber-light);padding:6px 10px;border-radius:5px;margin-bottom:8px;display:none;" id="new-round-overlap-warn"></div>
+          <div id="new-round-added-list" style="display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto;border:1px solid var(--green);border-radius:6px;padding:8px;background:var(--green-light);"></div>
+        </div>
+
+        <!-- Ranking: team picker instead of events -->
+        <div id="new-round-ranking-teams" style="display:none;">
+          <label class="form-label">Select teams to include in this ranking</label>
+          <div style="font-size:11px;color:var(--text-3);margin-bottom:10px;">Users will rank these teams from highest to lowest for the selected metric.</div>
+          <div id="ranking-team-list" style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:8px;display:flex;flex-direction:column;gap:4px;"></div>
+          <div style="font-size:11px;color:var(--text-3);margin-top:6px;" id="ranking-team-count">0 teams selected</div>
+        </div>
       </div>
 
-      <!-- Ranking: team picker instead of events -->
-      <div id="new-round-ranking-teams" style="display:none;">
-        <label class="form-label">Select teams to include in this ranking</label>
-        <div style="font-size:11px;color:var(--text-3);margin-bottom:10px;">Users will rank these teams from highest to lowest for the selected metric.</div>
-        <div id="ranking-team-list" style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:8px;display:flex;flex-direction:column;gap:4px;"></div>
-        <div style="font-size:11px;color:var(--text-3);margin-top:6px;" id="ranking-team-count">0 teams selected</div>
+      <!-- STEP 2: prizes -->
+      <div id="new-round-step-2" style="display:none;">
+        <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:6px;">Round Prizes</div>
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:14px;">Optional — add a text prize for top finishers in this round's leaderboard.</div>
+        <div id="new-round-prizes-list"></div>
+        <button class="btn btn-ghost btn-sm" onclick="addPrizePosition('new-round')" style="margin-top:8px;">+ Add position</button>
       </div>
 
     </div>
     <div class="modal-footer">
-      <div style="font-size:11px;color:var(--text-3);">Deadline = 1 hour before earliest kick-off.</div>
-      <button class="btn btn-ghost" onclick="closeModal('modal-create-round')">Cancel</button>
-      <button class="btn btn-primary" onclick="createRound()">Create Round</button>
+      <div style="font-size:11px;color:var(--text-3);" id="new-round-footer-note">Deadline = 2 hours before earliest kick-off.</div>
+      <div id="new-round-footer-step1">
+        <button class="btn btn-ghost" onclick="closeModal('modal-create-round')">Cancel</button>
+        <button class="btn btn-primary" onclick="goRoundStep2('new')">Next: Prizes →</button>
+      </div>
+      <div id="new-round-footer-step2" style="display:none;">
+        <button class="btn btn-ghost" onclick="goRoundStep1('new')">← Back</button>
+        <button class="btn btn-primary" onclick="createRound()">Create Round</button>
+      </div>
     </div>
   </div>
 </div>
@@ -930,6 +947,12 @@ tbody tr:hover td{background:var(--bg);}
         <div id="edit-ranking-team-list" style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:8px;display:flex;flex-direction:column;gap:4px;"></div>
         <div style="font-size:11px;color:var(--text-3);margin-top:6px;" id="edit-ranking-team-count">0 teams selected</div>
       </div>
+
+      <div class="divider" style="margin:16px 0;"></div>
+      <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:6px;">Round Prizes</div>
+      <div style="font-size:12px;color:var(--text-3);margin-bottom:14px;">Optional — add a text prize for top finishers in this round's leaderboard.</div>
+      <div id="edit-round-prizes-list"></div>
+      <button class="btn btn-ghost btn-sm" onclick="addPrizePosition('edit-round')" style="margin-top:8px;">+ Add position</button>
 
     </div>
     <div class="modal-footer">
@@ -1032,6 +1055,7 @@ async function saveAdminState(){
         color:c.color, status:c.status, long_term:c.longTerm||false,
         scoring:c.scoring||null, markets:c.markets||null,
         ranking_config:c.rankingConfig||null,
+        overall_prizes:c.overallPrizes||null,
         users:c.users||0, predictions:c.predictions||0
       }));
       await supa.from('gw_competitions').upsert(compRows,{onConflict:'id'});
@@ -1043,7 +1067,8 @@ async function saveAdminState(){
         label:r.label, status:r.status, deadline:r.deadline||'',
         event_ids:r.eventIds||[], tournament_ids:r.tournamentIds||[],
         tournament_names:r.tournamentNames||[], sort_order:ri,
-        ranking_teams:r.rankingTeams||null
+        ranking_teams:r.rankingTeams||null,
+        prizes:r.prizes||null
       }))
     );
     if(allRounds.length) await supa.from('gw_rounds').upsert(allRounds,{onConflict:'id'});
@@ -1316,6 +1341,11 @@ function renderCompDetail(){
             <input class="form-input" type="number" id="edit-pts-total" value="${c.scoring?.totalGoals??1}" min="0" max="99" style="width:64px;text-align:center;font-family:var(--mono);font-weight:700;" />
           </div>` : ''}
           <div class="divider"></div>
+          <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:6px;">Overall Prizes</div>
+          <div style="font-size:12px;color:var(--text-3);margin-bottom:14px;">Prizes for the season-long overall leaderboard (across all rounds).</div>
+          <div id="overall-prizes-list"></div>
+          <button class="btn btn-ghost btn-sm" onclick="addPrizePosition('overall')" style="margin-top:4px;">+ Add position</button>
+          <div class="divider"></div>
           <button class="btn btn-primary btn-sm" onclick="saveCompSettings()">Save changes</button>
         </div>
       </div>
@@ -1334,6 +1364,8 @@ function renderCompDetail(){
       </div>
     </div>
   </div>`;
+  prizeState['overall'] = (c.overallPrizes&&c.overallPrizes.length) ? JSON.parse(JSON.stringify(c.overallPrizes)) : defaultPrizes();
+  renderPrizesEditor('overall');
 }
 
 // ── RESULT MODAL ──────────────────────────────────────────────────────────
@@ -1454,13 +1486,93 @@ function saveBrandingBg(val){
 // Tracks events added to the round currently being created/edited
 let roundAddedEvents = []; // [{id, home, away, kickoff, tName}]
 
+// ── PRIZES (shared editor for round prizes + overall prizes) ────────────────
+// prefix examples: 'new-round', 'edit-round', 'overall'
+let prizeState = {}; // { [prefix]: [{pos:1,text:''}, ...] }
+
+function defaultPrizes(){
+  return [{pos:1,text:''},{pos:2,text:''},{pos:3,text:''}];
+}
+
+function renderPrizesEditor(prefix){
+  const list = document.getElementById(prefix+'-prizes-list');
+  if(!list) return;
+  const prizes = prizeState[prefix] || [];
+  list.innerHTML = prizes.map((p,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <span style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent);width:22px;text-align:center;flex-shrink:0;">#${p.pos}</span>
+      <input class="form-input" style="flex:1;" placeholder="e.g. $50 gift card" value="${(p.text||'').replace(/"/g,'&quot;')}" oninput="updatePrizeText('${prefix}',${i},this.value)">
+      <button onclick="removePrizePosition('${prefix}',${i})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:16px;padding:0 4px;flex-shrink:0;">×</button>
+    </div>`).join('');
+}
+
+function updatePrizeText(prefix,idx,val){
+  if(!prizeState[prefix]) return;
+  prizeState[prefix][idx].text = val;
+}
+
+function addPrizePosition(prefix){
+  if(!prizeState[prefix]) prizeState[prefix]=[];
+  const nextPos = prizeState[prefix].length + 1;
+  prizeState[prefix].push({pos:nextPos, text:''});
+  renderPrizesEditor(prefix);
+}
+
+function removePrizePosition(prefix,idx){
+  if(!prizeState[prefix]) return;
+  prizeState[prefix].splice(idx,1);
+  // Renumber positions sequentially
+  prizeState[prefix].forEach((p,i)=>p.pos=i+1);
+  renderPrizesEditor(prefix);
+}
+
+function getCleanPrizes(prefix){
+  return (prizeState[prefix]||[]).filter(p=>p.text&&p.text.trim()!=='').map(p=>({pos:p.pos,text:p.text.trim()}));
+}
+
+// ── ROUND WIZARD STEP NAVIGATION (create only) ───────────────────────────────
+function goRoundStep2(prefix){
+  const name = document.getElementById('new-round-name').value.trim();
+  if(!name){ toast('Enter a round name'); return; }
+  const comp = getComp(state.currentComp);
+  if(comp.mode==='ranking'){
+    if(!roundAddedEvents.length){ toast('Add events to derive ranking teams'); return; }
+  } else {
+    if(!roundAddedEvents.length){ toast('Add at least one event to the round'); return; }
+    const warnEl = document.getElementById('new-round-overlap-warn');
+    if(warnEl&&warnEl.style.display!=='none'){ toast('Fix the overlap conflict before continuing'); return; }
+  }
+  document.getElementById('new-round-step-1').style.display='none';
+  document.getElementById('new-round-step-2').style.display='block';
+  document.getElementById('new-round-footer-step1').style.display='none';
+  document.getElementById('new-round-footer-step2').style.display='flex';
+  document.getElementById('new-round-modal-title').textContent='New Round · Prizes';
+  if(!prizeState['new-round']) prizeState['new-round']=defaultPrizes();
+  renderPrizesEditor('new-round');
+}
+
+function goRoundStep1(prefix){
+  document.getElementById('new-round-step-1').style.display='block';
+  document.getElementById('new-round-step-2').style.display='none';
+  document.getElementById('new-round-footer-step1').style.display='flex';
+  document.getElementById('new-round-footer-step2').style.display='none';
+  document.getElementById('new-round-modal-title').textContent='New Round';
+}
+
 // ── OPEN MODAL (refresh DM data first) ───────────────────────────────────
 async function openModal(id){
   if(id==='modal-create-round'){
     roundAddedEvents = [];
+    prizeState['new-round'] = defaultPrizes();
     await refreshDMState();
     const comp = getComp(state.currentComp);
     const isRanking = comp?.mode === 'ranking';
+    // Reset wizard to step 1
+    document.getElementById('new-round-step-1').style.display='block';
+    document.getElementById('new-round-step-2').style.display='none';
+    document.getElementById('new-round-footer-step1').style.display='flex';
+    document.getElementById('new-round-footer-step2').style.display='none';
+    document.getElementById('new-round-modal-title').textContent='New Round';
     // For ranking: show tournament+events flow (same as others), teams are derived from events
     document.getElementById('new-round-tournament-select').closest('.form-group').style.display = 'block';
     document.getElementById('new-round-available-wrap').style.display = 'none';
@@ -1714,12 +1826,14 @@ function createRound(){
     const deadline = kickoffs.length ? new Date(Math.min(...kickoffs)-2*60*60*1000).toISOString().slice(0,16) : '';
     const r = {
       id:'r'+uid(), label:name, status:'open', deadline,
-      rankingTeams, eventIds:roundAddedEvents.map(e=>e.id)
+      rankingTeams, eventIds:roundAddedEvents.map(e=>e.id),
+      prizes: getCleanPrizes('new-round')
     };
     comp.rounds.push(r);
     closeModal('modal-create-round');
     document.getElementById('new-round-name').value='';
     roundAddedEvents=[];
+    prizeState['new-round']=[];
     saveAdminState(); renderCompDetail(); toast('Ranking round created with '+rankingTeams.length+' teams');
     return;
   }
@@ -1735,12 +1849,14 @@ function createRound(){
   const r = {
     id:'r'+uid(), label:name, status:'open', deadline,
     tournamentIds:[], tournamentNames:tNames,
-    eventIds: roundAddedEvents.map(e=>e.id)
+    eventIds: roundAddedEvents.map(e=>e.id),
+    prizes: getCleanPrizes('new-round')
   };
   comp.rounds.push(r);
   closeModal('modal-create-round');
   document.getElementById('new-round-name').value='';
   roundAddedEvents=[];
+  prizeState['new-round']=[];
   saveAdminState(); renderCompDetail(); toast('Round created');
 }
 
@@ -1792,6 +1908,8 @@ function openEditRound(roundId){
     renderAddedEvents('edit');
   }
   document.getElementById('modal-edit-round').classList.add('open');
+  prizeState['edit-round'] = (r.prizes&&r.prizes.length) ? JSON.parse(JSON.stringify(r.prizes)) : defaultPrizes();
+  renderPrizesEditor('edit-round');
 }
 
 function updateEditRankingTeamCount(){
@@ -1818,6 +1936,7 @@ function saveRoundEdit(){
       opponent: cb.dataset.opponent || '',
     }));
     r.eventIds = roundAddedEvents.map(e=>e.id);
+    r.prizes = getCleanPrizes('edit-round');
     closeModal('modal-edit-round');
     saveAdminState(); renderCompDetail(); toast('Round updated with '+r.rankingTeams.length+' teams');
     return;
@@ -1830,6 +1949,7 @@ function saveRoundEdit(){
   r.deadline = kickoffs.length ? new Date(Math.min(...kickoffs)-2*60*60*1000).toISOString().slice(0,16) : r.deadline;
   r.tournamentNames = [...new Set(roundAddedEvents.map(e=>e.tName))];
   r.eventIds = roundAddedEvents.map(e=>e.id);
+  r.prizes = getCleanPrizes('edit-round');
   closeModal('modal-edit-round');
   saveAdminState(); renderCompDetail(); toast('Round updated');
 }
@@ -1861,6 +1981,7 @@ function saveCompSettings(){
     }
     c.scoring = newScoring;
   }
+  c.overallPrizes = getCleanPrizes('overall');
   saveAdminState();
   renderCompDetail();
   toast('Changes saved');
@@ -2135,12 +2256,14 @@ function initOperatorChrome(){
     id:c.id, name:c.name, mode:c.mode, color:c.color, status:c.status,
     longTerm:c.long_term, scoring:c.scoring, markets:c.markets,
     rankingConfig:c.ranking_config||null,
+    overallPrizes:c.overall_prizes||null,
     users:c.users, predictions:c.predictions,
     rounds: (rounds||[]).filter(r=>r.competition_id===c.id).map(r=>({
       id:r.id, label:r.label, status:r.status, deadline:r.deadline||'',
       eventIds:r.event_ids||[], tournamentIds:r.tournament_ids||[],
       tournamentNames:r.tournament_names||[],
-      rankingTeams:r.ranking_teams||null
+      rankingTeams:r.ranking_teams||null,
+      prizes:r.prizes||null
     }))
   }));
 
