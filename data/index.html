@@ -680,7 +680,7 @@ function navTo(page,tournamentId){
   } else if(page==='players'){
     document.getElementById('nav-players').classList.add('active');
     document.getElementById('view-players').classList.add('active');
-    document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">// players</div></div><div id="main-header-actions"><button class="btn btn-primary btn-sm" onclick="openModal(\'modal-create-player\')">+ Add Player</button></div>';
+    document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">// players</div></div><div id="main-header-actions"><button class="btn btn-primary btn-sm" onclick="openModal(&#39;modal-create-player&#39;)">+ Add Player</button></div>';
     renderPlayers();
   } else if(page==='tournament'){
     S.activeTournamentId=tournamentId;
