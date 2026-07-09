@@ -1009,11 +1009,15 @@ function renderRouletteHTML(){
     <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin:18px 0 10px 2px;display:flex;justify-content:space-between;">
       <span>Correct score</span><span style="font-weight:400;text-transform:none;">tap a number, or the dots between</span>
     </div>
+    <div id="rl-scale-outer" style="width:100%;overflow:hidden;">
+    <div id="rl-scale-inner" style="width:fit-content;transform-origin:top left;">
     <div style="width:fit-content;margin:0 auto;padding:14px;background:var(--white);border-radius:14px;border:1px solid var(--border);">
       <div style="position:relative;width:${RL_CELL*4+RL_GAP*3}px;height:${RL_CELL*4+RL_GAP*3}px;">
         <div id="rl-grid" style="position:absolute;top:0;left:0;display:grid;grid-template-columns:repeat(4,${RL_CELL}px);grid-template-rows:repeat(4,${RL_CELL}px);gap:${RL_GAP}px;"></div>
         <div id="rl-dots" style="position:absolute;top:0;left:0;width:${RL_CELL*4+RL_GAP*3}px;height:${RL_CELL*4+RL_GAP*3}px;pointer-events:none;"></div>
       </div>
+    </div>
+    </div>
     </div>
     <div style="display:flex;gap:12px;margin-top:10px;padding:0 2px;flex-wrap:wrap;">
       <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:var(--accent-light);border:1px solid var(--accent);"></span>Arsenal win</div>
@@ -1097,7 +1101,22 @@ function initRouletteBoard(){
     sideEl.appendChild(div);
   });
   rlUpdateFooter();
+  rlFitBoard();
 }
+
+function rlFitBoard(){
+  const outer=document.getElementById('rl-scale-outer');
+  const inner=document.getElementById('rl-scale-inner');
+  if(!outer||!inner)return;
+  inner.style.transform='none';
+  const naturalW=inner.offsetWidth;
+  const naturalH=inner.offsetHeight;
+  const availW=outer.clientWidth;
+  const scale=Math.min(1, availW/naturalW);
+  inner.style.transform=`scale(${scale})`;
+  outer.style.height=(naturalH*scale)+'px';
+}
+window.addEventListener('resize',()=>{ if(document.getElementById('rl-scale-outer'))rlFitBoard(); });
 
 function rlHighlight(bet){document.querySelectorAll('#rl-grid > div').forEach(el=>{if(bet.match(el.dataset.h,el.dataset.a))el.style.outline='2.5px solid var(--amber)';});}
 function rlClearHighlight(){document.querySelectorAll('#rl-grid > div').forEach(el=>{el.style.outline='';});}
