@@ -714,8 +714,6 @@ function renderPredictionsPane(comp){
     const openEvents=events.filter(ev=>!ev.res);
     const predCount=openEvents.filter(ev=>{ const p=preds[ev.id]; if(!p)return false; if(comp.mode==='score')return p.h!==undefined&&p.a!==undefined; if(comp.mode==='betting')return typeof p==='object'&&Object.keys(p).length>0; return!!p; }).length;
     if(openEvents.length){
-    const pct=Math.round(predCount/openEvents.length*100);
-    html+=`<div class="progress-wrap"><div class="progress-meta"><span>${predCount} of ${events.length} predictions made</span><span class="progress-pct">${pct}%</span></div><div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:var(--comp-color);"></div></div></div>`;
     html+=`<button class="submit-preds-btn${predsDirty?'':' disabled'}" onclick="submitPreds()">${predCount===events.length?'✓ All predictions saved':'Save Predictions ('+predCount+'/'+events.length+')'}</button>`;
     }
   }
@@ -796,8 +794,10 @@ function renderEventCard(ev,comp,isOpen){
     html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div>${rb}</div>`;
     if(!rb&&!hasRes) html+=`<div style="margin-top:4px;"><span style="font-size:11px;color:var(--amber);font-weight:600;">\u23f3 Awaiting result</span></div>`;
     if(pointsBreakdown) html+=`<div style="font-size:10px;color:${earnedPts>0?'var(--green)':'var(--text-3)'};margin-top:4px;font-weight:600;">${pointsBreakdown}</div>`;
+    if(comp.mode==='lms'&&hasRes) html+=`<div data-surv-ev="${ev.id}" style="text-align:left;font-family:var(--sans);font-size:11px;font-weight:700;color:var(--text-2);margin-top:6px;"></div>`;
   } else {
     html+='<div style="font-size:12px;color:var(--text-3);">No prediction made.</div>';
+    if(comp.mode==='lms'&&hasRes) html+=`<div data-surv-ev="${ev.id}" style="text-align:left;font-family:var(--sans);font-size:11px;font-weight:700;color:var(--text-2);margin-top:6px;"></div>`;
   }
   html+='</div></div>'; return html;
 }
@@ -885,10 +885,10 @@ async function loadLMSSummary(wrapperId,comp,round,events){
         }
         if(alive)evSurvived++;
       });
-      ev._survivalPct=joined>0?Math.round(evSurvived/joined*100):0;
-      // Update the survival % display
+      ev._survivorCount=evSurvived;
+      // Update the survival count display
       const survEl=document.querySelector(`[data-surv-ev="${ev.id}"]`);
-      if(survEl)survEl.textContent=ev._survivalPct+'% survived';
+      if(survEl)survEl.textContent=evSurvived+' survived';
     });
 
     // Update the DOM
