@@ -339,11 +339,13 @@ async function buildCompsFromRealData(){
         return {id:r.id, label:r.label, deadline:r.deadline||'',
           status: r.status==='completed'?'completed':(allDone&&evIds.length?'completed':'open'),
           eventIds:evIds, tournamentNames:r.tournament_names||[],
-          rankingTeams:r.ranking_teams||null};
+          rankingTeams:r.ranking_teams||null,
+          prizes:r.prizes||null};
       });
       COMPS.push({id:c.id, name:c.name, mode:c.mode||'lms', color:c.color||'#4F46E5',
         scoring:c.scoring||null, markets:c.markets||[],
         rankingConfig:c.ranking_config||null,
+        overallPrizes:c.overall_prizes||null,
         rounds:cRounds,
         tournamentNames:[...new Set(cRounds.flatMap(r=>r.tournamentNames||[]).filter(Boolean))]
       });
@@ -1125,7 +1127,8 @@ async function loadAndRenderLeaderboard(comp){
       const rows=Object.values(players).sort((a,b)=>b.points-a.points||b.played-a.played);
       let rank=1; rows.forEach((r,i)=>{ if(i>0&&rows[i].points<rows[i-1].points)rank=i+1; r.rank=rank; });
       const subtitle=isOverall?'Overall — total points':comp.rounds[sel].label+' · points';
-      paneEl.innerHTML=buildLBTable(comp.name,subtitle,rows,r=>`<td class="lb-num">${r.points} pts</td>`,'<th class="r">Points</th>');
+      const activePrizes = isOverall ? comp.overallPrizes : comp.rounds[sel]?.prizes;
+      paneEl.innerHTML=buildLBTable(comp.name,subtitle,rows,r=>`<td class="lb-num">${r.points} pts</td>`,'<th class="r">Points</th>',activePrizes);
       return;
     }
 
@@ -1137,7 +1140,7 @@ async function loadAndRenderLeaderboard(comp){
       const rows=Object.values(players).map(p=>({u:p.u,survived:p.rounds.size})).sort((a,b)=>b.survived-a.survived);
       if(!rows.length){paneEl.innerHTML='<div class="empty"><div class="empty-icon">🏆</div><div class="empty-title">No predictions yet</div></div>';return;}
       let rank=1; rows.forEach((r,i)=>{ if(i>0&&rows[i].survived<rows[i-1].survived)rank=i+1; r.rank=rank; });
-      paneEl.innerHTML=buildLBTable(comp.name,'Overall',rows,r=>`<td class="lb-num">${r.survived}</td>`,'<th class="r">Rounds</th>');
+      paneEl.innerHTML=buildLBTable(comp.name,'Overall',rows,r=>`<td class="lb-num">${r.survived}</td>`,'<th class="r">Rounds</th>',comp.overallPrizes);
     } else {
       const round=comp.rounds[sel]; if(!round){paneEl.innerHTML='';return;}
       const {data} = await supa.from('gw_predictions').select('username,player_id,event_id').eq('client_key',CLIENT_PARAM).eq('round_id',round.id);
@@ -1147,15 +1150,23 @@ async function loadAndRenderLeaderboard(comp){
       if(!rows.length){paneEl.innerHTML=`<div class="empty"><div class="empty-icon">🏆</div><div class="empty-title">No predictions yet</div><div class="empty-sub">Be the first to predict ${round.label}.</div></div>`;return;}
       const totalEvents=round.eventIds.length; let rank=1;
       rows.forEach((r,i)=>{ if(i>0&&rows[i].predictions<rows[i-1].predictions)rank=i+1; r.rank=rank; });
-      paneEl.innerHTML=buildLBTable(comp.name,round.label+' · this week',rows,r=>`<td class="lb-num">${r.predictions} / ${totalEvents}</td>`,'<th class="r">Predictions</th>');
+      paneEl.innerHTML=buildLBTable(comp.name,round.label+' · this week',rows,r=>`<td class="lb-num">${r.predictions} / ${totalEvents}</td>`,'<th class="r">Predictions</th>',round.prizes);
     }
   }catch(e){ paneEl.innerHTML=`<div class="empty"><div class="empty-title">Error</div><div class="empty-sub">${e.message}</div></div>`; }
 }
 
-function buildLBTable(title,sub,rows,cellFn,colHeader){
+function buildLBTable(title,sub,rows,cellFn,colHeader,prizes){
   const me=currentPlayer?.username;
-  let html=`<div class="lb-wrap"><div class="lb-table-head"><span class="lb-table-head-title">${title}</span><span class="lb-table-head-sub">${sub}</span></div><table class="lb-table"><thead><tr><th style="width:32px;text-align:center">#</th><th>Player</th>${colHeader}</tr></thead><tbody>`;
-  rows.forEach(row=>{ const isMe=row.u===me,ini=(row.u||'?').slice(0,2).toUpperCase(); html+=`<tr class="${isMe?'me':''}"><td class="lb-rank ${row.rank<=3?'top':''}">${row.rank<=3?MEDALS[row.rank-1]:row.rank}</td><td><div class="lb-user"><div class="lb-av ${isMe?'me':''}">${ini}</div><span class="lb-uname ${isMe?'me':''}">${row.u}${isMe?'<span class="you-tag">YOU</span>':''}</span></div></td>${cellFn(row)}</tr>`; });
+  const prizeMap={};
+  (prizes||[]).forEach(p=>{prizeMap[p.pos]=p.text;});
+  const hasPrizes=Object.keys(prizeMap).length>0;
+  let html=`<div class="lb-wrap"><div class="lb-table-head"><span class="lb-table-head-title">${title}</span><span class="lb-table-head-sub">${sub}</span></div><table class="lb-table"><thead><tr><th style="width:32px;text-align:center">#</th><th>Player</th>${colHeader}${hasPrizes?'<th class="r">Prize</th>':''}</tr></thead><tbody>`;
+  rows.forEach(row=>{
+    const isMe=row.u===me,ini=(row.u||'?').slice(0,2).toUpperCase();
+    const prizeText=prizeMap[row.rank];
+    const prizeCell=hasPrizes?`<td class="r" style="font-size:11px;color:${prizeText?'var(--text)':'var(--text-3)'};font-weight:${prizeText?'700':'400'};">${prizeText?'🏆 '+prizeText:'—'}</td>`:'';
+    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank ${row.rank<=3?'top':''}">${row.rank<=3?MEDALS[row.rank-1]:row.rank}</td><td><div class="lb-user"><div class="lb-av ${isMe?'me':''}">${ini}</div><span class="lb-uname ${isMe?'me':''}">${row.u}${isMe?'<span class="you-tag">YOU</span>':''}</span></div></td>${cellFn(row)}${prizeCell}</tr>`;
+  });
   html+=`</tbody></table></div>`; return html;
 }
 

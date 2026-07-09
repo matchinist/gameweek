@@ -291,28 +291,32 @@ const COMPS=[
   {id:'c1',name:'Score Predictor',mode:'score',color:'#4F46E5',
     scoring:{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1},
     tournamentNames:['Premier League'],
+    overallPrizes:[{pos:1,text:'€100 bookmaker credit'},{pos:2,text:'€50 bookmaker credit'},{pos:3,text:'Free bet token'}],
     rounds:[
-      {id:'r0a',label:'Gameweek 1',status:'completed',deadline:'2026-08-16T14:00',eventIds:['e0a','e0b','e0c','e0d']},
-      {id:'r0b',label:'Gameweek 2',status:'completed',deadline:'2026-08-23T14:00',eventIds:['e0e','e0f','e0g','e0h']},
-      {id:'r1',label:'Gameweek 3',status:'open',deadline:'2026-08-31T14:00',eventIds:['e1','e2','e3','e4','e5']},
+      {id:'r0a',label:'Gameweek 1',status:'completed',deadline:'2026-08-16T14:00',eventIds:['e0a','e0b','e0c','e0d'],prizes:[{pos:1,text:'€20 bookmaker credit'},{pos:2,text:'Free bet token'}]},
+      {id:'r0b',label:'Gameweek 2',status:'completed',deadline:'2026-08-23T14:00',eventIds:['e0e','e0f','e0g','e0h'],prizes:[{pos:1,text:'€20 bookmaker credit'},{pos:2,text:'Free bet token'}]},
+      {id:'r1',label:'Gameweek 3',status:'open',deadline:'2026-08-31T14:00',eventIds:['e1','e2','e3','e4','e5'],prizes:[{pos:1,text:'€20 bookmaker credit'},{pos:2,text:'Free bet token'}]},
     ]},
   {id:'c2',name:'Last Man Standing',mode:'lms',color:'#DC2626',
     tournamentNames:['Champions League'],
+    overallPrizes:[{pos:1,text:'€250 cash prize'},{pos:2,text:'€100 cash prize'},{pos:3,text:'€50 cash prize'}],
     rounds:[
-      {id:'r3',label:'Matchday 1',status:'open',deadline:'2026-10-01T17:00',eventIds:['e201','e202','e203']},
+      {id:'r3',label:'Matchday 1',status:'open',deadline:'2026-10-01T17:00',eventIds:['e201','e202','e203'],prizes:[{pos:1,text:'Season ticket voucher'}]},
     ]},
   {id:'c3',name:'Betting Markets',mode:'betting',color:'#059669',
     markets:[{type:'1x2',label:'Match Result',points:3},{type:'ou25',label:'Over / Under 2.5',points:2},{type:'btts',label:'Both Teams to Score',points:2}],
     tournamentNames:['La Liga','Serie A'],
+    overallPrizes:[{pos:1,text:'€150 bookmaker credit'},{pos:2,text:'€75 bookmaker credit'},{pos:3,text:'€25 bookmaker credit'}],
     rounds:[
-      {id:'r5a',label:'Round 1',status:'completed',deadline:'2026-08-16T17:00',eventIds:['e305','e306']},
-      {id:'r5',label:'Round 2',status:'open',deadline:'2026-08-30T17:00',eventIds:['e301','e303','e304']},
+      {id:'r5a',label:'Round 1',status:'completed',deadline:'2026-08-16T17:00',eventIds:['e305','e306'],prizes:[{pos:1,text:'€15 free bet'}]},
+      {id:'r5',label:'Round 2',status:'open',deadline:'2026-08-30T17:00',eventIds:['e301','e303','e304'],prizes:[{pos:1,text:'€15 free bet'}]},
     ]},
   {id:'c4',name:'Ranking',mode:'ranking',color:'#8B5CF6',
     tournamentNames:['Premier League'],
     rankingConfig:{metric:'xG',pointsPerCorrect:2,perfectBonus:5},
+    overallPrizes:[{pos:1,text:'Signed team shirt'},{pos:2,text:'€50 bookmaker credit'},{pos:3,text:'Free bet token'}],
     rounds:[
-      {id:'r7',label:'Gameweek 3',status:'open',deadline:'2026-08-31T14:00',
+      {id:'r7',label:'Gameweek 3',status:'open',deadline:'2026-08-31T14:00',prizes:[{pos:1,text:'€10 free bet'}],
         rankingTeams:[
           {id:'rt1',name:'Arsenal',logo:lg('Arsenal'),opponent:'vs Wolves · 30 Aug',actualXG:2.1,matchResult:'2-0',matchXG:'2.1'},
           {id:'rt2',name:'Man City',logo:lg('Man City'),opponent:'vs Chelsea · 30 Aug',actualXG:3.4,matchResult:'3-1',matchXG:'3.4'},
@@ -321,7 +325,7 @@ const COMPS=[
           {id:'rt5',name:'Spurs',logo:lg('Spurs'),opponent:'vs Everton · 31 Aug',actualXG:null},
           {id:'rt6',name:'Man Utd',logo:lg('Man Utd'),opponent:'vs Newcastle · 01 Sep',actualXG:null},
         ]},
-      {id:'r8',label:'Gameweek 2',status:'completed',deadline:'2026-08-24T14:00',
+      {id:'r8',label:'Gameweek 2',status:'completed',deadline:'2026-08-24T14:00',prizes:[{pos:1,text:'€10 free bet'}],
         rankingTeams:[
           {id:'rt1',name:'Arsenal',logo:lg('Arsenal'),opponent:'vs Newcastle · 23 Aug',actualXG:2.4,matchResult:'3-1',matchXG:'2.4'},
           {id:'rt2',name:'Man City',logo:lg('Man City'),opponent:'vs Wolves · 23 Aug',actualXG:3.1,matchResult:'4-0',matchXG:'3.1'},
@@ -975,27 +979,36 @@ function renderLeaderboardPane(comp){
   const rKey=isOverall?'overall':(round?.id||'');
   let rows=cData?.[rKey]||[];
   if(!rows.length){html+='<div class="empty"><div class="empty-icon">\u{1F3C6}</div><div class="empty-title">No predictions yet</div></div>';return html;}
+  const activePrizes = isOverall ? comp.overallPrizes : round?.prizes;
   let rank=1;
   if(comp.mode==='score'||comp.mode==='betting'){
     rows.sort((a,b)=>b.points-a.points);
     rows.forEach((r,i)=>{if(i>0&&rows[i].points<rows[i-1].points)rank=i+1;r.rank=rank;});
-    html+=buildLBTable(comp.name,isOverall?'Overall':round.label,rows,r=>`<td class="lb-num">${r.points} pts</td>`,'<th class="r">Points</th>');
+    html+=buildLBTable(comp.name,isOverall?'Overall':round.label,rows,r=>`<td class="lb-num">${r.points} pts</td>`,'<th class="r">Points</th>',activePrizes);
   } else if(comp.mode==='ranking'){
     rows.sort((a,b)=>b.points-a.points);
     rows.forEach((r,i)=>{if(i>0&&rows[i].points<rows[i-1].points)rank=i+1;r.rank=rank;});
-    html+=buildLBTable(comp.name,isOverall?'Overall':round.label,rows,r=>`<td class="lb-num">${r.points} pts</td>`,'<th class="r">Points</th>');
+    html+=buildLBTable(comp.name,isOverall?'Overall':round.label,rows,r=>`<td class="lb-num">${r.points} pts</td>`,'<th class="r">Points</th>',activePrizes);
   } else {
     rows.sort((a,b)=>(b.correct||0)-(a.correct||0));
     rows.forEach((r,i)=>{if(i>0&&((rows[i].correct||0)<(rows[i-1].correct||0)))rank=i+1;r.rank=rank;});
-    html+=buildLBTable(comp.name,isOverall?'Overall':round.label,rows,r=>`<td class="lb-num">${r.correct||0}</td>`,'<th class="r">Correct</th>');
+    html+=buildLBTable(comp.name,isOverall?'Overall':round.label,rows,r=>`<td class="lb-num">${r.correct||0}</td>`,'<th class="r">Correct</th>',activePrizes);
   }
   return html;
 }
 function changeLBSelection(val){lbSelection[currentCompIdx]=val==='overall'?'overall':parseInt(val);renderPredict();}
-function buildLBTable(title,sub,rows,cellFn,colHeader){
+function buildLBTable(title,sub,rows,cellFn,colHeader,prizes){
   const me=currentUser;
-  let html=`<div class="lb-wrap"><div class="lb-table-head"><span class="lb-table-head-title">${title}</span><span class="lb-table-head-sub">${sub}</span></div><table class="lb-table"><thead><tr><th style="width:32px;text-align:center">#</th><th>Player</th>${colHeader}</tr></thead><tbody>`;
-  rows.forEach(row=>{const isMe=row.u===me,ini=(row.u||'?').slice(0,2).toUpperCase();html+=`<tr class="${isMe?'me':''}"><td class="lb-rank ${row.rank<=3?'top':''}">${row.rank<=3?MEDALS[row.rank-1]:row.rank}</td><td><div class="lb-user"><div class="lb-av ${isMe?'me':''}">${ini}</div><span class="lb-uname ${isMe?'me':''}">${row.u}${isMe?'<span class="you-tag">YOU</span>':''}</span></div></td>${cellFn(row)}</tr>`;});
+  const prizeMap={};
+  (prizes||[]).forEach(p=>{prizeMap[p.pos]=p.text;});
+  const hasPrizes=Object.keys(prizeMap).length>0;
+  let html=`<div class="lb-wrap"><div class="lb-table-head"><span class="lb-table-head-title">${title}</span><span class="lb-table-head-sub">${sub}</span></div><table class="lb-table"><thead><tr><th style="width:32px;text-align:center">#</th><th>Player</th>${colHeader}${hasPrizes?'<th class="r">Prize</th>':''}</tr></thead><tbody>`;
+  rows.forEach(row=>{
+    const isMe=row.u===me,ini=(row.u||'?').slice(0,2).toUpperCase();
+    const prizeText=prizeMap[row.rank];
+    const prizeCell=hasPrizes?`<td class="r" style="font-size:11px;color:${prizeText?'var(--text)':'var(--text-3)'};font-weight:${prizeText?'700':'400'};">${prizeText?'🏆 '+prizeText:'—'}</td>`:'';
+    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank ${row.rank<=3?'top':''}">${row.rank<=3?MEDALS[row.rank-1]:row.rank}</td><td><div class="lb-user"><div class="lb-av ${isMe?'me':''}">${ini}</div><span class="lb-uname ${isMe?'me':''}">${row.u}${isMe?'<span class="you-tag">YOU</span>':''}</span></div></td>${cellFn(row)}${prizeCell}</tr>`;
+  });
   html+='</tbody></table></div>';return html;
 }
 
