@@ -1006,36 +1006,31 @@ function renderRouletteHTML(){
       <button onclick="rlClearAll()" style="font-family:var(--mono);font-size:10px;font-weight:700;color:rgba(255,255,255,0.7);background:transparent;border:1px solid rgba(255,255,255,0.25);border-radius:8px;padding:7px 12px;cursor:pointer;">Clear all</button>
     </div>
 
-    <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;">
-      <div style="flex:0 1 420px;">
-        <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 10px 2px;display:flex;justify-content:space-between;gap:12px;">
-          <span>Correct score</span><span style="font-weight:400;text-transform:none;white-space:nowrap;">tap a number, or the dots between</span>
+    <div style="max-width:420px;margin:0 auto;">
+      <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 10px 2px;text-align:center;">
+        Correct score <span style="font-weight:400;text-transform:none;">— tap a number, or the dots between</span>
+      </div>
+      <div id="rl-scale-outer" style="width:100%;overflow:hidden;display:flex;justify-content:center;">
+      <div id="rl-scale-inner" style="width:fit-content;flex-shrink:0;transform-origin:top center;">
+      <div style="width:fit-content;margin:0 auto;padding:14px;background:var(--white);border-radius:14px;border:1px solid var(--border);">
+        <div style="position:relative;width:${RL_CELL*4+RL_GAP*3}px;height:${RL_CELL*4+RL_GAP*3}px;">
+          <div id="rl-grid" style="position:absolute;top:0;left:0;display:grid;grid-template-columns:repeat(4,${RL_CELL}px);grid-template-rows:repeat(4,${RL_CELL}px);gap:${RL_GAP}px;"></div>
+          <div id="rl-dots" style="position:absolute;top:0;left:0;width:${RL_CELL*4+RL_GAP*3}px;height:${RL_CELL*4+RL_GAP*3}px;pointer-events:none;"></div>
         </div>
-        <div id="rl-scale-outer" style="width:100%;overflow:hidden;">
-        <div id="rl-scale-inner" style="width:fit-content;transform-origin:top left;">
-        <div style="width:fit-content;margin:0 auto;padding:14px;background:var(--white);border-radius:14px;border:1px solid var(--border);">
-          <div style="position:relative;width:${RL_CELL*4+RL_GAP*3}px;height:${RL_CELL*4+RL_GAP*3}px;">
-            <div id="rl-grid" style="position:absolute;top:0;left:0;display:grid;grid-template-columns:repeat(4,${RL_CELL}px);grid-template-rows:repeat(4,${RL_CELL}px);gap:${RL_GAP}px;"></div>
-            <div id="rl-dots" style="position:absolute;top:0;left:0;width:${RL_CELL*4+RL_GAP*3}px;height:${RL_CELL*4+RL_GAP*3}px;pointer-events:none;"></div>
-          </div>
-        </div>
-        </div>
-        </div>
-        <div style="display:flex;gap:12px;margin-top:10px;padding:0 2px;flex-wrap:wrap;">
-          <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:var(--accent-light);border:1px solid var(--accent);"></span>Arsenal win</div>
-          <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:var(--surface);border:1px solid var(--text-3);"></span>Draw</div>
-          <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:#FFEDD5;border:1px solid #EA580C;"></span>Chelsea win</div>
-          <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:50%;background:var(--white);border:1.5px solid var(--text-3);"></span>Split / corner bet</div>
-        </div>
+      </div>
+      </div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:10px;padding:0 2px;flex-wrap:wrap;justify-content:center;">
+        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:var(--accent-light);border:1px solid var(--accent);"></span>Arsenal win</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:var(--surface);border:1px solid var(--text-3);"></span>Draw</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:#FFEDD5;border:1px solid #EA580C;"></span>Chelsea win</div>
       </div>
 
-      <div style="flex:1 1 200px;min-width:180px;">
-        <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 10px 2px;">Other markets</div>
-        <div id="rl-side-bets" style="display:grid;grid-template-columns:1fr;gap:8px;"></div>
-      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin:18px 0 10px 2px;text-align:center;">Other markets</div>
+      <div id="rl-side-bets" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
     </div>
 
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+    <div style="display:flex;align-items:center;justify-content:space-between;max-width:420px;margin:20px auto 0;padding-top:16px;border-top:1px solid var(--border);">
       <div style="font-size:12px;color:var(--text-2);"><strong id="rl-staked-count" style="color:var(--text);font-family:var(--mono);">0</strong> of 100 staked</div>
       <button id="rl-place-btn" disabled onclick="rlPlaceBets()" style="font-family:var(--mono);font-size:12px;font-weight:700;color:white;background:var(--accent);border:none;border-radius:8px;padding:12px 24px;cursor:pointer;">Place Bets</button>
     </div>
@@ -1086,10 +1081,10 @@ function initRouletteBoard(){
   boundary.forEach((by,ri)=>boundary.forEach((bx,ci)=>addDot('rlcorner_'+ri+'_'+ci,bx,by,[rlCellId(ri,ci),rlCellId(ri,ci+1),rlCellId(ri+1,ci),rlCellId(ri+1,ci+1)],'4-way: '+rlScoreLabel(ri,ci)+', '+rlScoreLabel(ri,ci+1)+', '+rlScoreLabel(ri+1,ci)+', '+rlScoreLabel(ri+1,ci+1))));
 
   const SIDE=[
-    {id:'rlbtts_y',label:'BTTS',sub:'Yes',mult:2,match:(h,a)=>rlNumVal(h)>0&&rlNumVal(a)>0},
-    {id:'rlbtts_n',label:'BTTS',sub:'No',mult:2,match:(h,a)=>rlNumVal(h)===0||rlNumVal(a)===0},
-    {id:'rlou_o',label:'2.5',sub:'Over',mult:2,match:(h,a)=>rlNumVal(h)+rlNumVal(a)>=3},
-    {id:'rlou_u',label:'2.5',sub:'Under',mult:2,match:(h,a)=>rlNumVal(h)+rlNumVal(a)<3},
+    {id:'rlbtts_y',label:'BTTS',sub:'Yes',mult:2,match:(h,a)=>rlNumVal(h)>0&&rlNumVal(a)>0,bg:'#BBF7D0',border:'#16A34A',text:'#166534'},
+    {id:'rlbtts_n',label:'BTTS',sub:'No',mult:2,match:(h,a)=>rlNumVal(h)===0||rlNumVal(a)===0,bg:'#F0FDF4',border:'#86EFAC',text:'#16A34A'},
+    {id:'rlou_o',label:'2.5',sub:'Over',mult:2,match:(h,a)=>rlNumVal(h)+rlNumVal(a)>=3,bg:'#BFDBFE',border:'#2563EB',text:'#1E3A8A'},
+    {id:'rlou_u',label:'2.5',sub:'Under',mult:2,match:(h,a)=>rlNumVal(h)+rlNumVal(a)<3,bg:'#EFF6FF',border:'#93C5FD',text:'#2563EB'},
   ];
   const sideEl=document.getElementById('rl-side-bets');
   sideEl.innerHTML='';
@@ -1097,13 +1092,14 @@ function initRouletteBoard(){
     rlMeta[b.id]={label:b.label+' '+b.sub,mult:b.mult,cells:[b.id]};
     const div=document.createElement('div');
     div.id=b.id;
-    div.style.cssText='border:1px solid var(--border);border-radius:10px;background:var(--white);padding:11px 13px;cursor:pointer;user-select:none;transition:border-color .15s;display:flex;align-items:center;justify-content:space-between;position:relative;';
+    div.style.cssText=`border:1.5px solid ${b.border};border-radius:10px;background:${b.bg};padding:11px 13px;cursor:pointer;user-select:none;transition:transform .1s;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;text-align:center;`;
     div.onclick=()=>rlAddChip(b.id);
     div.onmouseenter=()=>rlHighlight(b);
     div.onmouseleave=rlClearHighlight;
     div.innerHTML=`<span id="rlminus_${b.id}" onclick="event.stopPropagation();rlRemoveChip('${b.id}')" style="position:absolute;top:-6px;right:-6px;width:19px;height:19px;border-radius:50%;background:var(--red);color:white;font-size:12px;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;z-index:6;">−</span>
-      <div><div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">${b.label}</div><div style="font-size:10px;color:var(--text-3);margin-top:1px;">${b.sub}</div></div>
-      <span id="rlchip_${b.id}" style="display:none;font-family:var(--mono);font-size:11px;font-weight:700;color:white;background:var(--accent);border-radius:8px;padding:2px 9px;min-width:24px;text-align:center;"></span>`;
+      <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:${b.text};">${b.label}</div>
+      <div style="font-size:10px;color:${b.text};opacity:0.8;margin-top:1px;">${b.sub}</div>
+      <span id="rlchip_${b.id}" style="display:none;margin-top:5px;font-family:var(--mono);font-size:11px;font-weight:700;color:white;background:${b.border};border-radius:8px;padding:2px 9px;min-width:24px;text-align:center;"></span>`;
     sideEl.appendChild(div);
   });
   rlUpdateFooter();
@@ -1146,11 +1142,20 @@ function rlClearAll(){
   Object.keys(rlMeta).forEach(rlRender);
 }
 function rlRender(id){
+  const el=document.getElementById(id);
   const chipEl=document.getElementById('rlchip_'+id);
   const minusEl=document.getElementById('rlminus_'+id);
   const val=rlStakes[id]||0;
-  if(chipEl){chipEl.textContent=val;chipEl.style.display=val>0?'inline-block':'none';}
+  if(chipEl){
+    chipEl.textContent=val;
+    chipEl.style.display=val>0?'inline-block':'none';
+    if(id.match(/^rl(hsplit|vsplit|corner)_/)) chipEl.style.color = val>0 ? 'white' : 'var(--text-3)';
+  }
   if(minusEl){minusEl.style.display=val>0?'flex':'none';}
+  if(el && id.match(/^rl(hsplit|vsplit|corner)_/)){
+    if(val>0){ el.style.background='#2563EB'; el.style.borderColor='#1D4ED8'; el.style.transform='translate(-50%,-50%) scale(1.15)'; }
+    else { el.style.background='var(--white)'; el.style.borderColor='var(--text-3)'; el.style.transform='translate(-50%,-50%) scale(1)'; }
+  }
   rlUpdateFooter();
 }
 function rlUpdateFooter(){
