@@ -911,6 +911,8 @@
 
     /* ── RESPONSIVE ── */
     @media (max-width: 900px) {
+      #pricing > div:last-child > div:first-child { grid-template-columns: 1fr !important; }
+      #pricing > div > div { position: static !important; }
       nav { padding: 0 20px; }
       .hero { grid-template-columns: 1fr; gap: 40px; padding: 48px 20px; }
       .live-card { max-width: 100%; }
@@ -1001,6 +1003,7 @@
   <a href="#" class="logo">game<span>week</span></a>
   <div class="nav-right">
     <a href="#how" class="btn-ghost">How it works</a>
+    <a href="#pricing" class="btn-ghost">Pricing</a>
     <a href="/demo" class="btn-ghost">Demo</a>
     <span id="nav-auth-actions">
       <a href="/admin" class="btn-ghost">Go to dashboard</a>
@@ -1015,6 +1018,7 @@
 <!-- Mobile nav menu -->
 <div class="nav-mobile-menu" id="nav-mobile-menu">
   <a href="#how" onclick="closeMobileNav()">How it works</a>
+  <a href="#pricing" onclick="closeMobileNav()">Pricing</a>
   <a href="/demo" onclick="closeMobileNav()">Demo</a>
   <a href="/admin" onclick="closeMobileNav()">Go to dashboard</a>
 </div>
@@ -1210,6 +1214,123 @@
 </div>
 
 
+
+
+<!-- ── PRICING ── -->
+<div class="section" id="pricing">
+  <div class="section-eyebrow">Pricing</div>
+  <h2 class="section-title">Pay as you go.<br>No fixed fees.</h2>
+  <p class="section-sub">You only pay for real engagement. One simple rate, all game modes and competitions included, with a monthly cap so costs are always predictable.</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:48px;align-items:start;">
+
+    <!-- Left: pricing details -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:28px 24px;">
+        <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:16px;">How it works</div>
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px;">
+          <span style="font-family:var(--mono);font-size:42px;font-weight:700;color:var(--text);">$0.30</span>
+          <span style="font-size:14px;color:var(--text-2);">per Monthly Active User</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-3);margin-bottom:24px;">Maximum <strong style="color:var(--text);">$150 / month</strong> — your costs are always capped.</div>
+
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;gap:12px;align-items:flex-start;">
+            <span style="color:var(--green);font-weight:700;flex-shrink:0;margin-top:1px;">✓</span>
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--text);">All 4 game modes</div>
+              <div style="font-size:12px;color:var(--text-3);margin-top:2px;">Score Predictor, Last Man Standing, Betting Markets, Ranking — all included.</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;">
+            <span style="color:var(--green);font-weight:700;flex-shrink:0;margin-top:1px;">✓</span>
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--text);">Unlimited competitions</div>
+              <div style="font-size:12px;color:var(--text-3);margin-top:2px;">Run as many competitions across as many leagues as you want.</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;">
+            <span style="color:var(--green);font-weight:700;flex-shrink:0;margin-top:1px;">✓</span>
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--text);">Monthly Active User = at least one prediction</div>
+              <div style="font-size:12px;color:var(--text-3);margin-top:2px;">Registered users who make no predictions in a month are never counted.</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;">
+            <span style="color:var(--accent);font-weight:700;flex-shrink:0;margin-top:1px;">⬆</span>
+            <div>
+              <div style="font-size:14px;font-weight:600;color:var(--text);">Cost capped at $150/month</div>
+              <div style="font-size:12px;color:var(--text-3);margin-top:2px;">No surprises. Once you hit 500 MAU your bill stops growing — even at 5,000 users.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right: interactive calculator -->
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:28px 24px;position:sticky;top:80px;">
+      <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:20px;">Cost calculator</div>
+
+      <div style="margin-bottom:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <label style="font-size:13px;font-weight:600;color:var(--text);">Monthly Active Users</label>
+          <span id="calc-mau-val" style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--accent);">250</span>
+        </div>
+        <input type="range" id="calc-slider" min="0" max="1000" step="10" value="250"
+          oninput="calcUpdate(this.value)"
+          style="width:100%;accent-color:var(--accent);cursor:pointer;">
+        <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--text-3);margin-top:4px;">
+          <span>0</span><span>250</span><span>500+</span><span>1,000</span>
+        </div>
+      </div>
+
+      <div style="background:var(--surface);border-radius:10px;padding:20px 18px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <span style="font-size:13px;color:var(--text-2);">Active users</span>
+          <span id="calc-users" style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);">250</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <span style="font-size:13px;color:var(--text-2);">Rate</span>
+          <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);">$0.30 / MAU</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <span style="font-size:13px;color:var(--text-2);">Calculated cost</span>
+          <span id="calc-raw" style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);">$75.00</span>
+        </div>
+        <div style="border-top:1px solid var(--border);margin:12px 0;"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:15px;font-weight:700;color:var(--text);">You pay</span>
+          <span id="calc-final" style="font-family:var(--mono);font-size:22px;font-weight:800;color:var(--accent);">$75.00</span>
+        </div>
+        <div id="calc-cap-note" style="font-size:11px;color:var(--green);font-weight:600;margin-top:6px;display:none;">🎉 Cost capped — you pay $150 no matter how many more users you add.</div>
+      </div>
+
+      <a href="/contact" style="display:block;text-align:center;background:var(--accent);color:white;padding:13px;border-radius:8px;font-family:var(--mono);font-weight:700;font-size:13px;text-decoration:none;">Get started →</a>
+    </div>
+
+  </div>
+
+  <div class="section-cta">
+    <a href="/contact" class="btn-hero-primary">Contact us →</a>
+    <a href="/demo" class="btn-hero-ghost">Try the demo</a>
+  </div>
+</div>
+
+<script>
+function calcUpdate(v){
+  const mau=parseInt(v);
+  const raw=mau*0.30;
+  const final=Math.min(raw,150);
+  const capped=raw>150;
+  document.getElementById('calc-mau-val').textContent=mau>=1000?'1,000+':mau.toLocaleString();
+  document.getElementById('calc-users').textContent=mau>=1000?'1,000+':mau.toLocaleString();
+  document.getElementById('calc-raw').textContent='$'+raw.toFixed(2);
+  document.getElementById('calc-final').textContent='$'+final.toFixed(2);
+  document.getElementById('calc-cap-note').style.display=capped?'block':'none';
+}
+</script>
 
 <!-- ── FINAL CTA ── -->
 <div class="cta-section">
