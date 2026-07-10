@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Set up your account — Gameweek</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: #F6F5FB; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 16px; }
+  .logo { font-family: monospace; font-size: 22px; font-weight: 700; color: #0F1117; margin-bottom: 32px; }
+  .logo span { color: #4F46E5; }
+  .card { background: white; border: 1px solid #E5E7EB; border-radius: 16px; padding: 36px 32px; width: 100%; max-width: 420px; }
+  .card-title { font-family: monospace; font-size: 18px; font-weight: 700; color: #0F1117; margin-bottom: 6px; }
+  .card-sub { font-size: 13px; color: #6B7280; margin-bottom: 28px; line-height: 1.5; }
+  .success-icon { font-size: 36px; margin-bottom: 12px; }
+  label { font-size: 12px; font-weight: 600; color: #374151; display: block; margin-bottom: 6px; }
+  input { width: 100%; border: 1px solid #E5E7EB; border-radius: 8px; padding: 10px 14px; font-size: 14px; color: #0F1117; outline: none; margin-bottom: 16px; transition: border-color .15s; }
+  input:focus { border-color: #4F46E5; }
+  input:disabled { background: #F9FAFB; color: #9CA3AF; }
+  .btn { width: 100%; background: #4F46E5; color: white; border: none; border-radius: 8px; padding: 13px; font-family: monospace; font-weight: 700; font-size: 14px; cursor: pointer; transition: background .15s; }
+  .btn:hover:not(:disabled) { background: #3730A3; }
+  .btn:disabled { background: #E5E7EB; color: #9CA3AF; cursor: default; }
+  .error { font-size: 12px; color: #DC2626; background: #FEE2E2; border-radius: 6px; padding: 10px 12px; margin-bottom: 16px; display: none; }
+  .error.visible { display: block; }
+  .hint { font-size: 11px; color: #9CA3AF; margin-top: 6px; }
+  .divider { border: none; border-top: 1px solid #F3F4F6; margin: 20px 0; }
+  .already { font-size: 12px; color: #6B7280; text-align: center; margin-top: 16px; }
+  .already a { color: #4F46E5; text-decoration: none; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="logo">game<span>week</span></div>
+
+<div class="card">
+  <!-- Step 1: setup form -->
+  <div id="step-setup">
+    <div class="success-icon">🎉</div>
+    <div class="card-title">Payment confirmed!</div>
+    <div class="card-sub">Set up your Gameweek account to access your dashboard.</div>
+
+    <div id="error-msg" class="error"></div>
+
+    <label>Email</label>
+    <input type="email" id="email" placeholder="your@email.com">
+
+    <label>Choose a password</label>
+    <input type="password" id="password" placeholder="At least 8 characters" minlength="8">
+    <p class="hint" style="margin-top:-10px;margin-bottom:16px;">Min. 8 characters</p>
+
+    <label>Company / site name</label>
+    <input type="text" id="company" placeholder="e.g. FootyTips">
+
+    <button class="btn" id="signup-btn" onclick="doSignup()">Create account & go to dashboard →</button>
+    <div class="already">Already have an account? <a href="/admin">Sign in</a></div>
+  </div>
+
+  <!-- Step 2: success -->
+  <div id="step-done" style="display:none;text-align:center;">
+    <div style="font-size:48px;margin-bottom:16px;">✅</div>
+    <div class="card-title" style="margin-bottom:8px;">Account created!</div>
+    <div class="card-sub">Taking you to your dashboard…</div>
+  </div>
+</div>
+
+<script>
+  const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
+  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
+  const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+  function showError(msg) {
+    const el = document.getElementById('error-msg');
+    el.textContent = msg;
+    el.classList.add('visible');
+  }
+  function hideError() {
+    document.getElementById('error-msg').classList.remove('visible');
+  }
+
+  async function doSignup() {
+    hideError();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const company = document.getElementById('company').value.trim();
+
+    if (!email) { showError('Enter your email'); return; }
+    if (!password || password.length < 8) { showError('Password must be at least 8 characters'); return; }
+    if (!company) { showError('Enter your company or site name'); return; }
+
+    const btn = document.getElementById('signup-btn');
+    btn.disabled = true;
+    btn.textContent = 'Creating account…';
+
+    // 1. Sign up with Supabase
+    const { data, error } = await supa.auth.signUp({ email, password });
+
+    if (error) {
+      // If user already exists, try signing in instead
+      if (error.message.includes('already registered') || error.message.includes('already exists')) {
+        const { error: signInErr } = await supa.auth.signInWithPassword({ email, password });
+        if (signInErr) {
+          showError('Account already exists. Try signing in with your password, or use a different email.');
+          btn.disabled = false;
+          btn.textContent = 'Create account & go to dashboard →';
+          return;
+        }
+      } else {
+        showError(error.message);
+        btn.disabled = false;
+        btn.textContent = 'Create account & go to dashboard →';
+        return;
+      }
+    }
+
+    // 2. Upsert operator row
+    const userId = data?.user?.id || (await supa.auth.getUser()).data?.user?.id;
+    if (userId) {
+      const clientKey = company.toLowerCase().replace(/[^a-z0-9]/g, '') + '_' + Math.random().toString(36).slice(2, 8);
+      await supa.from('gw_operators').upsert({
+        id: userId,
+        email,
+        company_name: company,
+        client_key: clientKey,
+        plan: 'active',
+      }, { onConflict: 'id' });
+    }
+
+    // 3. Show success and redirect
+    document.getElementById('step-setup').style.display = 'none';
+    document.getElementById('step-done').style.display = 'block';
+    setTimeout(() => { window.location.href = '/admin'; }, 1500);
+  }
+
+  // Allow Enter key to submit
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') doSignup();
+  });
+</script>
+</body>
+</html>

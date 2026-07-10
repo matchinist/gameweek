@@ -9,19 +9,61 @@
   body { font-family: 'Inter', sans-serif; background: #FAFAFA; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 16px; }
   .logo { font-family: monospace; font-size: 24px; font-weight: 700; color: #0F1117; margin-bottom: 8px; }
   .logo span { color: #4F46E5; }
-  p { font-size: 14px; color: #6B7280; margin-bottom: 40px; }
+  .sub { font-size: 14px; color: #6B7280; margin-bottom: 40px; }
   .table-wrap { width: 100%; max-width: 900px; }
+
+  /* Success state — shown after payment redirect */
+  .success-card { display:none; background:white; border:1px solid #E5E7EB; border-radius:16px; padding:40px 32px; max-width:460px; text-align:center; }
+  .success-card.visible { display:block; }
+  .success-icon { font-size:48px; margin-bottom:16px; }
+  .success-title { font-family:monospace; font-size:20px; font-weight:700; color:#0F1117; margin-bottom:8px; }
+  .success-body { font-size:14px; color:#6B7280; line-height:1.6; margin-bottom:24px; }
+  .success-email { font-family:monospace; font-size:14px; font-weight:700; color:#4F46E5; background:#EEF2FF; padding:8px 16px; border-radius:8px; display:inline-block; margin-bottom:24px; }
+  .success-note { font-size:12px; color:#9CA3AF; }
+  a.btn { display:inline-block; background:#4F46E5; color:white; padding:12px 28px; border-radius:8px; font-family:monospace; font-weight:700; font-size:13px; text-decoration:none; }
 </style>
 </head>
 <body>
   <div class="logo">game<span>week</span></div>
-  <p>Choose the plan that works for you</p>
-  <div class="table-wrap">
+  <p class="sub">Choose the plan that works for you</p>
+
+  <!-- Stripe pricing table (hidden after payment) -->
+  <div class="table-wrap" id="pricing-wrap">
     <script async src="https://js.stripe.com/v3/pricing-table.js"></script>
     <stripe-pricing-table
       pricing-table-id="prctbl_1TrjmiR3NbpQTjwatzKMcTlY"
-      publishable-key="pk_test_51TlREtR3NbpQTjwaKMGb66xNOxGg8gcCSZ0YbJRKcMR6ODZcC9A9FrUuIreu69XxJGNOmIGy0UgokUz8c2b9aqWU007YmdpZ9D">
+      publishable-key="pk_test_51TlREtR3NbpQTjwaKMGb66xNOxGg8gcCSZ0YbJRKcMR6ODZcC9A9FrUuIreu69XxJGNOmIGy0UgokUz8c2b9aqWU007YmdpZ9D"
+      success-url="https://www.gameweek.cloud/welcome?session_id={CHECKOUT_SESSION_ID}">
     </stripe-pricing-table>
   </div>
+
+  <!-- Success state -->
+  <div class="success-card" id="success-card">
+    <div class="success-icon">🎉</div>
+    <div class="success-title">Payment confirmed!</div>
+    <div class="success-body">We're setting up your Gameweek account. Check your inbox — a login link is on its way to:</div>
+    <div class="success-email" id="success-email">your email</div>
+    <div class="success-body">Click the link in the email to access your dashboard. It expires in 24 hours.</div>
+    <div class="success-note" style="margin-bottom:20px;">Didn't get it? Check your spam folder, or <a href="/pricingtest" style="color:#4F46E5;">contact us</a>.</div>
+    <a href="/admin" class="btn">Go to dashboard →</a>
+  </div>
+
+<script>
+  // Check if Stripe redirected back with ?success=1
+  const params = new URLSearchParams(window.location.search);
+  if(params.get('success') === '1'){
+    document.getElementById('pricing-wrap').style.display = 'none';
+    document.querySelector('.sub').style.display = 'none';
+    document.getElementById('success-card').classList.add('visible');
+
+    // Try to get email from session via Stripe session_id
+    // We can't query Stripe directly from the browser (no secret key)
+    // So just show a generic message — the webhook has already handled provisioning
+    const sessionId = params.get('session_id');
+    if(sessionId){
+      document.getElementById('success-email').textContent = 'the email you used at checkout';
+    }
+  }
+</script>
 </body>
 </html>
