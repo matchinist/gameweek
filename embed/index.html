@@ -588,28 +588,27 @@ function renderPredictionsPane(comp){
     }
   }
 
-  // LMS: predictions unlock only 1 hour before the first event's kick-off
-  let lmsUnlocked=true, lmsUnlockTime=null;
-  if(comp.mode==='lms'&&events.length){
+  // ALL MODES: open immediately, lock 1 hour before the first event's kick-off
+  let lockedByTime=false, timeLockAt=null;
+  if(isOpen&&events.length){
     const kickoffTimes=events.map(e=>e.kickoffRaw?new Date(e.kickoffRaw).getTime():null).filter(Boolean);
     if(kickoffTimes.length){
       const firstKickoff=Math.min(...kickoffTimes);
-      lmsUnlockTime=firstKickoff-60*60*1000; // 1 hour before
-      lmsUnlocked=Date.now()>=lmsUnlockTime;
+      timeLockAt=firstKickoff-60*60*1000;
+      lockedByTime=Date.now()>=timeLockAt;
     }
   }
-  const lmsWaitingToUnlock=comp.mode==='lms'&&isOpen&&!lmsUnlocked;
+  const lmsLockedByTime=comp.mode==='lms'&&lockedByTime; // keep var for LMS-specific survived/failed banner
 
-  const badgeText = lmsWaitingToUnlock ? '⏳ Opens soon' : (isOpen?'● Open':'✓ Done');
-  const badgeCls = lmsWaitingToUnlock ? 'upcoming' : round.status;
+  const badgeText = (isOpen&&lockedByTime) ? '🔒 Locked' : (isOpen?'● Open':'✓ Done');
+  const badgeCls = (isOpen&&lockedByTime) ? 'completed' : round.status;
   let html=`<div class="predict-header-row"><div style="display:flex;align-items:center;gap:8px;flex:1;"><select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select><span class="round-status ${badgeCls}">${badgeText}</span></div><div class="predict-subtabs"><button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button></div><div class="predict-subtabs-mobile"><select onchange="switchPredictSubTab(this.value)"><option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option><option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option></select></div></div>`;
 
-  if(lmsWaitingToUnlock){
-    html+=`<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;Predictions open in <span id="countdown-text">Calculating...</span></div>`;
-    setTimeout(()=>startCountdown(lmsUnlockTime,'unlock'),50);
-  } else if(isOpen&&round.deadline){
-    html+=`<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;<span id="countdown-text">Calculating...</span></div>`;
-    setTimeout(()=>startCountdown(round.deadline,'lock'),50);
+  if(isOpen&&lockedByTime){
+    html+=`<div class="deadline-banner" style="background:var(--bg);color:var(--text-2);">🔒 Predictions locked — match starts soon</div>`;
+  } else if(isOpen&&timeLockAt){
+    html+=`<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;Predictions lock in <span id="countdown-text">Calculating...</span></div>`;
+    setTimeout(()=>startCountdown(timeLockAt,'lock'),50);
   } else if(!isOpen&&comp.mode==='lms'){
     let userAlive=true;
     const resultedEvs=events.filter(ev=>ev.res);
@@ -675,8 +674,7 @@ function renderPredictionsPane(comp){
         html+=`<div style="display:flex;align-items:center;gap:8px;padding:8px;margin-bottom:4px;background:${isCorrect?'var(--green-light)':'var(--bg)'};border-radius:8px;border:1px solid ${isCorrect?'var(--green)':'var(--border)'};"><span style="font-family:var(--mono);font-size:12px;font-weight:800;color:${isCorrect?'var(--green)':'var(--text-3)'};width:20px;text-align:center;">#${i+1}</span><div class="ev-badge" style="width:24px;height:24px;font-size:7px;">${t.logo?'<img src="'+t.logo+'" alt="'+t.name+'">':t.name.slice(0,3).toUpperCase()}</div><div style="flex:1;min-width:0;"><div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div><div style="font-size:11px;color:var(--text-2);font-weight:600;">${t.opponent||''}${t.matchResult?' · <span style=font-family:var(--mono);font-weight:800;>'+t.matchResult+'</span>':''}</div></div><div style="text-align:right;"><div style="font-family:var(--mono);font-size:13px;font-weight:800;color:var(--text);">${t.actualXG?.toFixed(1)||'—'}</div><div style="font-size:9px;color:var(--text-3);">xG</div></div><span style="font-size:14px;">${isCorrect?'✓':'✗'}</span></div>`;
       });
     } else {
-    const rankingPastDeadline = round.deadline && new Date(round.deadline).getTime()<=Date.now();
-    const rankingCanPredict = isOpen && !rankingPastDeadline;
+    const rankingCanPredict = isOpen && !lockedByTime;
     if(rankingCanPredict){
       html+=`<div style="padding:8px 8px 12px;font-size:13px;color:var(--text);font-weight:700;">Drag teams to sort from highest to lowest expected ${comp.rankingConfig?.metric||'xG'}</div>`;
       html+=`<div id="ranking-list" data-roundid="${round.id}">`;
@@ -710,7 +708,7 @@ function renderPredictionsPane(comp){
       const isEliminated=eliminatedAtIdx>=0&&i>eliminatedAtIdx;
       const isEliminationPoint=i===eliminatedAtIdx;
       if(comp.mode==='lms'&&isEliminated) lmsBlocked=true;
-      const effectiveOpen=comp.mode==='lms'?(isOpen&&!lmsBlocked&&lmsUnlocked):isOpen;
+      const effectiveOpen=isOpen&&!lockedByTime&&(comp.mode==='lms'?(!lmsBlocked):true);
       html+=`<div style="opacity:${isEliminated?'0.4':'1'};">${renderEventCard(ev,comp,effectiveOpen)}</div>`;
     });
   }
@@ -1017,10 +1015,13 @@ async function submitRanking(roundId){
   if(!currentPlayer){openAuthModal('Sign in to save your ranking');return;}
   const comp=COMPS[currentCompIdx];
   const round=comp?.rounds?.find(r=>r.id===roundId);
-  if(round){
-    const isOpenNow=round.status==='open';
-    const pastDeadline=round.deadline && new Date(round.deadline).getTime()<=Date.now();
-    if(!isOpenNow||pastDeadline){ toast('Predictions are locked for this round'); renderPredict(); return; }
+  if(round&&round.status==='open'){
+    const evIds=round.eventIds||[];
+    const kickoffTimes=evIds.map(id=>EVENTS[id]?.kickoffRaw?new Date(EVENTS[id].kickoffRaw).getTime():null).filter(Boolean);
+    if(kickoffTimes.length){
+      const lockAt=Math.min(...kickoffTimes)-60*60*1000;
+      if(Date.now()>=lockAt){ toast('Predictions are locked for this round'); renderPredict(); return; }
+    }
   }
   predsDirty=false;
   const btn=document.querySelector('.submit-preds-btn');if(btn){btn.classList.add('disabled');btn.textContent='✓ Saved';}
@@ -1059,13 +1060,18 @@ async function submitPreds(){
     openAuthModal('Sign in to save your predictions');
     return;
   }
+  const comp=COMPS[currentCompIdx], round=comp?.rounds[selectedRound[currentCompIdx]];
+  if(!round){toast('No round selected');return;}
+  // Check 1-hour-before-kickoff lock
+  const events=(round.eventIds||[]).map(id=>({id,...EVENTS[id]})).filter(e=>e.home);
+  const kickoffTimes=events.map(e=>e.kickoffRaw?new Date(e.kickoffRaw).getTime():null).filter(Boolean);
+  if(kickoffTimes.length){
+    const lockAt=Math.min(...kickoffTimes)-60*60*1000;
+    if(Date.now()>=lockAt){ toast('Predictions are locked — match starts soon'); renderPredict(); return; }
+  }
   predsDirty=false;
   const btn=document.querySelector('.submit-preds-btn');
   if(btn){btn.classList.add('disabled');btn.textContent='Saving...';}
-
-  const comp=COMPS[currentCompIdx], round=comp?.rounds[selectedRound[currentCompIdx]];
-  if(!round){toast('No round selected');return;}
-  const events=(round.eventIds||[]).map(id=>({id,...EVENTS[id]})).filter(e=>e.home);
   const rows=[];
 
   for(const ev of events){
