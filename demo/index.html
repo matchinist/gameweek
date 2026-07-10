@@ -1026,8 +1026,6 @@ function renderRouletteHTML(){
         <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:#FFEDD5;border:1px solid #EA580C;"></span>Chelsea win</div>
       </div>
 
-      <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin:18px 0 10px 2px;text-align:center;">Other markets</div>
-      <div id="rl-side-bets" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
     </div>
 
     <div style="display:flex;align-items:center;justify-content:space-between;max-width:420px;margin:20px auto 0;padding-top:16px;border-top:1px solid var(--border);">
@@ -1080,28 +1078,6 @@ function initRouletteBoard(){
   for(let c=0;c<4;c++)boundary.forEach((by,ri)=>addDot('rlvsplit_'+ri+'_'+c,center(c),by,[rlCellId(ri,c),rlCellId(ri+1,c)],rlScoreLabel(ri,c)+' / '+rlScoreLabel(ri+1,c)));
   boundary.forEach((by,ri)=>boundary.forEach((bx,ci)=>addDot('rlcorner_'+ri+'_'+ci,bx,by,[rlCellId(ri,ci),rlCellId(ri,ci+1),rlCellId(ri+1,ci),rlCellId(ri+1,ci+1)],'4-way: '+rlScoreLabel(ri,ci)+', '+rlScoreLabel(ri,ci+1)+', '+rlScoreLabel(ri+1,ci)+', '+rlScoreLabel(ri+1,ci+1))));
 
-  const SIDE=[
-    {id:'rlbtts_y',label:'BTTS',sub:'Yes',mult:2,match:(h,a)=>rlNumVal(h)>0&&rlNumVal(a)>0,bg:'#BBF7D0',border:'#16A34A',text:'#166534'},
-    {id:'rlbtts_n',label:'BTTS',sub:'No',mult:2,match:(h,a)=>rlNumVal(h)===0||rlNumVal(a)===0,bg:'#F0FDF4',border:'#86EFAC',text:'#16A34A'},
-    {id:'rlou_o',label:'2.5',sub:'Over',mult:2,match:(h,a)=>rlNumVal(h)+rlNumVal(a)>=3,bg:'#BFDBFE',border:'#2563EB',text:'#1E3A8A'},
-    {id:'rlou_u',label:'2.5',sub:'Under',mult:2,match:(h,a)=>rlNumVal(h)+rlNumVal(a)<3,bg:'#EFF6FF',border:'#93C5FD',text:'#2563EB'},
-  ];
-  const sideEl=document.getElementById('rl-side-bets');
-  sideEl.innerHTML='';
-  SIDE.forEach(b=>{
-    rlMeta[b.id]={label:b.label+' '+b.sub,mult:b.mult,cells:[b.id]};
-    const div=document.createElement('div');
-    div.id=b.id;
-    div.style.cssText=`border:1.5px solid ${b.border};border-radius:10px;background:${b.bg};padding:11px 13px;cursor:pointer;user-select:none;transition:transform .1s;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;text-align:center;`;
-    div.onclick=()=>rlAddChip(b.id);
-    div.onmouseenter=()=>rlHighlight(b);
-    div.onmouseleave=rlClearHighlight;
-    div.innerHTML=`<span id="rlminus_${b.id}" onclick="event.stopPropagation();rlRemoveChip('${b.id}')" style="position:absolute;top:-6px;right:-6px;width:19px;height:19px;border-radius:50%;background:var(--red);color:white;font-size:12px;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;z-index:6;">−</span>
-      <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:${b.text};">${b.label}</div>
-      <div style="font-size:10px;color:${b.text};opacity:0.8;margin-top:1px;">${b.sub}</div>
-      <span id="rlchip_${b.id}" style="display:none;margin-top:5px;font-family:var(--mono);font-size:11px;font-weight:700;color:white;background:${b.border};border-radius:8px;padding:2px 9px;min-width:24px;text-align:center;"></span>`;
-    sideEl.appendChild(div);
-  });
   rlUpdateFooter();
   rlFitBoard();
 }
@@ -1119,9 +1095,6 @@ function rlFitBoard(){
   outer.style.height=(naturalH*scale)+'px';
 }
 window.addEventListener('resize',()=>{ if(document.getElementById('rl-scale-outer'))rlFitBoard(); });
-
-function rlHighlight(bet){document.querySelectorAll('#rl-grid > div').forEach(el=>{if(bet.match(el.dataset.h,el.dataset.a))el.style.outline='2.5px solid var(--amber)';});}
-function rlClearHighlight(){document.querySelectorAll('#rl-grid > div').forEach(el=>{el.style.outline='';});}
 
 function rlAddChip(id){
   if(rlRemaining<RL_STEP)return;
@@ -1173,9 +1146,22 @@ function rlRenderBetslip(){
   if(!el)return;
   const ids=Object.keys(rlStakes);
   if(!ids.length){el.innerHTML='';return;}
-  el.innerHTML=ids.map(id=>{
+  const typeLabel = id => id.startsWith('rlhsplit')||id.startsWith('rlvsplit') ? 'SPLIT' : id.startsWith('rlcorner') ? 'CORNER' : 'STRAIGHT';
+  el.innerHTML='<div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Bet Slip</div>'+ids.map(id=>{
     const m=rlMeta[id],stake=rlStakes[id],payout=stake*m.mult;
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;font-size:11px;border-bottom:1px solid var(--surface);"><span style="color:var(--text-2);font-family:var(--mono);">${m.label} — ${stake} coins (×${m.mult})</span><span style="color:var(--green);font-weight:700;font-family:var(--mono);">wins ${payout}</span></div>`;
+    const type=typeLabel(id);
+    const typeColor=type==='STRAIGHT'?'var(--accent)':type==='SPLIT'?'#7C3AED':'#0891B2';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;margin-bottom:6px;background:var(--surface);border-radius:8px;border-left:3px solid ${typeColor};">
+      <div>
+        <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:${typeColor};margin-bottom:2px;">${type} · ×${m.mult}</div>
+        <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);">${m.label}</div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:1px;">${stake} coins staked</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:10px;color:var(--text-3);">potential win</div>
+        <div style="font-family:var(--mono);font-size:18px;font-weight:800;color:var(--green);">${payout}</div>
+      </div>
+    </div>`;
   }).join('');
 }
 function rlPlaceBets(){toast('✓ Bets placed (demo — not persisted)');}
