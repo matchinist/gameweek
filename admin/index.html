@@ -2170,6 +2170,14 @@ async function adminSignup(){
     document.getElementById('admin-login-email').value=email;
     return;
   }
+
+  msg.style.color='#16A34A';
+  msg.textContent='✓ Loading your dashboard…';
+
+  // Wait for session to be fully written to localStorage before reload
+  await new Promise(r=>setTimeout(r,600));
+  window.history.replaceState({},'','/admin');
+  location.reload();
 }
 
 async function adminLogin(){
