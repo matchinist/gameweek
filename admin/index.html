@@ -2150,7 +2150,14 @@ async function adminSignup(){
   const userId=data?.user?.id;
   if(userId){
     const clientKey=company.toLowerCase().replace(/[^a-z0-9]/g,'')+'_'+Math.random().toString(36).slice(2,8);
-    await supa.from('gw_operators').upsert({auth_id:userId,email,company_name:company,client_key:clientKey,plan:'free',is_admin:false},{onConflict:'auth_id'});
+    await supa.from('gw_operators').upsert({
+      id: userId,
+      auth_id: userId,
+      email, company_name: company,
+      client_key: clientKey,
+      plan: 'free',
+      is_admin: false
+    },{onConflict:'id'});
   }
 
   // Always sign in explicitly — don't rely on the signUp session
@@ -2283,18 +2290,32 @@ function initOperatorChrome(){
   }
   console.log('GW: Session restored for', session.user.email);
 
-  // Load operator profile — retry once on failure
-  let op = null, opErr = null;
-  for(let attempt=0; attempt<2; attempt++){
-    const res = await supa.from('gw_operators').select('*').eq('auth_id',session.user.id).single();
-    op = res.data; opErr = res.error;
-    if(op) break;
-    if(attempt===0) await new Promise(r=>setTimeout(r,1000)); // wait 1s before retry
+  // Load operator profile — try auth_id first, fall back to id
+  let op = null;
+  const res1 = await supa.from('gw_operators').select('*').eq('auth_id',session.user.id).maybeSingle();
+  op = res1.data;
+  if(!op){
+    const res2 = await supa.from('gw_operators').select('*').eq('id',session.user.id).maybeSingle();
+    op = res2.data;
   }
   if(!op){
-    console.error('GW: No operator profile found', opErr?.message);
+    // Auto-create operator row for new signups
+    const email = session.user.email||'';
+    const clientKey = email.split('@')[0].replace(/[^a-z0-9]/gi,'').toLowerCase()+'_'+Math.random().toString(36).slice(2,8);
+    const {data:newOp} = await supa.from('gw_operators').insert({
+      auth_id: session.user.id,
+      email,
+      company_name: email.split('@')[0],
+      client_key: clientKey,
+      plan: 'free',
+      is_admin: false,
+    }).select().single();
+    op = newOp;
+  }
+  if(!op){
+    console.error('GW: Could not load or create operator profile');
     await supa.auth.signOut();
-    showAdminLogin('No operator account found for this email.');
+    showAdminLogin('Could not load your account. Please contact support.');
     return;
   }
   console.log('GW: Operator loaded', op.company_name);
