@@ -2142,19 +2142,27 @@ async function adminSignup(){
   btn.disabled=true;btn.textContent='Creating account…';msg.textContent='';
 
   const {data,error}=await supa.auth.signUp({email,password});
-  if(error){btn.disabled=false;btn.textContent='Create account →';msg.style.color='#DC2626';msg.textContent=error.message;return;}
+  if(error&&!error.message.includes('already registered')){
+    btn.disabled=false;btn.textContent='Create account →';msg.style.color='#DC2626';msg.textContent=error.message;return;
+  }
 
+  // If already registered, that's fine — just sign in
   const userId=data?.user?.id;
   if(userId){
     const clientKey=company.toLowerCase().replace(/[^a-z0-9]/g,'')+'_'+Math.random().toString(36).slice(2,8);
     await supa.from('gw_operators').upsert({auth_id:userId,email,company_name:company,client_key:clientKey,plan:'free',is_admin:false},{onConflict:'auth_id'});
   }
 
-  msg.style.color='#16A34A';
-  msg.textContent='✓ Account created! Signing you in…';
-  await supa.auth.signInWithPassword({email,password});
-  window.history.replaceState({},'','/admin');
-  location.reload();
+  // Always sign in explicitly — don't rely on the signUp session
+  const {error:signInErr}=await supa.auth.signInWithPassword({email,password});
+  if(signInErr){
+    btn.disabled=false;btn.textContent='Create account →';
+    msg.style.color='#DC2626';
+    msg.textContent='Account created but could not sign in automatically. Please sign in manually.';
+    authTab('signin');
+    document.getElementById('admin-login-email').value=email;
+    return;
+  }
 }
 
 async function adminLogin(){
