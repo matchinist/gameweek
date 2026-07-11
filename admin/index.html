@@ -676,19 +676,51 @@ tbody tr:hover td{background:var(--bg);}
 <!-- ── SUBSCRIPTION PAYWALL ── -->
 <!-- ── OPERATOR LOGIN OVERLAY ── -->
 <div id="admin-login-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:#0f1117;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:#fff;border-radius:14px;max-width:360px;width:100%;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+  <div style="background:#fff;border-radius:14px;max-width:380px;width:100%;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
     <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;text-align:center;margin-bottom:2px;">game<span style="color:#4F46E5;">week</span></div>
-    <div style="text-align:center;font-size:11px;color:#9CA3AF;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Client Dashboard</div>
-    <div style="text-align:center;font-size:13px;color:#6B7280;margin-bottom:22px;">Sign in with your credentials</div>
-    <div style="margin-bottom:14px;">
-      <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;">Email</label>
-      <input type="email" id="admin-login-email" placeholder="you@company.com" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;" />
+    <div style="text-align:center;font-size:11px;color:#9CA3AF;letter-spacing:1px;text-transform:uppercase;margin-bottom:20px;">Client Dashboard</div>
+
+    <!-- Tabs -->
+    <div style="display:flex;background:#F9FAFB;border-radius:8px;padding:3px;margin-bottom:22px;">
+      <button id="tab-signin" onclick="authTab('signin')" style="flex:1;padding:8px;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;background:#4F46E5;color:white;">Sign in</button>
+      <button id="tab-signup" onclick="authTab('signup')" style="flex:1;padding:8px;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;background:transparent;color:#6B7280;">Create account</button>
     </div>
-    <div style="margin-bottom:18px;">
-      <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;">Password</label>
-      <input type="password" id="admin-login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;" />
+
+    <!-- Sign in form -->
+    <div id="form-signin">
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;">Email</label>
+        <input type="email" id="admin-login-email" placeholder="you@company.com" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;" />
+      </div>
+      <div style="margin-bottom:18px;">
+        <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;">Password</label>
+        <input type="password" id="admin-login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;" />
+      </div>
+      <button id="admin-login-btn" onclick="adminLogin()" style="width:100%;padding:12px;background:#4F46E5;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">Sign in</button>
     </div>
-    <button id="admin-login-btn" onclick="adminLogin()" style="width:100%;padding:12px;background:#4F46E5;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">Sign in</button>
+
+    <!-- Sign up form -->
+    <div id="form-signup" style="display:none;">
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;">Email</label>
+        <input type="email" id="signup-email" placeholder="you@company.com" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;" />
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;">Password</label>
+        <input type="password" id="signup-password" placeholder="Min. 8 characters" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;" />
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;">Company / site name</label>
+        <input type="text" id="signup-company" placeholder="e.g. FootyTips" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;" />
+      </div>
+      <div style="margin-bottom:18px;">
+        <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;">Verification code</label>
+        <input type="text" id="signup-code" placeholder="Enter code from pricing page" onkeydown="if(event.key==='Enter')adminSignup()" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;letter-spacing:2px;" />
+        <div style="font-size:11px;color:#9CA3AF;margin-top:4px;">Get your code from the <a href="/pricingtest" style="color:#4F46E5;">pricing page</a></div>
+      </div>
+      <button id="admin-signup-btn" onclick="adminSignup()" style="width:100%;padding:12px;background:#4F46E5;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">Create account →</button>
+    </div>
+
     <div id="admin-login-msg" style="text-align:center;font-size:12px;color:#9CA3AF;margin-top:12px;min-height:16px;"></div>
     <div style="text-align:center;margin-top:16px;">
       <a href="/" style="font-size:12px;color:#9CA3AF;text-decoration:none;">← Back to gameweek.cloud</a>
@@ -698,30 +730,20 @@ tbody tr:hover td{background:var(--bg);}
 
 <div id="paywall-overlay" style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;padding:20px;overflow-y:auto;">
   <div style="position:absolute;inset:0;backdrop-filter:blur(8px);background:rgba(17,19,23,0.45);"></div>
-  <div style="position:relative;background:var(--white);border-radius:16px;max-width:520px;width:100%;padding:32px;box-shadow:0 24px 70px rgba(0,0,0,0.3);text-align:center;">
+  <div style="position:relative;background:var(--white);border-radius:16px;max-width:720px;width:100%;padding:32px;box-shadow:0 24px 70px rgba(0,0,0,0.3);text-align:center;">
     <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;">game<span style="color:var(--accent);">week</span></div>
-    <div style="display:inline-block;background:var(--accent-light);color:var(--accent);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;margin-bottom:18px;letter-spacing:0.5px;">SUBSCRIPTION REQUIRED</div>
-    <h2 style="font-size:22px;font-weight:800;color:var(--text);margin-bottom:8px;">Activate your plan to continue</h2>
-    <p style="font-size:14px;color:var(--text-2);margin-bottom:24px;line-height:1.6;">Your account is created, but you'll need an active subscription to build competitions and go live.</p>
-
-    <div style="background:var(--sidebar);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:22px;text-align:left;">
-      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:14px;">
-        <span style="font-size:34px;font-weight:800;font-family:var(--mono);color:var(--text);">$50</span>
-        <span style="font-size:14px;color:var(--text-3);">/month base</span>
-      </div>
-      <div style="font-size:13px;color:var(--text-2);margin-bottom:16px;">+ $0.40 per active user / month</div>
-      <div style="display:flex;flex-direction:column;gap:9px;font-size:13px;color:var(--text);">
-        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> All 4 game modes</div>
-        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> Unlimited competitions</div>
-        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> Full branding control</div>
-        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✓</span> No setup fees, no contracts</div>
-      </div>
-    </div>
-
-    <a href="mailto:gameweek.cloud@gmail.com?subject=Activate%20my%20Gameweek%20subscription" class="btn btn-primary" style="width:100%;justify-content:center;padding:13px;font-size:14px;margin-bottom:10px;text-decoration:none;display:block;text-align:center;">Contact us to activate →</a>
-    <div style="font-size:11px;color:var(--text-3);margin-bottom:16px;">We'll set up your account and have you live within 24 hours.</div>
-
-    <div style="margin-top:16px;">
+    <div style="display:inline-block;background:var(--accent-light);color:var(--accent);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;margin-bottom:14px;letter-spacing:0.5px;">SUBSCRIPTION REQUIRED</div>
+    <h2 style="font-size:20px;font-weight:800;color:var(--text);margin-bottom:6px;">Subscribe to activate competitions</h2>
+    <p style="font-size:13px;color:var(--text-2);margin-bottom:24px;line-height:1.6;">Build and configure everything for free. Subscribe when you're ready to go live.</p>
+    <script async src="https://js.stripe.com/v3/pricing-table.js"></script>
+    <stripe-pricing-table
+      pricing-table-id="prctbl_1TrjmiR3NbpQTjwatzKMcTlY"
+      publishable-key="pk_test_51TlREtR3NbpQTjwaKMGb66xNOxGg8gcCSZ0YbJRKcMR6ODZcC9A9FrUuIreu69XxJGNOmIGy0UgokUz8c2b9aqWU007YmdpZ9D"
+      id="paywall-stripe-table">
+    </stripe-pricing-table>
+    <div style="margin-top:20px;">
+      <a href="#" onclick="hidePaywall();return false;" style="font-size:12px;color:var(--text-3);text-decoration:none;">Maybe later</a>
+      <span style="color:var(--border);margin:0 10px;">·</span>
       <a href="#" onclick="signOutOperator();return false;" style="font-size:12px;color:var(--text-3);text-decoration:none;">Sign out</a>
     </div>
   </div>
@@ -1987,7 +2009,14 @@ function saveCompSettings(){
   toast('Changes saved');
 }
 
-function setCompStatus(id,status){
+async function setCompStatus(id,status){
+  if(status==='active'){
+    const op=state.operatorProfile;
+    const bypass=op?.is_admin||['ercanvural.bm@gmail.com','ercanvural.bm+admin@gmail.com'].includes((op?.email||'').toLowerCase());
+    if(!bypass&&op?.plan!=='active'){
+      showPaywall(); return;
+    }
+  }
   getComp(id).status=status;
   saveAdminState();
   renderCompDetail();
@@ -2091,7 +2120,57 @@ function toast(msg){
 function showAdminLogin(msg){
   document.getElementById('admin-login-overlay').style.display='flex';
   if(msg) document.getElementById('admin-login-msg').textContent=msg;
+  // Auto-switch to signup tab if ?signup= in URL
+  const params=new URLSearchParams(window.location.search);
+  if(params.get('signup')) authTab('signup');
   setTimeout(()=>document.getElementById('admin-login-email')?.focus(),80);
+}
+
+function authTab(tab){
+  document.getElementById('form-signin').style.display=tab==='signin'?'block':'none';
+  document.getElementById('form-signup').style.display=tab==='signup'?'block':'none';
+  document.getElementById('tab-signin').style.background=tab==='signin'?'#4F46E5':'transparent';
+  document.getElementById('tab-signin').style.color=tab==='signin'?'white':'#6B7280';
+  document.getElementById('tab-signup').style.background=tab==='signup'?'#4F46E5':'transparent';
+  document.getElementById('tab-signup').style.color=tab==='signup'?'white':'#6B7280';
+  document.getElementById('admin-login-msg').textContent='';
+}
+
+// Verification codes — simple base64 tokens starting with 'Z3df' (base64 of 'gw_free')
+function isValidSignupCode(code){
+  if(!code||code.length<8) return false;
+  try{ const dec=atob(code); return dec.startsWith('gw_free_'); }catch(e){ return false; }
+}
+
+async function adminSignup(){
+  const email=document.getElementById('signup-email').value.trim().toLowerCase();
+  const password=document.getElementById('signup-password').value;
+  const company=document.getElementById('signup-company').value.trim();
+  const code=document.getElementById('signup-code').value.trim();
+  const msg=document.getElementById('admin-login-msg');
+  const btn=document.getElementById('admin-signup-btn');
+
+  if(!email){msg.textContent='Enter your email.';return;}
+  if(!password||password.length<8){msg.textContent='Password must be at least 8 characters.';return;}
+  if(!company){msg.textContent='Enter your company name.';return;}
+  if(!isValidSignupCode(code)){msg.style.color='#DC2626';msg.textContent='Invalid verification code. Get yours from the pricing page.';return;}
+
+  btn.disabled=true;btn.textContent='Creating account…';msg.style.color='#9CA3AF';msg.textContent='';
+
+  const {data,error}=await supa.auth.signUp({email,password});
+  if(error){btn.disabled=false;btn.textContent='Create account →';msg.style.color='#DC2626';msg.textContent=error.message;return;}
+
+  const userId=data?.user?.id;
+  if(userId){
+    const clientKey=company.toLowerCase().replace(/[^a-z0-9]/g,'')+'_'+Math.random().toString(36).slice(2,8);
+    await supa.from('gw_operators').upsert({auth_id:userId,email,company_name:company,client_key:clientKey,plan:'free',is_admin:false},{onConflict:'auth_id'});
+  }
+
+  msg.style.color='#16A34A';
+  msg.textContent='✓ Account created! Signing you in…';
+  await supa.auth.signInWithPassword({email,password});
+  window.history.replaceState({},'',' /admin');
+  location.reload();
 }
 
 async function adminLogin(){
@@ -2103,23 +2182,19 @@ async function adminLogin(){
   btn.disabled=true;btn.textContent='Signing in…';msg.textContent='';
 
   const {error:authErr}=await supa.auth.signInWithPassword({email,password});
-  if(authErr){btn.disabled=false;btn.textContent='Sign in';msg.textContent='Incorrect email or password.';return;}
+  if(authErr){btn.disabled=false;btn.textContent='Sign in';msg.style.color='#DC2626';msg.textContent='Incorrect email or password.';return;}
 
   document.getElementById('admin-login-overlay').style.display='none';
   location.reload();
 }
 
 function showPaywall(){
-  // Check if returning from Stripe checkout
-  const params = new URLSearchParams(window.location.search);
-  if(params.get('subscribed')==='1'){
-    showActivationPending();
-    // Clean the URL
-    window.history.replaceState({}, '', '/admin');
-    return;
-  }
   const el=document.getElementById('paywall-overlay');
   if(el){ el.style.display='flex'; document.body.style.overflow='hidden'; }
+}
+function hidePaywall(){
+  const el=document.getElementById('paywall-overlay');
+  if(el){ el.style.display='none'; document.body.style.overflow=''; }
 }
 
 function showActivationPending(){
@@ -2232,20 +2307,9 @@ function initOperatorChrome(){
   }
   console.log('GW: Operator loaded', op.company_name);
   currentOperator = op;
+  state.operatorProfile = op;
   CLIENT_KEY = op.client_key;
 
-  // Ensure subscription row exists, check status
-  let {data:sub} = await supa.from('gw_subscriptions').select('*').eq('client_key',CLIENT_KEY).single();
-  if(!sub){
-    const {data:newSub} = await supa.from('gw_subscriptions').insert({client_key:CLIENT_KEY}).select().single();
-    sub = newSub;
-  }
-  // Admins and allowlisted accounts bypass the paywall; everyone else needs an active plan
-  const PAYWALL_BYPASS = ['ercanvural.bm@gmail.com','ercanvural.bm+admin@gmail.com'];
-  const bypass = op.is_admin || PAYWALL_BYPASS.includes((op.email||'').toLowerCase());
-  if(!bypass && (!sub || sub.plan!=='active')){
-    showPaywall();
-  }
 
   // Load competitions + rounds from Supabase
   const [{data:comps},{data:rounds}] = await Promise.all([
