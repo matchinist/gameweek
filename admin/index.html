@@ -699,7 +699,7 @@ tbody tr:hover td{background:var(--bg);}
       <button id="admin-login-btn" onclick="adminLogin()" style="width:100%;padding:12px;background:#4F46E5;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">Sign in</button>
     </div>
 
-    <!-- Sign up form -->
+    <!-- Sign up form — step 1: details -->
     <div id="form-signup" style="display:none;">
       <div style="margin-bottom:14px;">
         <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;">Email</label>
@@ -709,14 +709,9 @@ tbody tr:hover td{background:var(--bg);}
         <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;">Password</label>
         <input type="password" id="signup-password" placeholder="Min. 8 characters" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;" />
       </div>
-      <div style="margin-bottom:14px;">
-        <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;">Company / site name</label>
-        <input type="text" id="signup-company" placeholder="e.g. FootyTips" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;" />
-      </div>
       <div style="margin-bottom:18px;">
-        <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;">Verification code</label>
-        <input type="text" id="signup-code" placeholder="Enter code from pricing page" onkeydown="if(event.key==='Enter')adminSignup()" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;letter-spacing:2px;" />
-        <div style="font-size:11px;color:#9CA3AF;margin-top:4px;">Get your code from the <a href="/pricingtest" style="color:#4F46E5;">pricing page</a></div>
+        <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;">Company / site name</label>
+        <input type="text" id="signup-company" placeholder="e.g. FootyTips" onkeydown="if(event.key==='Enter')adminSignup()" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;" />
       </div>
       <button id="admin-signup-btn" onclick="adminSignup()" style="width:100%;padding:12px;background:#4F46E5;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">Create account →</button>
     </div>
@@ -2120,9 +2115,6 @@ function toast(msg){
 function showAdminLogin(msg){
   document.getElementById('admin-login-overlay').style.display='flex';
   if(msg) document.getElementById('admin-login-msg').textContent=msg;
-  // Auto-switch to signup tab if ?signup= in URL
-  const params=new URLSearchParams(window.location.search);
-  if(params.get('signup')) authTab('signup');
   setTimeout(()=>document.getElementById('admin-login-email')?.focus(),80);
 }
 
@@ -2136,26 +2128,18 @@ function authTab(tab){
   document.getElementById('admin-login-msg').textContent='';
 }
 
-// Verification codes — simple base64 tokens starting with 'Z3df' (base64 of 'gw_free')
-function isValidSignupCode(code){
-  if(!code||code.length<8) return false;
-  try{ const dec=atob(code); return dec.startsWith('gw_free_'); }catch(e){ return false; }
-}
-
 async function adminSignup(){
   const email=document.getElementById('signup-email').value.trim().toLowerCase();
   const password=document.getElementById('signup-password').value;
   const company=document.getElementById('signup-company').value.trim();
-  const code=document.getElementById('signup-code').value.trim();
   const msg=document.getElementById('admin-login-msg');
   const btn=document.getElementById('admin-signup-btn');
 
-  if(!email){msg.textContent='Enter your email.';return;}
-  if(!password||password.length<8){msg.textContent='Password must be at least 8 characters.';return;}
-  if(!company){msg.textContent='Enter your company name.';return;}
-  if(!isValidSignupCode(code)){msg.style.color='#DC2626';msg.textContent='Invalid verification code. Get yours from the pricing page.';return;}
+  if(!email){msg.style.color='#DC2626';msg.textContent='Enter your email.';return;}
+  if(!password||password.length<8){msg.style.color='#DC2626';msg.textContent='Password must be at least 8 characters.';return;}
+  if(!company){msg.style.color='#DC2626';msg.textContent='Enter your company name.';return;}
 
-  btn.disabled=true;btn.textContent='Creating account…';msg.style.color='#9CA3AF';msg.textContent='';
+  btn.disabled=true;btn.textContent='Creating account…';msg.textContent='';
 
   const {data,error}=await supa.auth.signUp({email,password});
   if(error){btn.disabled=false;btn.textContent='Create account →';msg.style.color='#DC2626';msg.textContent=error.message;return;}
@@ -2169,7 +2153,7 @@ async function adminSignup(){
   msg.style.color='#16A34A';
   msg.textContent='✓ Account created! Signing you in…';
   await supa.auth.signInWithPassword({email,password});
-  window.history.replaceState({},'',' /admin');
+  window.history.replaceState({},'','/admin');
   location.reload();
 }
 

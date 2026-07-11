@@ -49,9 +49,7 @@
 
 <script>
 function startFree(){
-  // Generate a simple signup code and redirect to admin
-  const code = btoa('gw_free_' + Date.now()).replace(/=/g,'');
-  window.location.href = '/admin?signup=' + code;
+  window.location.href = '/admin';
 }
 </script>
 </body>
