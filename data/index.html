@@ -723,6 +723,8 @@ async function createPlayer(){
   document.getElementById('cp-number').value='';
   document.getElementById('cp-position').value='MID';
   document.getElementById('cp-photo').value='';
+  renderPlayers();
+  toast('Player added');
   document.getElementById('cp-photo-url').value='';
   const btn=document.getElementById('cp-submit-btn');
   btn.disabled=false;btn.textContent='Add Player';
@@ -751,7 +753,7 @@ function navTo(page,tournamentId){
     document.getElementById('nav-players').classList.add('active');
     document.getElementById('view-players').classList.add('active');
     document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">// players</div></div><div id="main-header-actions"><button class="btn btn-primary btn-sm" onclick="openModal(&#39;modal-create-player&#39;)">+ Add Player</button></div>';
-    renderPlayers();
+    loadPlayers().then(renderPlayers);
   } else if(page==='tournament'){
     S.activeTournamentId=tournamentId;
     document.getElementById('view-tournament').classList.add('active');
@@ -1368,6 +1370,7 @@ async function bootDataManager(){
   if(embedLink) embedLink.style.display='none'; // admin has no embed of their own
 
   await loadDMData();
+  await loadPlayers();
 }
 
 function showDMLogin(msg){
