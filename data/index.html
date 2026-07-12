@@ -640,9 +640,10 @@ const COUNTRIES=['Afghanistan','Albania','Algeria','Argentina','Armenia','Austra
 function renderPlayers(){
   document.getElementById('nav-players-count').textContent=players.length;
   const filter=document.getElementById('players-team-filter');
-  // Populate team filter dropdown
-  filter.innerHTML='<option value="">All Teams</option>'+S.teams.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
-  
+  // Only repopulate if empty or teams changed
+  if(filter.children.length<=1){
+    filter.innerHTML='<option value="">All Teams</option>'+S.teams.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  }
   const teamFilter=filter.value;
   const filtered=teamFilter?players.filter(p=>p.team_id===teamFilter):players;
   const el=document.getElementById('players-grid');
