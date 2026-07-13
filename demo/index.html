@@ -57,7 +57,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 @keyframes authshake{10%,90%{transform:translateX(-1px);}20%,80%{transform:translateX(2px);}30%,50%,70%{transform:translateX(-4px);}40%,60%{transform:translateX(4px);}}
 .auth-modal.shake{animation:authshake 0.4s;}
 .auth-terms{font-size:11px;color:var(--text-3);text-align:center;margin-top:14px;line-height:1.5;}
-.comp-tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--border);padding:0 12px;-webkit-overflow-scrolling:touch;align-items:center;}
+.comp-tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--border);padding:0 16px;-webkit-overflow-scrolling:touch;align-items:center;}
 .comp-tabs::-webkit-scrollbar{display:none;}
 .comp-tabs::-webkit-scrollbar{display:none;}
 .comp-tabs{-ms-overflow-style:none;scrollbar-width:none;}
@@ -120,7 +120,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .st-bar-fill.participated{background:var(--accent);}
 .st-bar-fill.survived{background:var(--green);}
 .st-bar-count{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);min-width:36px;text-align:right;}
-.events-list{display:flex;flex-direction:column;gap:8px;padding:12px 8px;}
+.events-list{display:flex;flex-direction:column;gap:8px;padding:12px 16px;}
 .event-card{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color 0.13s;}
 .event-card.predicted{border-color:var(--comp-color);}
 .event-card.locked-pred{border-color:var(--border);opacity:0.85;}
@@ -135,7 +135,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .ev-badge img{width:100%;height:100%;object-fit:contain;}
 .ev-name{font-family:var(--mono);font-size:13px;font-weight:700;color:#000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ev-vs{font-family:var(--mono);font-size:11px;color:var(--text-3);text-align:center;min-width:28px;}
-.ev-score{font-family:var(--mono);font-size:15px;font-weight:700;color:#000;text-align:center;min-width:42px;}
+.ev-score{font-family:var(--mono);font-size:15px;font-weight:700;color:#000;text-align:center;min-width:42px;letter-spacing:1px;}
 .pred-area{border-top:1px solid var(--border);padding:11px 14px;}
 .pred-label{font-size:11px;color:var(--text-2);font-weight:500;margin-bottom:8px;}
 .btns-1x2{display:flex;gap:5px;}
@@ -337,7 +337,11 @@ const COMPS=[
         ]},
     ]},
   {id:'c6',name:'Soccer Roulette',mode:'roulette',color:'#4F46E5',
-    rounds:[{id:'r_roulette',label:'Arsenal vs Chelsea',status:'open'}]},
+    rounds:[
+      {id:'rrl1',label:'Arsenal vs Chelsea',status:'open',eventId:'erl1'},
+      {id:'rrl2',label:'Liverpool vs Man City',status:'open',eventId:'erl2'},
+      {id:'rrl3',label:'Tottenham vs Arsenal',status:'upcoming',eventId:'erl3'},
+    ]},
 ];
 
 const EVENTS={
@@ -365,6 +369,9 @@ const EVENTS={
   e201:{tournament:'Champions League',home:'Real Madrid',away:'Dortmund',homeLogo:lg('Real Madrid'),awayLogo:lg('Dortmund'),kickoff:'17 Sep \u00b7 21:00',sortKey:'2026-09-17T21:00',res:{h:3,a:1}},
   e202:{tournament:'Champions League',home:'Bayern',away:'Inter',homeLogo:lg('Bayern'),awayLogo:lg('Inter'),kickoff:'20 Sep \u00b7 21:00',sortKey:'2026-09-20T21:00',res:{h:2,a:0}},
   e203:{tournament:'Champions League',home:'PSG',away:'Arsenal',homeLogo:lg('PSG'),awayLogo:lg('Arsenal'),kickoff:'01 Oct \u00b7 21:15',sortKey:'2026-10-01T21:15',res:null},
+  erl1:{tournament:'Premier League',home:'Arsenal',away:'Chelsea',homeLogo:lg('Arsenal'),awayLogo:lg('Chelsea'),kickoff:'30 Aug \u00b7 15:00',sortKey:'2026-08-30T15:00',res:null},
+  erl2:{tournament:'Premier League',home:'Liverpool',away:'Man City',homeLogo:lg('Liverpool'),awayLogo:lg('Man City'),kickoff:'31 Aug \u00b7 16:30',sortKey:'2026-08-31T16:30',res:null},
+  erl3:{tournament:'Premier League',home:'Tottenham',away:'Arsenal',homeLogo:lg('Tottenham'),awayLogo:lg('Arsenal'),kickoff:'14 Sep \u00b7 14:00',sortKey:'2026-09-14T14:00',res:null},
   // LMS open
   e204:{tournament:'Champions League',home:'Real Madrid',away:'Liverpool',homeLogo:lg('Real Madrid'),awayLogo:lg('Liverpool'),kickoff:'01 Oct \u00b7 21:00',res:null},
   e205:{tournament:'Champions League',home:'PSG',away:'Arsenal',homeLogo:lg('PSG'),awayLogo:lg('Arsenal'),kickoff:'01 Oct \u00b7 21:15',res:null},
@@ -977,36 +984,46 @@ function rlCellId(r,c){return 'rlscore_'+RL_HOME[r]+'_'+RL_AWAY[c];}
 function rlScoreLabel(r,c){return RL_HOME[r]+'-'+RL_AWAY[c];}
 
 function renderRouletteHTML(){
-  return `<div style="padding:14px 12px 30px;">
-    <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px;">
-      <div style="padding:12px 16px;background:var(--accent);display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-family:var(--mono);font-size:11px;font-weight:700;color:white;">Premier League · Gameweek 3</span>
-        <span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.75);">Sat 30 Aug · 15:00</span>
+  const comp=COMPS[currentCompIdx];
+  const ri=selectedRound[currentCompIdx]??0;
+  const round=comp.rounds[ri]||comp.rounds[0];
+  const ev=round.eventId?EVENTS[round.eventId]:null;
+  const home=ev?ev.home:'Arsenal'; const away=ev?ev.away:'Chelsea';
+  const homeLogo=ev?ev.homeLogo:lg('Arsenal'); const awayLogo=ev?ev.awayLogo:lg('Chelsea');
+  const kickoff=ev?ev.kickoff:'Sat 30 Aug · 15:00';
+  const tournament=ev?ev.tournament:'Premier League';
+  const roundSelect=comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('');
+  return `<div style="padding:0 0 30px;">
+    <div style="padding:10px 16px 0;display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <select class="round-select" onchange="rlChangeRound(this.value)">${roundSelect}</select>
+      <span class="round-status open" style="font-size:11px;">● Open</span>
+    </div>
+    <div style="padding:0 16px;">
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px;">
+      <div style="padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:11px;font-weight:600;color:var(--text-2);">${tournament}</span>
+        <span style="font-size:11px;color:var(--text-3);">${kickoff}</span>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 16px;">
-        <div style="display:flex;flex-direction:column;align-items:center;gap:7px;flex:1;">
-          <div style="width:44px;height:44px;border-radius:50%;background:var(--white);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;"><img src="${lg('Arsenal')}" style="width:100%;height:100%;object-fit:contain;padding:5px;"></div>
-          <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">Arsenal</span>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
+          <div style="width:40px;height:40px;border-radius:50%;background:var(--white);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;"><img src="${homeLogo}" style="width:100%;height:100%;object-fit:contain;padding:4px;"></div>
+          <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">${home}</span>
         </div>
         <span style="font-family:var(--mono);font-size:11px;color:var(--text-3);padding:0 10px;">vs</span>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:7px;flex:1;">
-          <div style="width:44px;height:44px;border-radius:50%;background:var(--white);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;"><img src="${lg('Chelsea')}" style="width:100%;height:100%;object-fit:contain;padding:5px;"></div>
-          <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">Chelsea</span>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
+          <div style="width:40px;height:40px;border-radius:50%;background:var(--white);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;"><img src="${awayLogo}" style="width:100%;height:100%;object-fit:contain;padding:4px;"></div>
+          <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">${away}</span>
         </div>
       </div>
     </div>
-
-    <div style="display:flex;align-items:center;justify-content:space-between;background:#1F1B3A;border-radius:12px;padding:14px 18px;margin-bottom:14px;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div style="width:30px;height:30px;border-radius:50%;background:var(--amber);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:13px;color:white;">GW</div>
-        <div>
-          <div style="font-size:10px;color:rgba(255,255,255,0.55);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Coins remaining</div>
-          <div id="rl-coin-value" style="font-family:var(--mono);font-size:22px;font-weight:700;color:white;">100</div>
-        </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0 12px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:12px;font-weight:500;color:var(--text-3);">Coins</span>
+        <span id="rl-coin-value" style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);">100</span>
+        <span style="font-size:12px;color:var(--text-3);">remaining</span>
       </div>
-      <button onclick="rlClearAll()" style="font-family:var(--mono);font-size:10px;font-weight:700;color:rgba(255,255,255,0.7);background:transparent;border:1px solid rgba(255,255,255,0.25);border-radius:8px;padding:7px 12px;cursor:pointer;">Clear all</button>
+      <button onclick="rlClearAll()" style="font-size:11px;font-weight:500;color:var(--text-3);background:none;border:none;cursor:pointer;padding:4px 0;text-decoration:underline;">Clear all</button>
     </div>
-
     <div style="max-width:420px;margin:0 auto;">
       <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 10px 2px;text-align:center;">
         Correct score <span style="font-weight:400;text-transform:none;">— tap a number, or the dots between</span>
@@ -1018,25 +1035,21 @@ function renderRouletteHTML(){
           <div id="rl-grid" style="position:absolute;top:0;left:0;display:grid;grid-template-columns:repeat(4,${RL_CELL}px);grid-template-rows:repeat(4,${RL_CELL}px);gap:${RL_GAP}px;"></div>
           <div id="rl-dots" style="position:absolute;top:0;left:0;width:${RL_CELL*4+RL_GAP*3}px;height:${RL_CELL*4+RL_GAP*3}px;pointer-events:none;"></div>
         </div>
-      </div>
-      </div>
-      </div>
-      <div style="display:flex;gap:12px;margin-top:10px;padding:0 2px;flex-wrap:wrap;justify-content:center;">
-        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:var(--accent-light);border:1px solid var(--accent);"></span>Arsenal win</div>
+      </div></div></div>
+      <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;justify-content:center;">
+        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:var(--accent-light);border:1px solid var(--accent);"></span>${home} win</div>
         <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:var(--surface);border:1px solid var(--text-3);"></span>Draw</div>
-        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:#FFEDD5;border:1px solid #EA580C;"></span>Chelsea win</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:#FFEDD5;border:1px solid #EA580C;"></span>${away} win</div>
       </div>
-
     </div>
-
     <div style="display:flex;align-items:center;justify-content:space-between;max-width:420px;margin:20px auto 0;padding-top:16px;border-top:1px solid var(--border);">
       <div style="font-size:12px;color:var(--text-2);"><strong id="rl-staked-count" style="color:var(--text);font-family:var(--mono);">0</strong> of 100 staked</div>
       <button id="rl-place-btn" disabled onclick="rlPlaceBets()" style="font-family:var(--mono);font-size:12px;font-weight:700;color:white;background:var(--accent);border:none;border-radius:8px;padding:12px 24px;cursor:pointer;">Place Bets</button>
     </div>
     <div id="rl-betslip" style="margin-top:16px;"></div>
+    </div>
   </div>`;
 }
-
 function initRouletteBoard(){
   rlRemaining=RL_BUDGET; rlStakes={}; rlMeta={};
   const gridEl=document.getElementById('rl-grid');
@@ -1164,6 +1177,13 @@ function rlRenderBetslip(){
       </div>
     </div>`;
   }).join('');
+}
+function rlChangeRound(idx){
+  selectedRound[currentCompIdx]=parseInt(idx);
+  rlRemaining=RL_BUDGET; rlStakes={}; rlMeta={};
+  const el=document.getElementById('predict-content');
+  if(el){el.innerHTML=renderRouletteHTML();}
+  setTimeout(()=>initRouletteBoard(),50);
 }
 function rlPlaceBets(){toast('✓ Bets placed (demo — not persisted)');}
 
