@@ -93,11 +93,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .predict-tournament-labels{display:flex;flex-wrap:wrap;gap:4px;flex:1;min-width:0;}
 .predict-tournament-label{font-size:10px;font-weight:600;background:var(--bg);border:1px solid var(--border);color:var(--text-2);padding:3px 9px;border-radius:12px;white-space:nowrap;}
 /* ── INLINE SCORE INPUTS ── */
-.score-num-inline{width:46px;height:44px;border:1.5px solid oklch(0.88 0.006 260);border-radius:10px;text-align:center;font-family:"DM Mono",monospace;font-size:17px;font-weight:700;color:oklch(0.25 0.01 260);background:oklch(0.98 0.002 260);outline:none;-moz-appearance:textfield;transition:border-color 0.13s;flex-shrink:0;}
+.score-num-inline{width:60px;height:57px;border:1.5px solid oklch(0.88 0.006 260);border-radius:12px;text-align:center;font-family:"DM Mono",monospace;font-size:22px;font-weight:700;color:oklch(0.25 0.01 260);background:oklch(0.98 0.002 260);outline:none;-moz-appearance:textfield;transition:border-color 0.13s;flex-shrink:0;}
 .score-num-inline::-webkit-inner-spin-button,.score-num-inline::-webkit-outer-spin-button{-webkit-appearance:none;}
 .score-num-inline:focus{border-color:var(--comp-color);}
 .score-num-inline.has{border-color:var(--comp-color);background:var(--accent-light);color:var(--comp-color);}
-.score-inline-mid{display:flex;align-items:center;gap:8px;flex-shrink:0;min-width:110px;justify-content:center;}
+.score-inline-mid{display:flex;align-items:center;gap:8px;flex-shrink:0;min-width:140px;justify-content:center;}
 .score-inline-dash{font-family:Inter,sans-serif;font-size:14px;color:oklch(0.7 0.01 260);font-weight:700;}
 /* ── SUBMIT BUTTON ── */
 .submit-preds-btn{display:block;width:calc(100% - 28px);margin:12px 14px 40px;padding:12px;background:var(--comp-color);color:white;border:none;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;transition:opacity 0.13s;}
@@ -130,11 +130,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .event-meta{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 0;margin-bottom:0;}
 .event-league{font-family:Inter,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.06em;color:oklch(0.58 0.01 260);text-transform:uppercase;}
 .event-kickoff{font-family:Inter,sans-serif;font-size:12.5px;color:oklch(0.58 0.01 260);font-weight:500;}
-.event-teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;padding:16px 20px;}
+.event-teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;padding:16px 20px;justify-items:stretch;}
 .ev-team{flex:1;display:flex;align-items:center;gap:9px;min-width:0;}
 .ev-team.away{flex-direction:row-reverse;}
-.ev-badge{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;overflow:hidden;}
-.ev-badge img{width:100%;height:100%;object-fit:contain;}
+.ev-badge{width:38px;height:38px;border-radius:0;background:none;display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif;font-size:11px;font-weight:700;color:var(--text-2);flex-shrink:0;overflow:hidden;}
+.ev-badge img{width:38px;height:38px;object-fit:contain;}
 .ev-name{font-family:Inter,sans-serif;font-size:13px;font-weight:700;color:oklch(0.2 0.01 260);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ev-vs{font-family:Inter,sans-serif;font-size:11px;color:oklch(0.58 0.01 260);text-align:center;min-width:28px;}
 .ev-score{font-family:var(--mono);font-size:15px;font-weight:700;color:#000;text-align:center;min-width:42px;}
@@ -747,8 +747,8 @@ function teamBadge(logo,name){
   const abbr=(name||'?').split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();
   const bg=TEAM_COLORS[name]||'oklch(0.55 0.19 275)';
   const style=`background:${bg};`;
-  if(logo)return`<div class="ev-badge" style="${style}"><img src="${logo}" alt="${name}" style="width:26px;height:26px;object-fit:contain;" onerror="this.parentElement.textContent='${abbr}'"></div>`;
-  return`<div class="ev-badge" style="${style}">${abbr}</div>`;
+  if(logo)return`<div class="ev-badge"><img src="${logo}" alt="${name}" style="width:38px;height:38px;object-fit:contain;" onerror="this.parentElement.textContent='${abbr}'"></div>`;
+  return`<div class="ev-badge">${abbr}</div>`;
 }
 
 function renderEventCard(ev,comp,isOpen){
@@ -787,7 +787,7 @@ function renderEventCard(ev,comp,isOpen){
     midSection='<div class="ev-vs">vs</div>';
   }
 
-  let html=`<div class="${cls}" data-evid="${ev.id}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${ev.tournament||comp.name}</span><span class="event-kickoff">${ev.kickoff||''}</span></div><div class="event-teams"><div style="display:flex;align-items:center;gap:12px;">${teamBadge(ev.homeLogo||'',ev.home)}<span class="ev-name">${ev.home}</span></div>${midSection}<div style="display:flex;align-items:center;gap:12px;justify-content:flex-end;"><span class="ev-name" style="text-align:right;">${ev.away}</span>${teamBadge(ev.awayLogo||'',ev.away)}</div></div></div></div><div class="pred-area">`;
+  let html=`<div class="${cls}" data-evid="${ev.id}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${ev.tournament||comp.name}</span><span class="event-kickoff">${ev.kickoff||''}</span></div><div class="event-teams"><div style="display:flex;align-items:center;gap:10px;">${teamBadge(ev.homeLogo||'',ev.home)}<span class="ev-name">${ev.home}</span></div>${midSection}<div style="display:flex;align-items:center;gap:10px;justify-content:flex-end;"><span class="ev-name" style="text-align:right;">${ev.away}</span>${teamBadge(ev.awayLogo||'',ev.away)}</div></div></div></div><div class="pred-area">`;
 
   if(canPredict){
     if(comp.mode==='lms'||comp.mode==='result'){
