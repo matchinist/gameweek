@@ -6,7 +6,7 @@
 <title>Gameweek Demo</title>
 <link rel="icon" type="image/png" href="https://www.gameweek.cloud/favicon.png" sizes="48x48">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 
 
@@ -21,8 +21,9 @@
   --mono:'Space Mono',monospace;--sans:'Inter',sans-serif;
   --comp-color:#4F46E5;
 }
-html,body{height:100%;overflow:hidden;margin:0;padding:0;max-width:100vw;}body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
-.app{display:flex;flex-direction:column;height:100vh;height:100dvh;min-height:-webkit-fill-available;overflow:hidden;max-width:860px;margin:0 auto;width:100%;background:var(--white);position:relative;}
+html,body{height:100%;}
+html,body{height:100%;overflow:hidden;}body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;}
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;max-width:860px;margin:0 auto;width:100%;background:var(--white);position:relative;}
 .app-header{background:var(--white);border-bottom:1px solid var(--border);flex-shrink:0;z-index:50;}
 .header-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;}
 .header-logo{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--text);letter-spacing:-0.5px;}
@@ -35,7 +36,7 @@ html,body{height:100%;overflow:hidden;margin:0;padding:0;max-width:100vw;}body{f
 
 
 
-.scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;background:oklch(0.965 0.004 260);}
+.scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
 ::-webkit-scrollbar{width:3px;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 .screen{display:none;padding:16px;}
@@ -88,12 +89,12 @@ html,body{height:100%;overflow:hidden;margin:0;padding:0;max-width:100vw;}body{f
   .round-bar{padding:8px 8px;}
 }
 /* ── INLINE SCORE INPUTS ── */
-.score-num-inline{width:46px;height:44px;border:1.5px solid oklch(0.88 0.006 260);border-radius:10px;text-align:center;font-family:var(--mono);font-size:17px;font-weight:700;color:oklch(0.25 0.01 260);outline:none;-moz-appearance:textfield;transition:border-color 0.13s;flex-shrink:0;background:oklch(0.98 0.002 260);}
+.score-num-inline{width:38px;height:34px;border:1px solid var(--border);border-radius:6px;text-align:center;font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);outline:none;-moz-appearance:textfield;transition:border-color 0.13s;flex-shrink:0;background:var(--white);}
 .score-num-inline::-webkit-inner-spin-button,.score-num-inline::-webkit-outer-spin-button{-webkit-appearance:none;}
-.score-num-inline:focus{border-color:oklch(0.55 0.19 275);}
-.score-num-inline.has{border-color:oklch(0.55 0.19 275);background:oklch(0.94 0.03 275 / 0.2);color:oklch(0.35 0.19 275);}
-.score-inline-mid{display:flex;align-items:center;gap:8px;flex-shrink:0;min-width:110px;justify-content:center;}
-.score-inline-dash{font-family:var(--mono);font-size:14px;color:oklch(0.7 0.01 260);font-weight:700;}
+.score-num-inline:focus{border-color:var(--comp-color);}
+.score-num-inline.has{border-color:var(--comp-color);background:var(--accent-light);color:var(--comp-color);}
+.score-inline-mid{display:flex;align-items:center;gap:4px;flex-shrink:0;min-width:95px;justify-content:center;}
+.score-inline-dash{font-family:var(--mono);font-size:13px;color:var(--text-3);font-weight:700;}
 /* ── SUBMIT BUTTON ── */
 .submit-preds-btn{display:block;width:calc(100% - 28px);margin:12px 14px 40px;padding:12px;background:var(--comp-color);color:white;border:none;border-radius:8px;font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;transition:opacity 0.13s;}
 .submit-preds-btn:hover{opacity:0.88;}
@@ -119,37 +120,37 @@ html,body{height:100%;overflow:hidden;margin:0;padding:0;max-width:100vw;}body{f
 .st-bar-fill.participated{background:var(--accent);}
 .st-bar-fill.survived{background:var(--green);}
 .st-bar-count{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);min-width:36px;text-align:right;}
-.events-list{display:flex;flex-direction:column;gap:14px;padding:14px 8px;}
-.event-card{background:#fff;border:1px solid oklch(0.92 0.004 260);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px oklch(0.2 0.02 260 / 0.04),0 6px 20px oklch(0.2 0.02 260 / 0.03);}
-.event-card.predicted{border-color:oklch(0.92 0.004 260);}
-.event-card.locked-pred{border-color:oklch(0.92 0.004 260);}
-.event-card-top{padding:14px 20px 10px;}
-.event-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-.event-league{font-size:11px;font-weight:700;color:oklch(0.58 0.01 260);letter-spacing:0.06em;text-transform:uppercase;}
-.event-kickoff{font-size:12.5px;color:oklch(0.58 0.01 260);font-weight:500;}
-.event-teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;padding:0 6px;}
+.events-list{display:flex;flex-direction:column;gap:8px;padding:12px 8px;}
+.event-card{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color 0.13s;}
+.event-card.predicted{border-color:var(--comp-color);}
+.event-card.locked-pred{border-color:var(--border);opacity:0.85;}
+.event-card-top{padding:13px 14px;}
+.event-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.event-league{font-size:10px;font-weight:700;color:var(--text-2);letter-spacing:0.5px;text-transform:uppercase;}
+.event-kickoff{font-family:var(--sans);font-size:11px;color:var(--text-2);font-weight:600;}
+.event-teams{display:flex;align-items:center;gap:8px;}
 .ev-team{flex:1;display:flex;align-items:center;gap:9px;min-width:0;}
 .ev-team.away{flex-direction:row-reverse;}
-.ev-badge{width:38px;height:38px;border-radius:10px;background:oklch(0.55 0.19 275);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;font-weight:800;color:#fff;flex-shrink:0;overflow:hidden;}
+.ev-badge{width:32px;height:32px;border-radius:50%;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:8px;font-weight:700;color:var(--text-2);flex-shrink:0;overflow:hidden;}
 .ev-badge img{width:100%;height:100%;object-fit:contain;}
-.ev-name{font-family:var(--sans);font-size:15.5px;font-weight:700;color:oklch(0.2 0.01 260);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.ev-vs{font-family:var(--sans);font-size:13px;color:oklch(0.7 0.01 260);text-align:center;min-width:28px;font-weight:500;}
-.ev-score{font-family:'DM Mono',var(--mono);font-size:22px;font-weight:700;color:oklch(0.2 0.01 260);text-align:center;min-width:60px;letter-spacing:2px;}
-.pred-area{border-top:1px solid oklch(0.95 0.004 260);padding:13px 20px;background:oklch(0.985 0.003 260);}
+.ev-name{font-family:var(--mono);font-size:13px;font-weight:700;color:#000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ev-vs{font-family:var(--mono);font-size:11px;color:var(--text-3);text-align:center;min-width:28px;}
+.ev-score{font-family:var(--mono);font-size:15px;font-weight:700;color:#000;text-align:center;min-width:42px;}
+.pred-area{border-top:1px solid var(--border);padding:11px 14px;}
 .pred-label{font-size:11px;color:var(--text-2);font-weight:500;margin-bottom:8px;}
-.btns-1x2{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;}
-.btn-1x2{padding:11px 12px;border:1px solid oklch(0.88 0.006 260);border-radius:10px;background:#fff;font-family:var(--sans);font-size:13px;font-weight:600;color:oklch(0.3 0.01 260);cursor:pointer;transition:all 0.13s;text-align:center;line-height:1.2;}
+.btns-1x2{display:flex;gap:5px;}
+.btn-1x2{flex:1;padding:11px 4px;border:1px solid var(--border);border-radius:7px;background:var(--white);font-family:var(--mono);font-size:13px;font-weight:700;color:#111;cursor:pointer;transition:all 0.13s;text-align:center;line-height:1.2;}
 @media(hover:hover) and (pointer:fine){.btn-1x2:hover{border-color:var(--comp-color);color:var(--comp-color);}}
-.btn-1x2.selected{border-color:oklch(0.55 0.19 275);background:oklch(0.55 0.19 275);color:white;}
-.btn-1x2.selected.home{border-color:oklch(0.55 0.19 275);background:oklch(0.55 0.19 275);color:white;}
+.btn-1x2.selected{border-color:var(--comp-color);background:var(--comp-color);color:white;}
+.btn-1x2.selected.home{border-color:#2563EB;background:#2563EB;color:white;}
 .btn-1x2.selected.draw{border-color:#D97706;background:#D97706;color:white;}
 .btn-1x2.selected.away{border-color:#DC2626;background:#DC2626;color:white;}
 .pred-result-row{display:flex;align-items:center;justify-content:space-between;}
-.pred-made{font-size:13px;color:oklch(0.5 0.01 260);font-weight:500;}
-.pred-made strong{font-family:var(--mono);color:oklch(0.3 0.01 260);font-weight:700;}
-.pred-correct{font-size:12.5px;font-weight:700;padding:5px 11px;border-radius:999px;}
-.pred-correct.yes{color:oklch(0.38 0.13 155);background:oklch(0.9 0.09 155 / 0.35);}
-.pred-correct.no{color:oklch(0.45 0.18 25);background:oklch(0.92 0.08 25 / 0.35);}
+.pred-made{font-size:12px;color:#333;}
+.pred-made strong{font-family:var(--mono);color:#000;}
+.pred-correct{font-size:12px;font-weight:700;}
+.pred-correct.yes{color:var(--green);}
+.pred-correct.no{color:var(--red);}
 .ev-participants{font-size:10px;color:var(--text-2);display:flex;align-items:center;gap:5px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
 .ev-participants strong{font-family:var(--mono);color:#333;font-size:11px;}
 .progress-wrap{padding:12px 16px;border-top:1px solid var(--border);background:var(--white);}
@@ -216,7 +217,7 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .score-dash{font-family:var(--mono);font-size:14px;color:var(--text-3);font-weight:700;}
 /* ── O/U ── */
 .btns-ou{display:flex;gap:6px;}
-.btn-ou{flex:1;padding:10px 4px;border:1px solid oklch(0.88 0.006 260);border-radius:10px;background:#fff;font-family:var(--sans);font-size:12px;font-weight:600;color:oklch(0.3 0.01 260);cursor:pointer;transition:all 0.13s;text-align:center;line-height:1.3;}
+.btn-ou{flex:1;padding:9px 4px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-family:var(--mono);font-size:11px;font-weight:700;color:#111;cursor:pointer;transition:all 0.13s;text-align:center;line-height:1.3;}
 .btn-ou .sub{display:block;font-size:8px;font-weight:400;opacity:0.6;margin-top:2px;}
 .btn-ou.over.selected{border-color:var(--green);background:var(--green);color:white;}
 .btn-ou.under.selected{border-color:var(--red);background:var(--red);color:white;}
@@ -250,7 +251,7 @@ table.lb-table{width:100%;border-collapse:collapse;}
     </div>
     <div class="scroll-area" id="scroll-area">
       <div class="screen active" id="tab-predict">
-        <div id="predict-content" style="padding:0;overflow-x:hidden;"></div>
+        <div id="predict-content" style="padding:0;"></div>
       </div>
       <div class="screen" id="tab-profile">
         <div id="profile-content"></div>
@@ -747,6 +748,7 @@ function renderEventCard(ev,comp,isRoundOpen){
   const pred=preds[ev.id]??null;
   const hasRes=!!ev.res;
   const isLocked=ev.locked||false;
+  // Event is "open for input" only if: round is open AND event has no result AND not locked
   const canPredict=isRoundOpen&&!hasRes&&!isLocked;
   const hasPred=comp.mode==='score'?(pred&&pred.h!==undefined&&pred.a!==undefined):comp.mode==='betting'?(pred&&typeof pred==='object'&&Object.keys(pred).length>0):(pred!==null&&pred!==undefined);
 
@@ -756,91 +758,71 @@ function renderEventCard(ev,comp,isRoundOpen){
     else if(comp.mode==='score'){[earnedPts,pointsBreakdown]=scorePoints(pred,ev.res,comp.scoring);correct=earnedPts>0;}
   }
 
+  let cls='event-card';
+  if(canPredict&&hasPred)cls+=' predicted';
+  if(!canPredict)cls+=' locked-pred';
+
   const hv=(pred&&pred.h!==undefined)?pred.h:'';
   const av=(pred&&pred.a!==undefined)?pred.a:'';
 
-  // Team badge — rounded square with team color derived from logo or fallback
-  function badge(logo,name,side){
-    const abbr=(name||'?').replace(/\s+/g,'').slice(0,3).toUpperCase();
-    const colors=['oklch(0.5 0.17 25)','oklch(0.55 0.17 250)','oklch(0.5 0.19 25)','oklch(0.45 0.15 255)','oklch(0.5 0.19 140)','oklch(0.48 0.16 300)','oklch(0.6 0.14 75)','oklch(0.5 0.18 185)'];
-    const bg=colors[(abbr.charCodeAt(0)+abbr.charCodeAt(1))%colors.length];
-    if(logo) return `<div class="ev-badge" style="background:${bg};border-radius:10px;"><img src="${logo}" alt="${name}" style="width:26px;height:26px;object-fit:contain;"></div>`;
-    return `<div class="ev-badge" style="background:${bg};border-radius:10px;">${abbr}</div>`;
-  }
-
-  // Centre section
-  let centre;
+  // Middle section (score inputs, result, or locked pick)
+  let midSection;
   if(comp.mode==='score'&&canPredict){
-    centre=`<div class="score-inline-mid"><input class="score-num-inline${hv!==''?' has':''}" type="number" min="0" max="20" placeholder="–" value="${hv}" id="sh-${ev.id}" oninput="pickScore('${ev.id}','h',this.value)"><span class="score-inline-dash">–</span><input class="score-num-inline${av!==''?' has':''}" type="number" min="0" max="20" placeholder="–" value="${av}" id="sa-${ev.id}" oninput="pickScore('${ev.id}','a',this.value)"></div>`;
+    midSection=`<div class="score-inline-mid"><input class="score-num-inline${hv!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${hv}" id="sh-${ev.id}" oninput="pickScore('${ev.id}','h',this.value)"><span class="score-inline-dash">\u2013</span><input class="score-num-inline${av!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${av}" id="sa-${ev.id}" oninput="pickScore('${ev.id}','a',this.value)"></div>`;
   } else if(hasRes){
-    centre=`<div class="ev-score">${ev.res.h}<span style="color:oklch(0.75 0.01 260);margin:0 4px;">–</span>${ev.res.a}</div>`;
-  } else if(comp.mode==='score'&&hasPred){
-    centre=`<div class="ev-score">${pred.h??'–'}<span style="color:oklch(0.75 0.01 260);margin:0 4px;">–</span>${pred.a??'–'}</div>`;
+    midSection=`<div class="ev-score">${ev.res.h}\u2013${ev.res.a}</div>`;
+  } else if(comp.mode==='score'&&hasPred&&!hasRes){
+    midSection=`<div class="ev-score">${pred.h??'-'}\u2013${pred.a??'-'}</div>`;
   } else {
-    centre='<div class="ev-vs">vs</div>';
+    midSection='<div class="ev-vs">vs</div>';
   }
 
-  let html=`<div class="event-card" data-evid="${ev.id}">
-    <div class="event-card-top">
-      <div class="event-meta">
-        <span class="event-league">${ev.tournament||comp.name}</span>
-        <span class="event-kickoff">${ev.kickoff||''}</span>
-      </div>
-      <div class="event-teams">
-        <div style="display:flex;align-items:center;gap:12px;">${badge(ev.homeLogo,ev.home,'home')}<span class="ev-name">${ev.home}</span></div>
-        ${centre}
-        <div style="display:flex;align-items:center;gap:12px;justify-content:flex-end;"><span class="ev-name" style="text-align:right;">${ev.away}</span>${badge(ev.awayLogo,ev.away,'away')}</div>
-      </div>
-    </div>
-    <div class="pred-area">`;
+  let html=`<div class="${cls}" data-evid="${ev.id}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${ev.tournament||comp.name}</span><span class="event-kickoff">${ev.kickoff||''}</span></div><div class="event-teams"><div class="ev-team">${teamBadge(ev.homeLogo,ev.home)}<span class="ev-name">${ev.home}</span></div>${midSection}<div class="ev-team away">${teamBadge(ev.awayLogo,ev.away)}<span class="ev-name">${ev.away}</span></div></div></div><div class="pred-area">`;
 
   if(canPredict){
+    // Open for prediction
     if(comp.mode==='lms'){
-      html+=`<div class="btns-1x2"><button class="btn-1x2${pred==='H'?' selected':''}" onclick="pick('${ev.id}','H')">${ev.home} win</button><button class="btn-1x2${pred==='D'?' selected':''}" style="flex:0 0 auto;padding:11px 16px;" onclick="pick('${ev.id}','D')">Draw</button><button class="btn-1x2${pred==='A'?' selected':''}" onclick="pick('${ev.id}','A')">${ev.away} win</button></div>`;
+      html+=`<div class="btns-1x2"><button class="btn-1x2${pred==='H'?' selected home':''}" data-val="H" onclick="pick('${ev.id}','H')">Home Win</button><button class="btn-1x2${pred==='D'?' selected draw':''}" data-val="D" onclick="pick('${ev.id}','D')">X</button><button class="btn-1x2${pred==='A'?' selected away':''}" data-val="A" onclick="pick('${ev.id}','A')">Away</button></div>`;
     } else if(comp.mode==='score'){
-      html+=`<div style="font-size:12.5px;color:oklch(0.62 0.01 260);font-weight:500;text-align:center;">Enter scores above \u2191</div>`;
+      html+='<div style="font-size:11px;color:var(--text-3);text-align:center;padding:2px 0;">Enter scores above \u2191</div>';
     } else if(comp.mode==='betting'){
       const markets=comp.markets||[];const mpred=(pred&&typeof pred==='object')?pred:{};
-      html+='<div style="display:flex;flex-direction:column;gap:10px;">';
+      html+='<div style="display:flex;flex-direction:column;gap:8px;">';
       markets.forEach(mkt=>{
-        html+=`<div><div style="font-size:12px;font-weight:600;color:oklch(0.5 0.01 260);margin-bottom:6px;">${mkt.label} <span style="color:oklch(0.55 0.19 275);">+${mkt.points}pts</span></div>`;
-        if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${mpred['1x2']==='H'?' selected':''}" onclick="pickMarket('${ev.id}','1x2','H')">${ev.home} win</button><button class="btn-1x2${mpred['1x2']==='D'?' selected':''}" style="flex:0 0 auto;padding:11px 16px;" onclick="pickMarket('${ev.id}','1x2','D')">Draw</button><button class="btn-1x2${mpred['1x2']==='A'?' selected':''}" onclick="pickMarket('${ev.id}','1x2','A')">${ev.away} win</button></div>`;
-        else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['ou25']==='O'?' selected':''}" onclick="pickMarket('${ev.id}','ou25','O')">Over 2.5</button><button class="btn-ou under${mpred['ou25']==='U'?' selected':''}" onclick="pickMarket('${ev.id}','ou25','U')">Under 2.5</button></div>`;
-        else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['btts']==='Y'?' selected':''}" onclick="pickMarket('${ev.id}','btts','Y')">Both score</button><button class="btn-ou under${mpred['btts']==='N'?' selected':''}" onclick="pickMarket('${ev.id}','btts','N')">Clean sheet</button></div>`;
+        html+=`<div><div class="pred-label" style="margin-bottom:5px;">${mkt.label} <span style="font-family:var(--sans);font-size:11px;color:var(--accent);font-weight:700;">+${mkt.points}pts</span></div>`;
+        if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${mpred['1x2']==='H'?' selected home':''}" onclick="pickMarket('${ev.id}','1x2','H')">Home Win</button><button class="btn-1x2${mpred['1x2']==='D'?' selected draw':''}" onclick="pickMarket('${ev.id}','1x2','D')">X</button><button class="btn-1x2${mpred['1x2']==='A'?' selected away':''}" onclick="pickMarket('${ev.id}','1x2','A')">Away</button></div>`;
+        else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['ou25']==='O'?' selected':''}" onclick="pickMarket('${ev.id}','ou25','O')">2.5 Over</button><button class="btn-ou under${mpred['ou25']==='U'?' selected':''}" onclick="pickMarket('${ev.id}','ou25','U')">2.5 Under</button></div>`;
+        else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['btts']==='Y'?' selected':''}" onclick="pickMarket('${ev.id}','btts','Y')">YES</button><button class="btn-ou under${mpred['btts']==='N'?' selected':''}" onclick="pickMarket('${ev.id}','btts','N')">NO</button></div>`;
         html+='</div>';
       });
       html+='</div>';
     }
   } else if(hasPred){
+    // Locked — show pick and optionally points
     let pl='';
-    if(comp.mode==='lms')pl=pred==='H'?ev.home+' win':pred==='D'?'Draw':ev.away+' win';
-    else if(comp.mode==='score')pl=(pred.h??'–')+' \u2013 '+(pred.a??'–');
+    if(comp.mode==='lms')pl=pred==='H'?ev.home+' (Home)':pred==='D'?'Draw':ev.away+' (Away)';
+    else if(comp.mode==='score')pl=(pred.h??'-')+' \u2013 '+(pred.a??'-');
     else if(comp.mode==='betting'&&typeof pred==='object')pl=Object.entries(pred).map(([k,v])=>k.toUpperCase()+': '+v).join(' \u00b7 ');
 
     if(hasRes&&comp.mode==='score'&&earnedPts!=null){
-      const statusBg=earnedPts>0?'oklch(0.9 0.09 155 / 0.35)':'oklch(0.92 0.08 25 / 0.35)';
-      const statusColor=earnedPts>0?'oklch(0.38 0.13 155)':'oklch(0.45 0.18 25)';
-      const statusLabel=earnedPts>0?(pointsBreakdown||'+'+earnedPts+' pts'):'0 pts';
-      html+=`<div class="pred-result-row"><span class="pred-made">Your pick: <strong>${pl}</strong></span><span class="pred-correct" style="background:${statusBg};color:${statusColor};">${statusLabel}</span></div>`;
+      html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div><span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'\u2717 0 pts'}</span></div>`;
+      if(pointsBreakdown)html+=`<div style="font-size:12px;color:${earnedPts>0?'var(--green)':'var(--text-3)'};margin-top:4px;font-weight:600;">${pointsBreakdown}</div>`;
     } else if(hasRes&&correct!=null){
-      const statusBg=correct?'oklch(0.9 0.09 155 / 0.35)':'oklch(0.92 0.08 25 / 0.35)';
-      const statusColor=correct?'oklch(0.38 0.13 155)':'oklch(0.45 0.18 25)';
-      html+=`<div class="pred-result-row"><span class="pred-made">Your pick: <strong>${pl}</strong></span><span class="pred-correct" style="background:${statusBg};color:${statusColor};">${correct?'\u2713 Correct':'\u2717 Wrong'}</span></div>`;
+      html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div><span class="pred-correct ${correct?'yes':'no'}">${correct?'\u2713 Correct':'\u2717 Wrong'}</span></div>`;
       if(comp.mode==='lms'&&ev._survivorCount!==undefined){
-        html+=`<div style="font-size:11px;font-weight:600;color:oklch(0.58 0.01 260);margin-top:6px;">${ev._survivorCount} survived</div>`;
+        html+=`<div style="text-align:left;font-family:var(--sans);font-size:11px;font-weight:700;color:var(--text-2);margin-top:6px;">${ev._survivorCount} survived</div>`;
       }
     } else {
-      html+=`<div class="pred-result-row"><span class="pred-made">Your pick: <strong>${pl}</strong></span><span style="font-size:12.5px;font-weight:600;color:oklch(0.5 0.13 55);background:oklch(0.93 0.08 65/0.4);padding:5px 11px;border-radius:999px;">\u25f7 Awaiting result</span></div>`;
+      // Predicted but no result yet — pending
+      html+=`<div><div class="pred-made">Your pick: <strong>${pl}</strong></div><div style="margin-top:4px;"><span style="font-size:11px;color:var(--amber);font-weight:600;">\u23f3 Awaiting result</span></div></div>`;
     }
   } else {
-    html+=`<span style="font-size:12.5px;color:oklch(0.62 0.01 260);font-weight:500;">No prediction made.</span>`;
+    html+='<div style="font-size:12px;color:var(--text-3);">No prediction made.</div>';
     if(comp.mode==='lms'&&hasRes&&ev._survivorCount!==undefined){
-      html+=`<div style="font-size:11px;font-weight:600;color:oklch(0.58 0.01 260);margin-top:6px;">${ev._survivorCount} survived</div>`;
+      html+=`<div style="text-align:left;font-family:var(--sans);font-size:11px;font-weight:700;color:var(--text-2);margin-top:6px;">${ev._survivorCount} survived</div>`;
     }
   }
-
-  html+='</div></div>';
-  return html;
+  html+='</div></div>';return html;
 }
 
 // ── COUNTDOWN ──────────────────────────────────────────────────────────────
