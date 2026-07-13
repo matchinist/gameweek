@@ -81,6 +81,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .ps-tab{padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:0.3px;text-transform:uppercase;color:var(--text-3);background:var(--bg);border:1px solid var(--border);border-radius:4px;cursor:pointer;transition:all 0.13s;white-space:nowrap;min-width:90px;text-align:center;}
 .ps-tab:hover{color:var(--text);}
 .ps-tab.active{background:var(--comp-color);border-color:var(--comp-color);color:white;}
+@media(min-width:600px){.events-list{display:grid;grid-template-columns:1fr 1fr;gap:14px;}.event-card{height:100%;}}
 @media(max-width:480px){
   .predict-subtabs{display:none !important;}
   .predict-subtabs-mobile{display:block !important;}
@@ -1047,7 +1048,7 @@ function renderRouletteHTML(){
         <div>
           <div style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.4px;">Coins remaining</div>
           <div style="display:flex;align-items:baseline;gap:4px;">
-            <span id="rl-coin-value" style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:var(--text);line-height:1.1;">100</span>
+            <span id="rl-coin-value" style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:oklch(0.2 0.01 260);line-height:1.1;">100</span>
             <span style="font-size:11px;color:var(--text-3);font-weight:500;">/ 100</span>
           </div>
         </div>
@@ -1178,7 +1179,7 @@ function rlRender(id){
 function rlUpdateFooter(){
   const staked=RL_BUDGET-rlRemaining;
   const coinEl=document.getElementById('rl-coin-value');
-  if(coinEl){coinEl.textContent=rlRemaining;coinEl.style.color=rlRemaining===0?'#F87171':'white';}
+  if(coinEl){coinEl.textContent=rlRemaining;coinEl.style.color=rlRemaining===0?'#DC2626':'var(--text)';}
   const stakedEl=document.getElementById('rl-staked-count');
   if(stakedEl)stakedEl.textContent=staked;
   const btn=document.getElementById('rl-place-btn');

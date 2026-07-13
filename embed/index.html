@@ -71,6 +71,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .round-status.completed{background:var(--bg);color:var(--text-3);}
 .round-status.upcoming{background:#FEF3C7;color:var(--amber);}
 .round-bar-right{margin-left:auto;display:flex;align-items:center;gap:4px;}
+@media(min-width:600px){.events-list{display:grid;grid-template-columns:1fr 1fr;gap:14px;}.event-card{height:100%;}}
 @media(max-width:480px){
   .predict-header-row{flex-direction:row;gap:4px;padding:8px 6px 0;}
   .predict-tournament-labels{flex:1;min-width:0;}
@@ -134,7 +135,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .ev-team{flex:1;display:flex;align-items:center;gap:9px;min-width:0;}
 .ev-team.away{flex-direction:row-reverse;}
 .ev-badge{width:38px;height:38px;border-radius:0;background:none;display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif;font-size:11px;font-weight:700;color:var(--text-2);flex-shrink:0;overflow:hidden;}
-.ev-badge img{width:38px;height:38px;object-fit:contain;mix-blend-mode:multiply;}
+.ev-badge img{width:38px;height:38px;object-fit:contain;}
 .ev-name{font-family:Inter,sans-serif;font-size:13px;font-weight:700;color:oklch(0.2 0.01 260);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ev-vs{font-family:Inter,sans-serif;font-size:11px;color:oklch(0.58 0.01 260);text-align:center;min-width:28px;}
 .ev-score{font-family:var(--mono);font-size:15px;font-weight:700;color:#000;text-align:center;min-width:42px;}
