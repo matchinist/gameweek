@@ -71,13 +71,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .round-status.completed{background:var(--bg);color:var(--text-3);}
 .round-status.upcoming{background:#FEF3C7;color:var(--amber);}
 .round-bar-right{margin-left:auto;display:flex;align-items:center;gap:4px;}
-@media(min-width:600px){.events-list{display:grid;grid-template-columns:1fr 1fr;gap:14px;}.event-card{height:100%;}}
+@media(min-width:600px){.events-list{grid-template-columns:1fr 1fr;}.event-card{height:100%;}}
 @media(max-width:480px){
   .predict-header-row{flex-direction:row;gap:4px;padding:8px 6px 0;}
   .predict-tournament-labels{flex:1;min-width:0;}
   .predict-subtabs{display:none;}
   .predict-subtabs-mobile{display:block;}
-  .events-list{padding:10px 0;}
+  .events-list{grid-template-columns:1fr;padding:10px 0;}
   .event-card-top{padding:0;}
   .pred-area{padding:9px 10px;}
 }
