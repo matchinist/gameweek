@@ -1004,10 +1004,10 @@
   <div class="nav-right">
     <a href="#how" class="btn-ghost">How it works</a>
     <a href="#pricing" class="btn-ghost">Pricing</a>
-    <a href="/demo" class="btn-ghost">Demo</a>
+    <a href="/demo" onclick="gtag('event','click',{event_category:'cta',event_label:'nav_demo'});return true;" class="btn-ghost">Demo</a>
     <span id="nav-auth-actions">
       <a href="/admin" class="btn-ghost">Go to dashboard</a>
-      <a href="/contact" class="btn-primary">Contact us</a>
+      <a href="/contact" onclick="gtag('event','click',{event_category:'cta',event_label:'nav_contact'});return true;" class="btn-primary">Contact us</a>
     </span>
   </div>
   <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Menu">
@@ -1019,7 +1019,7 @@
 <div class="nav-mobile-menu" id="nav-mobile-menu">
   <a href="#how" onclick="closeMobileNav()">How it works</a>
   <a href="#pricing" onclick="closeMobileNav()">Pricing</a>
-  <a href="/demo" onclick="closeMobileNav()">Demo</a>
+  <a href="/demo" onclick="closeMobileNav();gtag('event','click',{event_category:'cta',event_label:'mobile_nav_demo'});">Demo</a>
   <a href="/admin" onclick="closeMobileNav()">Go to dashboard</a>
 </div>
 
@@ -1035,8 +1035,8 @@
       Your users predict, compete, and return — week after week, across every competition you cover.
     </p>
     <div class="hero-actions">
-      <a href="/contact" class="btn-hero-primary">Contact us →</a>
-      <a href="/demo" class="btn-hero-ghost">Try the demo</a>
+      <a href="/contact" class="btn-hero-primary" onclick="gtag('event','click',{event_category:'cta',event_label:'hero_contact'})">Contact us →</a>
+      <a href="/demo" onclick="gtag('event','click',{event_category:'cta',event_label:'hero_demo'})" class="btn-hero-ghost">Try the demo</a>
     </div>
   </div>
 
@@ -1115,8 +1115,8 @@
     </div>
   </div>
   <div class="section-cta">
-    <a href="/contact" class="btn-hero-primary">Contact us →</a>
-    <a href="/demo" class="btn-hero-ghost">Try the demo</a>
+    <a href="/contact" onclick="gtag('event','click',{event_category:'cta',event_label:'modes_contact'})" class="btn-hero-primary">Contact us →</a>
+    <a href="/demo" onclick="gtag('event','click',{event_category:'cta',event_label:'modes_demo'})" class="btn-hero-ghost">Try the demo</a>
   </div>
 </div>
 
@@ -1173,8 +1173,8 @@
       </div>
     </div>
     <div class="section-cta">
-      <a href="/contact" class="btn-hero-primary">Contact us →</a>
-      <a href="/demo" class="btn-hero-ghost">Try the demo</a>
+      <a href="/contact" onclick="gtag('event','click',{event_category:'cta',event_label:'embed_contact'})" class="btn-hero-primary">Contact us →</a>
+      <a href="/demo" onclick="gtag('event','click',{event_category:'cta',event_label:'embed_demo'})" class="btn-hero-ghost">Try the demo</a>
     </div>
   </div>
 </div>
@@ -1208,8 +1208,8 @@
     </div>
   </div>
   <div class="section-cta">
-    <a href="/contact" class="btn-hero-primary">Contact us →</a>
-    <a href="/demo" class="btn-hero-ghost">Try the demo</a>
+    <a href="/contact" onclick="gtag('event','click',{event_category:'cta',event_label:'pricing_contact'})" class="btn-hero-primary">Contact us →</a>
+    <a href="/demo" onclick="gtag('event','click',{event_category:'cta',event_label:'pricing_demo'})" class="btn-hero-ghost">Try the demo</a>
   </div>
 </div>
 
@@ -1313,8 +1313,8 @@
   </div>
 
   <div class="section-cta">
-    <a href="/contact" class="btn-hero-primary">Contact us →</a>
-    <a href="/demo" class="btn-hero-ghost">Try the demo</a>
+    <a href="/contact" onclick="gtag('event','click',{event_category:'cta',event_label:'final_contact'})" class="btn-hero-primary">Contact us →</a>
+    <a href="/demo" onclick="gtag('event','click',{event_category:'cta',event_label:'final_demo'})" class="btn-hero-ghost">Try the demo</a>
   </div>
 </div>
 
@@ -1338,8 +1338,8 @@ function calcUpdate(v){
     <h2 class="cta-title">Ready before the<br><span class="accent">season starts?</span></h2>
     <p class="cta-sub">The 2026/27 season kicks off soon. Setup takes less than a day. Try the demo, then reach out at gameweek.cloud@gmail.com — we'll have you live before Gameweek 1.</p>
     <div class="cta-actions">
-      <a href="/contact" class="btn-cta-primary">Contact us →</a>
-      <a href="/contact" class="btn-cta-ghost">gameweek.cloud@gmail.com</a>
+      <a href="/contact" onclick="gtag('event','click',{event_category:'cta',event_label:'final_cta_contact'})" class="btn-cta-primary">Contact us →</a>
+      <a href="/contact" onclick="gtag('event','click',{event_category:'cta',event_label:'final_cta_email'})" class="btn-cta-ghost">gameweek.cloud@gmail.com</a>
     </div>
   </div>
 </div>
@@ -1555,7 +1555,7 @@ function calcUpdate(v){
         if(!existingOp){
           await supa.from('gw_operators').insert({auth_id:loginData.user.id, email, company_name:company, client_key:clientKey});
         }
-        window.location.href = '/admin';
+        gtag('event','click',{event_category:'cta',event_label:'pricing_start_free'});window.location.href='/admin';
         return;
       }
       resetBtn(btn); shakeField(); return;
