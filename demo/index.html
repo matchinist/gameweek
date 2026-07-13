@@ -21,9 +21,10 @@
   --mono:'Space Mono',monospace;--sans:'Inter',sans-serif;
   --comp-color:#4F46E5;
 }
-html,body{height:100%;}
-html,body{height:100%;overflow:hidden;}body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;}
-.app{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;max-width:860px;margin:0 auto;width:100%;background:var(--white);position:relative;}
+html{height:100%;overflow:hidden;}
+body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;}
+.app{display:flex;flex-direction:column;position:fixed;top:0;left:0;right:0;bottom:0;max-width:860px;margin:0 auto;width:100%;background:var(--white);overflow:hidden;}
+.scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
 .app-header{background:var(--white);border-bottom:1px solid var(--border);flex-shrink:0;z-index:50;}
 .header-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;}
 .header-logo{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--text);letter-spacing:-0.5px;}
@@ -36,7 +37,6 @@ html,body{height:100%;overflow:hidden;}body{font-family:var(--sans);background:v
 
 
 
-.scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
 ::-webkit-scrollbar{width:3px;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 .screen{display:none;padding:16px;}
@@ -57,16 +57,16 @@ html,body{height:100%;overflow:hidden;}body{font-family:var(--sans);background:v
 @keyframes authshake{10%,90%{transform:translateX(-1px);}20%,80%{transform:translateX(2px);}30%,50%,70%{transform:translateX(-4px);}40%,60%{transform:translateX(4px);}}
 .auth-modal.shake{animation:authshake 0.4s;}
 .auth-terms{font-size:11px;color:var(--text-3);text-align:center;margin-top:14px;line-height:1.5;}
-.comp-tabs{display:flex;gap:0;overflow-x:auto;border-bottom:1px solid var(--border);padding:0 16px;-webkit-overflow-scrolling:touch;}
+.comp-tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--border);padding:0 12px;-webkit-overflow-scrolling:touch;align-items:center;}
 .comp-tabs::-webkit-scrollbar{display:none;}
 .comp-tabs::-webkit-scrollbar{display:none;}
 .comp-tabs{-ms-overflow-style:none;scrollbar-width:none;}
-.comp-tab{padding:10px 14px;font-size:12px;font-weight:500;color:var(--text-2);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:all 0.13s;display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex-shrink:0;}
-.comp-tab:hover{color:var(--text);}
-.comp-tab.active{color:var(--comp-color);border-bottom-color:var(--comp-color);}
-.comp-tab-name{font-size:15px;font-weight:700;}
-.comp-tab-mode{font-family:var(--mono);font-size:9px;color:var(--text-3);font-weight:700;letter-spacing:0.3px;}
-.comp-tab.active .comp-tab-mode{color:var(--comp-color);opacity:0.7;}
+.comp-tab{padding:7px 14px;font-size:13px;font-weight:500;color:var(--text-2);cursor:pointer;border:none;background:none;border-radius:20px;white-space:nowrap;transition:all 0.15s;flex-shrink:0;margin:6px 0;}
+.comp-tab:hover{color:var(--text);background:var(--surface);}
+.comp-tab.active{color:var(--accent);background:var(--accent-light);font-weight:600;}
+.comp-tab-name{font-size:13px;}
+
+
 .round-bar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--white);border-bottom:1px solid var(--border);flex-wrap:wrap;}
 .round-select{font-family:var(--mono);font-size:11px;border:1px solid var(--border);background:var(--white);padding:5px 8px;border-radius:5px;cursor:pointer;outline:none;color:var(--text);}
 .round-select:focus{border-color:var(--accent);}
@@ -433,7 +433,7 @@ function toggleProfile(){
 }
 function renderCompTabs(){
   const el=document.getElementById('comp-tabs');
-  el.innerHTML=COMPS.map((c,i)=>`<button class="comp-tab${i===currentCompIdx?' active':''}" onclick="switchComp(${i})" style="${i===currentCompIdx?'--comp-color:'+c.color:''}"><span class="comp-tab-name">${MODE_LABELS[c.mode]}</span></button>`).join('');
+  el.innerHTML=COMPS.map((c,i)=>`<button class="comp-tab${i===currentCompIdx?' active':''}" onclick="switchComp(${i})">${c.name}</button>`).join('');
   document.documentElement.style.setProperty('--comp-color',COMPS[currentCompIdx].color);
 }
 function switchComp(idx){currentCompIdx=idx;predictSubTab='predictions';predsDirty=false;document.documentElement.style.setProperty('--comp-color',COMPS[idx].color);renderCompTabs();renderPredict();setTimeout(()=>{const active=document.querySelector('.comp-tab.active');if(active)active.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});},50);}
