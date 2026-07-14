@@ -234,6 +234,17 @@ table.lb-table{width:100%;border-collapse:collapse;}
 
 .round-bar-spacer{flex:1;}
 
+
+.lineup-pitch{display:flex;flex-direction:column;justify-content:space-around;min-height:520px;}
+.lineup-row{display:flex;justify-content:space-around;align-items:center;padding:8px 0;}
+@media(min-width:560px){
+  .lineup-pitch{flex-direction:row;align-items:stretch;min-height:320px;gap:0;}
+  .lineup-row{flex-direction:column;justify-content:space-around;align-items:center;padding:0 8px;flex:1;order:unset!important;}
+  .lineup-pitch>.lineup-row:nth-child(1){order:1!important;}
+  .lineup-pitch>.lineup-row:nth-child(2){order:2!important;}
+  .lineup-pitch>.lineup-row:nth-child(3){order:3!important;}
+  .lineup-pitch>.lineup-row:nth-child(4){order:4!important;}
+}
 </style>
 </head>
 <body>
@@ -575,7 +586,7 @@ function renderLineupPredictor(comp){
   }
 
   function rowHTML(posSlots){
-    return `<div style="display:flex;justify-content:space-around;align-items:center;padding:8px 0;">${posSlots.map(slotHTML).join('')}</div>`;
+    return `<div class="lineup-row">${posSlots.map(slotHTML).join('')}</div>`;
   }
 
   const scoreSection = scored!==null ? `
@@ -599,7 +610,7 @@ function renderLineupPredictor(comp){
 
       <!-- Pitch -->
       <div style="max-width:440px;margin:0 auto;width:100%;">
-      <div style="background:linear-gradient(180deg,#2d7a3a 0%,#2d7a3a 48%,#265e31 48%,#265e31 100%);border-radius:16px;padding:20px 8px;position:relative;overflow:hidden;min-height:560px;box-shadow:0 4px 24px rgba(0,0,0,0.2);">
+      <div style="background:#2d7a3a;border-radius:16px;padding:20px 8px;position:relative;overflow:hidden;min-height:560px;box-shadow:0 4px 24px rgba(0,0,0,0.2);">
         <!-- Pitch markings -->
         <div style="position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(255,255,255,0.25);"></div>
         <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80px;height:80px;border-radius:50%;border:1px solid rgba(255,255,255,0.25);"></div>
@@ -607,11 +618,11 @@ function renderLineupPredictor(comp){
         <div style="position:absolute;bottom:4px;left:25%;right:25%;height:60px;border:1px solid rgba(255,255,255,0.2);border-bottom:none;"></div>
 
         <!-- Players by row (FWD top → GK bottom) -->
-        <div style="position:relative;z-index:2;display:flex;flex-direction:column;justify-content:space-around;min-height:520px;">
-          ${rowHTML(rows.FWD)}
-          ${rowHTML(rows.MID)}
-          ${rowHTML(rows.DEF)}
-          ${rowHTML(rows.GK)}
+        <div class="lineup-pitch" style="position:relative;z-index:2;">
+          <div class="lineup-row" style="--row-order:4;order:var(--row-order)">${rows.GK.map(slotHTML).join('')}</div>
+          <div class="lineup-row" style="--row-order:3;order:var(--row-order)">${rows.DEF.map(slotHTML).join('')}</div>
+          <div class="lineup-row" style="--row-order:2;order:var(--row-order)">${rows.MID.map(slotHTML).join('')}</div>
+          <div class="lineup-row" style="--row-order:1;order:var(--row-order)">${rows.FWD.map(slotHTML).join('')}</div>
         </div>
       </div>
       </div>
@@ -635,13 +646,14 @@ function openLineupPicker(roundId, slotIdx, pos){
 
   const overlay = document.createElement('div');
   overlay.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;';
+  overlay.dataset.isPickerOverlay='1';
   overlay.onclick=(e)=>{if(e.target===overlay)overlay.remove();};
 
   const byPos = {GK:LIV_SQUAD.GK,DEF:LIV_SQUAD.DEF,MID:LIV_SQUAD.MID,FWD:LIV_SQUAD.FWD};
   // Show suggested position first but allow all
   const ordered = [...(byPos[pos]||[]), ...Object.entries(byPos).filter(([p])=>p!==pos).flatMap(([,arr])=>arr)];
 
-  let html = `<div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:860px;max-height:70vh;overflow-y:auto;padding:20px 0 32px;">
+  let html = `<div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:440px;max-height:70vh;overflow-y:auto;padding:20px 0 32px;">
     <div style="padding:0 20px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid oklch(0.92 0.004 260);">
       <div>
         <div style="font-size:11px;font-weight:700;color:oklch(0.58 0.01 260);text-transform:uppercase;letter-spacing:0.5px;">Select player</div>
