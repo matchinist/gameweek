@@ -916,9 +916,12 @@ tbody tr:hover td{background:var(--bg);}
         </div>
 
         <div id="new-round-available-wrap" style="display:none;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px;">
             <label class="form-label" style="margin:0;">Available Events</label>
-            <span id="new-round-available-count" style="font-size:11px;color:var(--text-3);"></span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <select class="form-select" id="new-round-gw-select" onchange="roundSelectTournament('new',true)" style="display:none;width:auto;font-size:12px;padding:5px 8px;"></select>
+              <span id="new-round-available-count" style="font-size:11px;color:var(--text-3);"></span>
+            </div>
           </div>
           <div id="new-round-available-list" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;"></div>
         </div>
@@ -990,9 +993,12 @@ tbody tr:hover td{background:var(--bg);}
       </div>
 
       <div id="edit-round-available-wrap" style="display:none;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px;">
           <label class="form-label" style="margin:0;">Available Events</label>
-          <span id="edit-round-available-count" style="font-size:11px;color:var(--text-3);"></span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <select class="form-select" id="edit-round-gw-select" onchange="roundSelectTournament('edit',true)" style="display:none;width:auto;font-size:12px;padding:5px 8px;"></select>
+            <span id="edit-round-available-count" style="font-size:11px;color:var(--text-3);"></span>
+          </div>
         </div>
         <div id="edit-round-available-list" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;"></div>
       </div>
@@ -1794,23 +1800,51 @@ function populateTournamentDropdown(prefix){
     pl.map(t=>`<option value="${t.id}">${t.name}${t.country?' · '+t.country:''}</option>`).join('');
 }
 
-function roundSelectTournament(prefix){
+const CURRENT_SEASON = '2026/27';
+function roundSelectTournament(prefix, keepGw){
   const tId = document.getElementById(prefix+'-round-tournament-select').value;
   const availWrap = document.getElementById(prefix+'-round-available-wrap');
   const availList = document.getElementById(prefix+'-round-available-list');
   const availCount = document.getElementById(prefix+'-round-available-count');
-  if(!tId){ availWrap.style.display='none'; return; }
+  const gwSel = document.getElementById(prefix+'-round-gw-select');
+  if(!tId){ availWrap.style.display='none'; if(gwSel) gwSel.style.display='none'; return; }
 
   const tournament = getDMTournaments().find(t=>t.id===tId);
   const dmEvents = getDMEvents();
   const teams = getDMTeams();
   const teamById = id => teams.find(t=>t.id===id);
 
-  // Collect all event IDs from this tournament (all seasons/rounds)
+  const seasons = tournament?.seasons||{};
+  const season = seasons[CURRENT_SEASON];
+  const gwRounds = season?.rounds||[];
+
+  // Populate gameweek dropdown (only for current season)
+  if(gwSel && !keepGw){
+    if(gwRounds.length){
+      gwSel.innerHTML = '<option value="">All gameweeks · '+CURRENT_SEASON+'</option>'
+        + gwRounds.map((r,i)=>`<option value="${i}">${r.label}</option>`).join('');
+      gwSel.style.display = '';
+    } else {
+      gwSel.innerHTML = '';
+      gwSel.style.display = 'none';
+    }
+  }
+
+  // Collect event IDs — filtered by gameweek if selected, else all of current season
   const allEids = new Set();
-  Object.values(tournament?.seasons||{}).forEach(season=>{
-    (season.rounds||[]).forEach(r=>(r.eventIds||[]).forEach(eid=>allEids.add(eid)));
-  });
+  const gwIdx = (gwSel && gwSel.style.display!=='none') ? gwSel.value : '';
+  if(season){
+    if(gwIdx!=='' && gwRounds[parseInt(gwIdx)]){
+      (gwRounds[parseInt(gwIdx)].eventIds||[]).forEach(eid=>allEids.add(eid));
+    } else {
+      gwRounds.forEach(r=>(r.eventIds||[]).forEach(eid=>allEids.add(eid)));
+    }
+  } else {
+    // Fallback: tournament has no 2026/27 season — show all seasons as before
+    Object.values(seasons).forEach(s=>{
+      (s.rounds||[]).forEach(r=>(r.eventIds||[]).forEach(eid=>allEids.add(eid)));
+    });
+  }
 
   // Build event list, excluding already-added events
   const addedIds = new Set(roundAddedEvents.map(e=>e.id));
@@ -1859,14 +1893,14 @@ function roundAddEvent(prefix, eid, home, away, kickoff, tName){
   roundAddedEvents.push({id:eid, home, away, kickoff, tName});
   // Sort by kickoff so elimination order is always clear
   roundAddedEvents.sort((a,b)=>new Date(a.kickoff||0)-new Date(b.kickoff||0));
-  roundSelectTournament(prefix);
+  roundSelectTournament(prefix, true);
   renderAddedEvents(prefix);
   validateRoundOverlap(prefix);
 }
 
 function roundRemoveEvent(prefix, eid){
   roundAddedEvents = roundAddedEvents.filter(e=>e.id!==eid);
-  roundSelectTournament(prefix);
+  roundSelectTournament(prefix, true);
   renderAddedEvents(prefix);
 }
 
