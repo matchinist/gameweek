@@ -1167,8 +1167,32 @@ function renderEventCard(ev,comp,isRoundOpen){
         html+=`<div style="text-align:left;font-family:var(--sans);font-size:11px;font-weight:700;color:var(--text-2);margin-top:6px;">${ev._survivorCount} survived</div>`;
       }
     } else {
-      // Predicted but no result yet — pending
-      html+=`<div><div class="pred-made">Your pick: <strong>${pl}</strong></div><div style="margin-top:4px;"><span style="font-size:11px;color:var(--amber);font-weight:600;">\u23f3 Awaiting result</span></div></div>`;
+      if(comp.mode==='betting'&&typeof pred==='object'){
+        var mpred2=pred;
+        html+='<div style="display:flex;flex-direction:column;gap:8px;">';
+        (comp.markets||[]).forEach(function(mkt){
+          html+='<div><div style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);">'+mkt.label+'</div>';
+          var h=mpred2['1x2'],o=mpred2['ou25'],b=mpred2['btts'];
+          if(mkt.type==='1x2')html+='<div class="btns-1x2">'
+            +'<button class="btn-1x2'+(h==='H'?' selected home':'')+'" disabled>Home Win</button>'
+            +'<button class="btn-1x2'+(h==='D'?' selected draw':'')+'" disabled>X</button>'
+            +'<button class="btn-1x2'+(h==='A'?' selected away':'')+'" disabled>Away</button>'
+            +'</div>';
+          else if(mkt.type==='ou25')html+='<div class="btns-ou">'
+            +'<button class="btn-ou over'+(o==='O'?' selected':'')+'" disabled>Over</button>'
+            +'<button class="btn-ou under'+(o==='U'?' selected':'')+'" disabled>Under</button>'
+            +'</div>';
+          else if(mkt.type==='btts')html+='<div class="btns-ou">'
+            +'<button class="btn-ou over'+(b==='Y'?' selected':'')+'" disabled>Both Score</button>'
+            +'<button class="btn-ou under'+(b==='N'?' selected':'')+'" disabled>Clean Sheet</button>'
+            +'</div>';
+          html+='</div>';
+        });
+        html+='<div style="font-size:11px;color:oklch(0.58 0.01 260);margin-top:4px;">⏳ Awaiting result</div>';
+        html+='</div>';
+      } else {
+        html+=`<div><div class="pred-made">Your pick: <strong>${pl}</strong></div><div style="margin-top:4px;"><span style="font-size:11px;color:var(--amber);font-weight:600;">⏳ Awaiting result</span></div></div>`;
+      }
     }
   } else {
     html+='<div style="font-size:12px;color:var(--text-3);">No prediction made.</div>';
