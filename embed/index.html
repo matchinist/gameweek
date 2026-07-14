@@ -490,9 +490,15 @@ async function doLogin(){
   await loginPlayer(player);
 }
 
+let pendingSaveAction = null; // set by submitPreds()/saveLineup() when a guest clicks save
+
 async function loginPlayer(player){
   currentPlayer = player;
-  // Save any predictions entered before login (e.g. scores typed while logged out)
+  const wasSubmitting = pendingSaveAction;
+  pendingSaveAction = null;
+
+  // Save any predictions entered before login (e.g. scores typed while logged out) —
+  // covers the round/lineup fixture currently in view.
   const localPreds = {...preds};
   try{
     if(Object.keys(localPreds).length){
@@ -500,8 +506,8 @@ async function loginPlayer(player){
       const round=comp?.rounds[selectedRound[currentCompIdx]];
       if(comp&&round){
         for(const [eventId,prediction] of Object.entries(localPreds)){
-          // only save events that belong to the current round
-          if(!round.eventIds.includes(eventId)) continue;
+          const belongsToRound = (round.eventIds&&round.eventIds.includes(eventId)) || eventId===round.id || eventId===(round.id+'_ranking');
+          if(!belongsToRound) continue;
           const stored=(typeof prediction==='string'||typeof prediction==='number')?{value:prediction}:prediction;
           await supa.from('gw_predictions').upsert({
             client_key:CLIENT_PARAM, player_id:player.id, username:player.username,
@@ -516,9 +522,26 @@ async function loginPlayer(player){
   try{ await loadPlayerPreds(); }catch(e){ console.error('loadPlayerPreds:',e); }
   // Re-apply any local preds not yet in DB (safety)
   preds = {...localPreds, ...preds};
+
+  // Lineup picks live outside `preds` (keyed by slot, not event) — save separately
+  if(wasSubmitting && wasSubmitting.type==='lineup' && wasSubmitting.roundId){
+    const picks = lineupPicks[wasSubmitting.roundId]||{};
+    const pickedIds = Object.values(picks);
+    if(pickedIds.length){
+      try{ await savePred(wasSubmitting.roundId, pickedIds); }catch(e){ console.error('save lineup after login:',e); }
+    }
+  }
+
   closeAuthModal();
   updateHeaderUser();
+  predsDirty=false; // predictions are now saved — the button should render as such
   renderPredict();
+
+  if(wasSubmitting&&wasSubmitting.type==='lineup'){
+    toast('✓ Lineup saved!');
+  } else if(Object.keys(localPreds).length){
+    toast('✓ Your predictions have been saved');
+  }
 }
 
 async function doLogout(){
@@ -977,7 +1000,17 @@ function removeLineupPick(roundId, slotIdx){
 }
 
 function saveLineup(roundId){
+  if(!currentPlayer){
+    pendingSaveAction={type:'lineup',roundId};
+    openAuthModal('Sign in to save your lineup');
+    return;
+  }
+  const picks = lineupPicks[roundId]||{};
+  const pickedIds = Object.values(picks);
+  if(!pickedIds.length){ toast('Pick some players first'); return; }
+  savePred(roundId, pickedIds);
   toast('✓ Lineup saved!');
+  renderPredict();
 }
 
 // Fake leaderboard for lineup
@@ -1806,13 +1839,34 @@ function rlChangeRound(idx){
 function rlPlaceBets(){toast('✓ Bets placed (demo — not persisted)');}
 
 function submitPreds(){
+  const comp=COMPS[currentCompIdx],round=comp?.rounds[selectedRound[currentCompIdx]];
+  if(!round)return;
+  if(!currentPlayer){
+    pendingSaveAction='predictions';
+    openAuthModal('Sign in to save your predictions');
+    return;
+  }
+  const events=round.eventIds.map(id=>({id,...EVENTS[id]})).filter(e=>e.home&&!e.res&&!e.locked);
+  events.forEach(ev=>{
+    const p=preds[ev.id];
+    const hasVal = comp.mode==='score' ? (p&&p.h!==undefined&&p.a!==undefined)
+      : comp.mode==='betting' ? (p&&typeof p==='object'&&Object.keys(p).length>0)
+      : (p!==undefined&&p!==null);
+    if(hasVal) savePred(ev.id, p);
+  });
+  if(comp.mode==='ranking'){
+    const rk=round.id+'_ranking';
+    if(preds[rk]) savePred(rk, preds[rk]);
+  }
   predsDirty=false;
   const btn=document.querySelector('.submit-preds-btn');
   if(btn){btn.classList.add('disabled');btn.textContent='\u2713 Saved';}
-  const comp=COMPS[currentCompIdx],round=comp.rounds[selectedRound[currentCompIdx]];
-  if(!round)return;
-  const events=round.eventIds.map(id=>({id,...EVENTS[id]})).filter(e=>e.home&&!e.res&&!e.locked);
-  const done=events.filter(ev=>{const p=preds[ev.id];return p&&p.h!==undefined&&p.a!==undefined;}).length;
+  const done=events.filter(ev=>{
+    const p=preds[ev.id];
+    return comp.mode==='score' ? (p&&p.h!==undefined&&p.a!==undefined)
+      : comp.mode==='betting' ? (p&&typeof p==='object'&&Object.keys(p).length>0)
+      : (p!==undefined&&p!==null);
+  }).length;
   toast('\u2713 '+done+' of '+events.length+' predictions saved');
 }
 
