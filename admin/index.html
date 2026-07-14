@@ -1131,6 +1131,8 @@ async function saveAdminState(){
         color:c.color, status:c.status, long_term:c.longTerm||false,
         scoring:c.scoring||null, markets:c.markets||null,
         ranking_config:c.rankingConfig||null,
+        lineup_config:c.lineupConfig||null,
+        roulette_config:c.rouletteConfig||null,
         overall_prizes:c.overallPrizes||null,
         users:c.users||0, predictions:c.predictions||0
       }));
@@ -1148,7 +1150,10 @@ async function saveAdminState(){
       }))
     );
     if(allRounds.length) await supa.from('gw_rounds').upsert(allRounds,{onConflict:'id'});
-  }catch(e){ console.error('saveAdminState failed:',e.message); }
+  }catch(e){
+    console.error('saveAdminState failed:',e.message);
+    toast('⚠ Save failed: '+e.message);
+  }
 }
 
 // ── DM HELPERS (read from in-memory dmState) ──────────────────────────────
@@ -1719,6 +1724,7 @@ async function openModal(id){
     }
     if(id==='modal-create-round'){
       roundAddedEvents = [];
+      editRoundSavedTeamIds = null;
       prizeState['new-round'] = defaultPrizes();
       // Open the modal shell FIRST so user sees it immediately
       document.getElementById(id)?.classList.add('open');
@@ -1927,6 +1933,7 @@ function renderAddedEvents(prefix){
   updateRankingTeamPreview(prefix);
 }
 
+let editRoundSavedTeamIds = null; // team ids checked when this round was last saved, used to seed the edit modal correctly
 function updateRankingTeamPreview(prefix){
   const comp = getComp(state.currentComp);
   if(!comp || comp.mode!=='ranking') return;
@@ -1967,9 +1974,17 @@ function updateRankingTeamPreview(prefix){
   listEl.querySelectorAll(`.${prefix}-ranking-team-cb`).forEach(cb=>{
     prevState[cb.value] = cb.checked;
   });
+  const isFirstRenderThisSession = Object.keys(prevState).length===0;
 
   listEl.innerHTML = derivedTeams.map(t=>{
-    const isChecked = prevState.hasOwnProperty(t.id) ? prevState[t.id] : true;
+    let isChecked;
+    if(prevState.hasOwnProperty(t.id)){
+      isChecked = prevState[t.id];
+    } else if(prefix==='edit' && isFirstRenderThisSession && editRoundSavedTeamIds){
+      isChecked = editRoundSavedTeamIds.has(t.id);
+    } else {
+      isChecked = true;
+    }
     return `
     <label style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg);border-radius:6px;cursor:pointer;">
       <input type="checkbox" class="${prefix}-ranking-team-cb" value="${t.id}" data-name="${t.name}" data-logo="${t.logo}" data-opponent="${t.opponent}" ${isChecked?'checked':''} style="accent-color:var(--accent);width:16px;height:16px;">
@@ -2080,6 +2095,9 @@ function openEditRound(roundId){
   if(isRanking){
     // For ranking: show events flow + display derived teams
     document.getElementById('edit-round-ranking-teams').style.display = 'block';
+    // Seed checkbox defaults from the round's previously-saved selection,
+    // so reopening for edit doesn't silently re-check teams the operator excluded.
+    editRoundSavedTeamIds = (r.rankingTeams && r.rankingTeams.length) ? new Set(r.rankingTeams.map(t=>t.id)) : null;
     // Pre-populate events from the round
     const dmEvents = getDMEvents();
     const teamList = getDMTeams();
