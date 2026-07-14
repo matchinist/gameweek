@@ -848,6 +848,12 @@ const NATIONALITY_FLAGS = {
   'Latvia':'🇱🇻','Lithuania':'🇱🇹','Ireland':'🇮🇪',
 };
 
+const NATIONALITY_FLAGS_LC = Object.fromEntries(Object.entries(NATIONALITY_FLAGS).map(([k,v])=>[k.toLowerCase(),v]));
+function flagFor(nationality){
+  if(!nationality) return '';
+  return NATIONALITY_FLAGS[nationality] || NATIONALITY_FLAGS_LC[nationality.toLowerCase().trim()] || '';
+}
+
 const FORMATIONS = {
   '4-3-3': {GK:1,DEF:4,MID:3,FWD:3},
   '4-4-2': {GK:1,DEF:4,MID:4,FWD:2},
@@ -888,7 +894,6 @@ function renderLineupPredictor(comp){
   const picks = lineupPicks[round.id]||{};
   const slots = getLineupSlots(lineupFormation);
   const pickCount = Object.keys(picks).length;
-  const roundSelect = comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('');
 
   // Score if completed
   let scored = null;
@@ -922,7 +927,7 @@ function renderLineupPredictor(comp){
     if(player){
       const isCorrect = !isOpen && actual && actual.includes(player.id);
       const borderColor = !isOpen && actual ? (isCorrect ? '#4ade80' : 'rgba(255,255,255,0.4)') : 'rgba(255,255,255,0.9)';
-      const flag = NATIONALITY_FLAGS[player.nationality] || '';
+      const flag = flagFor(player.nationality);
       return `<div onclick="${click}" style="position:absolute;left:${xPct}%;top:${yPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:${isOpen?'pointer':'default'};z-index:3;width:64px;">
         <div style="position:relative;width:40px;height:40px;">
           <div style="width:40px;height:40px;border-radius:50%;background:${col};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:11px;border:2.5px solid ${borderColor};box-shadow:0 2px 8px rgba(0,0,0,0.4);">${player.no}</div>
@@ -994,7 +999,7 @@ function renderLineupPredictor(comp){
   return `
     <div style="padding:0 0 30px;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
-        <select class="round-select" onchange="changeRound(this.value)">${roundSelect}</select>
+        <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:800;color:oklch(0.2 0.01 260);">${round.label}</span>
         <span class="round-status ${round.status==='open'?'open':'upcoming'}">${round.status==='open'?'● Open':'◷ Soon'}</span>
         ${isOpen ? `<select onchange="lineupFormation=this.value;renderPredict();" style="font-family:Inter,sans-serif;font-size:13px;padding:7px 12px;border:1px solid oklch(0.88 0.006 260);border-radius:8px;background:#fff;color:oklch(0.25 0.01 260);cursor:pointer;outline:none;">
           ${Object.keys(FORMATIONS).map(f=>`<option value="${f}"${f===lineupFormation?' selected':''}>${f}</option>`).join('')}
