@@ -1705,16 +1705,20 @@ function goRoundStep1(prefix){
 
 // ── OPEN MODAL (refresh DM data first) ───────────────────────────────────
 async function openModal(id){
-  if(id==='modal-create-comp'){
-    // Close round modal if somehow open
-    document.getElementById('modal-create-round')?.classList.remove('open');
-  }
-  if(id==='modal-create-round'){
-    roundAddedEvents = [];
-    prizeState['new-round'] = defaultPrizes();
-    await refreshDMState();
-    const comp = getComp(state.currentComp);
-    const isRanking = comp?.mode === 'ranking';
+  console.log('GW: openModal called for', id, '(v2)');
+  try{
+    if(id==='modal-create-comp'){
+      // Close round modal if somehow open
+      document.getElementById('modal-create-round')?.classList.remove('open');
+    }
+    if(id==='modal-create-round'){
+      roundAddedEvents = [];
+      prizeState['new-round'] = defaultPrizes();
+      // Open the modal shell FIRST so user sees it immediately
+      document.getElementById(id)?.classList.add('open');
+      await refreshDMState();
+      const comp = getComp(state.currentComp);
+      const isRanking = comp?.mode === 'ranking';
     // Reset wizard to step 1
     document.getElementById('new-round-step-1')?.style && (document.getElementById('new-round-step-1').style.display='block');
     document.getElementById('new-round-step-2')?.style && (document.getElementById('new-round-step-2').style.display='none');
@@ -1734,6 +1738,9 @@ async function openModal(id){
       document.getElementById('ranking-team-list').innerHTML = '<div style="padding:10px;font-size:12px;color:var(--text-3);">Select events above — teams will be extracted automatically with their opponents.</div>';
       document.getElementById('ranking-team-count').textContent = 'Add events to populate teams';
     }
+    }
+  }catch(err){
+    console.error('GW: openModal error for', id, '—', err);
   }
   document.getElementById(id)?.classList.add('open');
 }
