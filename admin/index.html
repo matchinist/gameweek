@@ -1438,6 +1438,11 @@ function renderCompDetail(){
   </div>`;
   prizeState['overall'] = (c.overallPrizes&&c.overallPrizes.length) ? JSON.parse(JSON.stringify(c.overallPrizes)) : defaultPrizes();
   renderPrizesEditor('overall');
+  // Hide New Round buttons only for lineup mode
+  ['new-round-btn-header','new-round-btn-card'].forEach(bid=>{
+    const b=document.getElementById(bid);
+    if(b) b.style.display = c.mode==='lineup' ? 'none' : '';
+  });
 }
 
 // ── RESULT MODAL ──────────────────────────────────────────────────────────
