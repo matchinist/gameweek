@@ -559,32 +559,31 @@ const LIV_SQUAD = {
 };
 
 const NATIONALITY_FLAGS = {
-  'England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Wales':'🏴󠁧󠁢󠁷󠁬󠁳󠁿',
-  'Brazil':'🇧🇷','Argentina':'🇦🇷','France':'🇫🇷','Germany':'🇩🇪',
-  'Spain':'🇪🇸','Portugal':'🇵🇹','Netherlands':'🇳🇱','Belgium':'🇧🇪',
-  'Italy':'🇮🇹','Uruguay':'🇺🇾','Colombia':'🇨🇴','Egypt':'🇪🇬',
-  'Senegal':'🇸🇳','Ghana':'🇬🇭','Nigeria':'🇳🇬','Ivory Coast':'🇨🇮',
-  'Sweden':'🇸🇪','Norway':'🇳🇴','Denmark':'🇩🇰','Switzerland':'🇨🇭',
-  'Croatia':'🇭🇷','Serbia':'🇷🇸','Hungary':'🇭🇺','Poland':'🇵🇱',
-  'Slovakia':'🇸🇰','Czech Republic':'🇨🇿','Austria':'🇦🇹','Greece':'🇬🇷',
-  'Turkey':'🇹🇷','Japan':'🇯🇵','South Korea':'🇰🇷','Australia':'🇦🇺',
-  'United States':'🇺🇸','Canada':'🇨🇦','Mexico':'🇲🇽','Ecuador':'🇪🇨',
-  'Chile':'🇨🇱','Peru':'🇵🇪','Bolivia':'🇧🇴','Paraguay':'🇵🇾',
-  'Venezuela':'🇻🇪','Morocco':'🇲🇦','Tunisia':'🇹🇳','Algeria':'🇩🇿',
-  'Cameroon':'🇨🇲','Gabon':'🇬🇦','Guinea':'🇬🇳','Mali':'🇲🇱',
-  'DR Congo':'🇨🇩','Cape Verde':'🇨🇻','Mozambique':'🇲🇿','Zimbabwe':'🇿🇼',
-  'Jamaica':'🇯🇲','Trinidad and Tobago':'🇹🇹','New Zealand':'🇳🇿',
-  'South Africa':'🇿🇦','Slovenia':'🇸🇮','Albania':'🇦🇱','Iceland':'🇮🇸',
-  'Finland':'🇫🇮','Luxembourg':'🇱🇺','Cyprus':'🇨🇾','Estonia':'🇪🇪',
-  'Latvia':'🇱🇻','Lithuania':'🇱🇹','Ireland':'🇮🇪',
+  'Afghanistan':'🇦🇫','Albania':'🇦🇱','Algeria':'🇩🇿','Argentina':'🇦🇷','Armenia':'🇦🇲',
+  'Australia':'🇦🇺','Austria':'🇦🇹','Azerbaijan':'🇦🇿','Belgium':'🇧🇪','Bolivia':'🇧🇴',
+  'Bosnia and Herzegovina':'🇧🇦','Brazil':'🇧🇷','Bulgaria':'🇧🇬','Cameroon':'🇨🇲','Canada':'🇨🇦',
+  'Chile':'🇨🇱','China':'🇨🇳','Colombia':'🇨🇴','Costa Rica':'🇨🇷','Croatia':'🇭🇷',
+  'Cuba':'🇨🇺','Czech Republic':'🇨🇿','Denmark':'🇩🇰','Ecuador':'🇪🇨','Egypt':'🇪🇬',
+  'England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Estonia':'🇪🇪','Finland':'🇫🇮','France':'🇫🇷','Gabon':'🇬🇦',
+  'Georgia':'🇬🇪','Germany':'🇩🇪','Ghana':'🇬🇭','Greece':'🇬🇷','Guinea':'🇬🇳',
+  'Honduras':'🇭🇳','Hungary':'🇭🇺','Iceland':'🇮🇸','India':'🇮🇳','Iran':'🇮🇷',
+  'Iraq':'🇮🇶','Ireland':'🇮🇪','Israel':'🇮🇱','Italy':'🇮🇹','Ivory Coast':'🇨🇮',
+  'Jamaica':'🇯🇲','Japan':'🇯🇵','Jordan':'🇯🇴','Kenya':'🇰🇪','South Korea':'🇰🇷',
+  'Kosovo':'🇽🇰','Latvia':'🇱🇻','Lebanon':'🇱🇧','Libya':'🇱🇾','Lithuania':'🇱🇹',
+  'Luxembourg':'🇱🇺','Mali':'🇲🇱','Mexico':'🇲🇽','Montenegro':'🇲🇪','Morocco':'🇲🇦',
+  'Netherlands':'🇳🇱','New Zealand':'🇳🇿','Nigeria':'🇳🇬','North Macedonia':'🇲🇰','Northern Ireland':'🇬🇧',
+  'Norway':'🇳🇴','Panama':'🇵🇦','Paraguay':'🇵🇾','Peru':'🇵🇪','Poland':'🇵🇱',
+  'Portugal':'🇵🇹','Qatar':'🇶🇦','Republic of Ireland':'🇮🇪','Romania':'🇷🇴','Russia':'🇷🇺',
+  'Saudi Arabia':'🇸🇦','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Senegal':'🇸🇳','Serbia':'🇷🇸','Slovakia':'🇸🇰',
+  'Slovenia':'🇸🇮','South Africa':'🇿🇦','Spain':'🇪🇸','Sweden':'🇸🇪','Switzerland':'🇨🇭',
+  'Syria':'🇸🇾','Tunisia':'🇹🇳','Turkey':'🇹🇷','Ukraine':'🇺🇦','United Arab Emirates':'🇦🇪',
+  'United States':'🇺🇸','Uruguay':'🇺🇾','Uzbekistan':'🇺🇿','Venezuela':'🇻🇪','Vietnam':'🇻🇳',
+  'Wales':'🏴󠁧󠁢󠁷󠁬󠁳󠁿','Zambia':'🇿🇲',
 };
 
+// Only 4-2-3-1 is supported — kept as a map for compatibility with getLineupSlots().
 const FORMATIONS = {
-  '4-3-3': {GK:1,DEF:4,MID:3,FWD:3},
-  '4-4-2': {GK:1,DEF:4,MID:4,FWD:2},
   '4-2-3-1': {GK:1,DEF:4,MID:6,FWD:1},
-  '3-5-2': {GK:1,DEF:3,MID:5,FWD:2},
-  '5-3-2': {GK:1,DEF:5,MID:3,FWD:2},
 };
 
 // Actual result for scoring
@@ -593,7 +592,7 @@ const LIV_ACTUAL_XI = {
 };
 
 let lineupPicks = {}; // roundId -> {slotIdx -> playerId}
-let lineupFormation = '4-3-3';
+let lineupFormation = '4-2-3-1';
 
 function getLineupSlots(formation){
   const f = FORMATIONS[formation] || FORMATIONS['4-3-3'];
@@ -724,9 +723,6 @@ function renderLineupPredictor(comp){
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
         <select class="round-select" onchange="changeRound(this.value)">${roundSelect}</select>
         <span class="round-status ${round.status==='open'?'open':'upcoming'}">${round.status==='open'?'● Open':'◷ Soon'}</span>
-        ${isOpen ? `<select onchange="lineupFormation=this.value;renderPredict();" style="font-family:Inter,sans-serif;font-size:13px;padding:7px 12px;border:1px solid oklch(0.88 0.006 260);border-radius:8px;background:#fff;color:oklch(0.25 0.01 260);cursor:pointer;outline:none;">
-          ${Object.keys(FORMATIONS).map(f=>`<option value="${f}"${f===lineupFormation?' selected':''}>${f}</option>`).join('')}
-        </select>` : ''}
         <span style="margin-left:auto;font-size:12px;color:oklch(0.5 0.01 260);font-weight:600;">${pickCount}/11 selected</span>
       </div>
 
@@ -1808,6 +1804,16 @@ function showRules(mode){
 • Both Teams to Score — Will both teams find the net?
 </div>
 <div><strong style="color:var(--text);">Points:</strong> Each market has its own points value, set by the competition operator.</div>
+</div>`,
+    lineup:`<h3 style="margin-bottom:12px;">Lineup Predictor Rules</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">How to play:</strong> Pick the starting XI (11 players) for the team's next fixture before it kicks off. Formation is fixed at 4-2-3-1.</div>
+<div><strong style="color:var(--text);">Points:</strong></div>
+<div style="padding-left:12px;">
+• Each correct player in your lineup — <strong style="color:var(--green);">+10 pts</strong><br>
+• All 11 players correct — <strong style="color:var(--green);">+30 bonus pts</strong>
+</div>
+<div><strong style="color:var(--text);">Leaderboard:</strong> Players are ranked by total points across all correctly predicted lineups.</div>
 </div>`,
   };
   const content=rules[mode]||'';

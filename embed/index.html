@@ -829,38 +829,34 @@ const LIV_SQUAD = {
 };
 
 const NATIONALITY_FLAGS = {
-  'England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Wales':'🏴󠁧󠁢󠁷󠁬󠁳󠁿',
-  'Brazil':'🇧🇷','Argentina':'🇦🇷','France':'🇫🇷','Germany':'🇩🇪',
-  'Spain':'🇪🇸','Portugal':'🇵🇹','Netherlands':'🇳🇱','Belgium':'🇧🇪',
-  'Italy':'🇮🇹','Uruguay':'🇺🇾','Colombia':'🇨🇴','Egypt':'🇪🇬',
-  'Senegal':'🇸🇳','Ghana':'🇬🇭','Nigeria':'🇳🇬','Ivory Coast':'🇨🇮',
-  'Sweden':'🇸🇪','Norway':'🇳🇴','Denmark':'🇩🇰','Switzerland':'🇨🇭',
-  'Croatia':'🇭🇷','Serbia':'🇷🇸','Hungary':'🇭🇺','Poland':'🇵🇱',
-  'Slovakia':'🇸🇰','Czech Republic':'🇨🇿','Austria':'🇦🇹','Greece':'🇬🇷',
-  'Turkey':'🇹🇷','Japan':'🇯🇵','South Korea':'🇰🇷','Australia':'🇦🇺',
-  'United States':'🇺🇸','Canada':'🇨🇦','Mexico':'🇲🇽','Ecuador':'🇪🇨',
-  'Chile':'🇨🇱','Peru':'🇵🇪','Bolivia':'🇧🇴','Paraguay':'🇵🇾',
-  'Venezuela':'🇻🇪','Morocco':'🇲🇦','Tunisia':'🇹🇳','Algeria':'🇩🇿',
-  'Cameroon':'🇨🇲','Gabon':'🇬🇦','Guinea':'🇬🇳','Mali':'🇲🇱',
-  'DR Congo':'🇨🇩','Cape Verde':'🇨🇻','Mozambique':'🇲🇿','Zimbabwe':'🇿🇼',
-  'Jamaica':'🇯🇲','Trinidad and Tobago':'🇹🇹','New Zealand':'🇳🇿',
-  'South Africa':'🇿🇦','Slovenia':'🇸🇮','Albania':'🇦🇱','Iceland':'🇮🇸',
-  'Finland':'🇫🇮','Luxembourg':'🇱🇺','Cyprus':'🇨🇾','Estonia':'🇪🇪',
-  'Latvia':'🇱🇻','Lithuania':'🇱🇹','Ireland':'🇮🇪',
+  'Afghanistan':'🇦🇫','Albania':'🇦🇱','Algeria':'🇩🇿','Argentina':'🇦🇷','Armenia':'🇦🇲',
+  'Australia':'🇦🇺','Austria':'🇦🇹','Azerbaijan':'🇦🇿','Belgium':'🇧🇪','Bolivia':'🇧🇴',
+  'Bosnia and Herzegovina':'🇧🇦','Brazil':'🇧🇷','Bulgaria':'🇧🇬','Cameroon':'🇨🇲','Canada':'🇨🇦',
+  'Chile':'🇨🇱','China':'🇨🇳','Colombia':'🇨🇴','Costa Rica':'🇨🇷','Croatia':'🇭🇷',
+  'Cuba':'🇨🇺','Czech Republic':'🇨🇿','Denmark':'🇩🇰','Ecuador':'🇪🇨','Egypt':'🇪🇬',
+  'England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Estonia':'🇪🇪','Finland':'🇫🇮','France':'🇫🇷','Gabon':'🇬🇦',
+  'Georgia':'🇬🇪','Germany':'🇩🇪','Ghana':'🇬🇭','Greece':'🇬🇷','Guinea':'🇬🇳',
+  'Honduras':'🇭🇳','Hungary':'🇭🇺','Iceland':'🇮🇸','India':'🇮🇳','Iran':'🇮🇷',
+  'Iraq':'🇮🇶','Ireland':'🇮🇪','Israel':'🇮🇱','Italy':'🇮🇹','Ivory Coast':'🇨🇮',
+  'Jamaica':'🇯🇲','Japan':'🇯🇵','Jordan':'🇯🇴','Kenya':'🇰🇪','South Korea':'🇰🇷',
+  'Kosovo':'🇽🇰','Latvia':'🇱🇻','Lebanon':'🇱🇧','Libya':'🇱🇾','Lithuania':'🇱🇹',
+  'Luxembourg':'🇱🇺','Mali':'🇲🇱','Mexico':'🇲🇽','Montenegro':'🇲🇪','Morocco':'🇲🇦',
+  'Netherlands':'🇳🇱','New Zealand':'🇳🇿','Nigeria':'🇳🇬','North Macedonia':'🇲🇰','Northern Ireland':'🇬🇧',
+  'Norway':'🇳🇴','Panama':'🇵🇦','Paraguay':'🇵🇾','Peru':'🇵🇪','Poland':'🇵🇱',
+  'Portugal':'🇵🇹','Qatar':'🇶🇦','Republic of Ireland':'🇮🇪','Romania':'🇷🇴','Russia':'🇷🇺',
+  'Saudi Arabia':'🇸🇦','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Senegal':'🇸🇳','Serbia':'🇷🇸','Slovakia':'🇸🇰',
+  'Slovenia':'🇸🇮','South Africa':'🇿🇦','Spain':'🇪🇸','Sweden':'🇸🇪','Switzerland':'🇨🇭',
+  'Syria':'🇸🇾','Tunisia':'🇹🇳','Turkey':'🇹🇷','Ukraine':'🇺🇦','United Arab Emirates':'🇦🇪',
+  'United States':'🇺🇸','Uruguay':'🇺🇾','Uzbekistan':'🇺🇿','Venezuela':'🇻🇪','Vietnam':'🇻🇳',
+  'Wales':'🏴󠁧󠁢󠁷󠁬󠁳󠁿','Zambia':'🇿🇲',
 };
 
-const NATIONALITY_FLAGS_LC = Object.fromEntries(Object.entries(NATIONALITY_FLAGS).map(([k,v])=>[k.toLowerCase(),v]));
-function flagFor(nationality){
-  if(!nationality) return '';
-  return NATIONALITY_FLAGS[nationality] || NATIONALITY_FLAGS_LC[nationality.toLowerCase().trim()] || '';
-}
+// Nationality comes from a fixed dropdown (see Data Manager), so a direct
+// lookup is all that's needed — no normalization required.
 
+// Only 4-2-3-1 is supported — kept as a map for compatibility with getLineupSlots().
 const FORMATIONS = {
-  '4-3-3': {GK:1,DEF:4,MID:3,FWD:3},
-  '4-4-2': {GK:1,DEF:4,MID:4,FWD:2},
   '4-2-3-1': {GK:1,DEF:4,MID:6,FWD:1},
-  '3-5-2': {GK:1,DEF:3,MID:5,FWD:2},
-  '5-3-2': {GK:1,DEF:5,MID:3,FWD:2},
 };
 
 // Actual result for scoring
@@ -869,7 +865,7 @@ const LIV_ACTUAL_XI = {
 };
 
 let lineupPicks = {}; // roundId -> {slotIdx -> playerId}
-let lineupFormation = '4-3-3';
+let lineupFormation = '4-2-3-1';
 
 function getLineupSlots(formation){
   const f = FORMATIONS[formation] || FORMATIONS['4-3-3'];
@@ -928,7 +924,7 @@ function renderLineupPredictor(comp){
     if(player){
       const isCorrect = !isOpen && actual && actual.includes(player.id);
       const borderColor = !isOpen && actual ? (isCorrect ? '#4ade80' : 'rgba(255,255,255,0.4)') : 'rgba(255,255,255,0.9)';
-      const flag = flagFor(player.nationality);
+      const flag = NATIONALITY_FLAGS[player.nationality] || '';
       return `<div onclick="${click}" style="position:absolute;left:${xPct}%;top:${yPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:${isOpen?'pointer':'default'};z-index:3;width:64px;">
         <div style="position:relative;width:40px;height:40px;">
           <div style="width:40px;height:40px;border-radius:50%;background:${col};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:11px;border:2.5px solid ${borderColor};box-shadow:0 2px 8px rgba(0,0,0,0.4);">${player.no}</div>
@@ -1041,9 +1037,7 @@ function renderLineupPredictor(comp){
 
         <!-- Pitch -->
         <div class="pitch-wrap" style="position:relative;">
-          ${isOpen ? `<select onchange="lineupFormation=this.value;renderPredict();" style="position:absolute;top:10px;right:10px;z-index:5;font-family:Inter,sans-serif;font-size:12px;font-weight:600;padding:6px 10px;border:1px solid rgba(255,255,255,0.3);border-radius:8px;background:rgba(0,0,0,0.55);color:#fff;cursor:pointer;outline:none;">
-            ${Object.keys(FORMATIONS).map(f=>`<option value="${f}"${f===lineupFormation?' selected':''}>${f}</option>`).join('')}
-          </select>` : ''}
+          <span style="position:absolute;top:10px;right:10px;z-index:5;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;padding:6px 10px;border-radius:8px;background:rgba(0,0,0,0.55);color:#fff;">4-2-3-1</span>
         <div class="lineup-pitch-container">
           <!-- Pitch markings -->
           <div style="position:absolute;inset:0;">
@@ -2527,6 +2521,85 @@ function buildLBTable(title,sub,rows,cellFn,colHeader,prizes){
 }
 
 // ── PROFILE ───────────────────────────────────────────────────────────────────
+function showRules(mode){
+  const rules={
+    score:`<h3 style="margin-bottom:12px;">Score Predictor Rules</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">How to play:</strong> Predict the exact final score for each match before the deadline.</div>
+<div><strong style="color:var(--text);">Points:</strong></div>
+<div style="padding-left:12px;">
+• Exact score correct — <strong style="color:var(--green);">+5 pts</strong><br>
+• Home team goals correct only — <strong>+2 pts</strong><br>
+• Away team goals correct only — <strong>+2 pts</strong><br>
+• Total goals correct only — <strong>+1 pt</strong>
+</div>
+<div><strong style="color:var(--text);">Leaderboard:</strong> Players are ranked by total points. Highest score wins.</div>
+</div>`,
+    lms:`<h3 style="margin-bottom:12px;">Last Man Standing Rules</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">How to play:</strong> Predict the outcome (Home Win, Draw, or Away Win) for every event in the round.</div>
+<div><strong style="color:var(--text);">Elimination:</strong> Events are resolved in kick-off order. If your prediction is wrong, you are eliminated at that event. All remaining events are irrelevant.</div>
+<div><strong style="color:var(--text);">Winning:</strong> The last player(s) still standing after all events win the round.</div>
+<div><strong style="color:var(--text);">Note:</strong> You must predict ALL events before the round starts. No two events can share the same kick-off time.</div>
+</div>`,
+    fantasy:`<h3 style="margin-bottom:12px;">CS2 Simple Fantasy Rules</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">How to play:</strong> Pick 5 CS2 players from any of the 8 playoff teams within the $50,000 budget.</div>
+<div><strong style="color:var(--text);">Scoring:</strong> Each kill by your player earns <strong style="color:var(--green);">+1 point</strong>. Total points = sum of all your players' kills across the tournament.</div>
+<div><strong style="color:var(--text);">Budget:</strong> $50,000 total. Player prices range from $7,000 to $12,500 based on form and rating.</div>
+<div><strong style="color:var(--text);">Winning:</strong> The manager with the highest total kills from their 5-player roster wins.</div>
+</div>`,
+    ranking:`<h3 style="margin-bottom:12px;">Ranking Rules</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">How to play:</strong> Sort the selected teams from highest to lowest expected goals (xG) for the gameweek.</div>
+<div><strong style="color:var(--text);">Points:</strong></div>
+<div style="padding-left:12px;">
+• Each team in the correct position — <strong style="color:var(--green);">+2 pts</strong><br>
+• All teams in perfect order — <strong style="color:var(--green);">+5 bonus pts</strong>
+</div>
+<div><strong style="color:var(--text);">Tip:</strong> Think about which teams are playing at home, their recent form, and the quality of their opponents.</div>
+</div>`,
+    roulette:`<h3 style="margin-bottom:12px;">Soccer Roulette Rules</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">How to play:</strong> You get 100 coins per match. Place them anywhere on the score grid, or on Both Teams to Score / Over-Under 2.5.</div>
+<div><strong style="color:var(--text);">Bet types:</strong></div>
+<div style="padding-left:12px;">
+• Straight — one exact score — <strong style="color:var(--green);">×16</strong><br>
+• Split — the dot between two adjacent scores, covers both — <strong style="color:var(--green);">×8</strong><br>
+• Corner — the dot where four scores meet, covers all four — <strong style="color:var(--green);">×4</strong><br>
+• BTTS / Over-Under 2.5 — <strong style="color:var(--green);">×2</strong>
+</div>
+<div><strong style="color:var(--text);">Payouts:</strong> Set purely by how many outcomes a bet covers — no bookmaker-style odds shading.</div>
+</div>`,
+    betting:`<h3 style="margin-bottom:12px;">Betting Markets Rules</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">How to play:</strong> For each match, predict multiple markets. Each correct market earns points.</div>
+<div><strong style="color:var(--text);">Markets:</strong></div>
+<div style="padding-left:12px;">
+• Match Result (1X2) — Home Win, Draw, or Away Win<br>
+• Over/Under 2.5 Goals — Will there be 3+ goals?<br>
+• Both Teams to Score — Will both teams find the net?
+</div>
+<div><strong style="color:var(--text);">Points:</strong> Each market has its own points value, set by the competition operator.</div>
+</div>`,
+    lineup:`<h3 style="margin-bottom:12px;">Lineup Predictor Rules</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">How to play:</strong> Pick the starting XI (11 players) for the team's next fixture before it kicks off. Formation is fixed at 4-2-3-1.</div>
+<div><strong style="color:var(--text);">Points:</strong></div>
+<div style="padding-left:12px;">
+• Each correct player in your lineup — <strong style="color:var(--green);">+10 pts</strong><br>
+• All 11 players correct — <strong style="color:var(--green);">+30 bonus pts</strong>
+</div>
+<div><strong style="color:var(--text);">Leaderboard:</strong> Players are ranked by total points across all correctly predicted lineups.</div>
+</div>`,
+  };
+  const content=rules[mode]||'';
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML=`<div onclick="this.parentElement.remove()" style="position:absolute;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(2px);"></div><div style="position:relative;background:var(--white);border-radius:14px;max-width:400px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-height:80vh;overflow-y:auto;"><button onclick="this.closest('[style*=fixed]').remove()" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-3);">×</button>${content}</div>`;
+  document.body.appendChild(overlay);
+}
+
 async function renderProfile(){
   if(!currentPlayer)return;
   const ini=currentPlayer.username.slice(0,2).toUpperCase();
