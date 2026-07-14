@@ -558,33 +558,38 @@ async function loadPlayerPreds(){
     .eq('client_key',CLIENT_PARAM)
     .eq('player_id',currentPlayer.id);
   preds={};
-  const lineupRoundIds = new Set(
-    (COMPS||[]).filter(c=>c.mode==='lineup').flatMap(c=>(c.rounds||[]).map(r=>r.id))
-  );
-  (data||[]).forEach(p=>{
+  const lineupComps = (COMPS||[]).filter(c=>c.mode==='lineup');
+  const lineupRoundToComp = {};
+  lineupComps.forEach(c=>(c.rounds||[]).forEach(r=>{ lineupRoundToComp[r.id]=c; }));
+
+  for(const p of (data||[])){
     const v=p.prediction;
     const val = (v&&typeof v==='object'&&'value'in v)?v.value:v;
-    if(lineupRoundIds.has(p.event_id) && Array.isArray(val)){
-      reconstructLineupPicks(p.event_id, val);
+    const owningComp = lineupRoundToComp[p.event_id];
+    if(owningComp && Array.isArray(val)){
+      const teamId = owningComp.lineupConfig?.teamId;
+      if(teamId) await loadTeamSquad(teamId);
+      reconstructLineupPicks(p.event_id, val, owningComp);
     } else {
       preds[p.event_id] = val;
     }
-  });
+  }
 }
 
-function findLineupPlayerPos(pid){
+function findLineupPlayerPos(pid, comp){
+  const squad = comp ? squadFor(comp) : LIV_SQUAD;
   for(const pos of ['GK','DEF','MID','FWD']){
-    const p = (LIV_SQUAD[pos]||[]).find(pl=>pl.id===pid);
+    const p = (squad[pos]||[]).find(pl=>pl.id===pid);
     if(p) return pos;
   }
   return null;
 }
 
-function reconstructLineupPicks(roundId, pickedIds){
+function reconstructLineupPicks(roundId, pickedIds, comp){
   if(!pickedIds || !pickedIds.length) return;
   const byPos = {GK:[], DEF:[], MID:[], FWD:[]};
   pickedIds.forEach(pid=>{
-    const pos = findLineupPlayerPos(pid);
+    const pos = findLineupPlayerPos(pid, comp);
     if(pos) byPos[pos].push(pid);
   });
   // Pick whichever formation's slot counts best match the saved lineup
@@ -745,6 +750,52 @@ function renderPredict(){
 }
 function switchPredictSubTab(tab){ predictSubTab=tab; renderPredict(); }
 
+// Real squads loaded from Data Manager, keyed by team id — falls back to
+// the hardcoded LIV_SQUAD below if a team has no imported squad yet.
+const TEAM_SQUADS = {}; // teamId -> {GK:[],DEF:[],MID:[],FWD:[]}
+const TEAM_SQUAD_LOADING = new Set();
+
+function normalizePos(raw){
+  const p=(raw||'').toString().trim().toUpperCase();
+  if(['GK','GOALKEEPER','G'].includes(p)) return 'GK';
+  if(['DEF','DEFENDER','DF','D'].includes(p)) return 'DEF';
+  if(['MID','MIDFIELDER','MF','M'].includes(p)) return 'MID';
+  if(['FWD','FORWARD','ATT','ATTACKER','ST','F'].includes(p)) return 'FWD';
+  return null;
+}
+
+async function loadTeamSquad(teamId){
+  if(!teamId || TEAM_SQUADS[teamId] || TEAM_SQUAD_LOADING.has(teamId)) return;
+  TEAM_SQUAD_LOADING.add(teamId);
+  try{
+    const {data,error} = await supa.from('gw_dm_players').select('*').eq('team_id',teamId);
+    if(error) throw error;
+    const squad = {GK:[],DEF:[],MID:[],FWD:[]};
+    (data||[]).forEach(p=>{
+      const pos = normalizePos(p.position||p.pos);
+      if(!pos) return;
+      squad[pos].push({
+        id:p.id, name:p.name,
+        no:p.number??p.shirt_number??p.no??'',
+        nationality:p.nationality||''
+      });
+    });
+    if(squad.GK.length||squad.DEF.length||squad.MID.length||squad.FWD.length){
+      TEAM_SQUADS[teamId] = squad;
+      renderPredict();
+    }
+  }catch(e){
+    console.error('loadTeamSquad:',e);
+  }finally{
+    TEAM_SQUAD_LOADING.delete(teamId);
+  }
+}
+
+function squadFor(comp){
+  const teamId = comp?.lineupConfig?.teamId;
+  return (teamId && TEAM_SQUADS[teamId]) ? TEAM_SQUADS[teamId] : LIV_SQUAD;
+}
+
 const LIV_SQUAD = {
   GK: [
     {id:'liv1',name:'Alisson',no:1},
@@ -830,6 +881,7 @@ function lineupPlayerInRound(roundId, pid){
 function renderLineupPredictor(comp){
   // Use lineupConfig from competition if available
   const teamName = comp.lineupConfig?.teamName || 'Liverpool';
+  if(comp.lineupConfig?.teamId) loadTeamSquad(comp.lineupConfig.teamId);
   const ri = selectedRound[currentCompIdx]??0;
   const round = comp.rounds[ri]||comp.rounds[0];
   const isOpen = round.status==='open';
@@ -856,7 +908,7 @@ function renderLineupPredictor(comp){
   const rows = {GK:[],DEF:[],MID:[],FWD:[]};
   slots.forEach((s,si)=>{
     const pid = picks[si];
-    const player = pid ? [...LIV_SQUAD.GK,...LIV_SQUAD.DEF,...LIV_SQUAD.MID,...LIV_SQUAD.FWD].find(p=>p.id===pid) : null;
+    const player = pid ? [...squadFor(comp).GK,...squadFor(comp).DEF,...squadFor(comp).MID,...squadFor(comp).FWD].find(p=>p.id===pid) : null;
     rows[s.pos].push({si, pid, player, pos:s.pos});
   });
 
@@ -929,7 +981,7 @@ function renderLineupPredictor(comp){
   const positions = calcPositions();
   const pitchSlots = positions.map(({si, pos, x, y}) => {
     const pid = picks[si];
-    const player = pid ? [...LIV_SQUAD.GK,...LIV_SQUAD.DEF,...LIV_SQUAD.MID,...LIV_SQUAD.FWD].find(p=>p.id===pid) : null;
+    const player = pid ? [...squadFor(comp).GK,...squadFor(comp).DEF,...squadFor(comp).MID,...squadFor(comp).FWD].find(p=>p.id===pid) : null;
     return slotHTML({si, player, pos}, x, y);
   });
 
@@ -983,15 +1035,17 @@ function renderLineupPredictor(comp){
 }
 
 function openLineupPicker(roundId, slotIdx, pos){
+  const comp = COMPS[currentCompIdx];
+  const squad = squadFor(comp);
   const picks = lineupPicks[roundId]||{};
-  const allPlayers = [...LIV_SQUAD.GK,...LIV_SQUAD.DEF,...LIV_SQUAD.MID,...LIV_SQUAD.FWD];
+  const allPlayers = [...squad.GK,...squad.DEF,...squad.MID,...squad.FWD];
   const posColor = {GK:'#F59E0B',DEF:'#0EA5E9',MID:'#10B981',FWD:'#EF4444'};
 
   const overlay = document.createElement('div');
   overlay.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;';
   overlay.onclick=(e)=>{if(e.target===overlay)overlay.remove();};
 
-  const byPos = {GK:LIV_SQUAD.GK,DEF:LIV_SQUAD.DEF,MID:LIV_SQUAD.MID,FWD:LIV_SQUAD.FWD};
+  const byPos = {GK:squad.GK,DEF:squad.DEF,MID:squad.MID,FWD:squad.FWD};
   // Show suggested position first but allow all
   const ordered = [...(byPos[pos]||[]), ...Object.entries(byPos).filter(([p])=>p!==pos).flatMap(([,arr])=>arr)];
 
@@ -1010,7 +1064,7 @@ function openLineupPicker(roundId, slotIdx, pos){
   }
 
   ['FWD','MID','DEF','GK'].forEach(p=>{
-    const list = LIV_SQUAD[p];
+    const list = squad[p];
     html+=`<div style="padding:8px 20px 4px;font-size:10px;font-weight:700;color:${posColor[p]};text-transform:uppercase;letter-spacing:0.5px;">${p}</div>`;
     list.forEach(pl=>{
       const alreadyUsed = Object.entries(picks).some(([k,v])=>v===pl.id && parseInt(k)!==slotIdx);
@@ -1909,6 +1963,24 @@ function submitPreds(){
       : (p!==undefined&&p!==null);
   }).length;
   toast('\u2713 '+done+' of '+events.length+' predictions saved');
+}
+
+function submitRanking(roundId){
+  const comp=COMPS[currentCompIdx],round=comp?.rounds[selectedRound[currentCompIdx]];
+  if(!round||round.id!==roundId)return;
+  if(!currentPlayer){
+    pendingSaveAction='predictions';
+    openAuthModal('Sign in to save your ranking');
+    return;
+  }
+  const rk=round.id+'_ranking';
+  const order=preds[rk];
+  if(!order||!order.length){ toast('Reorder the teams first'); return; }
+  savePred(rk, order);
+  predsDirty=false;
+  const btn=document.querySelector('.submit-preds-btn');
+  if(btn){btn.classList.add('disabled');btn.textContent='\u2713 Saved';}
+  toast('\u2713 Ranking saved');
 }
 
 // ── LEADERBOARD ───────────────────────────────────────────────────────────
