@@ -785,9 +785,9 @@ const LINEUP_LB = [
 ];
 
 function renderPredictionsPane(comp){
+  if(comp.mode==='lineup') return renderLineupPredictor(comp);
   const ri=selectedRound[currentCompIdx];
   const round=comp.rounds[ri];if(!round)return'';
-  if(comp.mode==='lineup') return renderLineupPredictor(comp);
   if(comp.mode==='roulette'){
     setTimeout(()=>initRouletteBoard(),50);
     return renderRouletteHTML();
