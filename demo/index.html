@@ -786,12 +786,9 @@ const LINEUP_LB = [
 
 function renderPredictionsPane(comp){
   if(comp.mode==='lineup') return renderLineupPredictor(comp);
+  if(comp.mode==='roulette'){ setTimeout(()=>initRouletteBoard(),50); return renderRouletteHTML(); }
   const ri=selectedRound[currentCompIdx];
   const round=comp.rounds[ri];if(!round)return'';
-  if(comp.mode==='roulette'){
-    setTimeout(()=>initRouletteBoard(),50);
-    return renderRouletteHTML();
-  }
   const isOpen=round.status==='open';
   let events=(round.eventIds||[]).map(id=>({id,...EVENTS[id]})).filter(e=>e.home);
   let eliminatedAtIdx=-1;
