@@ -503,10 +503,16 @@ function computeCurrentRoundIdx(comp){
   return Math.min(idx, rounds.length-1);
 }
 function getDefaultRoundIdx(comp){
+  const openIdxs = comp.rounds.map((r,i)=>r.status==='open'?i:null).filter(i=>i!==null);
+  if(openIdxs.length===1) return openIdxs[0];
+  if(openIdxs.length>1){
+    const computed = computeCurrentRoundIdx(comp);
+    if(computed!==null && openIdxs.includes(computed)) return computed;
+    return openIdxs[openIdxs.length-1];
+  }
   const computed = computeCurrentRoundIdx(comp);
   if(computed!==null) return computed;
-  const idx=comp.rounds.findIndex(r=>r.status==='open');
-  return idx>=0?idx:0;
+  return Math.max(0, comp.rounds.length-1);
 }
 
 function renderPredict(){

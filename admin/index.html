@@ -1961,15 +1961,25 @@ function updateRankingTeamPreview(prefix){
     }
   });
 
-  listEl.innerHTML = derivedTeams.map(t=>`
+  // Preserve current checked/unchecked state before rebuilding, so re-adding
+  // events doesn't silently re-select teams the operator already unchecked.
+  const prevState = {};
+  listEl.querySelectorAll(`.${prefix}-ranking-team-cb`).forEach(cb=>{
+    prevState[cb.value] = cb.checked;
+  });
+
+  listEl.innerHTML = derivedTeams.map(t=>{
+    const isChecked = prevState.hasOwnProperty(t.id) ? prevState[t.id] : true;
+    return `
     <label style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg);border-radius:6px;cursor:pointer;">
-      <input type="checkbox" class="${prefix}-ranking-team-cb" value="${t.id}" data-name="${t.name}" data-logo="${t.logo}" data-opponent="${t.opponent}" checked style="accent-color:var(--accent);width:16px;height:16px;">
+      <input type="checkbox" class="${prefix}-ranking-team-cb" value="${t.id}" data-name="${t.name}" data-logo="${t.logo}" data-opponent="${t.opponent}" ${isChecked?'checked':''} style="accent-color:var(--accent);width:16px;height:16px;">
       ${t.logo?'<img src="'+t.logo+'" style="width:24px;height:24px;border-radius:50%;object-fit:contain;">':''}
       <div style="flex:1;">
         <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text);">${t.name}</span>
         <div style="font-size:10px;color:var(--text-3);">${t.opponent}</div>
       </div>
-    </label>`).join('');
+    </label>`;
+  }).join('');
   countEl.textContent = derivedTeams.length + ' teams — uncheck any you want to exclude';
 }
 

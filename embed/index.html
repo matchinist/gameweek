@@ -380,7 +380,26 @@ async function buildCompsFromRealData(){
 
     (compsRows||[]).forEach(c=>{
       if(c.status==='archived') return;
-      const cRounds = (roundsRows||[]).filter(r=>r.competition_id===c.id).map(r=>{
+      let cRounds;
+      if(c.mode==='lineup' && c.lineup_config?.teamId){
+        const lTeamId = c.lineup_config.teamId;
+        cRounds = (evRows||[]).filter(ev=>ev.home_id===lTeamId||ev.away_id===lTeamId)
+          .sort((a,b)=>new Date(a.kickoff||0)-new Date(b.kickoff||0))
+          .map(ev=>{
+            const isHome = ev.home_id===lTeamId;
+            const opp = teamById(isHome?ev.away_id:ev.home_id);
+            const hasResult = ev.result && ev.result.h!=null && ev.result.a!=null;
+            const dateStr = ev.kickoff ? new Date(ev.kickoff).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '';
+            return {
+              id: ev.id,
+              label: `${isHome?'vs':'@'} ${opp?.name||'TBD'}${dateStr?' · '+dateStr:''}`,
+              status: hasResult?'completed':'open',
+              eventId: ev.id,
+              kickoffRaw: ev.kickoff||null,
+            };
+          });
+      } else {
+        cRounds = (roundsRows||[]).filter(r=>r.competition_id===c.id).map(r=>{
         const evIds = r.event_ids||[];
         const allDone = evIds.length>0 && evIds.every(eid=>EVENTS[eid]?.res!==null);
         return {id:r.id, label:r.label, deadline:r.deadline||'',
@@ -388,7 +407,8 @@ async function buildCompsFromRealData(){
           eventIds:evIds, tournamentNames:r.tournament_names||[],
           rankingTeams:r.ranking_teams||null,
           prizes:r.prizes||null};
-      });
+        });
+      }
       COMPS.push({id:c.id, name:c.name, mode:c.mode||'lms', color:c.color||'#4F46E5',
         scoring:c.scoring||null, markets:c.markets||[],
         rankingConfig:c.ranking_config||null,
@@ -632,10 +652,16 @@ function computeCurrentRoundIdx(comp){
   return Math.min(idx, rounds.length-1);
 }
 function getDefaultRoundIdx(comp){
+  const openIdxs = comp.rounds.map((r,i)=>r.status==='open'?i:null).filter(i=>i!==null);
+  if(openIdxs.length===1) return openIdxs[0];
+  if(openIdxs.length>1){
+    const computed = computeCurrentRoundIdx(comp);
+    if(computed!==null && openIdxs.includes(computed)) return computed;
+    return openIdxs[openIdxs.length-1];
+  }
   const computed = computeCurrentRoundIdx(comp);
   if(computed!==null) return computed;
-  const idx=comp.rounds.findIndex(r=>r.status==='open');
-  return idx>=0?idx:0;
+  return Math.max(0, comp.rounds.length-1);
 }
 
 function renderPredict(){
@@ -777,10 +803,10 @@ function renderLineupPredictor(comp){
     const {si, player, pos} = slot;
     const col = posColor[pos];
     const click = isOpen ? `openLineupPicker('${round.id}',${si},'${pos}')` : '';
-    const isCorrect = !isOpen && actual && actual.includes(player.id);
-    const borderColor = !isOpen && actual ? (isCorrect ? '#4ade80' : 'rgba(255,255,255,0.4)') : 'rgba(255,255,255,0.9)';
-    const flag = NATIONALITY_FLAGS[player.nationality] || '';
     if(player){
+      const isCorrect = !isOpen && actual && actual.includes(player.id);
+      const borderColor = !isOpen && actual ? (isCorrect ? '#4ade80' : 'rgba(255,255,255,0.4)') : 'rgba(255,255,255,0.9)';
+      const flag = NATIONALITY_FLAGS[player.nationality] || '';
       return `<div onclick="${click}" style="position:absolute;left:${xPct}%;top:${yPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:${isOpen?'pointer':'default'};z-index:3;width:64px;">
         <div style="position:relative;width:40px;height:40px;">
           <div style="width:40px;height:40px;border-radius:50%;background:${col};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:11px;border:2.5px solid ${borderColor};box-shadow:0 2px 8px rgba(0,0,0,0.4);">${player.no}</div>
