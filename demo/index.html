@@ -509,6 +509,27 @@ const LIV_SQUAD = {
   ]
 };
 
+const NATIONALITY_FLAGS = {
+  'England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Wales':'🏴󠁧󠁢󠁷󠁬󠁳󠁿',
+  'Brazil':'🇧🇷','Argentina':'🇦🇷','France':'🇫🇷','Germany':'🇩🇪',
+  'Spain':'🇪🇸','Portugal':'🇵🇹','Netherlands':'🇳🇱','Belgium':'🇧🇪',
+  'Italy':'🇮🇹','Uruguay':'🇺🇾','Colombia':'🇨🇴','Egypt':'🇪🇬',
+  'Senegal':'🇸🇳','Ghana':'🇬🇭','Nigeria':'🇳🇬','Ivory Coast':'🇨🇮',
+  'Sweden':'🇸🇪','Norway':'🇳🇴','Denmark':'🇩🇰','Switzerland':'🇨🇭',
+  'Croatia':'🇭🇷','Serbia':'🇷🇸','Hungary':'🇭🇺','Poland':'🇵🇱',
+  'Slovakia':'🇸🇰','Czech Republic':'🇨🇿','Austria':'🇦🇹','Greece':'🇬🇷',
+  'Turkey':'🇹🇷','Japan':'🇯🇵','South Korea':'🇰🇷','Australia':'🇦🇺',
+  'United States':'🇺🇸','Canada':'🇨🇦','Mexico':'🇲🇽','Ecuador':'🇪🇨',
+  'Chile':'🇨🇱','Peru':'🇵🇪','Bolivia':'🇧🇴','Paraguay':'🇵🇾',
+  'Venezuela':'🇻🇪','Morocco':'🇲🇦','Tunisia':'🇹🇳','Algeria':'🇩🇿',
+  'Cameroon':'🇨🇲','Gabon':'🇬🇦','Guinea':'🇬🇳','Mali':'🇲🇱',
+  'DR Congo':'🇨🇩','Cape Verde':'🇨🇻','Mozambique':'🇲🇿','Zimbabwe':'🇿🇼',
+  'Jamaica':'🇯🇲','Trinidad and Tobago':'🇹🇹','New Zealand':'🇳🇿',
+  'South Africa':'🇿🇦','Slovenia':'🇸🇮','Albania':'🇦🇱','Iceland':'🇮🇸',
+  'Finland':'🇫🇮','Luxembourg':'🇱🇺','Cyprus':'🇨🇾','Estonia':'🇪🇪',
+  'Latvia':'🇱🇻','Lithuania':'🇱🇹','Ireland':'🇮🇪',
+};
+
 const FORMATIONS = {
   '4-3-3': {GK:1,DEF:4,MID:3,FWD:3},
   '4-4-2': {GK:1,DEF:4,MID:4,FWD:2},
@@ -579,9 +600,13 @@ function renderLineupPredictor(comp){
     const click = isOpen ? `openLineupPicker('${round.id}',${si},'${pos}')` : '';
     const isCorrect = !isOpen && actual && actual.includes(player.id);
     const borderColor = !isOpen && actual ? (isCorrect ? '#4ade80' : 'rgba(255,255,255,0.4)') : 'rgba(255,255,255,0.9)';
+    const flag = NATIONALITY_FLAGS[player.nationality] || '';
     if(player){
       return `<div onclick="${click}" style="position:absolute;left:${xPct}%;top:${yPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:${isOpen?'pointer':'default'};z-index:3;width:64px;">
-        <div style="width:40px;height:40px;border-radius:50%;background:${col};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:11px;border:2.5px solid ${borderColor};box-shadow:0 2px 8px rgba(0,0,0,0.4);">${player.no}</div>
+        <div style="position:relative;width:40px;height:40px;">
+          <div style="width:40px;height:40px;border-radius:50%;background:${col};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:11px;border:2.5px solid ${borderColor};box-shadow:0 2px 8px rgba(0,0,0,0.4);">${player.no}</div>
+          ${flag?`<div style="position:absolute;bottom:-2px;right:-4px;font-size:12px;line-height:1;">${flag}</div>`:''}
+        </div>
         <div style="background:rgba(0,0,0,0.7);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:999px;white-space:nowrap;max-width:64px;overflow:hidden;text-overflow:ellipsis;text-align:center;">${player.name}</div>
       </div>`;
     } else {

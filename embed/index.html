@@ -392,6 +392,7 @@ async function buildCompsFromRealData(){
       COMPS.push({id:c.id, name:c.name, mode:c.mode||'lms', color:c.color||'#4F46E5',
         scoring:c.scoring||null, markets:c.markets||[],
         rankingConfig:c.ranking_config||null,
+        lineupConfig:c.lineup_config||null,
         overallPrizes:c.overall_prizes||null,
         rounds:cRounds,
         tournamentNames:[...new Set(cRounds.flatMap(r=>r.tournamentNames||[]).filter(Boolean))]
@@ -642,6 +643,27 @@ const LIV_SQUAD = {
   ]
 };
 
+const NATIONALITY_FLAGS = {
+  'England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Wales':'🏴󠁧󠁢󠁷󠁬󠁳󠁿',
+  'Brazil':'🇧🇷','Argentina':'🇦🇷','France':'🇫🇷','Germany':'🇩🇪',
+  'Spain':'🇪🇸','Portugal':'🇵🇹','Netherlands':'🇳🇱','Belgium':'🇧🇪',
+  'Italy':'🇮🇹','Uruguay':'🇺🇾','Colombia':'🇨🇴','Egypt':'🇪🇬',
+  'Senegal':'🇸🇳','Ghana':'🇬🇭','Nigeria':'🇳🇬','Ivory Coast':'🇨🇮',
+  'Sweden':'🇸🇪','Norway':'🇳🇴','Denmark':'🇩🇰','Switzerland':'🇨🇭',
+  'Croatia':'🇭🇷','Serbia':'🇷🇸','Hungary':'🇭🇺','Poland':'🇵🇱',
+  'Slovakia':'🇸🇰','Czech Republic':'🇨🇿','Austria':'🇦🇹','Greece':'🇬🇷',
+  'Turkey':'🇹🇷','Japan':'🇯🇵','South Korea':'🇰🇷','Australia':'🇦🇺',
+  'United States':'🇺🇸','Canada':'🇨🇦','Mexico':'🇲🇽','Ecuador':'🇪🇨',
+  'Chile':'🇨🇱','Peru':'🇵🇪','Bolivia':'🇧🇴','Paraguay':'🇵🇾',
+  'Venezuela':'🇻🇪','Morocco':'🇲🇦','Tunisia':'🇹🇳','Algeria':'🇩🇿',
+  'Cameroon':'🇨🇲','Gabon':'🇬🇦','Guinea':'🇬🇳','Mali':'🇲🇱',
+  'DR Congo':'🇨🇩','Cape Verde':'🇨🇻','Mozambique':'🇲🇿','Zimbabwe':'🇿🇼',
+  'Jamaica':'🇯🇲','Trinidad and Tobago':'🇹🇹','New Zealand':'🇳🇿',
+  'South Africa':'🇿🇦','Slovenia':'🇸🇮','Albania':'🇦🇱','Iceland':'🇮🇸',
+  'Finland':'🇫🇮','Luxembourg':'🇱🇺','Cyprus':'🇨🇾','Estonia':'🇪🇪',
+  'Latvia':'🇱🇻','Lithuania':'🇱🇹','Ireland':'🇮🇪',
+};
+
 const FORMATIONS = {
   '4-3-3': {GK:1,DEF:4,MID:3,FWD:3},
   '4-4-2': {GK:1,DEF:4,MID:4,FWD:2},
@@ -673,6 +695,8 @@ function lineupPlayerInRound(roundId, pid){
 }
 
 function renderLineupPredictor(comp){
+  // Use lineupConfig from competition if available
+  const teamName = comp.lineupConfig?.teamName || 'Liverpool';
   const ri = selectedRound[currentCompIdx]??0;
   const round = comp.rounds[ri]||comp.rounds[0];
   const isOpen = round.status==='open';
@@ -712,9 +736,13 @@ function renderLineupPredictor(comp){
     const click = isOpen ? `openLineupPicker('${round.id}',${si},'${pos}')` : '';
     const isCorrect = !isOpen && actual && actual.includes(player.id);
     const borderColor = !isOpen && actual ? (isCorrect ? '#4ade80' : 'rgba(255,255,255,0.4)') : 'rgba(255,255,255,0.9)';
+    const flag = NATIONALITY_FLAGS[player.nationality] || '';
     if(player){
       return `<div onclick="${click}" style="position:absolute;left:${xPct}%;top:${yPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:${isOpen?'pointer':'default'};z-index:3;width:64px;">
-        <div style="width:40px;height:40px;border-radius:50%;background:${col};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:11px;border:2.5px solid ${borderColor};box-shadow:0 2px 8px rgba(0,0,0,0.4);">${player.no}</div>
+        <div style="position:relative;width:40px;height:40px;">
+          <div style="width:40px;height:40px;border-radius:50%;background:${col};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:11px;border:2.5px solid ${borderColor};box-shadow:0 2px 8px rgba(0,0,0,0.4);">${player.no}</div>
+          ${flag?`<div style="position:absolute;bottom:-2px;right:-4px;font-size:12px;line-height:1;">${flag}</div>`:''}
+        </div>
         <div style="background:rgba(0,0,0,0.7);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:999px;white-space:nowrap;max-width:64px;overflow:hidden;text-overflow:ellipsis;text-align:center;">${player.name}</div>
       </div>`;
     } else {
@@ -1268,10 +1296,25 @@ function renderEventCard(ev,comp,isRoundOpen){
     let pl='';
     if(comp.mode==='lms')pl=pred==='H'?ev.home+' (Home)':pred==='D'?'Draw':ev.away+' (Away)';
     else if(comp.mode==='score')pl=(pred.h??'-')+' \u2013 '+(pred.a??'-');
-    else if(comp.mode==='betting'&&typeof pred==='object')pl=Object.entries(pred).map(([k,v])=>k.toUpperCase()+': '+v).join(' \u00b7 ');
+    else if(comp.mode==='betting'&&typeof pred==='object'){
+      if(!hasRes){
+        const mpred=pred; const markets=comp.markets||[];
+        html+='<div style="display:flex;flex-direction:column;gap:10px;">';
+        markets.forEach(mkt=>{
+          html+=`<div><div class="pred-label" style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);">${mkt.label}</div>`;
+          if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${mpred['1x2']==='H'?' selected home':''}" disabled>Home Win</button><button class="btn-1x2${mpred['1x2']==='D'?' selected draw':''}" disabled>X</button><button class="btn-1x2${mpred['1x2']==='A'?' selected away':''}" disabled>Away</button></div>`;
+          else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['ou25']==='O'?' selected':''}" disabled>Over</button><button class="btn-ou under${mpred['ou25']==='U'?' selected':''}" disabled>Under</button></div>`;
+          else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['btts']==='Y'?' selected':''}" disabled>Both Score</button><button class="btn-ou under${mpred['btts']==='N'?' selected':''}" disabled>Clean Sheet</button></div>`;
+          html+='</div>';
+        });
+        html+='<div style="font-size:11px;color:oklch(0.6 0.01 260);margin-top:4px;">⏳ Awaiting result</div>';
+        html+='</div></div></div>'; return html;
+      }
+      pl=Object.entries(pred).map(([k,v])=>k.toUpperCase()+': '+v).join(' · ');
+    }
 
     if(hasRes&&comp.mode==='score'&&earnedPts!=null){
-      html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div><span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'\u2717 0 pts'}</span></div>`;
+      html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div><span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'✗ 0 pts'}</span></div>`;
       if(pointsBreakdown)html+=`<div style="font-size:12px;color:${earnedPts>0?'var(--green)':'var(--text-3)'};margin-top:4px;font-weight:600;">${pointsBreakdown}</div>`;
     } else if(hasRes&&correct!=null){
       html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div><span class="pred-correct ${correct?'yes':'no'}">${correct?'\u2713 Correct':'\u2717 Wrong'}</span></div>`;
