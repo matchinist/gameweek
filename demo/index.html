@@ -13,7 +13,7 @@
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --bg:#F7F8FA;--white:#FFFFFF;--border:#E2E4EA;
+  --bg:#F9FAFB;--white:#FFFFFF;--border:#E2E4EA;
   --text:#0F1117;--text-2:#6B7280;--text-3:#9CA3AF;
   --accent:#4F46E5;--accent-2:#3730A3;--accent-light:#EEF2FF;
   --green:#16A34A;--green-light:#DCFCE7;
@@ -25,7 +25,7 @@
 html{height:100%;overflow:hidden;}
 body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;}
 .app{display:flex;flex-direction:column;position:fixed;top:0;left:0;right:0;bottom:0;max-width:860px;margin:0 auto;width:100%;background:var(--white);overflow:hidden;}
-.scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:oklch(0.965 0.004 260);}
+.scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:#F9FAFB;}
 .app-header{background:#fff;border-bottom:1px solid oklch(0.92 0.004 260);flex-shrink:0;z-index:50;}
 .header-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;}
 .header-logo{font-family:Inter,sans-serif;font-size:19px;font-weight:800;letter-spacing:-0.02em;color:oklch(0.22 0.01 260);}
@@ -311,7 +311,7 @@ const COMPS=[
     rounds:[
       {id:'r0a',label:'Gameweek 1',status:'completed',deadline:'2026-08-16T14:00',eventIds:['e0a','e0b','e0c','e0d'],prizes:[{pos:1,text:'€20 bookmaker credit'},{pos:2,text:'Free bet token'}]},
       {id:'r0b',label:'Gameweek 2',status:'completed',deadline:'2026-08-23T14:00',eventIds:['e0e','e0f','e0g','e0h'],prizes:[{pos:1,text:'€20 bookmaker credit'},{pos:2,text:'Free bet token'}]},
-      {id:'r1',label:'Gameweek 3',status:'open',deadline:'2026-08-31T14:00',eventIds:['e1','e2','e3','e4','e5'],prizes:[{pos:1,text:'€20 bookmaker credit'},{pos:2,text:'Free bet token'}]},
+      {id:'r1',label:'Gameweek 3',status:'open',deadline:'2026-08-31T14:00',eventIds:['e1','e2','e3','e4','e5','e6'],prizes:[{pos:1,text:'€20 bookmaker credit'},{pos:2,text:'Free bet token'}]},
     ]},
   {id:'c2',name:'Last Man Standing',mode:'lms',color:'#DC2626',
     tournamentNames:['Champions League'],
@@ -381,6 +381,7 @@ const EVENTS={
   // 4-5: open for prediction
   e4:{home:'Chelsea',away:'Spurs',homeLogo:lg('Chelsea'),awayLogo:lg('Spurs'),tournament:'Premier League',kickoff:'31 Aug \u00b7 16:30',res:null,locked:false},
   e5:{home:'Wolves',away:'Man City',homeLogo:lg('Wolves'),awayLogo:lg('Man City'),tournament:'Premier League',kickoff:'01 Sep \u00b7 15:00',res:null,locked:false},
+  e6:{home:'Aston Villa',away:'Newcastle',homeLogo:lg('Aston Villa'),awayLogo:lg('Newcastle'),tournament:'Premier League',kickoff:'01 Sep \u00b7 17:30',res:null,locked:false},
 
   // LMS completed — eliminated at event 3
   e201:{tournament:'Champions League',home:'Real Madrid',away:'Dortmund',homeLogo:lg('Real Madrid'),awayLogo:lg('Dortmund'),kickoff:'17 Sep \u00b7 21:00',sortKey:'2026-09-17T21:00',res:{h:3,a:1}},
