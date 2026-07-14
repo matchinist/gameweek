@@ -762,6 +762,7 @@ tbody tr:hover td{background:var(--bg);}
           <option value="betting">Betting Markets</option>
                   <option value="ranking">Ranking</option>
           <option value="lineup">Lineup Predictor</option>
+          <option value="roulette">Soccer Roulette</option>
         </select>
         <div id="mode-description" style="margin-top:10px;padding:12px;background:var(--bg);border-radius:6px;border-left:3px solid var(--accent);">
           <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;">Last Man Standing</div>
@@ -859,6 +860,24 @@ tbody tr:hover td{background:var(--bg);}
         <div style="background:oklch(0.97 0.01 275);border:1px solid oklch(0.88 0.05 275/0.5);border-radius:8px;padding:14px;margin-top:4px;">
           <div style="font-size:12px;font-weight:700;color:oklch(0.45 0.15 275);margin-bottom:6px;">ℹ️ No rounds needed</div>
           <div style="font-size:12px;color:oklch(0.4 0.01 260);line-height:1.6;">The Lineup Predictor automatically pulls the team's next fixture from your Data Manager. Users can start predicting immediately — no rounds to create or manage. New matches appear automatically.</div>
+        </div>
+      <!-- Roulette config -->
+      <div id="roulette-config" style="display:none;">
+        <div class="divider"></div>
+        <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:12px;">Soccer Roulette</div>
+        <div style="background:oklch(0.97 0.01 275);border:1px solid oklch(0.88 0.05 275/0.5);border-radius:8px;padding:14px;">
+          <div style="font-size:12px;font-weight:700;color:oklch(0.45 0.15 275);margin-bottom:6px;">ℹ️ How it works</div>
+          <div style="font-size:12px;color:oklch(0.4 0.01 260);line-height:1.6;">After creating the competition, add rounds and pick events from your Data Manager. Each round is one match — users spend 100 coins across the score matrix before kick-off.</div>
+        </div>
+        <div style="margin-top:12px;display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px 14px;">
+          <label class="form-label" style="margin:0;">Coins per round</label>
+          <input class="form-input" type="number" id="roulette-coins" value="100" min="10" max="1000" style="width:72px;text-align:center;font-family:var(--mono);font-weight:700;">
+          <label class="form-label" style="margin:0;">Straight bet multiplier (×)</label>
+          <input class="form-input" type="number" id="roulette-mult-straight" value="16" min="2" max="50" style="width:72px;text-align:center;font-family:var(--mono);font-weight:700;">
+          <label class="form-label" style="margin:0;">Split bet multiplier (×)</label>
+          <input class="form-input" type="number" id="roulette-mult-split" value="8" min="2" max="50" style="width:72px;text-align:center;font-family:var(--mono);font-weight:700;">
+          <label class="form-label" style="margin:0;">Corner bet multiplier (×)</label>
+          <input class="form-input" type="number" id="roulette-mult-corner" value="4" min="2" max="50" style="width:72px;text-align:center;font-family:var(--mono);font-weight:700;">
         </div>
       </div>
     </div>
@@ -1127,8 +1146,8 @@ function getDMEvents(){ return dmState.events||{}; }
 function getDMTeams(){ return dmState.teams||[]; }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
-const modeLabel = {lms:'Last Man Standing', score:'Score Predictor', betting:'Betting Markets', ranking:'Ranking', lineup:'Lineup Predictor'};
-const modeChip  = {lms:'LMS', score:'SCORE', betting:'BET', ranking:'RANKING', lineup:'LINEUP'};
+const modeLabel = {lms:'Last Man Standing', score:'Score Predictor', betting:'Betting Markets', ranking:'Ranking', lineup:'Lineup Predictor', roulette:'Soccer Roulette'};
+const modeChip  = {lms:'LMS', score:'SCORE', betting:'BET', ranking:'RANKING', lineup:'LINEUP', roulette:'ROULETTE'};
 
 function getEvent(id){ return state.events.find(e=>e.id===id); }
 function getComp(id){ return state.competitions.find(c=>c.id===id); }
@@ -1369,6 +1388,7 @@ function renderCompDetail(){
               <option value="betting" ${c.mode==='betting'?'selected':''}>Betting Markets</option>
               <option value="ranking" ${c.mode==='ranking'?'selected':''}>Ranking</option>
               <option value="lineup" ${c.mode==='lineup'?'selected':''}>Lineup Predictor</option>
+              <option value="roulette" ${c.mode==='roulette'?'selected':''}>Soccer Roulette</option>
             </select>
             <div style="font-size:11px;color:var(--amber);background:var(--amber-light);padding:7px 10px;border-radius:5px;margin-top:6px;">
               Game mode cannot be changed after creation. To use a different mode, create a new competition from scratch.
@@ -1444,7 +1464,8 @@ const MODE_DESCRIPTIONS = {
   score:   { title:'Score Predictor',    text:'Users predict the exact scoreline for every match. An exact score earns maximum points; partial credit for getting individual team goals right.' },
   betting: { title:'Betting Markets',    text:'Users predict multiple markets per event — choose from 1X2, Over/Under 2.5, and Both Teams to Score. Each market earns its own points.' },
   ranking: { title:'Ranking',            text:'Users rank selected teams from highest to lowest for a chosen metric (e.g. xG or Total Shots) in a gameweek. Points for each correct position, bonus for a perfect ranking.' },
-  lineup:  { title:'Lineup Predictor',    text:'Users predict the starting 11 for a chosen team before each match. 10 pts for each correct player, +30 bonus if all 11 are correct. No rounds needed — the competition automatically picks up the next fixture for the selected team.' }
+  lineup:   { title:'Lineup Predictor',    text:'Users predict the starting 11 for a chosen team before each match. 10 pts for each correct player, +30 bonus if all 11 are correct. No rounds needed — the competition automatically picks up the next fixture for the selected team.' },
+  roulette: { title:'Soccer Roulette',      text:'Users spend 100 coins across a score matrix — straight bets on exact scores, splits between two adjacent scores, or corner bets across four scores. Higher risk = higher payout. Add rounds by picking events from your Data Manager.' }
 };
 function updateModeDescription(){
   const mode = document.getElementById('new-comp-mode')?.value;
@@ -1456,6 +1477,7 @@ function updateModeDescription(){
   document.getElementById('ranking-config').style.display         = mode==='ranking' ? 'block' : 'none';
   document.getElementById('lineup-config').style.display          = mode==='lineup'  ? 'block' : 'none';
   if(mode==='lineup') populateLineupTournaments();
+  document.getElementById('roulette-config').style.display        = mode==='roulette'? 'block' : 'none';
 }
 
 function populateLineupTournaments(){
@@ -1513,6 +1535,15 @@ function createComp(){
       perfectBonus: parseInt(document.getElementById('ranking-pts-bonus').value) || 5,
     };
   }
+  let rouletteConfig = null;
+  if(mode==='roulette'){
+    rouletteConfig = {
+      coins: parseInt(document.getElementById('roulette-coins').value)||100,
+      multStraight: parseInt(document.getElementById('roulette-mult-straight').value)||16,
+      multSplit: parseInt(document.getElementById('roulette-mult-split').value)||8,
+      multCorner: parseInt(document.getElementById('roulette-mult-corner').value)||4,
+    };
+  }
   let lineupConfig = null;
   if(mode==='lineup'){
     const teamId = document.getElementById('lineup-team')?.value;
@@ -1522,7 +1553,7 @@ function createComp(){
     lineupConfig = { teamId, tournamentId: tournId, teamName: team?.name||'' };
   }
   const c = {
-    id: 'c'+uid(), name: mode==='lineup'?'Lineup Predictor':name, mode, scoring, markets, rankingConfig, lineupConfig,
+    id: 'c'+uid(), name, mode, scoring, markets, rankingConfig, lineupConfig, rouletteConfig,
     longTerm: false,
     status: 'draft', color: mode==='lineup'?'#0EA5E9':'#8B5CF6', users: 0, predictions: 0, rounds: []
   };
@@ -1531,6 +1562,7 @@ function createComp(){
   document.getElementById('new-comp-mode').value='lms';
   const lt = document.getElementById('lineup-team'); if(lt) lt.value='';
   const ltg = document.getElementById('lineup-team-group'); if(ltg) ltg.style.display='none';
+  const rc = document.getElementById('roulette-config'); if(rc) rc.style.display='none';
   updateModeDescription();
   saveAdminState();
   state.currentComp = c.id;

@@ -234,6 +234,19 @@ table.lb-table{width:100%;border-collapse:collapse;}
 
 .round-bar-spacer{flex:1;}
 
+.pitch-wrap{width:100%;}
+.pitch-midline{position:absolute;top:0;bottom:0;left:50%;width:1px;background:rgba(255,255,255,0.2);}
+.pitch-box-a{position:absolute;left:0;top:20%;bottom:20%;width:10%;border:1px solid rgba(255,255,255,0.2);border-left:none;}
+.pitch-box-b{position:absolute;right:0;top:20%;bottom:20%;width:10%;border:1px solid rgba(255,255,255,0.2);border-right:none;}
+@media(max-width:559px){
+  .pitch-midline{top:50%;bottom:auto;left:0;right:0;width:auto;height:1px;}
+  .pitch-box-a{top:0;left:10%;right:10%;bottom:auto;width:auto;height:10%;border:1px solid rgba(255,255,255,0.2);border-top:none;border-left:1px solid rgba(255,255,255,0.2);}
+  .pitch-box-b{bottom:0;top:auto;left:10%;right:10%;width:auto;height:10%;border:1px solid rgba(255,255,255,0.2);border-bottom:none;border-right:1px solid rgba(255,255,255,0.2);}
+}
+/* Mobile: vertical pitch (portrait, like a real pitch viewed from above) */
+.lineup-pitch-container{background:#2d7a3a;border-radius:16px;position:relative;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.2);padding-bottom:140%;/* tall portrait */}
+/* Desktop: horizontal pitch (landscape) */
+@media(min-width:560px){.lineup-pitch-container{padding-bottom:52%;}}
 </style>
 </head>
 <body>
@@ -580,24 +593,41 @@ function renderLineupPredictor(comp){
 
   // Calculate player positions based on formation
   // X = left%, Y = top% — GK at far left, FWD at far right
+  // Detect if pitch is horizontal (wide) or vertical (tall)
+  const pitchEl = document.querySelector('.lineup-pitch-container');
+  const isHorizontal = pitchEl ? (pitchEl.offsetWidth > pitchEl.offsetHeight) : window.innerWidth >= 560;
+
   function calcPositions(){
     const f = FORMATIONS[lineupFormation]||FORMATIONS['4-3-3'];
     const positions = [];
-    // X positions per group (percentage across pitch width)
-    const xMap = {GK:8, DEF:25, MID:50, FWD:75};
-    // For 4-2-3-1: split MID into 2+3 or similar — handled by count
     let slotIdx = 0;
-    ['GK','DEF','MID','FWD'].forEach(pos => {
-      const count = f[pos];
-      const x = xMap[pos];
-      for(let i=0;i<count;i++){
-        // Y spread evenly, centred
-        const spacing = 100/(count+1);
-        const y = spacing*(i+1);
-        positions.push({si:slotIdx, pos, x, y});
-        slotIdx++;
-      }
-    });
+    if(isHorizontal){
+      // Horizontal: GK left (x=8%), FWD right (x=75%)
+      const xMap = {GK:8, DEF:26, MID:52, FWD:76};
+      ['GK','DEF','MID','FWD'].forEach(pos => {
+        const count = f[pos];
+        const x = xMap[pos];
+        for(let i=0;i<count;i++){
+          const spacing = 90/(count+1);
+          const y = 5 + spacing*(i+1);
+          positions.push({si:slotIdx, pos, x, y});
+          slotIdx++;
+        }
+      });
+    } else {
+      // Vertical: GK bottom (y=88%), FWD top (y=8%)
+      const yMap = {GK:88, DEF:68, MID:45, FWD:18};
+      ['GK','DEF','MID','FWD'].forEach(pos => {
+        const count = f[pos];
+        const y = yMap[pos];
+        for(let i=0;i<count;i++){
+          const spacing = 80/(count+1);
+          const x = 10 + spacing*(i+1);
+          positions.push({si:slotIdx, pos, x, y});
+          slotIdx++;
+        }
+      });
+    }
     return positions;
   }
 
@@ -629,13 +659,13 @@ function renderLineupPredictor(comp){
 
       <!-- Pitch -->
       <div class="pitch-wrap">
-      <div style="background:#2d7a3a;border-radius:16px;position:relative;overflow:hidden;padding-bottom:56%;box-shadow:0 4px 24px rgba(0,0,0,0.2);">
+      <div class="lineup-pitch-container">
         <!-- Pitch markings -->
         <div style="position:absolute;inset:0;">
-          <div style="position:absolute;top:0;bottom:0;left:50%;width:1px;background:rgba(255,255,255,0.2);"></div>
-          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:14%;padding-bottom:14%;border-radius:50%;border:1px solid rgba(255,255,255,0.2);"></div>
-          <div style="position:absolute;left:0;top:20%;bottom:20%;width:10%;border:1px solid rgba(255,255,255,0.2);border-left:none;"></div>
-          <div style="position:absolute;right:0;top:20%;bottom:20%;width:10%;border:1px solid rgba(255,255,255,0.2);border-right:none;"></div>
+          <div class="pitch-midline"></div>
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80px;height:80px;border-radius:50%;border:1px solid rgba(255,255,255,0.2);pointer-events:none;"></div>
+          <div class="pitch-box-a"></div>
+          <div class="pitch-box-b"></div>
           <div style="position:absolute;inset:1px;border:1px solid rgba(255,255,255,0.15);border-radius:15px;pointer-events:none;"></div>
         </div>
         <!-- Players -->
