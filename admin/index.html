@@ -1326,8 +1326,8 @@ function renderCompDetail(){
   const c = getComp(state.currentComp);
   const el = document.getElementById('comp-detail-content');
 
-  const newRoundBtn = '<button class="btn btn-outline" onclick="openModal(\'modal-create-round\')">+ New Round</button>';
-  const newRoundBtnSm = '<button class="btn btn-primary btn-sm" onclick="openModal(\'modal-create-round\')">+ New Round</button>';
+  const newRoundBtn = '<button class="btn btn-outline" onclick="openModal(&quot;modal-create-round&quot;)">+ New Round</button>';
+  const newRoundBtnSm = '<button class="btn btn-primary btn-sm" onclick="openModal(&quot;modal-create-round&quot;)">+ New Round</button>';
   el.innerHTML = `
   <div class="page-header">
     <div>
@@ -1363,7 +1363,7 @@ function renderCompDetail(){
       <div class="card">
         <div class="card-header">
           <span class="card-title">Rounds</span>
-          ${c.mode!=='lineup'?'<button class="btn btn-primary btn-sm" onclick="openModal(\'modal-create-round\')">+ New Round</button>':''}
+          ${c.mode!=='lineup'?newRoundBtnSm:''}
         </div>
         <div class="card-body" style="padding:12px;">
           ${c.rounds.length===0
