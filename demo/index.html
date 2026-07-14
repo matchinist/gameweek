@@ -135,7 +135,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .ev-team.away{flex-direction:row-reverse;}
 .ev-badge{width:38px;height:38px;border-radius:0;background:none;display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif;font-size:11px;font-weight:700;color:var(--text-2);flex-shrink:0;overflow:hidden;}
 .ev-badge img{width:38px;height:38px;object-fit:contain;mix-blend-mode:multiply;}
-.ev-name{font-family:Inter,sans-serif;font-size:13px;font-weight:700;color:oklch(0.2 0.01 260);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ev-name{font-family:Inter,sans-serif;font-size:13px;font-weight:700;color:oklch(0.2 0.01 260);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1;}
 .ev-vs{font-family:Inter,sans-serif;font-size:11px;color:oklch(0.58 0.01 260);text-align:center;min-width:28px;}
 .ev-score{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:oklch(0.2 0.01 260);text-align:center;display:flex;align-items:center;justify-content:center;gap:4px;}
 .pred-area{border-top:1px solid oklch(0.95 0.004 260);padding:13px 20px;background:oklch(0.985 0.003 260);}
@@ -464,7 +464,50 @@ function renderCompTabs(){
 function switchComp(idx){currentCompIdx=idx;predictSubTab='predictions';predsDirty=false;document.documentElement.style.setProperty('--comp-color',COMPS[idx].color);renderCompTabs();renderPredict();setTimeout(()=>{const active=document.querySelector('.comp-tab.active');if(active)active.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});},50);}
 
 // ── PREDICT (merged header: round + status + tabs in ONE bar) ─────────────
-function getDefaultRoundIdx(comp){const idx=comp.rounds.findIndex(r=>r.status==='open');return idx>=0?idx:0;}
+function parseKickoffMs(s){
+  if(!s) return null;
+  if(/\d{4}-\d{2}-\d{2}T/.test(s)){ const t=new Date(s).getTime(); return isNaN(t)?null:t; }
+  const m = s.replace('\u00b7','').match(/(\d{1,2})\s+([A-Za-z]{3})\s+(\d{1,2}):(\d{2})/);
+  if(m){
+    const day=parseInt(m[1]), monStr=m[2], hh=parseInt(m[3]), mm=parseInt(m[4]);
+    const months={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+    const mon = months[monStr]; if(mon==null) return null;
+    const d = new Date(Date.UTC(2026, mon, day, hh, mm));
+    return d.getTime();
+  }
+  const t = new Date(s).getTime();
+  return isNaN(t)?null:t;
+}
+function roundLastKickoffMs(round){
+  const ids = round.eventIds || (round.eventId?[round.eventId]:[]);
+  let max=null;
+  ids.forEach(id=>{
+    const ev = EVENTS[id]; if(!ev) return;
+    const raw = ev.kickoffRaw || ev.kickoff;
+    const t = parseKickoffMs(raw);
+    if(t!=null && (max===null || t>max)) max=t;
+  });
+  return max;
+}
+function computeCurrentRoundIdx(comp){
+  const rounds = comp.rounds||[];
+  if(!rounds.length) return 0;
+  const lastKo = rounds.map(roundLastKickoffMs);
+  if(lastKo.every(k=>k===null)) return null; // no kickoff data at all — caller should fall back
+  const now = Date.now();
+  let idx = 0;
+  for(let i=0;i<rounds.length;i++){
+    const startTime = i===0 ? -Infinity : (lastKo[i-1]!=null ? lastKo[i-1] + 4*3600*1000 : -Infinity);
+    if(now >= startTime) idx = i; else break;
+  }
+  return Math.min(idx, rounds.length-1);
+}
+function getDefaultRoundIdx(comp){
+  const computed = computeCurrentRoundIdx(comp);
+  if(computed!==null) return computed;
+  const idx=comp.rounds.findIndex(r=>r.status==='open');
+  return idx>=0?idx:0;
+}
 
 function renderPredict(){
   if(selectedRound[currentCompIdx]===undefined)selectedRound[currentCompIdx]=getDefaultRoundIdx(COMPS[currentCompIdx]);
@@ -1129,7 +1172,7 @@ function renderEventCard(ev,comp,isRoundOpen){
     midSection='<div class="ev-vs">vs</div>';
   }
 
-  let html=`<div class="${cls}" data-evid="${ev.id}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${ev.tournament||comp.name}</span><span class="event-kickoff">${ev.kickoff||''}</span></div><div class="event-teams"><div style="display:flex;align-items:center;gap:10px;">${teamBadge(ev.homeLogo,ev.home)}<span class="ev-name">${ev.home}</span></div>${midSection}<div style="display:flex;align-items:center;gap:10px;justify-content:flex-end;"><span class="ev-name" style="text-align:right;">${ev.away}</span>${teamBadge(ev.awayLogo,ev.away)}</div></div></div><div class="pred-area">`;
+  let html=`<div class="${cls}" data-evid="${ev.id}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${ev.tournament||comp.name}</span><span class="event-kickoff">${ev.kickoff||''}</span></div><div class="event-teams"><div style="display:flex;align-items:center;gap:10px;min-width:0;">${teamBadge(ev.homeLogo,ev.home)}<span class="ev-name">${ev.home}</span></div>${midSection}<div style="display:flex;align-items:center;gap:10px;justify-content:flex-end;min-width:0;"><span class="ev-name" style="text-align:right;">${ev.away}</span>${teamBadge(ev.awayLogo,ev.away)}</div></div></div><div class="pred-area">`;
 
   if(canPredict){
     // Open for prediction
