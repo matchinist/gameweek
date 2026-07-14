@@ -1410,6 +1410,19 @@ function renderCompDetail(){
               Game mode cannot be changed after creation. To use a different mode, create a new competition from scratch.
             </div>
           </div>
+          ${c.mode==='lineup' ? `
+          <div class="divider"></div>
+          <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:12px;">Lineup Team</div>
+          <div style="background:oklch(0.97 0.01 275);border:1px solid oklch(0.88 0.05 275/0.5);border-radius:8px;padding:12px;margin-bottom:12px;font-size:12px;color:oklch(0.4 0.01 260);">
+            ${c.lineupConfig?.teamId ? `Currently tracking <strong>${c.lineupConfig.teamName||c.lineupConfig.teamId}</strong>. If the pitch isn't showing in the live embed, re-select the team below and save — this re-confirms it's stored correctly.` : `⚠ No team is currently set for this competition — this is why the pitch isn't showing. Select a team below and save.`}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Team to predict lineup for</label>
+            <select class="form-select" id="edit-lineup-team">
+              <option value="">— select team —</option>
+              ${getDMTeams().sort((a,b)=>a.name.localeCompare(b.name)).map(t=>`<option value="${t.id}" ${c.lineupConfig?.teamId===t.id?'selected':''}>${t.name}</option>`).join('')}
+            </select>
+          </div>` : ''}
           ${c.mode==='score' ? `
           <div class="divider"></div>
           <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:12px;">Points Configuration</div>
@@ -1454,6 +1467,17 @@ function renderCompDetail(){
     const b=document.getElementById(bid);
     if(b) b.style.display = c.mode==='lineup' ? 'none' : '';
   });
+  // Lineup comps never open the round modal (no rounds needed), so dmState.teams
+  // is never populated by the usual path — fetch it here so the team dropdown works.
+  if(c.mode==='lineup' && !getDMTeams().length){
+    refreshDMState().then(()=>{
+      const sel = document.getElementById('edit-lineup-team');
+      if(sel){
+        sel.innerHTML = '<option value="">— select team —</option>' +
+          getDMTeams().sort((a,b)=>a.name.localeCompare(b.name)).map(t=>`<option value="${t.id}" ${c.lineupConfig?.teamId===t.id?'selected':''}>${t.name}</option>`).join('');
+      }
+    }).catch(e=>console.error('refreshDMState for lineup settings:',e));
+  }
 }
 
 // ── RESULT MODAL ──────────────────────────────────────────────────────────
@@ -2199,6 +2223,14 @@ function saveCompSettings(){
       if(!confirm('⚠ Changing point values will recalculate all existing scores across all submitted predictions in this competition. This cannot be undone. Proceed?')) return;
     }
     c.scoring = newScoring;
+  }
+  if(c.mode==='lineup'){
+    const teamSel = document.getElementById('edit-lineup-team');
+    const teamId = teamSel?.value;
+    if(teamId){
+      const team = getDMTeams().find(t=>t.id===teamId);
+      c.lineupConfig = { ...(c.lineupConfig||{}), teamId, teamName: team?.name||'' };
+    }
   }
   c.overallPrizes = getCleanPrizes('overall');
   saveAdminState();
