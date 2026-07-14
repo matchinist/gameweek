@@ -714,7 +714,7 @@ function openLineupPicker(roundId, slotIdx, pos){
     html+=`<div style="padding:12px 20px;"><button onclick="removeLineupPick('${roundId}',${slotIdx})" style="width:100%;padding:10px;background:#FEE2E2;color:#DC2626;border:1px solid #FCA5A5;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Remove player</button></div>`;
   }
 
-  ['GK','DEF','MID','FWD'].forEach(p=>{
+  ['FWD','MID','DEF','GK'].forEach(p=>{
     const list = LIV_SQUAD[p];
     html+=`<div style="padding:8px 20px 4px;font-size:10px;font-weight:700;color:${posColor[p]};text-transform:uppercase;letter-spacing:0.5px;">${p}</div>`;
     list.forEach(pl=>{
