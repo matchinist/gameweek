@@ -140,8 +140,8 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .ev-score{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:oklch(0.2 0.01 260);text-align:center;display:flex;align-items:center;justify-content:center;gap:4px;}
 .pred-area{border-top:1px solid oklch(0.95 0.004 260);padding:13px 20px;background:oklch(0.985 0.003 260);}
 .pred-label{font-size:11px;color:var(--text-2);font-weight:500;margin-bottom:8px;}
-.btns-1x2{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;}
-.btn-1x2{flex:1;padding:11px 4px;border:1px solid var(--border);border-radius:7px;background:var(--white);font-family:var(--mono);font-size:13px;font-weight:700;color:#111;cursor:pointer;transition:all 0.13s;text-align:center;line-height:1.2;}
+.btns-1x2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+.btn-1x2{flex:1;padding:11px 4px;border:1px solid var(--border);border-radius:7px;background:var(--white);font-family:Inter,sans-serif;font-size:13px;font-weight:600;color:oklch(0.3 0.01 260);cursor:pointer;transition:all 0.13s;text-align:center;line-height:1.2;}.btn-1x2:disabled{cursor:default;}.btn-ou:disabled{cursor:default;}
 @media(hover:hover) and (pointer:fine){.btn-1x2:hover{border-color:var(--comp-color);color:var(--comp-color);}}
 .btn-1x2.selected{border-color:var(--comp-color);background:var(--comp-color);color:white;}
 .btn-1x2.selected.home{border-color:#2563EB;background:#2563EB;color:white;}
@@ -307,7 +307,7 @@ const COMPS=[
       {id:'r3',label:'Matchday 1',status:'open',deadline:'2026-10-01T17:00',eventIds:['e201','e202','e203'],prizes:[{pos:1,text:'Season ticket voucher'}]},
     ]},
   {id:'c3',name:'Betting Markets',mode:'betting',color:'#059669',
-    markets:[{type:'1x2',label:'Match Result',points:3},{type:'ou25',label:'Over / Under 2.5',points:2},{type:'btts',label:'Both Teams to Score',points:2}],
+    markets:[{type:'1x2',label:'Match Result',points:3},{type:'ou25',label:'Over / Under',points:2},{type:'btts',label:'Both Teams to Score',points:2}],
     tournamentNames:['La Liga','Serie A'],
     overallPrizes:[{pos:1,text:'€150 bookmaker credit'},{pos:2,text:'€75 bookmaker credit'},{pos:3,text:'€25 bookmaker credit'}],
     rounds:[
@@ -1059,10 +1059,12 @@ function renderEventCard(ev,comp,isRoundOpen){
       const markets=comp.markets||[];const mpred=(pred&&typeof pred==='object')?pred:{};
       html+='<div style="display:flex;flex-direction:column;gap:8px;">';
       markets.forEach(mkt=>{
-        html+=`<div><div class="pred-label" style="margin-bottom:5px;">${mkt.label} <span style="font-family:var(--sans);font-size:11px;color:var(--accent);font-weight:700;">+${mkt.points}pts</span></div>`;
-        if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${mpred['1x2']==='H'?' selected home':''}" onclick="pickMarket('${ev.id}','1x2','H')">Home Win</button><button class="btn-1x2${mpred['1x2']==='D'?' selected draw':''}" onclick="pickMarket('${ev.id}','1x2','D')">X</button><button class="btn-1x2${mpred['1x2']==='A'?' selected away':''}" onclick="pickMarket('${ev.id}','1x2','A')">Away</button></div>`;
-        else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['ou25']==='O'?' selected':''}" onclick="pickMarket('${ev.id}','ou25','O')">2.5 Over</button><button class="btn-ou under${mpred['ou25']==='U'?' selected':''}" onclick="pickMarket('${ev.id}','ou25','U')">2.5 Under</button></div>`;
-        else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['btts']==='Y'?' selected':''}" onclick="pickMarket('${ev.id}','btts','Y')">YES</button><button class="btn-ou under${mpred['btts']==='N'?' selected':''}" onclick="pickMarket('${ev.id}','btts','N')">NO</button></div>`;
+        html+=`<div><div class="pred-label" style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);">${mkt.label}</div>`;
+        const isLocked=ev.locked||false;
+        const dis=isLocked?'disabled style="pointer-events:none;opacity:0.7;"':'';
+        if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${mpred['1x2']==='H'?' selected home':''}" ${isLocked?'disabled':'onclick="pickMarket(\'${ev.id}\',\'1x2\',\'H\')'}">Home Win</button><button class="btn-1x2${mpred['1x2']==='D'?' selected draw':''}" ${isLocked?'disabled':'onclick="pickMarket(\'${ev.id}\',\'1x2\',\'D\')'}">X</button><button class="btn-1x2${mpred['1x2']==='A'?' selected away':''}" ${isLocked?'disabled':'onclick="pickMarket(\'${ev.id}\',\'1x2\',\'A\')'}">Away</button></div>`;
+        else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['ou25']==='O'?' selected':''}" ${isLocked?'disabled':'onclick="pickMarket(\'${ev.id}\',\'ou25\',\'O\')'}">Over</button><button class="btn-ou under${mpred['ou25']==='U'?' selected':''}" ${isLocked?'disabled':'onclick="pickMarket(\'${ev.id}\',\'ou25\',\'U\')'}">Under</button></div>`;
+        else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['btts']==='Y'?' selected':''}" ${isLocked?'disabled':'onclick="pickMarket(\'${ev.id}\',\'btts\',\'Y\')'}">Both Score</button><button class="btn-ou under${mpred['btts']==='N'?' selected':''}" ${isLocked?'disabled':'onclick="pickMarket(\'${ev.id}\',\'btts\',\'N\')'}">Clean Sheet</button></div>`;
         html+='</div>';
       });
       html+='</div>';
