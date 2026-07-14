@@ -761,6 +761,7 @@ tbody tr:hover td{background:var(--bg);}
           <option value="score">Score Predictor</option>
           <option value="betting">Betting Markets</option>
                   <option value="ranking">Ranking</option>
+          <option value="lineup">Lineup Predictor</option>
         </select>
         <div id="mode-description" style="margin-top:10px;padding:12px;background:var(--bg);border-radius:6px;border-left:3px solid var(--accent);">
           <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;">Last Man Standing</div>
@@ -836,6 +837,28 @@ tbody tr:hover td{background:var(--bg);}
           <input class="form-input" type="number" id="ranking-pts-correct" value="2" min="0" max="99" style="width:64px;text-align:center;font-family:var(--mono);font-weight:700;" />
           <label class="form-label" style="margin:0;">Bonus for perfect ranking</label>
           <input class="form-input" type="number" id="ranking-pts-bonus" value="5" min="0" max="99" style="width:64px;text-align:center;font-family:var(--mono);font-weight:700;" />
+        </div>
+      </div>
+
+      <!-- Lineup Predictor config -->
+      <div id="lineup-config" style="display:none;">
+        <div class="divider"></div>
+        <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:12px;">Lineup Predictor Setup</div>
+        <div class="form-group">
+          <label class="form-label">Tournament</label>
+          <select class="form-select" id="lineup-tournament" onchange="loadLineupTeams()">
+            <option value="">— select tournament —</option>
+          </select>
+        </div>
+        <div class="form-group" id="lineup-team-group" style="display:none;">
+          <label class="form-label">Team to predict lineup for</label>
+          <select class="form-select" id="lineup-team">
+            <option value="">— select team —</option>
+          </select>
+        </div>
+        <div style="background:oklch(0.97 0.01 275);border:1px solid oklch(0.88 0.05 275/0.5);border-radius:8px;padding:14px;margin-top:4px;">
+          <div style="font-size:12px;font-weight:700;color:oklch(0.45 0.15 275);margin-bottom:6px;">ℹ️ No rounds needed</div>
+          <div style="font-size:12px;color:oklch(0.4 0.01 260);line-height:1.6;">The Lineup Predictor automatically pulls the team's next fixture from your Data Manager. Users can start predicting immediately — no rounds to create or manage. New matches appear automatically.</div>
         </div>
       </div>
     </div>
@@ -1104,8 +1127,8 @@ function getDMEvents(){ return dmState.events||{}; }
 function getDMTeams(){ return dmState.teams||[]; }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
-const modeLabel = {lms:'Last Man Standing', score:'Score Predictor', betting:'Betting Markets', ranking:'Ranking'};
-const modeChip  = {lms:'LMS', score:'SCORE', betting:'BET', ranking:'RANKING'};
+const modeLabel = {lms:'Last Man Standing', score:'Score Predictor', betting:'Betting Markets', ranking:'Ranking', lineup:'Lineup Predictor'};
+const modeChip  = {lms:'LMS', score:'SCORE', betting:'BET', ranking:'RANKING', lineup:'LINEUP'};
 
 function getEvent(id){ return state.events.find(e=>e.id===id); }
 function getComp(id){ return state.competitions.find(c=>c.id===id); }
@@ -1345,6 +1368,7 @@ function renderCompDetail(){
               <option value="score" ${c.mode==='score'?'selected':''}>Score Predictor</option>
               <option value="betting" ${c.mode==='betting'?'selected':''}>Betting Markets</option>
               <option value="ranking" ${c.mode==='ranking'?'selected':''}>Ranking</option>
+              <option value="lineup" ${c.mode==='lineup'?'selected':''}>Lineup Predictor</option>
             </select>
             <div style="font-size:11px;color:var(--amber);background:var(--amber-light);padding:7px 10px;border-radius:5px;margin-top:6px;">
               Game mode cannot be changed after creation. To use a different mode, create a new competition from scratch.
@@ -1419,7 +1443,8 @@ const MODE_DESCRIPTIONS = {
   lms:     { title:'Last Man Standing',  text:'Users predict the result (Home / Draw / Away) for each event in the round. A wrong prediction eliminates them. Events resolve in kick-off order — tension builds with every result. The last survivor wins.' },
   score:   { title:'Score Predictor',    text:'Users predict the exact scoreline for every match. An exact score earns maximum points; partial credit for getting individual team goals right.' },
   betting: { title:'Betting Markets',    text:'Users predict multiple markets per event — choose from 1X2, Over/Under 2.5, and Both Teams to Score. Each market earns its own points.' },
-  ranking: { title:'Ranking',            text:'Users rank selected teams from highest to lowest for a chosen metric (e.g. xG or Total Shots) in a gameweek. Points for each correct position, bonus for a perfect ranking.' }
+  ranking: { title:'Ranking',            text:'Users rank selected teams from highest to lowest for a chosen metric (e.g. xG or Total Shots) in a gameweek. Points for each correct position, bonus for a perfect ranking.' },
+  lineup:  { title:'Lineup Predictor',    text:'Users predict the starting 11 for a chosen team before each match. Earn 3 pts for exact position, 1 pt for correct player in wrong position. No rounds to create — the competition picks up automatically from the next match.' }
 };
 function updateModeDescription(){
   const mode = document.getElementById('new-comp-mode')?.value;
@@ -1429,6 +1454,28 @@ function updateModeDescription(){
   document.getElementById('score-points-config').style.display   = mode==='score'   ? 'block' : 'none';
   document.getElementById('betting-markets-config').style.display = mode==='betting' ? 'block' : 'none';
   document.getElementById('ranking-config').style.display         = mode==='ranking' ? 'block' : 'none';
+  document.getElementById('lineup-config').style.display          = mode==='lineup'  ? 'block' : 'none';
+  if(mode==='lineup') populateLineupTournaments();
+}
+
+function populateLineupTournaments(){
+  const sel = document.getElementById('lineup-tournament');
+  if(!sel) return;
+  const tourns = getDMTournaments().filter(t => t.name.toLowerCase().includes('premier league'));
+  sel.innerHTML = '<option value="">— select tournament —</option>' +
+    tourns.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+  if(tourns.length===1){ sel.value=tourns[0].id; loadLineupTeams(); }
+}
+
+function loadLineupTeams(){
+  const tId = document.getElementById('lineup-tournament').value;
+  const teamGroup = document.getElementById('lineup-team-group');
+  const teamSel = document.getElementById('lineup-team');
+  if(!tId){ teamGroup.style.display='none'; return; }
+  const teams = getDMTeams().sort((a,b)=>a.name.localeCompare(b.name));
+  teamSel.innerHTML = '<option value="">— select team —</option>' +
+    teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+  teamGroup.style.display = 'block';
 }
 
 function createComp(){
@@ -1458,14 +1505,24 @@ function createComp(){
       perfectBonus: parseInt(document.getElementById('ranking-pts-bonus').value) || 5,
     };
   }
+  let lineupConfig = null;
+  if(mode==='lineup'){
+    const teamId = document.getElementById('lineup-team')?.value;
+    const tournId = document.getElementById('lineup-tournament')?.value;
+    if(!teamId){ toast('Select a team for the Lineup Predictor'); return; }
+    const team = getDMTeams().find(t=>t.id===teamId);
+    lineupConfig = { teamId, tournamentId: tournId, teamName: team?.name||'' };
+  }
   const c = {
-    id: 'c'+uid(), name, mode, scoring, markets, rankingConfig,
+    id: 'c'+uid(), name: mode==='lineup'?(lineupConfig?.teamName+' Lineup'):name, mode, scoring, markets, rankingConfig, lineupConfig,
     longTerm: false,
-    status: 'draft', color: '#8B5CF6', users: 0, predictions: 0, rounds: []
+    status: 'draft', color: mode==='lineup'?'#0EA5E9':'#8B5CF6', users: 0, predictions: 0, rounds: []
   };
   state.competitions.push(c);
   closeModal('modal-create-comp');
   document.getElementById('new-comp-mode').value='lms';
+  const lt = document.getElementById('lineup-team'); if(lt) lt.value='';
+  const ltg = document.getElementById('lineup-team-group'); if(ltg) ltg.style.display='none';
   updateModeDescription();
   saveAdminState();
   state.currentComp = c.id;
