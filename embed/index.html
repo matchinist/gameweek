@@ -775,8 +775,8 @@ async function loadTeamSquad(teamId){
       const pos = normalizePos(p.position||p.pos);
       if(!pos) return;
       squad[pos].push({
-        id:p.id, name:p.name,
-        no:p.number??p.shirt_number??p.no??'',
+        id:p.id, name:p.full_name||p.name||'Unknown',
+        no:p.jersey_number??p.number??p.shirt_number??p.no??'',
         nationality:p.nationality||''
       });
     });
