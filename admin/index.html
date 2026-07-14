@@ -1444,7 +1444,7 @@ const MODE_DESCRIPTIONS = {
   score:   { title:'Score Predictor',    text:'Users predict the exact scoreline for every match. An exact score earns maximum points; partial credit for getting individual team goals right.' },
   betting: { title:'Betting Markets',    text:'Users predict multiple markets per event — choose from 1X2, Over/Under 2.5, and Both Teams to Score. Each market earns its own points.' },
   ranking: { title:'Ranking',            text:'Users rank selected teams from highest to lowest for a chosen metric (e.g. xG or Total Shots) in a gameweek. Points for each correct position, bonus for a perfect ranking.' },
-  lineup:  { title:'Lineup Predictor',    text:'Users predict the starting 11 for a chosen team before each match. Earn 3 pts for exact position, 1 pt for correct player in wrong position. No rounds to create — the competition picks up automatically from the next match.' }
+  lineup:  { title:'Lineup Predictor',    text:'Users predict the starting 11 for a chosen team before each match. 10 pts for each correct player, +30 bonus if all 11 are correct. No rounds needed — the competition automatically picks up the next fixture for the selected team.' }
 };
 function updateModeDescription(){
   const mode = document.getElementById('new-comp-mode')?.value;
@@ -1472,7 +1472,15 @@ function loadLineupTeams(){
   const teamGroup = document.getElementById('lineup-team-group');
   const teamSel = document.getElementById('lineup-team');
   if(!tId){ teamGroup.style.display='none'; return; }
-  const teams = getDMTeams().sort((a,b)=>a.name.localeCompare(b.name));
+  // Get team IDs from tournament season data
+  const tourn = getDMTournaments().find(t=>t.id===tId);
+  const seasons = tourn?.seasons||{};
+  // Collect all teamIds across all seasons
+  const tournTeamIds = new Set(Object.values(seasons).flatMap(s=>s.teamIds||[]));
+  const allTeams = getDMTeams();
+  // Filter teams to those in this tournament, fallback to all if none found
+  const teams = (tournTeamIds.size>0 ? allTeams.filter(t=>tournTeamIds.has(t.id)) : allTeams)
+    .sort((a,b)=>a.name.localeCompare(b.name));
   teamSel.innerHTML = '<option value="">— select team —</option>' +
     teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
   teamGroup.style.display = 'block';
@@ -1514,7 +1522,7 @@ function createComp(){
     lineupConfig = { teamId, tournamentId: tournId, teamName: team?.name||'' };
   }
   const c = {
-    id: 'c'+uid(), name: mode==='lineup'?(lineupConfig?.teamName+' Lineup'):name, mode, scoring, markets, rankingConfig, lineupConfig,
+    id: 'c'+uid(), name: mode==='lineup'?'Lineup Predictor':name, mode, scoring, markets, rankingConfig, lineupConfig,
     longTerm: false,
     status: 'draft', color: mode==='lineup'?'#0EA5E9':'#8B5CF6', users: 0, predictions: 0, rounds: []
   };
