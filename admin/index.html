@@ -2181,7 +2181,7 @@ function saveCompSettings(){
 async function setCompStatus(id,status){
   if(status==='active'){
     const op=state.operatorProfile;
-    const bypass=op?.is_admin||['ercanvural.bm@gmail.com','ercanvural.bm+admin@gmail.com'].includes((op?.email||'').toLowerCase());
+    const bypass=op?.is_admin||['ercanvural.bm@gmail.com','ercanvural.bm+admin@gmail.com','ercanvural.bm+spursweb@gmail.com'].includes((op?.email||'').toLowerCase());
     if(!bypass&&op?.plan!=='active'){
       showPaywall(); return;
     }

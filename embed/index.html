@@ -119,7 +119,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .st-bar-fill.survived{background:var(--green);}
 .st-bar-count{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);min-width:36px;text-align:right;}
 .events-list{display:grid;grid-template-columns:1fr;gap:14px;padding:0;}
-@media(min-width:600px){.events-list{grid-template-columns:1fr 1fr;}.event-card{height:100%;}}
+@media(min-width:600px){.events-list{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}.event-card{height:100%;min-width:0;}}
 .event-card{background:#fff;border:1px solid oklch(0.92 0.004 260);border-radius:16px;box-shadow:0 1px 2px oklch(0.2 0.02 260 / 0.04),0 6px 20px oklch(0.2 0.02 260 / 0.03);overflow:hidden;}
 .event-card.predicted{border-color:var(--comp-color);}
 .event-card.locked-pred{border-color:var(--border);opacity:0.85;}
@@ -1403,12 +1403,17 @@ function renderEventCard(ev,comp,isRoundOpen){
 
 // ── COUNTDOWN ──────────────────────────────────────────────────────────────
 let countdownInterval;
-function startCountdown(deadline){
+function startCountdown(deadline,onExpire){
   clearInterval(countdownInterval);
   function update(){
     const el=document.getElementById('countdown-text');if(!el)return;
     const diff=new Date(deadline)-Date.now();
-    if(diff<=0){el.textContent='Predictions locked';clearInterval(countdownInterval);return;}
+    if(diff<=0){
+      clearInterval(countdownInterval);
+      if(typeof onExpire==='function'){onExpire();return;}
+      el.textContent='Predictions locked';
+      return;
+    }
     const d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
     let txt='';
     if(d>0)txt=`${d}d ${h}h ${m}m left`;
@@ -1425,15 +1430,26 @@ function pick(id,val){
   preds[id]=val;predsDirty=true;
   renderPredict();
 }
+function updateSubmitBtnText(){
+  const comp=COMPS[currentCompIdx]; if(!comp) return;
+  const round=comp.rounds[selectedRound[currentCompIdx]]; if(!round) return;
+  const events=(round.eventIds||[]).map(id=>({id,...EVENTS[id],tournament:(round.tournamentNames||[])[0]||''})).filter(e=>e.home);
+  const openEvents=events.filter(ev=>!ev.res);
+  if(!openEvents.length) return;
+  const predCount=openEvents.filter(ev=>{const p=preds[ev.id];if(!p)return false;if(comp.mode==='score')return p.h!==undefined&&p.a!==undefined;if(comp.mode==='betting')return typeof p==='object'&&Object.keys(p).length>0;return!!p;}).length;
+  const btn=document.querySelector('.submit-preds-btn');
+  if(btn) btn.textContent = predCount===events.length?'✓ All predictions saved':'Save Predictions ('+predCount+'/'+events.length+')';
+}
 function pickScore(id,side,val){
   predsDirty=true;
   if(!preds[id]||typeof preds[id]!=='object')preds[id]={};
   preds[id][side]=val===''?undefined:parseInt(val);
   const input=document.getElementById((side==='h'?'sh-':'sa-')+id);
   if(input)input.classList.toggle('has',val!=='');
-  // Activate submit button
+  // Activate submit button + refresh live count
   const btn=document.querySelector('.submit-preds-btn');
   if(btn&&predsDirty){btn.classList.remove('disabled');}
+  updateSubmitBtnText();
 }
 function pickMarket(evId,market,val){
   predsDirty=true;
@@ -1805,6 +1821,18 @@ function renderPredictionsPane(comp){
   const isOpen=round.status==='open';
   let events=(round.eventIds||[]).map(id=>({id,...EVENTS[id],tournament:(round.tournamentNames||[])[0]||''})).filter(e=>e.home);
 
+  let nextScoreLock=null;
+  if(comp.mode==='score'){
+    const nowTs=Date.now();
+    events.forEach(ev=>{
+      const raw=ev.kickoffRaw||ev.kickoff;
+      const ko=parseKickoffMs(raw);
+      ev._scoreLockAt = ko!=null ? ko-3600000 : null;
+    });
+    const upcoming=events.filter(ev=>!ev.res&&ev._scoreLockAt!=null&&ev._scoreLockAt>nowTs).sort((a,b)=>a._scoreLockAt-b._scoreLockAt);
+    if(upcoming.length) nextScoreLock=upcoming[0];
+  }
+
   let eliminatedAtIdx=-1;
   if(comp.mode==='lms'){
     events.sort((a,b)=>new Date(a.kickoffRaw||0)-new Date(b.kickoffRaw||0));
@@ -1832,7 +1860,14 @@ function renderPredictionsPane(comp){
   const badgeCls = (isOpen&&lockedByTime) ? 'completed' : round.status;
   let html=`<div class="predict-header-row"><div style="display:flex;align-items:center;gap:8px;flex:1;"><select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select><span class="round-status ${badgeCls}">${badgeText}</span></div><div class="predict-subtabs"><button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button></div><div class="predict-subtabs-mobile"><select onchange="switchPredictSubTab(this.value)"><option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option><option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option></select></div></div>`;
 
-  if(isOpen&&lockedByTime){
+  if(comp.mode==='score'){
+    if(isOpen&&nextScoreLock){
+      html+=`<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;Predictions lock in <span id="countdown-text">Calculating...</span></div>`;
+      setTimeout(()=>startCountdown(nextScoreLock._scoreLockAt,()=>renderPredict()),50);
+    } else if(isOpen&&events.length&&events.every(ev=>ev.res||(ev._scoreLockAt!=null&&ev._scoreLockAt<=Date.now()))){
+      html+=`<div class="deadline-banner" style="background:var(--bg);color:var(--text-2);">🔒 All predictions locked</div>`;
+    }
+  } else if(isOpen&&lockedByTime){
     html+=`<div class="deadline-banner" style="background:var(--bg);color:var(--text-2);">🔒 Predictions locked — match starts soon</div>`;
   } else if(isOpen&&timeLockAt){
     html+=`<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;Predictions lock in <span id="countdown-text">Calculating...</span></div>`;
@@ -1936,7 +1971,8 @@ function renderPredictionsPane(comp){
       const isEliminated=eliminatedAtIdx>=0&&i>eliminatedAtIdx;
       const isEliminationPoint=i===eliminatedAtIdx;
       if(comp.mode==='lms'&&isEliminated) lmsBlocked=true;
-      const effectiveOpen=isOpen&&!lockedByTime&&(comp.mode==='lms'?(!lmsBlocked):true);
+      const effectiveOpen=comp.mode==='score'?(isOpen&&(ev._scoreLockAt==null||Date.now()<ev._scoreLockAt))
+        :isOpen&&!lockedByTime&&(comp.mode==='lms'?(!lmsBlocked):true);
       html+=`<div style="opacity:${isEliminated?'0.4':'1'};">${renderEventCard(ev,comp,effectiveOpen)}</div>`;
     });
   }
