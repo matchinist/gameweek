@@ -558,10 +558,51 @@ async function loadPlayerPreds(){
     .eq('client_key',CLIENT_PARAM)
     .eq('player_id',currentPlayer.id);
   preds={};
+  const lineupRoundIds = new Set(
+    (COMPS||[]).filter(c=>c.mode==='lineup').flatMap(c=>(c.rounds||[]).map(r=>r.id))
+  );
   (data||[]).forEach(p=>{
     const v=p.prediction;
-    preds[p.event_id] = (v&&typeof v==='object'&&'value'in v)?v.value:v;
+    const val = (v&&typeof v==='object'&&'value'in v)?v.value:v;
+    if(lineupRoundIds.has(p.event_id) && Array.isArray(val)){
+      reconstructLineupPicks(p.event_id, val);
+    } else {
+      preds[p.event_id] = val;
+    }
   });
+}
+
+function findLineupPlayerPos(pid){
+  for(const pos of ['GK','DEF','MID','FWD']){
+    const p = (LIV_SQUAD[pos]||[]).find(pl=>pl.id===pid);
+    if(p) return pos;
+  }
+  return null;
+}
+
+function reconstructLineupPicks(roundId, pickedIds){
+  if(!pickedIds || !pickedIds.length) return;
+  const byPos = {GK:[], DEF:[], MID:[], FWD:[]};
+  pickedIds.forEach(pid=>{
+    const pos = findLineupPlayerPos(pid);
+    if(pos) byPos[pos].push(pid);
+  });
+  // Pick whichever formation's slot counts best match the saved lineup
+  let bestFormation = lineupFormation, bestScore = -1;
+  Object.entries(FORMATIONS).forEach(([name,counts])=>{
+    const score = (counts.DEF===byPos.DEF.length?1:0) + (counts.MID===byPos.MID.length?1:0) + (counts.FWD===byPos.FWD.length?1:0);
+    if(score>bestScore){ bestScore=score; bestFormation=name; }
+  });
+  lineupFormation = bestFormation;
+  const slots = getLineupSlots(lineupFormation);
+  const picks = {};
+  ['GK','DEF','MID','FWD'].forEach(pos=>{
+    const slotIdxs = slots.map((s,i)=>i).filter(i=>slots[i].pos===pos);
+    byPos[pos].forEach((pid,idx)=>{
+      if(idx<slotIdxs.length) picks[slotIdxs[idx]] = pid;
+    });
+  });
+  lineupPicks[roundId] = picks;
 }
 
 async function savePred(eventId, prediction){
