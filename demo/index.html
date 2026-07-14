@@ -598,10 +598,10 @@ function renderLineupPredictor(comp){
     const {si, player, pos} = slot;
     const col = posColor[pos];
     const click = isOpen ? `openLineupPicker('${round.id}',${si},'${pos}')` : '';
-    const isCorrect = !isOpen && actual && actual.includes(player.id);
-    const borderColor = !isOpen && actual ? (isCorrect ? '#4ade80' : 'rgba(255,255,255,0.4)') : 'rgba(255,255,255,0.9)';
-    const flag = NATIONALITY_FLAGS[player.nationality] || '';
     if(player){
+      const isCorrect = !isOpen && actual && actual.includes(player.id);
+      const borderColor = !isOpen && actual ? (isCorrect ? '#4ade80' : 'rgba(255,255,255,0.4)') : 'rgba(255,255,255,0.9)';
+      const flag = NATIONALITY_FLAGS[player.nationality] || '';
       return `<div onclick="${click}" style="position:absolute;left:${xPct}%;top:${yPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:${isOpen?'pointer':'default'};z-index:3;width:64px;">
         <div style="position:relative;width:40px;height:40px;">
           <div style="width:40px;height:40px;border-radius:50%;background:${col};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:11px;border:2.5px solid ${borderColor};box-shadow:0 2px 8px rgba(0,0,0,0.4);">${player.no}</div>
