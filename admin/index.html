@@ -1711,16 +1711,16 @@ async function openModal(id){
     const comp = getComp(state.currentComp);
     const isRanking = comp?.mode === 'ranking';
     // Reset wizard to step 1
-    document.getElementById('new-round-step-1').style.display='block';
-    document.getElementById('new-round-step-2').style.display='none';
-    document.getElementById('new-round-footer-step1').style.display='flex';
-    document.getElementById('new-round-footer-step2').style.display='none';
-    document.getElementById('new-round-modal-title').textContent='New Round';
+    document.getElementById('new-round-step-1')?.style && (document.getElementById('new-round-step-1').style.display='block');
+    document.getElementById('new-round-step-2')?.style && (document.getElementById('new-round-step-2').style.display='none');
+    document.getElementById('new-round-footer-step1')?.style && (document.getElementById('new-round-footer-step1').style.display='flex');
+    document.getElementById('new-round-footer-step2')?.style && (document.getElementById('new-round-footer-step2').style.display='none');
+    if(document.getElementById('new-round-modal-title')) document.getElementById('new-round-modal-title').textContent='New Round';
     // For ranking: show tournament+events flow (same as others), teams are derived from events
-    document.getElementById('new-round-tournament-select').closest('.form-group').style.display = 'block';
-    document.getElementById('new-round-available-wrap').style.display = 'none';
-    document.getElementById('new-round-added-wrap').style.display = 'none';
-    document.getElementById('new-round-ranking-teams').style.display = 'none';
+    document.getElementById('new-round-tournament-select')?.closest('.form-group') && (document.getElementById('new-round-tournament-select').closest('.form-group').style.display = 'block');
+    document.getElementById('new-round-available-wrap')?.style && (document.getElementById('new-round-available-wrap').style.display = 'none');
+    document.getElementById('new-round-added-wrap')?.style && (document.getElementById('new-round-added-wrap').style.display = 'none');
+    document.getElementById('new-round-ranking-teams')?.style && (document.getElementById('new-round-ranking-teams').style.display = 'none');
     populateTournamentDropdown('new');
     renderAddedEvents('new');
     if(isRanking){
@@ -1771,6 +1771,7 @@ async function refreshDMState(){
 
 function populateTournamentDropdown(prefix){
   const sel = document.getElementById(prefix+'-round-tournament-select');
+  if(!sel) return;
   const tournaments = getDMTournaments();
   const pl = tournaments.filter(t => t.name.toLowerCase().includes('premier league'));
   if(!pl.length){
