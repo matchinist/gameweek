@@ -21,7 +21,7 @@
 }
 html{height:100%;overflow:hidden;}
 body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;}
-.app{display:flex;flex-direction:column;position:fixed;top:0;left:0;right:0;bottom:0;max-width:860px;margin:0 auto;width:100%;background:var(--white);overflow:hidden;}
+.app{display:flex;flex-direction:column;position:fixed;top:0;left:0;right:0;bottom:0;max-width:860px;margin:0 auto;width:100%;background:var(--white);overflow:hidden;border-left:1px solid oklch(0.92 0.004 260);border-right:1px solid oklch(0.92 0.004 260);}
 .scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:#F9FAFB;}
 .app-header{background:#fff;border-bottom:1px solid oklch(0.92 0.004 260);flex-shrink:0;z-index:50;}
 .header-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;}
@@ -738,7 +738,7 @@ function renderPredict(){
   const tlHtml='';
   // Game descriptions + rules
   const descriptions={score:'Predict the exact score for each match. Points awarded for correct scores, correct team goals, or correct total.',lms:'Pick a winner for each event. Get it wrong and you are eliminated. Last one standing wins.',betting:'Predict multiple markets per match: result, over/under, both teams to score. Points per correct market.',ranking:'Rank teams from highest to lowest expected goals (xG) for the gameweek. Points for each correct position.'};
-  let html=`<div style="padding:10px 16px 0;display:flex;align-items:center;gap:8px;"><span style="font-size:12px;color:var(--text-2);flex:1;font-weight:600;">${descriptions[comp.mode]||''}</span><button onclick="showRules('${comp.mode}')" style="flex-shrink:0;border:1px solid oklch(0.88 0.006 260);background:#fff;color:oklch(0.35 0.01 260);font-size:13px;font-weight:600;padding:9px 18px;border-radius:10px;cursor:pointer;">Rules</button></div>`;
+  let html=`<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:20px;padding:10px 16px 0;"><p style="margin:0;font-size:15px;line-height:1.55;color:oklch(0.4 0.01 260);max-width:640px;">${descriptions[comp.mode]||''}</p><button onclick="showRules('${comp.mode}')" style="flex-shrink:0;border:1px solid oklch(0.88 0.006 260);background:#fff;color:oklch(0.35 0.01 260);font-size:13px;font-weight:600;padding:9px 18px;border-radius:10px;cursor:pointer;">Rules</button></div>`;
   html+=predictSubTab==='predictions'?renderPredictionsPane(comp):renderLeaderboardShell(comp);
   document.getElementById('predict-content').innerHTML=html;
   if(predictSubTab==='leaderboard') loadAndRenderLeaderboard(comp);
@@ -1979,7 +1979,21 @@ function renderPredictionsPane(comp){
 
   const badgeText = (isOpen&&lockedByTime) ? '🔒 Locked' : (isOpen?'● Open':'✓ Done');
   const badgeCls = (isOpen&&lockedByTime) ? 'completed' : round.status;
-  let html=`<div class="predict-header-row"><div style="display:flex;align-items:center;gap:8px;flex:1;"><select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select><span class="round-status ${badgeCls}">${badgeText}</span></div><div class="predict-subtabs"><button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button></div><div class="predict-subtabs-mobile"><select onchange="switchPredictSubTab(this.value)"><option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option><option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option></select></div></div>`;
+  let html=`<div class="round-bar">
+    <select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select>
+    <span class="round-status ${badgeCls}">${badgeText}</span>
+    <div class="round-bar-spacer"></div>
+    <div class="predict-subtabs">
+      <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button>
+      <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
+    </div>
+    <div class="predict-subtabs-mobile">
+      <select onchange="switchPredictSubTab(this.value)">
+        <option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option>
+        <option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option>
+      </select>
+    </div>
+  </div>`;
 
   if(comp.mode==='score'){
     if(isOpen&&nextScoreLock){
@@ -2234,7 +2248,21 @@ function renderLeaderboardShell(comp){
   const round=comp.rounds[ri];
   if(!round) return '<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">No rounds yet</div></div>';
   const roundSelect=comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('');
-  return `<div class="predict-header-row"><div style="display:flex;align-items:center;gap:8px;flex:1;"><select class="round-select" onchange="changeRound(this.value)">${roundSelect}</select></div><div class="predict-subtabs"><button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button></div><div class="predict-subtabs-mobile"><select onchange="switchPredictSubTab(this.value)"><option value="predictions">Predictions</option><option value="leaderboard" selected>Leaderboard</option></select></div></div>
+  return `<div class="round-bar">
+    <select class="round-select" onchange="changeRound(this.value)">${roundSelect}</select>
+    <span class="round-status ${round.status==='open'?'open':'completed'}">${round.status==='open'?'\u25cf Open':'\u2713 Done'}</span>
+    <div class="round-bar-spacer"></div>
+    <div class="predict-subtabs">
+      <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button>
+      <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
+    </div>
+    <div class="predict-subtabs-mobile">
+      <select onchange="switchPredictSubTab(this.value)">
+        <option value="predictions">Predictions</option>
+        <option value="leaderboard" selected>Leaderboard</option>
+      </select>
+    </div>
+  </div>
   <div id="lb-content" style="padding:12px 16px 30px;"><div class="empty" style="padding:40px 20px;"><div class="empty-icon">⏳</div><div class="empty-title">Loading leaderboard…</div></div></div>`;
 }
 
