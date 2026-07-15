@@ -942,9 +942,9 @@ function renderLineupPredictor(comp){
       const isCorrect = !isOpen && actual && actual.includes(player.id);
       const borderColor = !isOpen && actual ? (isCorrect ? '#4ade80' : 'rgba(255,255,255,0.4)') : col;
       const flag = NATIONALITY_FLAGS[player.nationality] || '';
-      const inner = isHorizontal ? '' : (flag || (player.no!=null && player.no!=='' ? player.no : ''));
+      const inner = flag || (player.no!=null && player.no!=='' ? player.no : '');
       return `<div onclick="${click}" style="position:absolute;left:${xPct}%;top:${yPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:${isOpen?'pointer':'default'};z-index:3;width:80px;">
-        <div style="width:52px;height:52px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;color:#000;font-weight:800;font-size:${flag?'26px':'15px'};border:1.5px solid ${borderColor};box-shadow:0 2px 8px rgba(0,0,0,0.4);">${inner}</div>
+        <div style="width:52px;height:52px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#000;font-weight:800;font-size:${flag?'36px':'15px'};line-height:1;border:1.5px solid ${borderColor};box-shadow:0 2px 8px rgba(0,0,0,0.4);">${inner}</div>
         <div style="background:rgba(0,0,0,0.7);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:999px;white-space:nowrap;max-width:76px;overflow:hidden;text-overflow:ellipsis;text-align:center;">${player.name}</div>
       </div>`;
     } else {
@@ -1188,6 +1188,7 @@ function openLineupPicker(roundId, slotIdx, pos){
   const posColor = {GK:'#F59E0B',DEF:'#0EA5E9',MID:'#10B981',FWD:'#EF4444'};
 
   const overlay = document.createElement('div');
+  overlay.className = 'lineup-picker-overlay';
   overlay.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;';
   overlay.onclick=(e)=>{if(e.target===overlay)overlay.remove();};
 
@@ -1201,7 +1202,7 @@ function openLineupPicker(roundId, slotIdx, pos){
         <div style="font-size:11px;font-weight:700;color:oklch(0.58 0.01 260);text-transform:uppercase;letter-spacing:0.5px;">Select player</div>
         <div style="font-size:16px;font-weight:800;color:oklch(0.2 0.01 260);margin-top:2px;">Position: <span style="color:${posColor[pos]};">${pos}</span></div>
       </div>
-      <button onclick="this.closest('[style*=fixed]').remove()" style="background:oklch(0.93 0.006 260);border:none;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;color:oklch(0.4 0.01 260);">×</button>
+      <button onclick="this.closest('.lineup-picker-overlay').remove()" style="background:oklch(0.93 0.006 260);border:none;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;color:oklch(0.4 0.01 260);">×</button>
     </div>`;
 
   // Remove button if already picked
@@ -1214,7 +1215,7 @@ function openLineupPicker(roundId, slotIdx, pos){
     html+=`<div style="padding:8px 20px 4px;font-size:10px;font-weight:700;color:${posColor[p]};text-transform:uppercase;letter-spacing:0.5px;">${p}</div>`;
     list.forEach(pl=>{
       const alreadyUsed = Object.entries(picks).some(([k,v])=>v===pl.id && parseInt(k)!==slotIdx);
-      html+=`<div onclick="${alreadyUsed?'':` pickLineupPlayer('${roundId}',${slotIdx},'${pl.id}');document.querySelector('[style*=fixed]').remove();renderPredict();`}" style="display:flex;align-items:center;gap:12px;padding:10px 20px;cursor:${alreadyUsed?'default':'pointer'};opacity:${alreadyUsed?'0.35':'1'};">
+      html+=`<div onclick="${alreadyUsed?'':` pickLineupPlayer('${roundId}',${slotIdx},'${pl.id}');document.querySelector('.lineup-picker-overlay').remove();renderPredict();`}" style="display:flex;align-items:center;gap:12px;padding:10px 20px;cursor:${alreadyUsed?'default':'pointer'};opacity:${alreadyUsed?'0.35':'1'};">
         <div style="width:36px;height:36px;border-radius:50%;background:${posColor[p]};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;flex-shrink:0;">${pl.no}</div>
         <div style="font-size:14px;font-weight:600;color:oklch(0.2 0.01 260);">${pl.name}</div>
         ${alreadyUsed?`<span style="margin-left:auto;font-size:11px;color:oklch(0.6 0.01 260);">Selected</span>`:''}
@@ -1237,7 +1238,7 @@ function pickLineupPlayer(roundId, slotIdx, pid){
 function removeLineupPick(roundId, slotIdx){
   if(lineupPicks[roundId]) delete lineupPicks[roundId][slotIdx];
   lineupSaved[roundId]=false;
-  const overlay=document.querySelector('[style*=fixed][style*=z-index:9999]');
+  const overlay=document.querySelector('.lineup-picker-overlay');
   if(overlay)overlay.remove();
   renderPredict();
 }
