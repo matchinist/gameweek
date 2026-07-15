@@ -101,6 +101,12 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .submit-preds-btn:hover{opacity:0.88;}
 .submit-preds-btn.disabled{opacity:0.4;cursor:default;pointer-events:none;}
 .rank-item:active{cursor:grabbing;}
+.rank-row-desktop{display:none;}
+.rank-row-mobile{display:flex;}
+@media(min-width:560px){
+  .rank-row-desktop{display:grid !important;}
+  .rank-row-mobile{display:none !important;}
+}
 .rank-item.dragging{opacity:0.5;background:var(--accent-light) !important;border-color:var(--accent) !important;transform:scale(0.98);}
 .rank-item.drag-over{border-top:3px solid var(--accent) !important;margin-top:-2px;}
 .rank-item .drag-handle{cursor:grab;}
@@ -334,21 +340,21 @@ const COMPS=[
     rounds:[
       {id:'r7',label:'Gameweek 3',status:'open',deadline:'2026-08-31T14:00',prizes:[{pos:1,text:'€10 free bet'}],
         rankingTeams:[
-          {id:'rt1',name:'Arsenal',logo:lg('Arsenal'),opponent:'vs Wolves · 30 Aug',actualXG:2.1,matchResult:'2-0',matchXG:'2.1'},
-          {id:'rt2',name:'Man City',logo:lg('Man City'),opponent:'vs Chelsea · 30 Aug',actualXG:3.4,matchResult:'3-1',matchXG:'3.4'},
-          {id:'rt3',name:'Liverpool',logo:lg('Liverpool'),opponent:'vs Man Utd · 31 Aug',actualXG:null},
-          {id:'rt4',name:'Chelsea',logo:lg('Chelsea'),opponent:'vs Spurs · 31 Aug',actualXG:null},
-          {id:'rt5',name:'Spurs',logo:lg('Spurs'),opponent:'vs Everton · 31 Aug',actualXG:null},
-          {id:'rt6',name:'Man Utd',logo:lg('Man Utd'),opponent:'vs Newcastle · 01 Sep',actualXG:null},
+          {id:'rt1',name:'Arsenal',logo:lg('Arsenal'),opponent:'vs Wolves · 30 Aug',actualXG:2.1,matchResult:'2-0',matchXG:'2.1',isHome:true,opponentName:'Wolves',opponentLogo:lg('Wolves'),dateShort:'30 Aug'},
+          {id:'rt2',name:'Man City',logo:lg('Man City'),opponent:'vs Chelsea · 30 Aug',actualXG:3.4,matchResult:'3-1',matchXG:'3.4',isHome:true,opponentName:'Chelsea',opponentLogo:lg('Chelsea'),dateShort:'30 Aug'},
+          {id:'rt3',name:'Liverpool',logo:lg('Liverpool'),opponent:'at Man Utd · 31 Aug',actualXG:null,isHome:false,opponentName:'Man Utd',opponentLogo:lg('Man Utd'),dateShort:'31 Aug'},
+          {id:'rt4',name:'Chelsea',logo:lg('Chelsea'),opponent:'at Spurs · 31 Aug',actualXG:null,isHome:false,opponentName:'Spurs',opponentLogo:lg('Spurs'),dateShort:'31 Aug'},
+          {id:'rt5',name:'Spurs',logo:lg('Spurs'),opponent:'vs Everton · 31 Aug',actualXG:null,isHome:true,opponentName:'Everton',opponentLogo:lg('Everton'),dateShort:'31 Aug'},
+          {id:'rt6',name:'Man Utd',logo:lg('Man Utd'),opponent:'vs Newcastle · 01 Sep',actualXG:null,isHome:true,opponentName:'Newcastle',opponentLogo:lg('Newcastle'),dateShort:'01 Sep'},
         ]},
       {id:'r8',label:'Gameweek 2',status:'completed',deadline:'2026-08-24T14:00',prizes:[{pos:1,text:'€10 free bet'}],
         rankingTeams:[
-          {id:'rt1',name:'Arsenal',logo:lg('Arsenal'),opponent:'vs Newcastle · 23 Aug',actualXG:2.4,matchResult:'3-1',matchXG:'2.4'},
-          {id:'rt2',name:'Man City',logo:lg('Man City'),opponent:'vs Wolves · 23 Aug',actualXG:3.1,matchResult:'4-0',matchXG:'3.1'},
-          {id:'rt3',name:'Liverpool',logo:lg('Liverpool'),opponent:'vs Everton · 24 Aug',actualXG:1.8,matchResult:'2-1',matchXG:'1.8'},
-          {id:'rt4',name:'Chelsea',logo:lg('Chelsea'),opponent:'vs Man Utd · 24 Aug',actualXG:1.2,matchResult:'1-1',matchXG:'1.2'},
-          {id:'rt5',name:'Spurs',logo:lg('Spurs'),opponent:'vs Liverpool · 24 Aug',actualXG:2.0,matchResult:'2-2',matchXG:'2.0'},
-          {id:'rt6',name:'Man Utd',logo:lg('Man Utd'),opponent:'vs Chelsea · 23 Aug',actualXG:0.9,matchResult:'0-2',matchXG:'0.9'},
+          {id:'rt1',name:'Arsenal',logo:lg('Arsenal'),opponent:'vs Newcastle · 23 Aug',actualXG:2.4,matchResult:'3-1',matchXG:'2.4',isHome:true,opponentName:'Newcastle',opponentLogo:lg('Newcastle'),dateShort:'23 Aug'},
+          {id:'rt2',name:'Man City',logo:lg('Man City'),opponent:'vs Wolves · 23 Aug',actualXG:3.1,matchResult:'4-0',matchXG:'3.1',isHome:true,opponentName:'Wolves',opponentLogo:lg('Wolves'),dateShort:'23 Aug'},
+          {id:'rt3',name:'Liverpool',logo:lg('Liverpool'),opponent:'at Everton · 24 Aug',actualXG:1.8,matchResult:'2-1',matchXG:'1.8',isHome:false,opponentName:'Everton',opponentLogo:lg('Everton'),dateShort:'24 Aug'},
+          {id:'rt4',name:'Chelsea',logo:lg('Chelsea'),opponent:'at Man Utd · 24 Aug',actualXG:1.2,matchResult:'1-1',matchXG:'1.2',isHome:false,opponentName:'Man Utd',opponentLogo:lg('Man Utd'),dateShort:'24 Aug'},
+          {id:'rt5',name:'Spurs',logo:lg('Spurs'),opponent:'at Liverpool · 24 Aug',actualXG:2.0,matchResult:'2-2',matchXG:'2.0',isHome:false,opponentName:'Liverpool',opponentLogo:lg('Liverpool'),dateShort:'24 Aug'},
+          {id:'rt6',name:'Man Utd',logo:lg('Man Utd'),opponent:'vs Chelsea · 23 Aug',actualXG:0.9,matchResult:'0-2',matchXG:'0.9',isHome:true,opponentName:'Chelsea',opponentLogo:lg('Chelsea'),dateShort:'23 Aug'},
         ]},
     ]},
   {id:'c7',name:'Lineup Predictor',mode:'lineup',color:'#0EA5E9',
@@ -1063,19 +1069,7 @@ function renderPredictionsPane(comp){
         const t=teamMap[tid];const actualIdx=actualOrder.indexOf(tid);
         const isCorrect=tid===actualOrder[i];
         const actualT=teamMap[actualOrder[i]];
-        html+=`<div style="display:flex;align-items:center;gap:8px;padding:8px;margin-bottom:4px;background:${isCorrect?'var(--green-light)':'var(--bg)'};border-radius:8px;border:1px solid ${isCorrect?'var(--green)':'var(--border)'};">
-          <span style="font-family:var(--mono);font-size:12px;font-weight:800;color:${isCorrect?'var(--green)':'var(--text-3)'};width:20px;text-align:center;">#${i+1}</span>
-          <div class="ev-badge" style="width:24px;height:24px;font-size:7px;">${t.logo?'<img src="'+t.logo+'" alt="'+t.name+'">':t.name.slice(0,3).toUpperCase()}</div>
-          <div style="flex:1;min-width:0;">
-            <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
-            <div style="font-size:11px;color:var(--text-2);font-weight:600;">${t.opponent}</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-family:var(--mono);font-size:13px;font-weight:800;color:var(--text);">${t.actualXG?.toFixed(1)||'—'}</div>
-            <div style="font-size:9px;color:var(--text-3);">xG</div>
-          </div>
-          <span style="font-size:14px;">${isCorrect?'✓':'✗'}</span>
-        </div>`;
+        html+=rankRowHTML(t, i, {showResult:true, isCorrect});
       });
       if(correctCount===teams.length) html+=`<div style="text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--green);padding:8px;">🎯 Perfect ranking! +${comp.rankingConfig?.perfectBonus||5} bonus pts</div>`;
     } else if(isOpen && !(round.deadline && new Date(round.deadline).getTime()<=Date.now())){
@@ -1083,15 +1077,7 @@ function renderPredictionsPane(comp){
       html+=`<div id="ranking-list" data-roundid="${round.id}">`;
       userOrder.forEach((tid,i)=>{
         const t=teamMap[tid];
-        html+=`<div class="rank-item" data-tid="${tid}" draggable="true" style="display:flex;align-items:center;gap:6px;padding:8px;margin-bottom:4px;background:var(--white);border-radius:8px;border:1px solid var(--border);cursor:grab;user-select:none;touch-action:none;-webkit-user-select:none;">
-          <span style="font-size:14px;color:var(--text-3);cursor:grab;flex-shrink:0;">☰</span>
-          <span style="font-family:var(--mono);font-size:12px;font-weight:800;color:var(--accent);width:20px;text-align:center;">#${i+1}</span>
-          <div class="ev-badge" style="width:24px;height:24px;font-size:7px;">${t.logo?'<img src="'+t.logo+'" alt="'+t.name+'">':t.name.slice(0,3).toUpperCase()}</div>
-          <div style="flex:1;min-width:0;">
-            <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
-            <div style="font-size:11px;color:var(--text-2);font-weight:600;">${t.opponent}</div>
-          </div>
-        </div>`;
+        html+=rankRowHTML(t, i, {draggable:true});
       });
       html+='</div>';
       setTimeout(()=>initDragSort(),50);
@@ -1400,6 +1386,87 @@ function moveRank(roundId,teamId,dir){
   if(newIdx<0||newIdx>=order.length)return;
   [order[idx],order[newIdx]]=[order[newIdx],order[idx]];
   renderPredict();
+}
+
+function rankRowHTML(t, idx, opts){
+  opts = opts || {};
+  const draggable = !!opts.draggable;
+  const showResult = !!opts.showResult;
+  const isCorrect = !!opts.isCorrect;
+  const oppName = t.opponentName || (t.opponent||'').replace(/^(vs|at)\s+/,'').split(' \u00b7 ')[0] || '';
+  const oppLogo = t.opponentLogo || '';
+  const dateShort = t.dateShort || ((t.opponent||'').split(' \u00b7 ')[1] || '');
+  const dParts = dateShort.split(' ');
+  const isHome = t.isHome !== false; // default true for legacy data with no isHome field
+  const prep = isHome ? 'vs' : 'at';
+  const venue = isHome ? 'HOME' : 'AWAY';
+
+  function badge(team, size){
+    return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:var(--white);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">${team.logo?`<img src="${team.logo}" alt="${team.name||''}" style="width:100%;height:100%;object-fit:contain;padding:3px;">`:`<span style="font-family:var(--mono);font-size:9px;font-weight:800;color:var(--text-2);">${(team.name||'?').slice(0,3).toUpperCase()}</span>`}</div>`;
+  }
+  function pill(team, isTarget, alignEnd){
+    const nameBlock = `<div style="min-width:0;${alignEnd?'text-align:right;':''}">
+      <div style="font-weight:${isTarget?'700':'500'};font-size:${isTarget?'14px':'12.5px'};color:${isTarget?'var(--text)':'var(--text-2)'};line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${team.name}</div>
+      ${isTarget?`<div style="font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:0.05em;color:var(--accent);text-transform:uppercase;">${venue} \u00b7 Your pick</div>`:''}
+    </div>`;
+    const b = badge(team, isTarget?36:26);
+    const inner = alignEnd ? nameBlock+b : b+nameBlock;
+    return `<div style="display:inline-flex;align-items:center;gap:${isTarget?'10px':'7px'};padding:${isTarget?'6px 12px':'3px 2px'};${isTarget?'background:var(--accent-light);border:1.5px solid var(--accent);border-radius:12px;':'opacity:0.75;'}">${inner}</div>`;
+  }
+
+  const dragHandle = draggable ? `<span class="drag-handle" style="display:flex;flex-direction:column;gap:3px;cursor:grab;flex-shrink:0;">
+    <span style="width:14px;height:2px;border-radius:2px;background:var(--border);"></span>
+    <span style="width:14px;height:2px;border-radius:2px;background:var(--border);"></span>
+    <span style="width:14px;height:2px;border-radius:2px;background:var(--border);"></span>
+  </span>` : '';
+
+  const rankColor = showResult ? (isCorrect?'var(--green)':'var(--text-3)') : 'var(--accent)';
+  const rightMeta = showResult ? `
+    <div style="text-align:right;min-width:48px;">
+      <div style="font-family:var(--mono);font-weight:800;font-size:15px;color:${isCorrect?'var(--green)':'var(--text)'};line-height:1;">${t.actualXG!=null?t.actualXG.toFixed(1):'\u2014'}</div>
+      <div style="font-size:9px;color:var(--text-3);margin-top:2px;">xG ${isCorrect?'\u2713':'\u2717'}</div>
+    </div>` : `
+    <div style="text-align:right;min-width:44px;">
+      <div style="font-family:var(--mono);font-weight:700;font-size:15px;color:var(--text);line-height:1;">${dParts[0]||''}</div>
+      <div style="font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:0.06em;color:var(--text-3);text-transform:uppercase;margin-top:2px;">${dParts[1]||''}</div>
+    </div>`;
+
+  const homePill = isHome ? pill(t,true,true) : pill({id:'opp',name:oppName,logo:oppLogo},false,true);
+  const awayPill = isHome ? pill({id:'opp',name:oppName,logo:oppLogo},false,false) : pill(t,true,false);
+
+  return `<div class="rank-item" data-tid="${t.id}" ${draggable?'draggable="true"':''} style="position:relative;background:${showResult?(isCorrect?'var(--green-light)':'var(--white)'):'var(--white)'};border:1px solid ${showResult&&isCorrect?'var(--green)':'var(--border)'};border-radius:14px;box-shadow:0 1px 2px rgba(20,20,50,0.05);margin-bottom:8px;overflow:hidden;${draggable?'cursor:grab;user-select:none;touch-action:none;-webkit-user-select:none;':''}">
+    <div class="rank-row-desktop" style="padding:12px 14px;align-items:center;gap:12px;grid-template-columns:auto 1fr auto;">
+      <div style="display:flex;align-items:center;gap:10px;">${dragHandle}<div style="font-family:var(--mono);font-weight:800;font-size:15px;color:${rankColor};min-width:24px;text-align:center;">#${idx+1}</div></div>
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;min-width:0;">
+        <div style="display:flex;justify-content:flex-end;min-width:0;">${homePill}</div>
+        <div style="font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text-3);">${prep}</div>
+        <div style="display:flex;justify-content:flex-start;min-width:0;">${awayPill}</div>
+      </div>
+      ${rightMeta}
+    </div>
+    <div class="rank-row-mobile" style="padding:10px 12px;align-items:center;gap:10px;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;">
+        <div style="font-family:var(--mono);font-weight:800;font-size:15px;color:${rankColor};">#${idx+1}</div>
+        ${dragHandle}
+      </div>
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;">
+        <div style="display:flex;align-items:center;gap:9px;padding:6px 10px;background:var(--accent-light);border:1.5px solid var(--accent);border-radius:11px;">
+          ${badge(t,32)}
+          <div style="min-width:0;flex:1;">
+            <div style="font-weight:700;font-size:14px;color:var(--text);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
+            <div style="font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:0.05em;color:var(--accent);text-transform:uppercase;">${venue} \u00b7 Your pick</div>
+          </div>
+          ${showResult?`<div style="text-align:right;flex-shrink:0;"><div style="font-family:var(--mono);font-weight:800;font-size:14px;color:${isCorrect?'var(--green)':'var(--text)'};">${t.actualXG!=null?t.actualXG.toFixed(1):'\u2014'}</div><div style="font-size:8px;color:var(--text-3);">xG ${isCorrect?'\u2713':'\u2717'}</div></div>`:''}
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;padding-left:2px;">
+          <span style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--text-3);">${prep}</span>
+          ${badge({name:oppName,logo:oppLogo},18)}
+          <span style="font-size:11px;font-weight:500;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${oppName}</span>
+          ${!showResult?`<span style="font-family:var(--mono);font-size:9px;color:var(--text-3);white-space:nowrap;">\u00b7 ${dateShort}</span>`:''}
+        </div>
+      </div>
+    </div>
+  </div>`;
 }
 
 function initDragSort(){

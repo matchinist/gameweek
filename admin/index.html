@@ -1977,14 +1977,18 @@ function updateRankingTeamPreview(prefix){
   roundAddedEvents.forEach(ev=>{
     const dmEv = dmEvents[ev.id]; if(!dmEv) return;
     const home = teamById(dmEv.homeId), away = teamById(dmEv.awayId);
-    const ko = dmEv.kickoff ? new Date(dmEv.kickoff).toLocaleDateString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+    const kickoffDate = dmEv.kickoff ? new Date(dmEv.kickoff) : null;
+    const ko = kickoffDate ? kickoffDate.toLocaleDateString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+    const koShort = kickoffDate ? kickoffDate.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '';
     if(home && !seen.has(home.id)){
       seen.add(home.id);
-      derivedTeams.push({id:home.id, name:home.name, logo:home.logo||'', opponent:'vs '+(away?.name||'?')+' · '+ko});
+      derivedTeams.push({id:home.id, name:home.name, logo:home.logo||'', opponent:'vs '+(away?.name||'?')+' · '+ko,
+        isHome:true, opponentName:away?.name||'', opponentLogo:away?.logo||'', dateShort:koShort});
     }
     if(away && !seen.has(away.id)){
       seen.add(away.id);
-      derivedTeams.push({id:away.id, name:away.name, logo:away.logo||'', opponent:'vs '+(home?.name||'?')+' · '+ko});
+      derivedTeams.push({id:away.id, name:away.name, logo:away.logo||'', opponent:'at '+(home?.name||'?')+' · '+ko,
+        isHome:false, opponentName:home?.name||'', opponentLogo:home?.logo||'', dateShort:koShort});
     }
   });
 
@@ -2007,7 +2011,7 @@ function updateRankingTeamPreview(prefix){
     }
     return `
     <label style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg);border-radius:6px;cursor:pointer;">
-      <input type="checkbox" class="${prefix}-ranking-team-cb" value="${t.id}" data-name="${t.name}" data-logo="${t.logo}" data-opponent="${t.opponent}" ${isChecked?'checked':''} style="accent-color:var(--accent);width:16px;height:16px;">
+      <input type="checkbox" class="${prefix}-ranking-team-cb" value="${t.id}" data-name="${t.name}" data-logo="${t.logo}" data-opponent="${t.opponent}" data-is-home="${t.isHome?'1':'0'}" data-opponent-name="${t.opponentName||''}" data-opponent-logo="${t.opponentLogo||''}" data-date-short="${t.dateShort||''}" ${isChecked?'checked':''} style="accent-color:var(--accent);width:16px;height:16px;">
       ${t.logo?'<img src="'+t.logo+'" style="width:24px;height:24px;border-radius:50%;object-fit:contain;">':''}
       <div style="flex:1;">
         <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text);">${t.name}</span>
@@ -2056,6 +2060,10 @@ function createRound(){
       name: cb.dataset.name,
       logo: cb.dataset.logo || '',
       opponent: cb.dataset.opponent || '',
+      isHome: cb.dataset.isHome === '1',
+      opponentName: cb.dataset.opponentName || '',
+      opponentLogo: cb.dataset.opponentLogo || '',
+      dateShort: cb.dataset.dateShort || '',
     }));
     const dmEvents = getDMEvents();
     const kickoffs = roundAddedEvents.map(e=>dmEvents[e.id]?.kickoff).filter(Boolean).map(k=>new Date(k).getTime());
@@ -2173,6 +2181,10 @@ function saveRoundEdit(){
       name: cb.dataset.name,
       logo: cb.dataset.logo || '',
       opponent: cb.dataset.opponent || '',
+      isHome: cb.dataset.isHome === '1',
+      opponentName: cb.dataset.opponentName || '',
+      opponentLogo: cb.dataset.opponentLogo || '',
+      dateShort: cb.dataset.dateShort || '',
     }));
     r.eventIds = roundAddedEvents.map(e=>e.id);
     r.prizes = getCleanPrizes('edit-round');
