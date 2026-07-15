@@ -381,7 +381,7 @@ async function buildCompsFromRealData(){
     });
 
     (compsRows||[]).forEach(c=>{
-      if(c.status==='archived') return;
+      if(c.status!=='active') return;
       let cRounds;
       if(c.mode==='lineup' && c.lineup_config?.teamId){
         const lTeamId = c.lineup_config.teamId;
