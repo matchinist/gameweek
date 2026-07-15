@@ -355,9 +355,7 @@ const COMPS=[
     rounds:[{id:'rl1',label:'vs Arsenal · 30 Aug',status:'open'},{id:'rl2',label:'vs Man City · 14 Sep',status:'upcoming'}]},
   {id:'c6',name:'Soccer Roulette',mode:'roulette',color:'#4F46E5',
     rounds:[
-      {id:'rrl1',label:'Arsenal vs Chelsea',status:'open',eventId:'erl1'},
-      {id:'rrl2',label:'Liverpool vs Man City',status:'open',eventId:'erl2'},
-      {id:'rrl3',label:'Tottenham vs Arsenal',status:'upcoming',eventId:'erl3'},
+      {id:'rrl-gw3',label:'Gameweek 3',status:'open',eventIds:['erl1','erl2','erl3']},
     ]},
 ];
 
@@ -389,7 +387,7 @@ const EVENTS={
   e203:{tournament:'Champions League',home:'PSG',away:'Arsenal',homeLogo:lg('PSG'),awayLogo:lg('Arsenal'),kickoff:'01 Oct \u00b7 21:15',sortKey:'2026-10-01T21:15',res:null},
   erl1:{tournament:'Premier League',home:'Arsenal',away:'Chelsea',homeLogo:lg('Arsenal'),awayLogo:lg('Chelsea'),kickoff:'30 Aug \u00b7 15:00',sortKey:'2026-08-30T15:00',res:null},
   erl2:{tournament:'Premier League',home:'Liverpool',away:'Man City',homeLogo:lg('Liverpool'),awayLogo:lg('Man City'),kickoff:'31 Aug \u00b7 16:30',sortKey:'2026-08-31T16:30',res:null},
-  erl3:{tournament:'Premier League',home:'Tottenham',away:'Arsenal',homeLogo:lg('Tottenham'),awayLogo:lg('Arsenal'),kickoff:'14 Sep \u00b7 14:00',sortKey:'2026-09-14T14:00',res:null},
+  erl3:{tournament:'Premier League',home:'Tottenham',away:'Arsenal',homeLogo:lg('Tottenham'),awayLogo:lg('Arsenal'),kickoff:'31 Aug \u00b7 14:00',sortKey:'2026-08-31T14:00',res:null},
   // LMS open
   e204:{tournament:'Champions League',home:'Real Madrid',away:'Liverpool',homeLogo:lg('Real Madrid'),awayLogo:lg('Liverpool'),kickoff:'01 Oct \u00b7 21:00',res:null},
   e205:{tournament:'Champions League',home:'PSG',away:'Arsenal',homeLogo:lg('PSG'),awayLogo:lg('Arsenal'),kickoff:'01 Oct \u00b7 21:15',res:null},
@@ -1461,6 +1459,8 @@ function initDragSort(){
 
 // ── SOCCER ROULETTE ─────────────────────────────────────────────────────────
 let rlRemaining=100, rlStakes={}, rlMeta={};
+let rlExpandedEventId=null;
+let RL_STATE={}; // eventId -> {remaining, stakes}
 const RL_BUDGET=100, RL_STEP=10, RL_CELL=92, RL_GAP=8, RL_PITCH=RL_CELL+RL_GAP;
 const RL_HOME=['0','1','2','3+'], RL_AWAY=['0','1','2','3+'];
 function rlNumVal(v){return v==='3+'?3:parseInt(v);}
@@ -1472,36 +1472,45 @@ function renderRouletteHTML(){
   const comp=COMPS[currentCompIdx];
   const ri=selectedRound[currentCompIdx]??0;
   const round=comp.rounds[ri]||comp.rounds[0];
-  const ev=round.eventId?EVENTS[round.eventId]:null;
-  const home=ev?ev.home:'Arsenal'; const away=ev?ev.away:'Chelsea';
-  const homeLogo=ev?ev.homeLogo:lg('Arsenal'); const awayLogo=ev?ev.awayLogo:lg('Chelsea');
-  const kickoff=ev?ev.kickoff:'Sat 30 Aug · 15:00';
-  const tournament=ev?ev.tournament:'Premier League';
   const roundSelect=comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('');
-  return `<div style="padding:0 0 30px;">
+  const eventIds=round.eventIds||[];
+
+  // Default to the first event expanded, so the board is visible immediately.
+  if(rlExpandedEventId===null && eventIds.length) rlExpandedEventId=eventIds[0];
+
+  let html=`<div style="padding:0 0 30px;">
     <div style="padding:10px 16px 0;display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-      <select class="round-select" onchange="rlChangeRound(this.value)">${roundSelect}</select>
+      <select class="round-select" onchange="rlChangeGameweek(this.value)">${roundSelect}</select>
       <span class="round-status open" style="font-size:11px;">● Open</span>
     </div>
-    <div style="padding:0 16px;">
-    <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px;">
-      <div style="padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:11px;font-weight:600;color:var(--text-2);">${tournament}</span>
-        <span style="font-size:11px;color:var(--text-3);">${kickoff}</span>
-      </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;">
-        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
-          <div style="width:40px;height:40px;border-radius:50%;background:var(--white);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;"><img src="${homeLogo}" style="width:100%;height:100%;object-fit:contain;padding:4px;"></div>
-          <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">${home}</span>
+    <div style="padding:0 16px;display:flex;flex-direction:column;gap:10px;">`;
+
+  eventIds.forEach(eid=>{
+    const ev=EVENTS[eid]; if(!ev) return;
+    const isExpanded = rlExpandedEventId===eid;
+    html+=`<div style="background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;">
+      <div onclick="rlToggleEvent('${eid}')" style="padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;">
+        <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--white);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"><img src="${ev.homeLogo}" style="width:100%;height:100%;object-fit:contain;padding:3px;"></div>
+          <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ev.home}</span>
+          <span style="font-size:10px;color:var(--text-3);">vs</span>
+          <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ev.away}</span>
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--white);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"><img src="${ev.awayLogo}" style="width:100%;height:100%;object-fit:contain;padding:3px;"></div>
         </div>
-        <span style="font-family:var(--mono);font-size:11px;color:var(--text-3);padding:0 10px;">vs</span>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
-          <div style="width:40px;height:40px;border-radius:50%;background:var(--white);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;"><img src="${awayLogo}" style="width:100%;height:100%;object-fit:contain;padding:4px;"></div>
-          <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">${away}</span>
-        </div>
+        <span style="font-size:10px;color:var(--text-3);white-space:nowrap;">${ev.kickoff}</span>
+        <span style="font-size:14px;color:var(--text-3);transform:rotate(${isExpanded?'180':'0'}deg);transition:transform .15s;">▾</span>
       </div>
-    </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0 14px;">
+      ${isExpanded?rlBoardHTML(eid):''}
+    </div>`;
+  });
+
+  html+='</div></div>';
+  return html;
+}
+
+function rlBoardHTML(eventId){
+  return `<div style="border-top:1px solid var(--border);padding:14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:14px;">
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:var(--accent-light);">
           <span style="font-size:15px;">🪙</span>
@@ -1516,38 +1525,91 @@ function renderRouletteHTML(){
       </div>
       <button onclick="rlClearAll()" style="font-size:12px;font-weight:600;color:var(--text-2);background:var(--surface);border:1px solid var(--border);border-radius:8px;cursor:pointer;padding:7px 14px;">Clear all</button>
     </div>
+
     <div style="max-width:420px;margin:0 auto;">
+      <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px 2px;text-align:center;">Match markets <span style="font-weight:400;text-transform:none;">— hover to preview matching scores</span></div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <div style="flex:1;display:flex;flex-direction:column;gap:5px;">
+          <div style="font-size:10px;color:var(--text-3);text-align:center;font-weight:600;">Both Teams to Score</div>
+          <div style="display:flex;gap:6px;">
+            <div id="rlbtts_Y" onclick="rlAddChip('rlbtts_Y')" onmouseenter="rlPreviewHighlight('rlbtts_Y')" onmouseleave="rlHighlightGrid()" style="flex:1;position:relative;text-align:center;padding:9px 4px;border-radius:8px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">
+              <span id="rlminus_rlbtts_Y" onclick="event.stopPropagation();rlRemoveChip('rlbtts_Y')" style="position:absolute;top:-7px;right:-7px;width:17px;height:17px;border-radius:50%;background:var(--red);color:white;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;z-index:6;">−</span>
+              Yes <span style="color:var(--text-3);font-size:10px;">×3</span>
+              <div id="rlchip_rlbtts_Y" style="display:none;margin-top:3px;font-family:var(--mono);font-size:11px;font-weight:700;color:white;background:var(--accent);border-radius:6px;padding:1px 6px;"></div>
+            </div>
+            <div id="rlbtts_N" onclick="rlAddChip('rlbtts_N')" onmouseenter="rlPreviewHighlight('rlbtts_N')" onmouseleave="rlHighlightGrid()" style="flex:1;position:relative;text-align:center;padding:9px 4px;border-radius:8px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">
+              <span id="rlminus_rlbtts_N" onclick="event.stopPropagation();rlRemoveChip('rlbtts_N')" style="position:absolute;top:-7px;right:-7px;width:17px;height:17px;border-radius:50%;background:var(--red);color:white;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;z-index:6;">−</span>
+              No <span style="color:var(--text-3);font-size:10px;">×3</span>
+              <div id="rlchip_rlbtts_N" style="display:none;margin-top:3px;font-family:var(--mono);font-size:11px;font-weight:700;color:white;background:var(--accent);border-radius:6px;padding:1px 6px;"></div>
+            </div>
+          </div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:5px;">
+          <div style="font-size:10px;color:var(--text-3);text-align:center;font-weight:600;">Over/Under 2.5 Goals</div>
+          <div style="display:flex;gap:6px;">
+            <div id="rlou_O" onclick="rlAddChip('rlou_O')" onmouseenter="rlPreviewHighlight('rlou_O')" onmouseleave="rlHighlightGrid()" style="flex:1;position:relative;text-align:center;padding:9px 4px;border-radius:8px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">
+              <span id="rlminus_rlou_O" onclick="event.stopPropagation();rlRemoveChip('rlou_O')" style="position:absolute;top:-7px;right:-7px;width:17px;height:17px;border-radius:50%;background:var(--red);color:white;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;z-index:6;">−</span>
+              Over <span style="color:var(--text-3);font-size:10px;">×3</span>
+              <div id="rlchip_rlou_O" style="display:none;margin-top:3px;font-family:var(--mono);font-size:11px;font-weight:700;color:white;background:var(--accent);border-radius:6px;padding:1px 6px;"></div>
+            </div>
+            <div id="rlou_U" onclick="rlAddChip('rlou_U')" onmouseenter="rlPreviewHighlight('rlou_U')" onmouseleave="rlHighlightGrid()" style="flex:1;position:relative;text-align:center;padding:9px 4px;border-radius:8px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">
+              <span id="rlminus_rlou_U" onclick="event.stopPropagation();rlRemoveChip('rlou_U')" style="position:absolute;top:-7px;right:-7px;width:17px;height:17px;border-radius:50%;background:var(--red);color:white;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;z-index:6;">−</span>
+              Under <span style="color:var(--text-3);font-size:10px;">×3</span>
+              <div id="rlchip_rlou_U" style="display:none;margin-top:3px;font-family:var(--mono);font-size:11px;font-weight:700;color:white;background:var(--accent);border-radius:6px;padding:1px 6px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 10px 2px;text-align:center;">
-        Correct score <span style="font-weight:400;text-transform:none;">— tap a number, or the dots between</span>
+        Correct score <span style="font-weight:400;text-transform:none;">— tap a score to place a bet</span>
       </div>
       <div id="rl-scale-outer" style="width:100%;overflow:hidden;display:flex;justify-content:center;">
       <div id="rl-scale-inner" style="width:fit-content;flex-shrink:0;transform-origin:top center;">
       <div style="width:fit-content;margin:0 auto;padding:14px;background:var(--white);border-radius:14px;border:1px solid var(--border);">
         <div style="position:relative;width:${RL_CELL*4+RL_GAP*3}px;height:${RL_CELL*4+RL_GAP*3}px;">
           <div id="rl-grid" style="position:absolute;top:0;left:0;display:grid;grid-template-columns:repeat(4,${RL_CELL}px);grid-template-rows:repeat(4,${RL_CELL}px);gap:${RL_GAP}px;"></div>
-          <div id="rl-dots" style="position:absolute;top:0;left:0;width:${RL_CELL*4+RL_GAP*3}px;height:${RL_CELL*4+RL_GAP*3}px;pointer-events:none;"></div>
         </div>
       </div></div></div>
       <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;justify-content:center;">
-        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:var(--accent-light);border:1px solid var(--accent);"></span>${home} win</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:var(--accent-light);border:1px solid var(--accent);"></span>Home win</div>
         <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:var(--surface);border:1px solid var(--text-3);"></span>Draw</div>
-        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:#FFEDD5;border:1px solid #EA580C;"></span>${away} win</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:#FFEDD5;border:1px solid #EA580C;"></span>Away win</div>
       </div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;max-width:420px;margin:20px auto 0;padding-top:16px;border-top:1px solid var(--border);">
       <div style="font-size:12px;color:var(--text-2);"><strong id="rl-staked-count" style="color:var(--text);font-family:var(--mono);">0</strong> of 100 staked</div>
       <button id="rl-place-btn" disabled onclick="rlPlaceBets()" style="font-family:var(--mono);font-size:12px;font-weight:700;color:white;background:var(--accent);border:none;border-radius:8px;padding:12px 24px;cursor:pointer;">Place Bets</button>
     </div>
-    <div id="rl-betslip" style="margin-top:16px;"></div>
-    </div>
+    <div id="rl-betslip" style="margin-top:16px;max-width:420px;margin-left:auto;margin-right:auto;"></div>
   </div>`;
 }
+
+function rlToggleEvent(eventId){
+  rlSaveCurrentState();
+  rlExpandedEventId = (rlExpandedEventId===eventId) ? null : eventId;
+  const el=document.getElementById('predict-content');
+  if(el){el.innerHTML=renderRouletteHTML();}
+  if(rlExpandedEventId){
+    rlLoadState(rlExpandedEventId);
+    setTimeout(()=>initRouletteBoard(),50);
+  }
+}
+
+function rlSaveCurrentState(){
+  if(rlExpandedEventId) RL_STATE[rlExpandedEventId]={remaining:rlRemaining, stakes:{...rlStakes}};
+}
+function rlLoadState(eventId){
+  const saved=RL_STATE[eventId];
+  rlRemaining = saved ? saved.remaining : RL_BUDGET;
+  rlStakes = saved ? {...saved.stakes} : {};
+}
+
 function initRouletteBoard(){
-  rlRemaining=RL_BUDGET; rlStakes={}; rlMeta={};
+  rlMeta={};
   const gridEl=document.getElementById('rl-grid');
-  const dotsEl=document.getElementById('rl-dots');
-  if(!gridEl||!dotsEl)return;
-  gridEl.innerHTML=''; dotsEl.innerHTML='';
+  if(!gridEl)return;
+  gridEl.innerHTML='';
 
   for(let r=0;r<4;r++){
     for(let c=0;c<4;c++){
@@ -1555,35 +1617,23 @@ function initRouletteBoard(){
       const type=rlCellType(RL_HOME[r],RL_AWAY[c]);
       const bg=type==='draw'?'var(--surface)':type==='home'?'var(--accent-light)':'#FFEDD5';
       const div=document.createElement('div');
-      div.id=id; div.dataset.h=RL_HOME[r]; div.dataset.a=RL_AWAY[c];
-      div.style.cssText=`position:relative;border-radius:12px;border:1px solid var(--border);background:${bg};display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;user-select:none;transition:transform .1s,outline .15s;`;
+      div.id=id; div.dataset.h=RL_HOME[r]; div.dataset.a=RL_AWAY[c]; div.dataset.baseBg=bg;
+      div.style.cssText=`position:relative;border-radius:12px;border:1px solid var(--border);background:${bg};display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;user-select:none;transition:transform .1s,outline .15s,box-shadow .15s;`;
       div.onclick=()=>rlAddChip(id);
       div.innerHTML=`<span id="rlminus_${id}" onclick="event.stopPropagation();rlRemoveChip('${id}')" style="position:absolute;top:-7px;right:-7px;width:19px;height:19px;border-radius:50%;background:var(--red);color:white;font-size:12px;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;z-index:6;">−</span>
         <span style="font-family:var(--mono);font-size:9px;color:var(--text-3);position:absolute;top:6px;right:7px;">×16</span>
         <span style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);">${rlScoreLabel(r,c)}</span>
         <span id="rlchip_${id}" style="display:none;margin-top:5px;font-family:var(--mono);font-size:12px;font-weight:700;color:white;background:var(--accent);border-radius:8px;padding:2px 9px;min-width:24px;text-align:center;"></span>`;
       gridEl.appendChild(div);
-      rlMeta[id]={label:rlScoreLabel(r,c)+' correct score',mult:16,cells:[id]};
+      rlMeta[id]={label:rlScoreLabel(r,c)+' correct score',mult:16,type:'SCORE'};
     }
   }
+  rlMeta['rlbtts_Y']={label:'Both teams to score: Yes',mult:3,type:'MARKET'};
+  rlMeta['rlbtts_N']={label:'Both teams to score: No',mult:3,type:'MARKET'};
+  rlMeta['rlou_O']={label:'Over 2.5 goals',mult:3,type:'MARKET'};
+  rlMeta['rlou_U']={label:'Under 2.5 goals',mult:3,type:'MARKET'};
 
-  const boundary=[1,2,3].map(i=>i*RL_PITCH-RL_GAP/2);
-  const center=i=>i*RL_PITCH+RL_CELL/2;
-
-  function addDot(id,x,y,cells,label){
-    rlMeta[id]={label,mult:Math.round(16/cells.length),cells};
-    const div=document.createElement('div');
-    div.id=id;
-    div.style.cssText=`position:absolute;width:20px;height:20px;border-radius:50%;background:var(--white);border:1.5px solid var(--text-3);z-index:3;display:flex;align-items:center;justify-content:center;cursor:pointer;transform:translate(-50%,-50%);transition:transform .1s,background .15s,border-color .15s;pointer-events:auto;left:${x}px;top:${y}px;`;
-    div.onclick=()=>rlAddChip(id);
-    div.innerHTML=`<span id="rlminus_${id}" onclick="event.stopPropagation();rlRemoveChip('${id}')" style="position:absolute;top:-8px;right:-8px;width:16px;height:16px;border-radius:50%;background:var(--red);color:white;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;z-index:6;">−</span>
-      <span id="rlchip_${id}" style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--text-3);"></span>`;
-    dotsEl.appendChild(div);
-  }
-  for(let r=0;r<4;r++)boundary.forEach((bx,ci)=>addDot('rlhsplit_'+r+'_'+ci,bx,center(r),[rlCellId(r,ci),rlCellId(r,ci+1)],rlScoreLabel(r,ci)+' / '+rlScoreLabel(r,ci+1)));
-  for(let c=0;c<4;c++)boundary.forEach((by,ri)=>addDot('rlvsplit_'+ri+'_'+c,center(c),by,[rlCellId(ri,c),rlCellId(ri+1,c)],rlScoreLabel(ri,c)+' / '+rlScoreLabel(ri+1,c)));
-  boundary.forEach((by,ri)=>boundary.forEach((bx,ci)=>addDot('rlcorner_'+ri+'_'+ci,bx,by,[rlCellId(ri,ci),rlCellId(ri,ci+1),rlCellId(ri+1,ci),rlCellId(ri+1,ci+1)],'4-way: '+rlScoreLabel(ri,ci)+', '+rlScoreLabel(ri,ci+1)+', '+rlScoreLabel(ri+1,ci)+', '+rlScoreLabel(ri+1,ci+1))));
-
+  Object.keys(rlMeta).forEach(rlRender);
   rlUpdateFooter();
   rlFitBoard();
 }
@@ -1607,6 +1657,7 @@ function rlAddChip(id){
   rlStakes[id]=(rlStakes[id]||0)+RL_STEP;
   rlRemaining-=RL_STEP;
   rlRender(id);
+  rlHighlightGrid();
 }
 function rlRemoveChip(id){
   if(!rlStakes[id])return;
@@ -1614,28 +1665,60 @@ function rlRemoveChip(id){
   rlRemaining+=RL_STEP;
   if(rlStakes[id]<=0)delete rlStakes[id];
   rlRender(id);
+  rlHighlightGrid();
 }
 function rlClearAll(){
   Object.keys(rlStakes).forEach(k=>delete rlStakes[k]);
   rlRemaining=RL_BUDGET;
   Object.keys(rlMeta).forEach(rlRender);
+  rlHighlightGrid();
 }
 function rlRender(id){
   const el=document.getElementById(id);
   const chipEl=document.getElementById('rlchip_'+id);
   const minusEl=document.getElementById('rlminus_'+id);
   const val=rlStakes[id]||0;
+  const isMarket = id.startsWith('rlbtts_')||id.startsWith('rlou_');
   if(chipEl){
     chipEl.textContent=val;
-    chipEl.style.display=val>0?'inline-block':'none';
-    if(id.match(/^rl(hsplit|vsplit|corner)_/)) chipEl.style.color = val>0 ? 'white' : 'var(--text-3)';
+    chipEl.style.display=val>0?(isMarket?'block':'inline-block'):'none';
   }
   if(minusEl){minusEl.style.display=val>0?'flex':'none';}
-  if(el && id.match(/^rl(hsplit|vsplit|corner)_/)){
-    if(val>0){ el.style.background='#2563EB'; el.style.borderColor='#1D4ED8'; el.style.transform='translate(-50%,-50%) scale(1.15)'; }
-    else { el.style.background='var(--white)'; el.style.borderColor='var(--text-3)'; el.style.transform='translate(-50%,-50%) scale(1)'; }
+  if(el && isMarket){
+    if(val>0){ el.style.background='var(--accent)'; el.style.borderColor='var(--accent)'; el.style.color='white'; }
+    else { el.style.background='var(--white)'; el.style.borderColor='var(--border)'; el.style.color='var(--text)'; }
   }
   rlUpdateFooter();
+}
+// Which score cells match a given special market ("both teams to score" / "over-under")
+function rlMatchesMarket(marketId, h, a){
+  const total=h+a;
+  if(marketId==='rlbtts_Y') return h>0 && a>0;
+  if(marketId==='rlbtts_N') return h===0 || a===0;
+  if(marketId==='rlou_O') return total>2.5;
+  if(marketId==='rlou_U') return total<=2.5;
+  return false;
+}
+// Hover preview — shows what a market would highlight even before it's staked
+function rlPreviewHighlight(marketId){
+  rlApplyGridHighlight([marketId]);
+}
+// Persistent highlight — reflects whatever markets are actually staked right now
+function rlHighlightGrid(){
+  const active=['rlbtts_Y','rlbtts_N','rlou_O','rlou_U'].filter(id=>(rlStakes[id]||0)>0);
+  rlApplyGridHighlight(active);
+}
+function rlApplyGridHighlight(marketIds){
+  for(let r=0;r<4;r++){
+    for(let c=0;c<4;c++){
+      const id=rlCellId(r,c);
+      const el=document.getElementById(id);
+      if(!el)continue;
+      const h=rlNumVal(RL_HOME[r]), a=rlNumVal(RL_AWAY[c]);
+      const match = marketIds.some(mid=>rlMatchesMarket(mid,h,a));
+      el.style.boxShadow = match ? '0 0 0 2.5px #F59E0B' : 'none';
+    }
+  }
 }
 function rlUpdateFooter(){
   const staked=RL_BUDGET-rlRemaining;
@@ -1652,14 +1735,13 @@ function rlRenderBetslip(){
   if(!el)return;
   const ids=Object.keys(rlStakes);
   if(!ids.length){el.innerHTML='';return;}
-  const typeLabel = id => id.startsWith('rlhsplit')||id.startsWith('rlvsplit') ? 'SPLIT' : id.startsWith('rlcorner') ? 'CORNER' : 'STRAIGHT';
   el.innerHTML='<div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Bet Slip</div>'+ids.map(id=>{
-    const m=rlMeta[id],stake=rlStakes[id],payout=stake*m.mult;
-    const type=typeLabel(id);
-    const typeColor=type==='STRAIGHT'?'var(--accent)':type==='SPLIT'?'#7C3AED':'#0891B2';
+    const m=rlMeta[id]; if(!m) return '';
+    const stake=rlStakes[id],payout=stake*m.mult;
+    const typeColor=m.type==='MARKET'?'#0891B2':'var(--accent)';
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;margin-bottom:6px;background:var(--surface);border-radius:8px;border-left:3px solid ${typeColor};">
       <div>
-        <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:${typeColor};margin-bottom:2px;">${type} · ×${m.mult}</div>
+        <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:${typeColor};margin-bottom:2px;">${m.type} · ×${m.mult}</div>
         <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);">${m.label}</div>
         <div style="font-size:11px;color:var(--text-3);margin-top:1px;">${stake} coins staked</div>
       </div>
@@ -1670,12 +1752,12 @@ function rlRenderBetslip(){
     </div>`;
   }).join('');
 }
-function rlChangeRound(idx){
+function rlChangeGameweek(idx){
   selectedRound[currentCompIdx]=parseInt(idx);
-  rlRemaining=RL_BUDGET; rlStakes={}; rlMeta={};
+  rlExpandedEventId=null; RL_STATE={}; rlStakes={}; rlRemaining=RL_BUDGET;
   const el=document.getElementById('predict-content');
   if(el){el.innerHTML=renderRouletteHTML();}
-  setTimeout(()=>initRouletteBoard(),50);
+  if(rlExpandedEventId) setTimeout(()=>initRouletteBoard(),50);
 }
 function rlPlaceBets(){toast('✓ Bets placed (demo — not persisted)');}
 
