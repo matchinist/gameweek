@@ -1,0 +1,37 @@
+# Gameweek
+
+> Gameweek is an embeddable, white-label free-to-play prediction game platform for sports websites and media publishers. Operators embed a branded prediction widget on their own site; site visitors register, make predictions on real fixtures, and compete on a leaderboard.
+
+Gameweek is built for sports media companies, betting affiliate sites, fan communities, and league/club websites that want a recurring reason for visitors to come back weekly. It is not a betting product — no money changes hands between the operator and the player; it is a free-to-play engagement tool.
+
+## What it does
+
+- Operators sign up, brand the widget with their own colors and logo, and embed it via a single script/iframe on their website.
+- Site visitors create a free account, make predictions on upcoming fixtures, and see their results and points on a leaderboard.
+- Operators manage everything (competitions, fixtures, results, teams, players) from an admin dashboard — no coding required after the initial embed.
+
+## Game modes
+
+- **Score Predictor** — predict the exact scoreline for each match. Exact scores earn maximum points; correct results earn partial credit.
+- **Last Man Standing** — pick one winner per event each round. One wrong pick eliminates the player. Last player standing wins.
+- **Betting Markets** — predict multiple markets per match (match result / 1X2, Over-Under 2.5 goals, Both Teams to Score), each with configurable points.
+- **Ranking** — rank a set of teams from highest to lowest on a chosen metric (e.g. expected goals), earning points per correct position plus a bonus for a perfect ranking.
+- **Lineup Predictor** — predict the starting XI for a specific team's next fixture; earns points per correctly predicted starter plus a bonus for a perfect lineup.
+
+## Pricing
+
+- $0.30 per Monthly Active User (MAU). A "Monthly Active User" is a registered player who makes at least one prediction in that month — inactive registered users are never billed.
+- Costs are capped at $150/month regardless of how many active users the operator has.
+- All game modes, unlimited competitions, and leaderboards are included at every usage level — there is no separate paid tier.
+
+## Key facts
+
+- Setup typically takes under a day from sign-up to a live embed.
+- The platform is fully white-label: no Gameweek branding is shown to end users unless the operator chooses to.
+- Works as an embed on any website (WordPress, custom CMS, static sites, etc.).
+
+## Links
+
+- [Homepage](https://www.gameweek.cloud/): product overview, game modes, and pricing.
+- [Live interactive demo](https://www.gameweek.cloud/demo/): try Score Predictor, Last Man Standing, Betting Markets, Ranking, and Lineup Predictor without signing up.
+- Contact: gameweek.cloud@gmail.com
