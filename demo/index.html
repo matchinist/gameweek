@@ -692,13 +692,13 @@ function renderLineupPredictor(comp){
       {pos:'DEF', x:34, y:76}, // CB
       {pos:'DEF', x:66, y:76}, // CB
       {pos:'DEF', x:86, y:70}, // RB
-      // 2-3-1 bands pushed further forward with equal spacing between them
+      // 2-3-1 bands, equal spacing between them, CF pulled back inside the pitch edge
       {pos:'MID', x:37, y:48}, // DM
       {pos:'MID', x:63, y:48}, // CM
-      {pos:'MID', x:50, y:27}, // AM
-      {pos:'MID', x:21, y:27}, // LW
-      {pos:'MID', x:79, y:27}, // RW
-      {pos:'FWD', x:50, y:6},  // CF — pushed close to the top edge
+      {pos:'MID', x:50, y:30}, // AM
+      {pos:'MID', x:21, y:30}, // LW
+      {pos:'MID', x:79, y:30}, // RW
+      {pos:'FWD', x:50, y:12}, // CF
     ];
     const layout = isHorizontal ? LAYOUT_H : LAYOUT_V;
     return layout.map((s,i)=>({si:i, pos:s.pos, x:s.x, y:s.y}));

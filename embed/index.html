@@ -747,7 +747,10 @@ function renderPredict(){
   let html=`<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:20px;padding:10px 16px 0;"><p style="margin:0;font-size:15px;line-height:1.55;color:oklch(0.4 0.01 260);max-width:640px;">${descriptions[comp.mode]||''}</p><button onclick="showRules('${comp.mode}')" style="flex-shrink:0;border:1px solid oklch(0.88 0.006 260);background:#fff;color:oklch(0.35 0.01 260);font-size:13px;font-weight:600;padding:9px 18px;border-radius:10px;cursor:pointer;">Rules</button></div>`;
   html+=predictSubTab==='predictions'?renderPredictionsPane(comp):(comp.mode==='lineup'?renderLineupLeaderboardShell(comp):renderLeaderboardShell(comp));
   document.getElementById('predict-content').innerHTML=html;
-  if(predictSubTab==='leaderboard'&&comp.mode!=='lineup') loadAndRenderLeaderboard(comp);
+  if(predictSubTab==='leaderboard'){
+    if(comp.mode==='lineup') loadAndRenderLineupLeaderboard(comp);
+    else loadAndRenderLeaderboard(comp);
+  }
 }
 function switchPredictSubTab(tab){ predictSubTab=tab; renderPredict(); }
 
@@ -925,7 +928,7 @@ function renderLineupPredictor(comp){
       const isCorrect = !isOpen && actual && actual.includes(player.id);
       const borderColor = !isOpen && actual ? (isCorrect ? '#4ade80' : 'rgba(255,255,255,0.4)') : col;
       const flag = NATIONALITY_FLAGS[player.nationality] || '';
-      const inner = flag || (player.no!=null && player.no!=='' ? player.no : '');
+      const inner = isHorizontal ? '' : (flag || (player.no!=null && player.no!=='' ? player.no : ''));
       return `<div onclick="${click}" style="position:absolute;left:${xPct}%;top:${yPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:${isOpen?'pointer':'default'};z-index:3;width:80px;">
         <div style="width:52px;height:52px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;color:#000;font-weight:800;font-size:${flag?'26px':'15px'};border:1.5px solid ${borderColor};box-shadow:0 2px 8px rgba(0,0,0,0.4);">${inner}</div>
         <div style="background:rgba(0,0,0,0.7);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:999px;white-space:nowrap;max-width:76px;overflow:hidden;text-overflow:ellipsis;text-align:center;">${player.name}</div>
@@ -967,13 +970,13 @@ function renderLineupPredictor(comp){
       {pos:'DEF', x:34, y:76}, // CB
       {pos:'DEF', x:66, y:76}, // CB
       {pos:'DEF', x:86, y:70}, // RB
-      // 2-3-1 bands pushed further forward with equal spacing between them
+      // 2-3-1 bands, equal spacing between them, CF pulled back inside the pitch edge
       {pos:'MID', x:37, y:48}, // DM
       {pos:'MID', x:63, y:48}, // CM
-      {pos:'MID', x:50, y:27}, // AM
-      {pos:'MID', x:21, y:27}, // LW
-      {pos:'MID', x:79, y:27}, // RW
-      {pos:'FWD', x:50, y:6},  // CF — pushed close to the top edge
+      {pos:'MID', x:50, y:30}, // AM
+      {pos:'MID', x:21, y:30}, // LW
+      {pos:'MID', x:79, y:30}, // RW
+      {pos:'FWD', x:50, y:12}, // CF
     ];
     const layout = isHorizontal ? LAYOUT_H : LAYOUT_V;
     return layout.map((s,i)=>({si:i, pos:s.pos, x:s.x, y:s.y}));
@@ -1065,7 +1068,7 @@ function renderLineupPredictor(comp){
 function renderLineupLeaderboardShell(comp){
   const ri = selectedRound[currentCompIdx]??0;
   const round = comp.rounds[ri]||comp.rounds[0];
-  let html = `<div class="round-bar">
+  return `<div class="round-bar">
     <span class="round-status ${round?.status==='open'?'open':'upcoming'}">${round?.status==='open'?'● Open':'◷ Soon'}</span>
     <div class="round-bar-spacer"></div>
     <div class="predict-subtabs">
@@ -1079,21 +1082,80 @@ function renderLineupLeaderboardShell(comp){
       </select>
     </div>
   </div>
-  <div style="padding:16px;">`;
-  html += `<div style="background:#fff;border:1px solid oklch(0.92 0.004 260);border-radius:16px;overflow:hidden;">`;
-  LINEUP_LB.forEach((row,i)=>{
-    const isMe=row.u===currentPlayer?.username;
-    html+=`<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;${i>0?'border-top:1px solid oklch(0.95 0.004 260)':''}${isMe?';background:oklch(0.97 0.01 275)':''};">
-      <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:oklch(0.5 0.01 260);min-width:22px;">${i+1}</span>
-      <div style="flex:1;">
-        <div style="font-size:14px;font-weight:${isMe?'700':'600'};color:oklch(0.2 0.01 260);">${row.u}${isMe?' 👤':''}</div>
-        <div style="font-size:11px;color:oklch(0.58 0.01 260);">${row.correct} correct players</div>
-      </div>
-      <span style="font-family:'DM Mono',monospace;font-size:16px;font-weight:800;color:oklch(0.42 0.12 275);">${row.pts}pts</span>
+  <div style="padding:16px;" id="lineup-lb-content">
+    <div class="empty" style="padding:40px 20px;"><div class="empty-icon">⏳</div><div class="empty-title">Loading leaderboard…</div></div>
+  </div>`;
+}
+
+async function loadAndRenderLineupLeaderboard(comp){
+  const ri = selectedRound[currentCompIdx]??0;
+  const round = comp.rounds[ri]||comp.rounds[0];
+  const target = document.getElementById('lineup-lb-content');
+  if(!round||!target) return;
+
+  try{
+    const {data:allPreds,error} = await supa.from('gw_predictions')
+      .select('username,player_id,prediction')
+      .eq('client_key',CLIENT_PARAM)
+      .eq('competition_id',comp.id)
+      .eq('round_id',round.id);
+    if(error) throw error;
+
+    if(!allPreds || !allPreds.length){
+      target.innerHTML = '<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">No lineups saved yet</div><div class="empty-sub">Be the first to submit your XI.</div></div>';
+      return;
+    }
+
+    // Actual starting XI isn't captured anywhere yet (no admin input for it), so
+    // accuracy/points can't be computed for real fixtures — show '-' until that
+    // data source exists. Every user who saved a lineup still appears, regardless.
+    const actualXI = round.actualXI || null;
+
+    const rows = allPreds.map(p=>{
+      const uname = p.username || p.player_id;
+      const unwrap = (v)=> (v && typeof v==='object' && 'value' in v) ? v.value : v;
+      const picks = unwrap(p.prediction);
+      const pickedArr = Array.isArray(picks) ? picks : [];
+      let accuracy = '-', pts = '-';
+      if(actualXI && actualXI.length && pickedArr.length){
+        const correct = pickedArr.filter(pid=>actualXI.includes(pid)).length;
+        accuracy = `${correct}/11`;
+        pts = correct*10 + (correct===11 ? 30 : 0);
+      }
+      return {u:uname, accuracy, pts, pickedCount:pickedArr.length};
+    });
+
+    // No real scores to sort by yet — alphabetical is the stable, honest default
+    // until actual-lineup scoring exists; once pts are numeric it sorts by that.
+    rows.sort((a,b)=>{
+      if(typeof a.pts==='number' && typeof b.pts==='number') return b.pts-a.pts;
+      if(typeof a.pts==='number') return -1;
+      if(typeof b.pts==='number') return 1;
+      return a.u.localeCompare(b.u);
+    });
+
+    const prizes = comp.overallPrizes || round.prizes || [];
+    let html = '<div style="background:#fff;border:1px solid oklch(0.92 0.004 260);border-radius:16px;overflow:hidden;">';
+    html += `<div style="display:grid;grid-template-columns:28px 1fr 70px 70px 60px;gap:8px;padding:10px 16px;background:oklch(0.97 0.006 260);border-bottom:1px solid oklch(0.92 0.004 260);font-size:10px;font-weight:700;color:oklch(0.5 0.01 260);text-transform:uppercase;letter-spacing:0.4px;">
+      <span></span><span>Player</span><span style="text-align:right;">Accuracy</span><span style="text-align:right;">Points</span><span style="text-align:right;">Prize</span>
     </div>`;
-  });
-  html += '</div></div>';
-  return html;
+    rows.forEach((row,i)=>{
+      const isMe = row.u===currentPlayer?.username;
+      const prize = prizes.find(pz=>pz.pos===i+1);
+      html += `<div style="display:grid;grid-template-columns:28px 1fr 70px 70px 60px;gap:8px;align-items:center;padding:12px 16px;${i>0?'border-top:1px solid oklch(0.95 0.004 260);':''}${isMe?'background:oklch(0.97 0.01 275);':''}">
+        <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:oklch(0.5 0.01 260);">${i+1}</span>
+        <span style="font-size:14px;font-weight:${isMe?'700':'600'};color:oklch(0.2 0.01 260);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row.u}${isMe?' 👤':''}</span>
+        <span style="text-align:right;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:oklch(0.4 0.01 260);">${row.accuracy}</span>
+        <span style="text-align:right;font-family:'DM Mono',monospace;font-size:14px;font-weight:800;color:oklch(0.42 0.12 275);">${row.pts}</span>
+        <span style="text-align:right;font-size:11px;font-weight:600;color:oklch(0.5 0.01 260);">${prize?prize.text:'-'}</span>
+      </div>`;
+    });
+    html += '</div>';
+    target.innerHTML = html;
+  }catch(e){
+    console.error('loadAndRenderLineupLeaderboard:',e);
+    target.innerHTML = '<div class="empty" style="padding:40px 20px;"><div class="empty-icon">⚠️</div><div class="empty-title">Could not load leaderboard</div></div>';
+  }
 }
 
 function openLineupPicker(roundId, slotIdx, pos){
@@ -1171,14 +1233,6 @@ function saveLineup(roundId){
 }
 
 // Fake leaderboard for lineup
-const LINEUP_LB = [
-  {u:'footy_oracle',pts:28,correct:9},{u:'demo_user',pts:24,correct:8},
-  {u:'xavi_8',pts:21,correct:7},{u:'stadyum76',pts:18,correct:6},
-  {u:'matchday_man',pts:15,correct:5},{u:'arsenal_fan',pts:12,correct:4},
-  {u:'bvb_predictor',pts:9,correct:3},{u:'golazo99',pts:6,correct:2},
-  {u:'tipster_pro',pts:3,correct:1},{u:'bet_master',pts:0,correct:0},
-];
-
 function renderPredictionsPane(comp){
   if(comp.mode==='lineup') return renderLineupPredictor(comp);
   const ri=selectedRound[currentCompIdx];
