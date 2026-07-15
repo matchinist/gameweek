@@ -843,28 +843,32 @@ const LIV_SQUAD = {
   ]
 };
 
-const NATIONALITY_FLAGS = {
-  'Afghanistan':'🇦🇫','Albania':'🇦🇱','Algeria':'🇩🇿','Argentina':'🇦🇷','Armenia':'🇦🇲',
-  'Australia':'🇦🇺','Austria':'🇦🇹','Azerbaijan':'🇦🇿','Belgium':'🇧🇪','Bolivia':'🇧🇴',
-  'Bosnia and Herzegovina':'🇧🇦','Brazil':'🇧🇷','Bulgaria':'🇧🇬','Cameroon':'🇨🇲','Canada':'🇨🇦',
-  'Chile':'🇨🇱','China':'🇨🇳','Colombia':'🇨🇴','Costa Rica':'🇨🇷','Croatia':'🇭🇷',
-  'Cuba':'🇨🇺','Czech Republic':'🇨🇿','Denmark':'🇩🇰','Ecuador':'🇪🇨','Egypt':'🇪🇬',
-  'England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Estonia':'🇪🇪','Finland':'🇫🇮','France':'🇫🇷','Gabon':'🇬🇦',
-  'Georgia':'🇬🇪','Germany':'🇩🇪','Ghana':'🇬🇭','Greece':'🇬🇷','Guinea':'🇬🇳',
-  'Honduras':'🇭🇳','Hungary':'🇭🇺','Iceland':'🇮🇸','India':'🇮🇳','Iran':'🇮🇷',
-  'Iraq':'🇮🇶','Ireland':'🇮🇪','Israel':'🇮🇱','Italy':'🇮🇹','Ivory Coast':'🇨🇮',
-  'Jamaica':'🇯🇲','Japan':'🇯🇵','Jordan':'🇯🇴','Kenya':'🇰🇪','South Korea':'🇰🇷',
-  'Kosovo':'🇽🇰','Latvia':'🇱🇻','Lebanon':'🇱🇧','Libya':'🇱🇾','Lithuania':'🇱🇹',
-  'Luxembourg':'🇱🇺','Mali':'🇲🇱','Mexico':'🇲🇽','Montenegro':'🇲🇪','Morocco':'🇲🇦',
-  'Netherlands':'🇳🇱','New Zealand':'🇳🇿','Nigeria':'🇳🇬','North Macedonia':'🇲🇰','Northern Ireland':'🇬🇧',
-  'Norway':'🇳🇴','Panama':'🇵🇦','Paraguay':'🇵🇾','Peru':'🇵🇪','Poland':'🇵🇱',
-  'Portugal':'🇵🇹','Qatar':'🇶🇦','Republic of Ireland':'🇮🇪','Romania':'🇷🇴','Russia':'🇷🇺',
-  'Saudi Arabia':'🇸🇦','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Senegal':'🇸🇳','Serbia':'🇷🇸','Slovakia':'🇸🇰',
-  'Slovenia':'🇸🇮','South Africa':'🇿🇦','Spain':'🇪🇸','Sweden':'🇸🇪','Switzerland':'🇨🇭',
-  'Syria':'🇸🇾','Tunisia':'🇹🇳','Turkey':'🇹🇷','Ukraine':'🇺🇦','United Arab Emirates':'🇦🇪',
-  'United States':'🇺🇸','Uruguay':'🇺🇾','Uzbekistan':'🇺🇿','Venezuela':'🇻🇪','Vietnam':'🇻🇳',
-  'Wales':'🏴󠁧󠁢󠁷󠁬󠁳󠁿','Zambia':'🇿🇲',
+const NATIONALITY_CODES = {
+  'Afghanistan':'af','Albania':'al','Algeria':'dz','Argentina':'ar','Armenia':'am',
+  'Australia':'au','Austria':'at','Azerbaijan':'az','Belgium':'be','Bolivia':'bo',
+  'Bosnia and Herzegovina':'ba','Brazil':'br','Bulgaria':'bg','Cameroon':'cm','Canada':'ca',
+  'Chile':'cl','China':'cn','Colombia':'co','Costa Rica':'cr','Croatia':'hr',
+  'Cuba':'cu','Czech Republic':'cz','Denmark':'dk','Ecuador':'ec','Egypt':'eg',
+  'England':'gb-eng','Estonia':'ee','Finland':'fi','France':'fr','Gabon':'ga',
+  'Georgia':'ge','Germany':'de','Ghana':'gh','Greece':'gr','Guinea':'gn',
+  'Honduras':'hn','Hungary':'hu','Iceland':'is','India':'in','Iran':'ir',
+  'Iraq':'iq','Ireland':'ie','Israel':'il','Italy':'it','Ivory Coast':'ci',
+  'Jamaica':'jm','Japan':'jp','Jordan':'jo','Kenya':'ke','South Korea':'kr',
+  'Kosovo':'xk','Latvia':'lv','Lebanon':'lb','Libya':'ly','Lithuania':'lt',
+  'Luxembourg':'lu','Mali':'ml','Mexico':'mx','Montenegro':'me','Morocco':'ma',
+  'Netherlands':'nl','New Zealand':'nz','Nigeria':'ng','North Macedonia':'mk','Northern Ireland':'gb-nir',
+  'Norway':'no','Panama':'pa','Paraguay':'py','Peru':'pe','Poland':'pl',
+  'Portugal':'pt','Qatar':'qa','Republic of Ireland':'ie','Romania':'ro','Russia':'ru',
+  'Saudi Arabia':'sa','Scotland':'gb-sct','Senegal':'sn','Serbia':'rs','Slovakia':'sk',
+  'Slovenia':'si','South Africa':'za','Spain':'es','Sweden':'se','Switzerland':'ch',
+  'Syria':'sy','Tunisia':'tn','Turkey':'tr','Ukraine':'ua','United Arab Emirates':'ae',
+  'United States':'us','Uruguay':'uy','Uzbekistan':'uz','Venezuela':'ve','Vietnam':'vn',
+  'Wales':'gb-wls','Zambia':'zm',
 };
+function flagImgUrl(nationality){
+  const code = NATIONALITY_CODES[nationality];
+  return code ? `https://flagcdn.com/w80/${code}.png` : '';
+}
 
 // Nationality comes from a fixed dropdown (see Data Manager), so a direct
 // lookup is all that's needed — no normalization required.
@@ -941,10 +945,10 @@ function renderLineupPredictor(comp){
     if(player){
       const isCorrect = !isOpen && actual && actual.includes(player.id);
       const borderColor = !isOpen && actual ? (isCorrect ? '#4ade80' : 'rgba(255,255,255,0.4)') : col;
-      const flag = NATIONALITY_FLAGS[player.nationality] || '';
-      const inner = flag || (player.no!=null && player.no!=='' ? player.no : '');
+      const flagUrl = flagImgUrl(player.nationality);
+      const fallback = player.no!=null && player.no!=='' ? player.no : '';
       return `<div onclick="${click}" style="position:absolute;left:${xPct}%;top:${yPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:${isOpen?'pointer':'default'};z-index:3;width:80px;">
-        <div style="width:52px;height:52px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#000;font-weight:800;font-size:${flag?'36px':'15px'};line-height:1;border:1.5px solid ${borderColor};box-shadow:0 2px 8px rgba(0,0,0,0.4);">${inner}</div>
+        <div style="width:52px;height:52px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#000;font-weight:800;font-size:15px;border:1.5px solid ${borderColor};box-shadow:0 2px 8px rgba(0,0,0,0.4);">${flagUrl?`<img src="${flagUrl}" alt="${player.nationality||''}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.textContent='${fallback}';">`:fallback}</div>
         <div style="background:rgba(0,0,0,0.7);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:999px;white-space:nowrap;max-width:76px;overflow:hidden;text-overflow:ellipsis;text-align:center;">${player.name}</div>
       </div>`;
     } else {
