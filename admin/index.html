@@ -1055,9 +1055,9 @@ tbody tr:hover td{background:var(--bg);}
       </div>
       <p style="font-size:11px;color:var(--text-3);text-align:center;">Enter the final score</p>
       <div style="margin-top:14px;">
-        <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;">Kickoff date (optional)</label>
-        <input type="date" id="result-kickoff" class="form-input" style="width:100%;">
-        <div style="font-size:11px;color:var(--text-3);margin-top:4px;">Leave blank to keep existing date. Clear to remove date.</div>
+        <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;">Kickoff date & time (optional)</label>
+        <input type="datetime-local" id="result-kickoff" class="form-input" style="width:100%;">
+        <div style="font-size:11px;color:var(--text-3);margin-top:4px;">Leave blank to keep existing. Clear to remove.</div>
       </div>
     </div>
     <div class="modal-footer">
@@ -1488,11 +1488,11 @@ function openResultModal(id){
   document.getElementById('result-away-label').textContent = ev.away;
   document.getElementById('result-h').value = '';
   document.getElementById('result-a').value = '';
-  // Pre-populate kickoff date
+  // Pre-populate kickoff date & time
   const koInput = document.getElementById('result-kickoff');
   if(koInput){
     const ev2 = getEvent(id);
-    koInput.value = ev2?.kickoff ? ev2.kickoff.split('T')[0] : '';
+    koInput.value = ev2?.kickoff ? ev2.kickoff.slice(0,16) : '';
   }
   openModal('modal-result');
 }

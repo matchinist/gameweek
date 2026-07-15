@@ -589,27 +589,37 @@ function findLineupPlayerPos(pid, comp){
 
 function reconstructLineupPicks(roundId, pickedIds, comp){
   if(!pickedIds || !pickedIds.length) return;
+  const slots = getLineupSlots(lineupFormation); // fixed 11-slot layout, position per slot
   const byPos = {GK:[], DEF:[], MID:[], FWD:[]};
+  const unknownPos = [];
   pickedIds.forEach(pid=>{
     const pos = findLineupPlayerPos(pid, comp);
-    if(pos) byPos[pos].push(pid);
+    if(pos) byPos[pos].push(pid); else unknownPos.push(pid);
   });
-  // Pick whichever formation's slot counts best match the saved lineup
-  let bestFormation = lineupFormation, bestScore = -1;
-  Object.entries(FORMATIONS).forEach(([name,counts])=>{
-    const score = (counts.DEF===byPos.DEF.length?1:0) + (counts.MID===byPos.MID.length?1:0) + (counts.FWD===byPos.FWD.length?1:0);
-    if(score>bestScore){ bestScore=score; bestFormation=name; }
-  });
-  lineupFormation = bestFormation;
-  const slots = getLineupSlots(lineupFormation);
+
+  const slotsByPos = {GK:[],DEF:[],MID:[],FWD:[]};
+  slots.forEach((s,i)=>slotsByPos[s.pos].push(i));
+
   const picks = {};
+  const placed = new Set();
+  // First pass: place each player in a slot matching their real position
   ['GK','DEF','MID','FWD'].forEach(pos=>{
-    const slotIdxs = slots.map((s,i)=>i).filter(i=>slots[i].pos===pos);
-    byPos[pos].forEach((pid,idx)=>{
-      if(idx<slotIdxs.length) picks[slotIdxs[idx]] = pid;
+    const avail = slotsByPos[pos].slice();
+    byPos[pos].forEach(pid=>{
+      if(avail.length){ picks[avail.shift()] = pid; placed.add(pid); }
     });
   });
+  // Second pass: anyone left over (formation mismatch from older saved data, or an
+  // unrecognised position) still gets shown — fill whatever slots remain, in order,
+  // rather than silently dropping players.
+  const leftover = pickedIds.filter(pid=>!placed.has(pid));
+  const emptySlots = slots.map((s,i)=>i).filter(i=>!(i in picks));
+  leftover.forEach(pid=>{
+    if(emptySlots.length){ picks[emptySlots.shift()] = pid; }
+  });
+
   lineupPicks[roundId] = picks;
+  lineupSaved[roundId] = true;
 }
 
 async function savePred(eventId, prediction){
@@ -865,6 +875,7 @@ const FORMATIONS = {
 };
 
 let lineupPicks = {}; // roundId -> {slotIdx -> playerId}
+let lineupSaved = {}; // roundId -> true once saved and unchanged since
 let lineupFormation = '4-2-3-1';
 
 function getLineupSlots(formation){
@@ -1055,10 +1066,13 @@ function renderLineupPredictor(comp){
         </div>
 
         <div class="pitch-wrap">
-        ${isOpen && pickCount===11 ? `
+        ${isOpen && pickCount===11 ? (lineupSaved[round.id] ? `
+        <button disabled style="width:100%;margin-top:16px;background:oklch(0.93 0.006 260);color:oklch(0.5 0.01 260);border:none;border-radius:10px;padding:14px;font-family:'DM Mono',monospace;font-size:14px;font-weight:700;cursor:default;">
+          ✓ Lineup Saved
+        </button>` : `
         <button onclick="saveLineup('${round.id}')" style="width:100%;margin-top:16px;background:oklch(0.55 0.19 275);color:#fff;border:none;border-radius:10px;padding:14px;font-family:'DM Mono',monospace;font-size:14px;font-weight:700;cursor:pointer;">
           Save Lineup (${pickCount}/11)
-        </button>` : isOpen ? `
+        </button>`) : isOpen ? `
         <div style="width:100%;margin-top:16px;background:oklch(0.93 0.006 260);color:oklch(0.5 0.01 260);border:none;border-radius:10px;padding:14px;font-size:13px;font-weight:600;text-align:center;">
           Select all 11 players to save
         </div>` : ''}
@@ -1216,11 +1230,13 @@ function openLineupPicker(roundId, slotIdx, pos){
 function pickLineupPlayer(roundId, slotIdx, pid){
   if(!lineupPicks[roundId]) lineupPicks[roundId]={};
   lineupPicks[roundId][slotIdx]=pid;
+  lineupSaved[roundId]=false;
   renderPredict();
 }
 
 function removeLineupPick(roundId, slotIdx){
   if(lineupPicks[roundId]) delete lineupPicks[roundId][slotIdx];
+  lineupSaved[roundId]=false;
   const overlay=document.querySelector('[style*=fixed][style*=z-index:9999]');
   if(overlay)overlay.remove();
   renderPredict();
@@ -1236,6 +1252,7 @@ function saveLineup(roundId){
   const pickedIds = Object.values(picks);
   if(!pickedIds.length){ toast('Pick some players first'); return; }
   savePred(roundId, pickedIds);
+  lineupSaved[roundId]=true;
   toast('✓ Lineup saved!');
   renderPredict();
 }
