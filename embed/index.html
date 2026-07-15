@@ -44,7 +44,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .auth-tab.active{background:var(--white);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.08);}
 .form-group{margin-bottom:12px;}
 .form-label{font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:4px;}
-.form-input{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:7px;font-family:var(--sans);font-size:13px;color:var(--text);background:var(--white);outline:none;transition:border-color 0.13s;}
+.form-input{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:7px;font-family:var(--sans);font-size:16px;color:var(--text);background:var(--white);outline:none;transition:border-color 0.13s;}
 .form-input:focus{border-color:var(--accent);}
 .form-input::placeholder{color:var(--text-3);}
 .auth-btn{width:100%;padding:11px;background:var(--accent);color:white;border:none;border-radius:7px;font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;transition:background 0.13s;margin-top:4px;letter-spacing:0.3px;}
@@ -525,12 +525,25 @@ async function loginPlayer(player){
   // Re-apply any local preds not yet in DB (safety)
   preds = {...localPreds, ...preds};
 
-  // Lineup picks live outside `preds` (keyed by slot, not event) — save separately
-  if(wasSubmitting && wasSubmitting.type==='lineup' && wasSubmitting.roundId){
-    const picks = lineupPicks[wasSubmitting.roundId]||{};
+  // Lineup picks live outside `preds` (keyed by slot, not event) — save separately.
+  // Check the currently-viewed competition/round opportunistically, not just when
+  // login was triggered specifically via the Save Lineup button — e.g. someone who
+  // registers via the header avatar with an in-progress (unsaved) lineup should
+  // still have it persisted automatically.
+  let savedLineupThisLogin = false;
+  const curComp = COMPS[currentCompIdx];
+  const curRound = curComp?.mode==='lineup' ? (curComp.rounds[selectedRound[currentCompIdx]]||curComp.rounds[0]) : null;
+  const lineupRoundIdToSave = (wasSubmitting&&wasSubmitting.type==='lineup'&&wasSubmitting.roundId) || curRound?.id;
+  if(lineupRoundIdToSave){
+    const picks = lineupPicks[lineupRoundIdToSave]||{};
     const pickedIds = Object.values(picks);
     if(pickedIds.length){
-      try{ await savePred(wasSubmitting.roundId, pickedIds); }catch(e){ console.error('save lineup after login:',e); }
+      try{
+        await savePred(lineupRoundIdToSave, pickedIds);
+        clearLineupDraft(lineupRoundIdToSave);
+        lineupSaved[lineupRoundIdToSave] = true;
+        savedLineupThisLogin = true;
+      }catch(e){ console.error('save lineup after login:',e); }
     }
   }
 
@@ -539,7 +552,7 @@ async function loginPlayer(player){
   predsDirty=false; // predictions are now saved — the button should render as such
   renderPredict();
 
-  if(wasSubmitting&&wasSubmitting.type==='lineup'){
+  if(savedLineupThisLogin){
     toast('✓ Lineup saved!');
   } else if(Object.keys(localPreds).length){
     toast('✓ Your predictions have been saved');
@@ -882,6 +895,12 @@ function renderLineupPredictor(comp){
   if(comp.lineupConfig?.teamId) loadTeamSquad(comp.lineupConfig.teamId);
   const ri = selectedRound[currentCompIdx]??0;
   const round = comp.rounds[ri]||comp.rounds[0];
+  // If nothing's loaded yet for this round (no DB-reconstructed save, no in-session
+  // picks), check for an unsaved local draft from before a refresh and restore it.
+  if(!lineupPicks[round.id]){
+    const draft = loadLineupDraft(round.id);
+    if(draft) lineupPicks[round.id] = draft;
+  }
   const isOpen = round.status==='open';
   const picks = lineupPicks[round.id]||{};
   const slots = getLineupSlots(lineupFormation);
@@ -951,10 +970,10 @@ function renderLineupPredictor(comp){
     // AM flanked by wingers, lone striker up top) rather than generic even-spacing.
     const LAYOUT_H = [
       {pos:'GK',  x:10, y:50}, // GK
-      {pos:'DEF', x:30, y:14}, // LB
-      {pos:'DEF', x:24, y:34}, // CB
-      {pos:'DEF', x:24, y:65}, // CB
-      {pos:'DEF', x:30, y:86}, // RB
+      {pos:'DEF', x:34, y:14}, // LB
+      {pos:'DEF', x:28, y:34}, // CB
+      {pos:'DEF', x:28, y:65}, // CB
+      {pos:'DEF', x:34, y:86}, // RB
       {pos:'MID', x:47, y:37}, // DM
       {pos:'MID', x:47, y:62}, // CM
       {pos:'MID', x:63, y:50}, // AM
@@ -964,10 +983,10 @@ function renderLineupPredictor(comp){
     ];
     const LAYOUT_V = [
       {pos:'GK',  x:50, y:90}, // GK
-      {pos:'DEF', x:14, y:70}, // LB
-      {pos:'DEF', x:34, y:76}, // CB
-      {pos:'DEF', x:66, y:76}, // CB
-      {pos:'DEF', x:86, y:70}, // RB
+      {pos:'DEF', x:14, y:66}, // LB
+      {pos:'DEF', x:34, y:72}, // CB
+      {pos:'DEF', x:66, y:72}, // CB
+      {pos:'DEF', x:86, y:66}, // RB
       // 2-3-1 bands, equal spacing between them, CF pulled back inside the pitch edge
       {pos:'MID', x:37, y:48}, // DM
       {pos:'MID', x:63, y:48}, // CM
@@ -1177,8 +1196,6 @@ function openLineupPicker(roundId, slotIdx, pos){
   overlay.onclick=(e)=>{if(e.target===overlay)overlay.remove();};
 
   const byPos = {GK:squad.GK,DEF:squad.DEF,MID:squad.MID,FWD:squad.FWD};
-  // Show suggested position first but allow all
-  const ordered = [...(byPos[pos]||[]), ...Object.entries(byPos).filter(([p])=>p!==pos).flatMap(([,arr])=>arr)];
 
   let html = `<div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:420px;max-height:70vh;overflow-y:auto;padding:20px 0 32px;">
     <div style="padding:0 20px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid oklch(0.92 0.004 260);">
@@ -1194,34 +1211,55 @@ function openLineupPicker(roundId, slotIdx, pos){
     html+=`<div style="padding:12px 20px;"><button onclick="removeLineupPick('${roundId}',${slotIdx})" style="width:100%;padding:10px;background:#FEE2E2;color:#DC2626;border:1px solid #FCA5A5;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Remove player</button></div>`;
   }
 
-  ['FWD','MID','DEF','GK'].forEach(p=>{
-    const list = squad[p];
-    html+=`<div style="padding:8px 20px 4px;font-size:10px;font-weight:700;color:${posColor[p]};text-transform:uppercase;letter-spacing:0.5px;">${p}</div>`;
-    list.forEach(pl=>{
-      const alreadyUsed = Object.entries(picks).some(([k,v])=>v===pl.id && parseInt(k)!==slotIdx);
-      html+=`<div onclick="${alreadyUsed?'':` pickLineupPlayer('${roundId}',${slotIdx},'${pl.id}');document.querySelector('.lineup-picker-overlay').remove();renderPredict();`}" style="display:flex;align-items:center;gap:12px;padding:10px 20px;cursor:${alreadyUsed?'default':'pointer'};opacity:${alreadyUsed?'0.35':'1'};">
-        <div style="width:36px;height:36px;border-radius:50%;background:${posColor[p]};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;flex-shrink:0;">${pl.no}</div>
-        <div style="font-size:14px;font-weight:600;color:oklch(0.2 0.01 260);">${pl.name}</div>
-        ${alreadyUsed?`<span style="margin-left:auto;font-size:11px;color:oklch(0.6 0.01 260);">Selected</span>`:''}
-      </div>`;
-    });
+  // Only show players from the slot's own position — a GK slot only offers GKs, etc.
+  const list = byPos[pos]||[];
+  list.forEach(pl=>{
+    const alreadyUsed = Object.entries(picks).some(([k,v])=>v===pl.id && parseInt(k)!==slotIdx);
+    html+=`<div onclick="${alreadyUsed?'':` pickLineupPlayer('${roundId}',${slotIdx},'${pl.id}');document.querySelector('.lineup-picker-overlay').remove();renderPredict();`}" style="display:flex;align-items:center;gap:12px;padding:10px 20px;cursor:${alreadyUsed?'default':'pointer'};opacity:${alreadyUsed?'0.35':'1'};">
+      <div style="width:28px;text-align:center;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:oklch(0.45 0.01 260);flex-shrink:0;">${pl.no!=null&&pl.no!==''?pl.no:'-'}</div>
+      <div style="font-size:14px;font-weight:600;color:oklch(0.2 0.01 260);">${pl.name}</div>
+      ${alreadyUsed?`<span style="margin-left:auto;font-size:11px;color:oklch(0.6 0.01 260);">Selected</span>`:''}
+    </div>`;
   });
+  if(!list.length){
+    html+=`<div style="padding:20px;text-align:center;font-size:13px;color:oklch(0.6 0.01 260);">No ${pos} players in the squad yet.</div>`;
+  }
 
   html+='</div>';
   overlay.innerHTML=html;
   document.body.appendChild(overlay);
 }
 
+function lineupDraftKey(roundId){ return 'gw_lineup_draft_'+CLIENT_PARAM+'_'+roundId; }
+function saveLineupDraft(roundId){
+  try{
+    const picks = lineupPicks[roundId]||{};
+    if(Object.keys(picks).length) localStorage.setItem(lineupDraftKey(roundId), JSON.stringify(picks));
+    else localStorage.removeItem(lineupDraftKey(roundId));
+  }catch(e){}
+}
+function loadLineupDraft(roundId){
+  try{
+    const raw = localStorage.getItem(lineupDraftKey(roundId));
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+function clearLineupDraft(roundId){
+  try{ localStorage.removeItem(lineupDraftKey(roundId)); }catch(e){}
+}
+
 function pickLineupPlayer(roundId, slotIdx, pid){
   if(!lineupPicks[roundId]) lineupPicks[roundId]={};
   lineupPicks[roundId][slotIdx]=pid;
   lineupSaved[roundId]=false;
+  saveLineupDraft(roundId);
   renderPredict();
 }
 
 function removeLineupPick(roundId, slotIdx){
   if(lineupPicks[roundId]) delete lineupPicks[roundId][slotIdx];
   lineupSaved[roundId]=false;
+  saveLineupDraft(roundId);
   const overlay=document.querySelector('.lineup-picker-overlay');
   if(overlay)overlay.remove();
   renderPredict();
@@ -1238,6 +1276,7 @@ function saveLineup(roundId){
   if(!pickedIds.length){ toast('Pick some players first'); return; }
   savePred(roundId, pickedIds);
   lineupSaved[roundId]=true;
+  clearLineupDraft(roundId);
   toast('✓ Lineup saved!');
   renderPredict();
 }

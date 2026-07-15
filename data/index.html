@@ -260,7 +260,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
           <div class="card">
             <div class="card-header">
               <span class="card-title">All Players</span>
-              <button class="btn btn-primary btn-sm" onclick="openModal('modal-create-player')">+ Add Player</button>
+              <button class="btn btn-primary btn-sm" onclick="resetPlayerForm();openModal('modal-create-player')">+ Add Player</button>
             </div>
             <div class="card-body">
               <div class="form-group" style="margin-bottom:12px;">
@@ -283,7 +283,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 <!-- Create Team -->
 <div class="modal-overlay" id="modal-create-player">
   <div class="modal" style="max-width:440px;">
-    <div class="modal-header"><div class="modal-title">Add Player</div><button class="modal-close" onclick="closeModal('modal-create-player')">×</button></div>
+    <div class="modal-header"><div class="modal-title" id="cp-modal-title">Add Player</div><button class="modal-close" onclick="closeModal('modal-create-player')">×</button></div>
     <div class="modal-body">
       <div class="form-group">
         <label class="form-label">Team</label>
@@ -665,6 +665,7 @@ function renderPlayers(){
         <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);">${p.jersey_number?'#'+p.jersey_number+' ':''}${p.full_name}${posLabel?' <span style="font-size:9px;color:var(--accent);background:var(--accent-light);padding:1px 6px;border-radius:8px;font-weight:700;">'+posLabel+'</span>':''}</div>
         <div style="font-size:11px;color:var(--text-3);">${team?team.name:'—'} · ${p.nationality||'—'} · Age ${age}</div>
       </div>
+      <button onclick="editPlayer('${p.id}')" style="background:none;border:none;cursor:pointer;color:var(--text-3);font-size:14px;padding:4px;" title="Edit">✎</button>
       <button onclick="deletePlayer('${p.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:14px;padding:4px;">✕</button>
     </div>`;
   }).join('');
@@ -678,6 +679,39 @@ function populatePlayerTeamDropdown(){
     natSelect.innerHTML=COUNTRIES.map(c=>`<option value="${c}">${c}</option>`).join('');
     natSelect.dataset.populated='1';
   }
+}
+
+let editingPlayerId = null;
+
+function editPlayer(id){
+  const p = players.find(pl=>pl.id===id);
+  if(!p) return;
+  editingPlayerId = id;
+  populatePlayerTeamDropdown();
+  document.getElementById('cp-modal-title').textContent = 'Edit Player';
+  document.getElementById('cp-team').value = p.team_id||'';
+  document.getElementById('cp-name').value = p.full_name||'';
+  document.getElementById('cp-birthday').value = p.birthday||'';
+  document.getElementById('cp-nationality').value = p.nationality||'';
+  document.getElementById('cp-number').value = p.jersey_number??'';
+  document.getElementById('cp-position').value = p.position||'MID';
+  document.getElementById('cp-photo-url').value = p.photo_url||'';
+  document.getElementById('cp-photo').value = '';
+  document.getElementById('cp-submit-btn').textContent = 'Save Changes';
+  openModal('modal-create-player');
+}
+
+function resetPlayerForm(){
+  editingPlayerId = null;
+  document.getElementById('cp-modal-title').textContent = 'Add Player';
+  document.getElementById('cp-submit-btn').textContent = 'Add Player';
+  document.getElementById('cp-name').value='';
+  document.getElementById('cp-birthday').value='';
+  document.getElementById('cp-nationality').value='';
+  document.getElementById('cp-number').value='';
+  document.getElementById('cp-position').value='MID';
+  document.getElementById('cp-photo').value='';
+  document.getElementById('cp-photo-url').value='';
 }
 
 async function createPlayer(){
@@ -694,6 +728,8 @@ async function createPlayer(){
   
   // Handle file upload if provided
   const fileInput=document.getElementById('cp-photo');
+  const isEditing = !!editingPlayerId;
+  const submitLabel = isEditing ? 'Save Changes' : 'Add Player';
   if(fileInput.files.length>0&&!photo_url){
     const btn=document.getElementById('cp-submit-btn');
     btn.disabled=true;btn.textContent='Uploading...';
@@ -704,7 +740,7 @@ async function createPlayer(){
       const {data:upData,error:upErr}=await supa.storage.from('player-photos').upload(path,file,{contentType:file.type});
       if(upErr){
         toast('Photo upload failed: '+upErr.message);
-        btn.disabled=false;btn.textContent='Add Player';
+        btn.disabled=false;btn.textContent=submitLabel;
         // Continue without photo
       } else {
         const {data:urlData}=supa.storage.from('player-photos').getPublicUrl(path);
@@ -712,25 +748,31 @@ async function createPlayer(){
       }
     }catch(e){toast('Photo upload error');console.error(e);}
   }
-  
+
+  if(isEditing){
+    const {data,error}=await supa.from('gw_dm_players').update({team_id,full_name,birthday,nationality,photo_url,jersey_number,position}).eq('id',editingPlayerId).select().single();
+    if(error){toast('Failed: '+error.message);return;}
+    const idx=players.findIndex(p=>p.id===editingPlayerId);
+    if(idx>=0) players[idx]=data;
+    closeModal('modal-create-player');
+    resetPlayerForm();
+    renderPlayers();
+    toast(full_name+' updated');
+    const btn=document.getElementById('cp-submit-btn');
+    btn.disabled=false;btn.textContent='Add Player';
+    return;
+  }
+
   const {data,error}=await supa.from('gw_dm_players').insert({team_id,full_name,birthday,nationality,photo_url,jersey_number,position}).select().single();
   if(error){toast('Failed: '+error.message);return;}
   
   players.push(data);
   closeModal('modal-create-player');
-  document.getElementById('cp-name').value='';
-  document.getElementById('cp-birthday').value='';
-  document.getElementById('cp-nationality').value='';
-  document.getElementById('cp-number').value='';
-  document.getElementById('cp-position').value='MID';
-  document.getElementById('cp-photo').value='';
-  renderPlayers();
-  toast('Player added');
-  document.getElementById('cp-photo-url').value='';
-  const btn=document.getElementById('cp-submit-btn');
-  btn.disabled=false;btn.textContent='Add Player';
+  resetPlayerForm();
   renderPlayers();
   toast(full_name+' added');
+  const btn=document.getElementById('cp-submit-btn');
+  btn.disabled=false;btn.textContent='Add Player';
 }
 
 async function deletePlayer(id){
