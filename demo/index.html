@@ -352,7 +352,7 @@ const COMPS=[
         ]},
     ]},
   {id:'c7',name:'Lineup Predictor',mode:'lineup',color:'#0EA5E9',
-    rounds:[{id:'rl1',label:'vs Arsenal · 30 Aug',status:'open'},{id:'rl2',label:'vs Man City · 14 Sep',status:'upcoming'}]},
+    rounds:[{id:'rl1',label:'vs Arsenal · 30 Aug',status:'open',eventId:'erl_lu1'},{id:'rl2',label:'vs Man City · 14 Sep',status:'upcoming',eventId:'erl_lu2'}]},
   {id:'c6',name:'Soccer Roulette',mode:'roulette',color:'#4F46E5',
     rounds:[
       {id:'rrl-gw3',label:'Gameweek 3',status:'open',eventIds:['erl1','erl2','erl3']},
@@ -385,6 +385,8 @@ const EVENTS={
   e201:{tournament:'Champions League',home:'Real Madrid',away:'Dortmund',homeLogo:lg('Real Madrid'),awayLogo:lg('Dortmund'),kickoff:'17 Sep \u00b7 21:00',sortKey:'2026-09-17T21:00',res:{h:3,a:1}},
   e202:{tournament:'Champions League',home:'Bayern',away:'Inter',homeLogo:lg('Bayern'),awayLogo:lg('Inter'),kickoff:'20 Sep \u00b7 21:00',sortKey:'2026-09-20T21:00',res:{h:2,a:0}},
   e203:{tournament:'Champions League',home:'PSG',away:'Arsenal',homeLogo:lg('PSG'),awayLogo:lg('Arsenal'),kickoff:'01 Oct \u00b7 21:15',sortKey:'2026-10-01T21:15',res:null},
+  erl_lu1:{tournament:'Premier League',home:'Liverpool',away:'Arsenal',homeLogo:lg('Liverpool'),awayLogo:lg('Arsenal'),kickoff:'30 Aug \u00b7 17:30',sortKey:'2026-08-30T17:30',res:null},
+  erl_lu2:{tournament:'Premier League',home:'Liverpool',away:'Man City',homeLogo:lg('Liverpool'),awayLogo:lg('Man City'),kickoff:'14 Sep \u00b7 16:30',sortKey:'2026-09-14T16:30',res:null},
   erl1:{tournament:'Premier League',home:'Arsenal',away:'Chelsea',homeLogo:lg('Arsenal'),awayLogo:lg('Chelsea'),kickoff:'30 Aug \u00b7 15:00',sortKey:'2026-08-30T15:00',res:null},
   erl2:{tournament:'Premier League',home:'Liverpool',away:'Man City',homeLogo:lg('Liverpool'),awayLogo:lg('Man City'),kickoff:'31 Aug \u00b7 16:30',sortKey:'2026-08-31T16:30',res:null},
   erl3:{tournament:'Premier League',home:'Tottenham',away:'Arsenal',homeLogo:lg('Tottenham'),awayLogo:lg('Arsenal'),kickoff:'31 Aug \u00b7 14:00',sortKey:'2026-08-31T14:00',res:null},
@@ -521,7 +523,7 @@ function renderPredict(){
   // Game description + rules button below comp tabs
   const descriptions={score:'Predict the exact score for each match. Points awarded for correct scores, correct team goals, or correct total.',lms:'Pick a winner for each event. Get it wrong and you are eliminated. Last one standing wins.',betting:'Predict multiple markets per match: result, over/under, both teams to score. Points per correct market.',ranking:'Rank teams from highest to lowest expected goals (xG) for the gameweek. Points for each correct position.',roulette:'Spend 100 coins across a score matrix. Straight, split, and corner bets pay out purely on probability — no odds.',lineup:'Pick the starting XI for Liverpool. Earn 3 pts for exact position, 1 pt for correct player in wrong position.'};
   let html=`<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:20px;"><p style="margin:0;font-size:15px;line-height:1.55;color:oklch(0.4 0.01 260);max-width:640px;">${descriptions[comp.mode]||''}</p><button onclick="showRules('${comp.mode}')" style="flex-shrink:0;border:1px solid oklch(0.88 0.006 260);background:#fff;color:oklch(0.35 0.01 260);font-size:13px;font-weight:600;padding:9px 18px;border-radius:10px;cursor:pointer;">Rules</button></div>`;
-  html+=predictSubTab==='predictions'?renderPredictionsPane(comp):renderLeaderboardPane(comp);
+  html+=predictSubTab==='predictions'?renderPredictionsPane(comp):(comp.mode==='lineup'?renderLineupLeaderboardShell(comp):renderLeaderboardPane(comp));
   document.getElementById('predict-content').innerHTML=html;
 }
 function switchPredictSubTab(tab){predictSubTab=tab;renderPredict();}
@@ -529,32 +531,32 @@ function switchPredictSubTab(tab){predictSubTab=tab;renderPredict();}
 
 const LIV_SQUAD = {
   GK: [
-    {id:'liv1',name:'Alisson',no:1},
-    {id:'liv2',name:'Kelleher',no:62},
+    {id:'liv1',name:'Alisson',no:1,nationality:'Brazil'},
+    {id:'liv2',name:'Kelleher',no:62,nationality:'Ireland'},
   ],
   DEF: [
-    {id:'liv3',name:'Alexander-Arnold',no:66},
-    {id:'liv4',name:'Van Dijk',no:4},
-    {id:'liv5',name:'Konaté',no:5},
-    {id:'liv6',name:'Robertson',no:26},
-    {id:'liv7',name:'Gomez',no:2},
-    {id:'liv8',name:'Quansah',no:78},
-    {id:'liv9',name:'Bradley',no:84},
+    {id:'liv3',name:'Alexander-Arnold',no:66,nationality:'England'},
+    {id:'liv4',name:'Van Dijk',no:4,nationality:'Netherlands'},
+    {id:'liv5',name:'Konaté',no:5,nationality:'France'},
+    {id:'liv6',name:'Robertson',no:26,nationality:'Scotland'},
+    {id:'liv7',name:'Gomez',no:2,nationality:'England'},
+    {id:'liv8',name:'Quansah',no:78,nationality:'England'},
+    {id:'liv9',name:'Bradley',no:84,nationality:'England'},
   ],
   MID: [
-    {id:'liv10',name:'Mac Allister',no:10},
-    {id:'liv11',name:'Gravenberch',no:38},
-    {id:'liv12',name:'Jones',no:17},
-    {id:'liv13',name:'Szoboszlai',no:8},
-    {id:'liv14',name:'Elliott',no:19},
-    {id:'liv15',name:'Endo',no:3},
+    {id:'liv10',name:'Mac Allister',no:10,nationality:'Argentina'},
+    {id:'liv11',name:'Gravenberch',no:38,nationality:'Netherlands'},
+    {id:'liv12',name:'Jones',no:17,nationality:'England'},
+    {id:'liv13',name:'Szoboszlai',no:8,nationality:'Hungary'},
+    {id:'liv14',name:'Elliott',no:19,nationality:'England'},
+    {id:'liv15',name:'Endo',no:3,nationality:'Japan'},
   ],
   FWD: [
-    {id:'liv16',name:'Salah',no:11},
-    {id:'liv17',name:'Núñez',no:9},
-    {id:'liv18',name:'Diaz',no:7},
-    {id:'liv19',name:'Gakpo',no:18},
-    {id:'liv20',name:'Jota',no:20},
+    {id:'liv16',name:'Salah',no:11,nationality:'Egypt'},
+    {id:'liv17',name:'Núñez',no:9,nationality:'Uruguay'},
+    {id:'liv18',name:'Diaz',no:7,nationality:'Colombia'},
+    {id:'liv19',name:'Gakpo',no:18,nationality:'Netherlands'},
+    {id:'liv20',name:'Jota',no:20,nationality:'Portugal'},
   ]
 };
 
@@ -619,7 +621,7 @@ function renderLineupPredictor(comp){
   const picks = lineupPicks[round.id]||{};
   const slots = getLineupSlots(lineupFormation);
   const pickCount = Object.keys(picks).length;
-  const roundSelect = comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('');
+  const ev = EVENTS[round.eventId||round.id] || {};
 
   // Score if completed
   let scored = null;
@@ -721,14 +723,43 @@ function renderLineupPredictor(comp){
       <span style="font-family:'DM Mono',monospace;font-size:22px;font-weight:800;color:oklch(0.42 0.12 275);">${scored.pts} <span style="font-size:13px;font-weight:500;">pts · ${scored.correctCount}/11 correct${scored.correctCount===11?' 🎯 +30 bonus!':''}</span></span>
     </div>` : '';
 
+  const fixtureHeader = ev.home ? `
+    <div style="background:#fff;border:1px solid oklch(0.92 0.004 260);border-radius:16px;padding:18px 20px;margin-bottom:16px;">
+      <div style="text-align:center;font-size:10px;font-weight:700;color:oklch(0.58 0.01 260);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px;">${ev.tournament||'Next Fixture'}${ev.kickoff?' · '+ev.kickoff:''}</div>
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;">
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;min-width:0;">
+          <span class="ev-name" style="text-align:right;">${ev.home}</span>
+          ${teamBadge(ev.homeLogo, ev.home)}
+        </div>
+        <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:oklch(0.6 0.01 260);">vs</span>
+        <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+          ${teamBadge(ev.awayLogo, ev.away)}
+          <span class="ev-name">${ev.away}</span>
+        </div>
+      </div>
+    </div>` : '';
+
   return `
     <div style="padding:0 0 30px;">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
-        <select class="round-select" onchange="changeRound(this.value)">${roundSelect}</select>
+      <div class="round-bar">
         <span class="round-status ${round.status==='open'?'open':'upcoming'}">${round.status==='open'?'● Open':'◷ Soon'}</span>
+        <div class="round-bar-spacer"></div>
+        <div class="predict-subtabs">
+          <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Builder</button>
+          <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
+        </div>
+        <div class="predict-subtabs-mobile">
+          <select onchange="switchPredictSubTab(this.value)">
+            <option value="predictions"${predictSubTab==='predictions'?' selected':''}>Builder</option>
+            <option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option>
+          </select>
+        </div>
       </div>
 
-      ${scoreSection}
+      <div style="padding:16px 16px 0;">
+        ${fixtureHeader}
+
+        ${scoreSection}
 
       <!-- Pitch -->
       <div class="pitch-wrap">
@@ -757,6 +788,7 @@ function renderLineupPredictor(comp){
         Select all 11 players to save
       </div>` : ''}
       </div>
+      </div>
     </div>`;
 }
 
@@ -767,17 +799,18 @@ function openLineupPicker(roundId, slotIdx, pos){
   const overlay = document.createElement('div');
   overlay.className = 'lineup-picker-overlay';
   overlay.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;';
-  overlay.onclick=(e)=>{if(e.target===overlay)overlay.remove();};
+  overlay.onclick=(e)=>{if(e.target===overlay)closeLineupPicker();};
+  document.body.style.overflow='hidden';
 
   const byPos = {GK:LIV_SQUAD.GK,DEF:LIV_SQUAD.DEF,MID:LIV_SQUAD.MID,FWD:LIV_SQUAD.FWD};
 
-  let html = `<div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:420px;max-height:70vh;overflow-y:auto;padding:20px 0 32px;">
+  let html = `<div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:420px;max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:20px 0 32px;">
     <div style="padding:0 20px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid oklch(0.92 0.004 260);">
       <div>
         <div style="font-size:11px;font-weight:700;color:oklch(0.58 0.01 260);text-transform:uppercase;letter-spacing:0.5px;">Select player</div>
         <div style="font-size:16px;font-weight:800;color:oklch(0.2 0.01 260);margin-top:2px;">Position: <span style="color:${posColor[pos]};">${pos}</span></div>
       </div>
-      <button onclick="this.closest('.lineup-picker-overlay').remove()" style="background:oklch(0.93 0.006 260);border:none;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;color:oklch(0.4 0.01 260);">×</button>
+      <button onclick="closeLineupPicker()" style="background:oklch(0.93 0.006 260);border:none;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;color:oklch(0.4 0.01 260);">×</button>
     </div>`;
 
   // Remove button if already picked
@@ -789,7 +822,7 @@ function openLineupPicker(roundId, slotIdx, pos){
   const list = byPos[pos]||[];
   list.forEach(pl=>{
     const alreadyUsed = Object.entries(picks).some(([k,v])=>v===pl.id && parseInt(k)!==slotIdx);
-    html+=`<div onclick="${alreadyUsed?'':` pickLineupPlayer('${roundId}',${slotIdx},'${pl.id}');document.querySelector('.lineup-picker-overlay').remove();renderPredict();`}" style="display:flex;align-items:center;gap:12px;padding:10px 20px;cursor:${alreadyUsed?'default':'pointer'};opacity:${alreadyUsed?'0.35':'1'};">
+    html+=`<div onclick="${alreadyUsed?'':` pickLineupPlayer('${roundId}',${slotIdx},'${pl.id}');closeLineupPicker();renderPredict();`}" style="display:flex;align-items:center;gap:12px;padding:10px 20px;cursor:${alreadyUsed?'default':'pointer'};opacity:${alreadyUsed?'0.35':'1'};">
       <div style="width:28px;text-align:center;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:oklch(0.45 0.01 260);flex-shrink:0;">${pl.no!=null&&pl.no!==''?pl.no:'-'}</div>
       <div style="font-size:14px;font-weight:600;color:oklch(0.2 0.01 260);">${pl.name}</div>
       ${alreadyUsed?`<span style="margin-left:auto;font-size:11px;color:oklch(0.6 0.01 260);">Selected</span>`:''}
@@ -810,10 +843,14 @@ function pickLineupPlayer(roundId, slotIdx, pid){
   renderPredict();
 }
 
-function removeLineupPick(roundId, slotIdx){
-  if(lineupPicks[roundId]) delete lineupPicks[roundId][slotIdx];
+function closeLineupPicker(){
   const overlay=document.querySelector('.lineup-picker-overlay');
   if(overlay)overlay.remove();
+  document.body.style.overflow='';
+}
+function removeLineupPick(roundId, slotIdx){
+  if(lineupPicks[roundId]) delete lineupPicks[roundId][slotIdx];
+  closeLineupPicker();
   renderPredict();
 }
 
@@ -1773,17 +1810,28 @@ function submitPreds(){
 }
 
 // ── LEADERBOARD ───────────────────────────────────────────────────────────
-function renderLineupLeaderboard(comp){
+function renderLineupLeaderboardShell(comp){
   const ri=selectedRound[currentCompIdx]??0;
   const round=comp.rounds[ri]||comp.rounds[0];
-  const roundSelect=comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('');
-  let html=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-    <select class="round-select" onchange="changeRound(this.value)">${roundSelect}</select>
-  </div>`;
+  let html=`<div class="round-bar">
+    <span class="round-status ${round?.status==='open'?'open':'upcoming'}">${round?.status==='open'?'● Open':'◷ Soon'}</span>
+    <div class="round-bar-spacer"></div>
+    <div class="predict-subtabs">
+      <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Builder</button>
+      <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
+    </div>
+    <div class="predict-subtabs-mobile">
+      <select onchange="switchPredictSubTab(this.value)">
+        <option value="predictions"${predictSubTab==='predictions'?' selected':''}>Builder</option>
+        <option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option>
+      </select>
+    </div>
+  </div>
+  <div style="padding:16px;">`;
   html+=`<div style="background:#fff;border:1px solid oklch(0.92 0.004 260);border-radius:16px;overflow:hidden;">`;
   LINEUP_LB.forEach((row,i)=>{
     const isMe=row.u==='demo_user';
-    html+=`<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;${i>0?'border-top:1px solid oklch(0.95 0.004 260)':''}${isMe?';background:oklch(0.97 0.01 275)':''};>
+    html+=`<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;${i>0?'border-top:1px solid oklch(0.95 0.004 260);':''}${isMe?'background:oklch(0.97 0.01 275);':''}">
       <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:oklch(0.5 0.01 260);min-width:22px;">${i+1}</span>
       <div style="flex:1;">
         <div style="font-size:14px;font-weight:${isMe?'700':'600'};color:oklch(0.2 0.01 260);">${row.u}${isMe?' 👤':''}</div>
@@ -1792,7 +1840,7 @@ function renderLineupLeaderboard(comp){
       <span style="font-family:'DM Mono',monospace;font-size:16px;font-weight:800;color:oklch(0.42 0.12 275);">${row.pts}pts</span>
     </div>`;
   });
-  html+='</div>';
+  html+='</div></div>';
   return html;
 }
 function renderLeaderboardPane(comp){
