@@ -923,18 +923,18 @@ function renderLineupPredictor(comp){
     const click = isOpen ? `openLineupPicker('${round.id}',${si},'${pos}')` : '';
     if(player){
       const isCorrect = !isOpen && actual && actual.includes(player.id);
-      const borderColor = !isOpen && actual ? (isCorrect ? '#4ade80' : 'rgba(255,255,255,0.4)') : 'rgba(255,255,255,0.9)';
+      const borderColor = !isOpen && actual ? (isCorrect ? '#4ade80' : 'rgba(255,255,255,0.4)') : col;
       const flag = NATIONALITY_FLAGS[player.nationality] || '';
-      return `<div onclick="${click}" style="position:absolute;left:${xPct}%;top:${yPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:${isOpen?'pointer':'default'};z-index:3;width:64px;">
-        <div style="position:relative;width:40px;height:40px;">
-          <div style="width:40px;height:40px;border-radius:50%;background:${col};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:11px;border:2.5px solid ${borderColor};box-shadow:0 2px 8px rgba(0,0,0,0.4);">${player.no}</div>
-          ${flag?`<div style="position:absolute;bottom:-3px;right:-5px;width:18px;height:18px;border-radius:50%;background:#fff;border:1.5px solid rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1;box-shadow:0 1px 3px rgba(0,0,0,0.3);">${flag}</div>`:''}
+      return `<div onclick="${click}" style="position:absolute;left:${xPct}%;top:${yPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:${isOpen?'pointer':'default'};z-index:3;width:80px;">
+        <div style="position:relative;width:52px;height:52px;">
+          <div style="width:52px;height:52px;border-radius:50%;background:${flag?'#fff':col};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:${flag?'26px':'14px'};border:3px solid ${borderColor};box-shadow:0 2px 8px rgba(0,0,0,0.4);">${flag||player.no}</div>
+          ${flag?`<div style="position:absolute;bottom:-3px;right:-5px;min-width:20px;height:20px;padding:0 3px;border-radius:10px;background:${col};color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.3);">${player.no}</div>`:''}
         </div>
-        <div style="background:rgba(0,0,0,0.7);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:999px;white-space:nowrap;max-width:64px;overflow:hidden;text-overflow:ellipsis;text-align:center;">${player.name}</div>
+        <div style="background:rgba(0,0,0,0.7);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:999px;white-space:nowrap;max-width:76px;overflow:hidden;text-overflow:ellipsis;text-align:center;">${player.name}</div>
       </div>`;
     } else {
-      return `<div onclick="${click}" style="position:absolute;left:${xPct}%;top:${yPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:${isOpen?'pointer':'default'};z-index:3;width:48px;">
-        <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px dashed rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.8);font-size:16px;">+</div>
+      return `<div onclick="${click}" style="position:absolute;left:${xPct}%;top:${yPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:${isOpen?'pointer':'default'};z-index:3;width:60px;">
+        <div style="width:47px;height:47px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px dashed rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.8);font-size:18px;">+</div>
         <div style="background:rgba(0,0,0,0.45);color:rgba(255,255,255,0.8);font-size:9px;font-weight:700;padding:2px 5px;border-radius:999px;">${posLabel[pos]}</div>
       </div>`;
     }
@@ -947,37 +947,37 @@ function renderLineupPredictor(comp){
   const isHorizontal = pitchEl ? (pitchEl.offsetWidth > pitchEl.offsetHeight) : window.innerWidth >= 560;
 
   function calcPositions(){
-    const f = FORMATIONS[lineupFormation]||FORMATIONS['4-3-3'];
-    const positions = [];
-    let slotIdx = 0;
-    if(isHorizontal){
-      // Horizontal: GK left (x=8%), FWD right (x=75%)
-      const xMap = {GK:8, DEF:26, MID:52, FWD:76};
-      ['GK','DEF','MID','FWD'].forEach(pos => {
-        const count = f[pos];
-        const x = xMap[pos];
-        for(let i=0;i<count;i++){
-          const spacing = 90/(count+1);
-          const y = 5 + spacing*(i+1);
-          positions.push({si:slotIdx, pos, x, y});
-          slotIdx++;
-        }
-      });
-    } else {
-      // Vertical: GK bottom (y=88%), FWD top (y=8%)
-      const yMap = {GK:88, DEF:68, MID:45, FWD:18};
-      ['GK','DEF','MID','FWD'].forEach(pos => {
-        const count = f[pos];
-        const y = yMap[pos];
-        for(let i=0;i<count;i++){
-          const spacing = 80/(count+1);
-          const x = 10 + spacing*(i+1);
-          positions.push({si:slotIdx, pos, x, y});
-          slotIdx++;
-        }
-      });
-    }
-    return positions;
+    // Only 4-2-3-1 exists now, so use an explicit shape matching a real 4-2-3-1
+    // (fullbacks pushed wider/higher than centre-backs, DM+CM pair centrally,
+    // AM flanked by wingers, lone striker up top) rather than generic even-spacing.
+    const LAYOUT_H = [
+      {pos:'GK',  x:10, y:50}, // GK
+      {pos:'DEF', x:30, y:14}, // LB
+      {pos:'DEF', x:24, y:34}, // CB
+      {pos:'DEF', x:24, y:65}, // CB
+      {pos:'DEF', x:30, y:86}, // RB
+      {pos:'MID', x:47, y:37}, // DM
+      {pos:'MID', x:47, y:62}, // CM
+      {pos:'MID', x:63, y:50}, // AM
+      {pos:'MID', x:63, y:21}, // LW
+      {pos:'MID', x:63, y:79}, // RW
+      {pos:'FWD', x:79, y:50}, // CF
+    ];
+    const LAYOUT_V = [
+      {pos:'GK',  x:50, y:90}, // GK
+      {pos:'DEF', x:14, y:70}, // LB
+      {pos:'DEF', x:34, y:76}, // CB
+      {pos:'DEF', x:66, y:76}, // CB
+      {pos:'DEF', x:86, y:70}, // RB
+      {pos:'MID', x:37, y:53}, // DM
+      {pos:'MID', x:63, y:53}, // CM
+      {pos:'MID', x:50, y:37}, // AM
+      {pos:'MID', x:21, y:37}, // LW
+      {pos:'MID', x:79, y:37}, // RW
+      {pos:'FWD', x:50, y:21}, // CF
+    ];
+    const layout = isHorizontal ? LAYOUT_H : LAYOUT_V;
+    return layout.map((s,i)=>({si:i, pos:s.pos, x:s.x, y:s.y}));
   }
 
   const positions = calcPositions();
@@ -1029,15 +1029,11 @@ function renderLineupPredictor(comp){
 
       <div style="padding:16px 16px 0;">
         ${fixtureHeader}
-        <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
-          <span style="font-size:12px;color:oklch(0.5 0.01 260);font-weight:600;">${pickCount}/11 selected</span>
-        </div>
 
         ${scoreSection}
 
         <!-- Pitch -->
         <div class="pitch-wrap" style="position:relative;">
-          <span style="position:absolute;top:10px;right:10px;z-index:5;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;padding:6px 10px;border-radius:8px;background:rgba(0,0,0,0.55);color:#fff;">4-2-3-1</span>
         <div class="lineup-pitch-container">
           <!-- Pitch markings -->
           <div style="position:absolute;inset:0;">
