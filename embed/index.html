@@ -373,7 +373,9 @@ async function buildCompsFromRealData(){
       EVENTS[ev.id] = {
         home: home?.name||ev.home_id, away: away?.name||ev.away_id,
         homeLogo: home?.logo||'', awayLogo: away?.logo||'',
-        kickoff: fmtKickoff(ev.kickoff), kickoffRaw: ev.kickoff||null, res: hasResult?ev.result:null
+        homeId: ev.home_id, awayId: ev.away_id,
+        kickoff: fmtKickoff(ev.kickoff), kickoffRaw: ev.kickoff||null, res: hasResult?ev.result:null,
+        lineup: ev.lineup||null
       };
       EVENTS_RAW[ev.id] = hasResult?ev.result:null;
     });
@@ -862,11 +864,6 @@ const FORMATIONS = {
   '4-2-3-1': {GK:1,DEF:4,MID:5,FWD:1}, // 2 CDM + 3 AM = 5 midfielders, 11 total
 };
 
-// Actual result for scoring
-const LIV_ACTUAL_XI = {
-  'rl1': ['liv1','liv3','liv4','liv5','liv6','liv10','liv11','liv13','liv16','liv17','liv18'],
-};
-
 let lineupPicks = {}; // roundId -> {slotIdx -> playerId}
 let lineupFormation = '4-2-3-1';
 
@@ -897,7 +894,13 @@ function renderLineupPredictor(comp){
 
   // Score if completed
   let scored = null;
-  const actual = LIV_ACTUAL_XI[round.id];
+  const ev = EVENTS[round.eventId||round.id] || {};
+  const teamId = comp.lineupConfig?.teamId;
+  let actual = null;
+  if(ev && ev.lineup && teamId){
+    if(ev.homeId===teamId) actual = ev.lineup.home||null;
+    else if(ev.awayId===teamId) actual = ev.lineup.away||null;
+  }
   if(!isOpen && actual && pickCount===11){
     const pickedIds = Object.values(picks);
     let pts = 0;
@@ -995,7 +998,6 @@ function renderLineupPredictor(comp){
       <span style="font-family:'DM Mono',monospace;font-size:22px;font-weight:800;color:oklch(0.42 0.12 275);">${scored.pts} <span style="font-size:13px;font-weight:500;">pts · ${scored.correctCount}/11 correct${scored.correctCount===11?' 🎯 +30 bonus!':''}</span></span>
     </div>` : '';
 
-  const ev = EVENTS[round.eventId] || {};
   const fixtureHeader = ev.home ? `
     <div style="background:#fff;border:1px solid oklch(0.92 0.004 260);border-radius:16px;padding:18px 20px;margin-bottom:16px;">
       <div style="text-align:center;font-size:10px;font-weight:700;color:oklch(0.58 0.01 260);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px;">${ev.tournament||'Next Fixture'}${ev.kickoff?' · '+ev.kickoff:''}</div>
@@ -1106,10 +1108,16 @@ async function loadAndRenderLineupLeaderboard(comp){
       return;
     }
 
-    // Actual starting XI isn't captured anywhere yet (no admin input for it), so
-    // accuracy/points can't be computed for real fixtures — show '-' until that
-    // data source exists. Every user who saved a lineup still appears, regardless.
-    const actualXI = round.actualXI || null;
+    // The Data Manager's "Enter Result" wizard lets admins mark the actual
+    // starting XI for both teams (gw_dm_events.lineup = {home:[...],away:[...]}).
+    // Pick whichever side matches this competition's configured team.
+    const ev = EVENTS[round.eventId||round.id];
+    const teamId = comp.lineupConfig?.teamId;
+    let actualXI = null;
+    if(ev && ev.lineup && teamId){
+      if(ev.homeId===teamId) actualXI = ev.lineup.home||null;
+      else if(ev.awayId===teamId) actualXI = ev.lineup.away||null;
+    }
 
     const rows = allPreds.map(p=>{
       const uname = p.username || p.player_id;
