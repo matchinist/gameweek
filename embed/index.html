@@ -105,7 +105,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
   .rank-row-mobile{display:none !important;}
 }
 .rank-item.dragging{opacity:0.5;background:var(--accent-light) !important;border-color:var(--accent) !important;transform:scale(0.98);}
-.rank-item.drag-over{border-top:3px solid var(--accent) !important;margin-top:-2px;}
+.rank-item.drag-over{background:var(--accent-light) !important;border:2px solid var(--accent) !important;}
 .rank-item .drag-handle{cursor:grab;}
 .rank-item:active .drag-handle{cursor:grabbing;}
 .lb-week-row{padding:14px 16px 0;}
@@ -267,7 +267,7 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .predict-tournament-label{font-size:10px;font-weight:600;background:var(--bg);border:1px solid var(--border);color:var(--text-2);padding:3px 9px;border-radius:12px;white-space:nowrap;}
 .rank-item{-webkit-user-select:none;user-select:none;}
 .rank-item.dragging{opacity:0.5;background:var(--accent-light) !important;border-color:var(--accent) !important;transform:scale(0.98);}
-.rank-item.drag-over{border-top:3px solid var(--accent) !important;margin-top:-2px;}
+.rank-item.drag-over{background:var(--accent-light) !important;border:2px solid var(--accent) !important;}
 #toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--text);color:white;font-family:var(--mono);font-size:11px;padding:9px 18px;border-radius:6px;z-index:999;transition:transform 0.25s ease,opacity 0.25s ease;pointer-events:none;white-space:nowrap;opacity:0;}
 #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}.pitch-wrap{width:100%;}
 .pitch-midline{position:absolute;top:0;bottom:0;left:50%;width:1px;background:rgba(255,255,255,0.2);}
@@ -1372,7 +1372,7 @@ function renderPredictionsPane(comp){
     const budget=comp.fantasyConfig?.budget||50000;
 
     // Roster section
-    html+=`<div style="padding:12px 8px;">`;
+    html+=`<div style="padding:0 8px 12px;">`;
     html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px 10px;">
       <div><span style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text-3);">BUDGET</span>
         <span style="font-family:var(--mono);font-size:13px;font-weight:800;color:${totalSpent<=budget?'var(--green)':'var(--red)'};margin-left:6px;">$${(budget-totalSpent).toLocaleString()} left</span></div>
@@ -1464,7 +1464,7 @@ function renderPredictionsPane(comp){
       if(correctCount===teams.length)totalPts+=(comp.rankingConfig?.perfectBonus||5);
     }
 
-    html+=`<div style="padding:12px 8px;">`;
+    html+=`<div style="padding:0 8px 12px;">`;
     if(isCompleted&&actualOrder){
       html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 8px 12px;">
         <span style="font-size:13px;font-weight:700;color:var(--text);">Your prediction vs Actual (${comp.rankingConfig?.metric||'xG'})</span>
@@ -1491,8 +1491,7 @@ function renderPredictionsPane(comp){
       });
       if(correctCount===teams.length) html+=`<div style="text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--green);padding:8px;">🎯 Perfect ranking! +${comp.rankingConfig?.perfectBonus||5} bonus pts</div>`;
     } else if(isOpen && !(round.deadline && new Date(round.deadline).getTime()<=Date.now())){
-      html+=`<div style="padding:8px 8px 12px;font-size:13px;color:var(--text);font-weight:700;">Drag teams to sort from <strong>highest</strong> to <strong>lowest</strong> expected ${comp.rankingConfig?.metric||'xG'}</div>`;
-      html+=`<div id="ranking-list" data-roundid="${round.id}">`;
+            html+=`<div id="ranking-list" data-roundid="${round.id}">`;
       userOrder.forEach((tid,i)=>{
         const t=teamMap[tid];
         html+=`<div class="rank-item" data-tid="${tid}" draggable="true" style="display:flex;align-items:center;gap:6px;padding:8px;margin-bottom:4px;background:var(--white);border-radius:8px;border:1px solid var(--border);cursor:grab;user-select:none;touch-action:none;-webkit-user-select:none;">
@@ -1906,17 +1905,39 @@ function initDragSort(){
   const list=document.getElementById('ranking-list');
   if(!list)return;
   const roundId=list.dataset.roundid;
-  let dragItem=null, startY=0, itemH=0;
+  let dragItem=null, itemH=0;
   // The row currently highlighted as the drop target, and whether the
   // dragged item would land before or after it. Nothing actually moves
   // until the user releases — dragging only highlights a candidate slot.
-  let dropTarget=null, dropAfter=false;
+  // dropTarget is "sticky": once set it only changes when another row
+  // clearly overlaps more, so release always has something valid to commit.
+  let dropTarget=null;
+  const OVERLAP_THRESHOLD=0.15; // don't switch target until ~15% covered
+
+  function clearHighlights(){
+    list.querySelectorAll('.rank-item.drag-over').forEach(el=>el.classList.remove('drag-over'));
+  }
 
   function commitReorder(){
+    // A genuine swap of the two rows' positions — whatever is highlighted
+    // when the user releases always actually changes places with the
+    // dragged row, regardless of exactly where in that row they let go.
     if(dragItem && dropTarget && dropTarget!==dragItem){
-      list.insertBefore(dragItem, dropAfter ? dropTarget.nextSibling : dropTarget);
+      const dragNext=dragItem.nextSibling;
+      const dropNext=dropTarget.nextSibling;
+      if(dragNext===dropTarget){
+        list.insertBefore(dropTarget,dragItem);
+      } else if(dropNext===dragItem){
+        list.insertBefore(dragItem,dropTarget);
+      } else {
+        const marker=document.createComment('');
+        list.insertBefore(marker,dragItem);
+        list.insertBefore(dragItem,dropNext);
+        list.insertBefore(dropTarget,marker);
+        marker.remove();
+      }
     }
-    list.querySelectorAll('.rank-item').forEach(el=>el.classList.remove('drag-over'));
+    clearHighlights();
     renumberRankItems(list);
     const newOrder=[...list.querySelectorAll('.rank-item')].map(el=>el.dataset.tid);
     preds[roundId+'_ranking']=newOrder;
@@ -1926,25 +1947,34 @@ function initDragSort(){
     dropTarget=null;
   }
 
+  // Picks whichever row has the greatest overlap with a virtual box the same
+  // height as the dragged row, centered on the pointer. Only switches to a
+  // new target once overlap clears the threshold, and never un-highlights
+  // to nothing — the last valid target stays sticky until a better one wins.
   function updateDropTarget(clientY){
     const items=[...list.querySelectorAll('.rank-item')];
-    items.forEach(it=>it.classList.remove('drag-over'));
-    for(const it of items){
-      if(it===dragItem)continue;
+    const others=items.filter(it=>it!==dragItem);
+    if(!others.length)return;
+    const h=itemH||others[0].getBoundingClientRect().height;
+    const dragTop=clientY-h/2, dragBottom=clientY+h/2;
+
+    let best=null, bestPct=0;
+    others.forEach(it=>{
       const rect=it.getBoundingClientRect();
-      const mid=rect.top+rect.height/2;
-      if(clientY<mid){
-        dropTarget=it; dropAfter=false;
-        it.classList.add('drag-over');
-        return;
-      }
+      const overlapTop=Math.max(dragTop,rect.top);
+      const overlapBottom=Math.min(dragBottom,rect.bottom);
+      const overlapH=Math.max(0,overlapBottom-overlapTop);
+      const pct=rect.height>0?overlapH/rect.height:0;
+      if(pct>bestPct){ bestPct=pct; best=it; }
+    });
+
+    if(best && bestPct>=OVERLAP_THRESHOLD){
+      dropTarget=best;
     }
-    // Below every other row — highlight the last one as an "insert after" target
-    const last=items[items.length-1];
-    if(last && last!==dragItem){
-      dropTarget=last; dropAfter=true;
-      last.classList.add('drag-over');
-    }
+    // else: below threshold everywhere — keep the previous dropTarget as-is
+
+    clearHighlights();
+    if(dropTarget) dropTarget.classList.add('drag-over');
   }
 
   list.querySelectorAll('.rank-item').forEach(item=>{
@@ -1961,8 +1991,8 @@ function initDragSort(){
       holdTimer=setTimeout(()=>{
         if(holdCancelled)return;
         dragItem=item;
-        startY=touchStartY;
         itemH=item.offsetHeight;
+        dropTarget=null;
         item.classList.add('dragging');
         item.style.zIndex='100';
       },HOLD_MS);
@@ -1984,6 +2014,8 @@ function initDragSort(){
     // Mouse drag
     item.addEventListener('dragstart',e=>{
       dragItem=item;
+      itemH=item.offsetHeight;
+      dropTarget=null;
       e.dataTransfer.effectAllowed='move';
       setTimeout(()=>item.classList.add('dragging'),0);
     });
@@ -1994,7 +2026,7 @@ function initDragSort(){
     });
     item.addEventListener('dragover',e=>{
       e.preventDefault();
-      if(!dragItem||dragItem===item)return;
+      if(!dragItem)return;
       updateDropTarget(e.clientY);
     });
   });
@@ -2423,7 +2455,7 @@ function renderPredictionsPane(comp){
       totalPts=correctCount*(comp.rankingConfig?.pointsPerCorrect||2);
       if(correctCount===teams.length)totalPts+=(comp.rankingConfig?.perfectBonus||5);
     }
-    html+=`<div style="padding:12px 8px;">`;
+    html+=`<div style="padding:0 8px 12px;">`;
     if(isCompleted&&actualOrder){
       html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 8px 12px;"><span style="font-size:13px;font-weight:700;color:var(--text);">Your prediction vs Actual (${comp.rankingConfig?.metric||'xG'})</span><span style="font-family:var(--mono);font-size:14px;font-weight:800;color:${correctCount===teams.length?'var(--green)':'var(--accent)'};">${totalPts} pts</span></div>`;
       userOrder.forEach((tid,i)=>{
@@ -2433,8 +2465,7 @@ function renderPredictionsPane(comp){
     } else {
     const rankingCanPredict = isOpen && !lockedByTime;
     if(rankingCanPredict){
-      html+=`<div style="padding:8px 8px 12px;font-size:13px;color:var(--text);font-weight:700;">Drag teams to sort from highest to lowest expected ${comp.rankingConfig?.metric||'xG'}</div>`;
-      html+=`<div id="ranking-list" data-roundid="${round.id}">`;
+            html+=`<div id="ranking-list" data-roundid="${round.id}">`;
       userOrder.forEach((tid,i)=>{
         const t=teamMap[tid];
         html+=rankRowHTML(t, i, {draggable:true});
