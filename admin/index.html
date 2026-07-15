@@ -857,10 +857,6 @@ tbody tr:hover td{background:var(--bg);}
             <option value="">— select team —</option>
           </select>
         </div>
-        <div style="background:oklch(0.97 0.01 275);border:1px solid oklch(0.88 0.05 275/0.5);border-radius:8px;padding:14px;margin-top:4px;">
-          <div style="font-size:12px;font-weight:700;color:oklch(0.45 0.15 275);margin-bottom:6px;">ℹ️ No rounds needed</div>
-          <div style="font-size:12px;color:oklch(0.4 0.01 260);line-height:1.6;">The Lineup Predictor automatically pulls the team's next fixture from your Data Manager. Users can start predicting immediately — no rounds to create or manage. New matches appear automatically.</div>
-        </div>
       <!-- Roulette config -->
       <div id="roulette-config" style="display:none;">
         <div class="divider"></div>
@@ -2575,6 +2571,8 @@ function initOperatorChrome(){
     id:c.id, name:c.name, mode:c.mode, color:c.color, status:c.status,
     longTerm:c.long_term, scoring:c.scoring, markets:c.markets,
     rankingConfig:c.ranking_config||null,
+    lineupConfig:c.lineup_config||null,
+    rouletteConfig:c.roulette_config||null,
     overallPrizes:c.overall_prizes||null,
     users:c.users, predictions:c.predictions,
     rounds: (rounds||[]).filter(r=>r.competition_id===c.id).map(r=>({
