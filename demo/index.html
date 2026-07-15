@@ -650,11 +650,9 @@ function renderLineupPredictor(comp){
       const isCorrect = !isOpen && actual && actual.includes(player.id);
       const borderColor = !isOpen && actual ? (isCorrect ? '#4ade80' : 'rgba(255,255,255,0.4)') : col;
       const flag = NATIONALITY_FLAGS[player.nationality] || '';
+      const inner = flag || (player.no!=null && player.no!=='' ? player.no : '');
       return `<div onclick="${click}" style="position:absolute;left:${xPct}%;top:${yPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:${isOpen?'pointer':'default'};z-index:3;width:80px;">
-        <div style="position:relative;width:52px;height:52px;">
-          <div style="width:52px;height:52px;border-radius:50%;background:${flag?'#fff':col};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:${flag?'26px':'14px'};border:3px solid ${borderColor};box-shadow:0 2px 8px rgba(0,0,0,0.4);">${flag||player.no}</div>
-          ${flag?`<div style="position:absolute;bottom:-3px;right:-5px;min-width:20px;height:20px;padding:0 3px;border-radius:10px;background:${col};color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.3);">${player.no}</div>`:''}
-        </div>
+        <div style="width:52px;height:52px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;color:#000;font-weight:800;font-size:${flag?'26px':'15px'};border:1.5px solid ${borderColor};box-shadow:0 2px 8px rgba(0,0,0,0.4);">${inner}</div>
         <div style="background:rgba(0,0,0,0.7);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:999px;white-space:nowrap;max-width:76px;overflow:hidden;text-overflow:ellipsis;text-align:center;">${player.name}</div>
       </div>`;
     } else {
@@ -694,12 +692,13 @@ function renderLineupPredictor(comp){
       {pos:'DEF', x:34, y:76}, // CB
       {pos:'DEF', x:66, y:76}, // CB
       {pos:'DEF', x:86, y:70}, // RB
-      {pos:'MID', x:37, y:53}, // DM
-      {pos:'MID', x:63, y:53}, // CM
-      {pos:'MID', x:50, y:37}, // AM
-      {pos:'MID', x:21, y:37}, // LW
-      {pos:'MID', x:79, y:37}, // RW
-      {pos:'FWD', x:50, y:21}, // CF
+      // 2-3-1 bands pushed further forward with equal spacing between them
+      {pos:'MID', x:37, y:48}, // DM
+      {pos:'MID', x:63, y:48}, // CM
+      {pos:'MID', x:50, y:27}, // AM
+      {pos:'MID', x:21, y:27}, // LW
+      {pos:'MID', x:79, y:27}, // RW
+      {pos:'FWD', x:50, y:6},  // CF — pushed close to the top edge
     ];
     const layout = isHorizontal ? LAYOUT_H : LAYOUT_V;
     return layout.map((s,i)=>({si:i, pos:s.pos, x:s.x, y:s.y}));
@@ -770,7 +769,7 @@ function openLineupPicker(roundId, slotIdx, pos){
   // Show suggested position first but allow all
   const ordered = [...(byPos[pos]||[]), ...Object.entries(byPos).filter(([p])=>p!==pos).flatMap(([,arr])=>arr)];
 
-  let html = `<div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:860px;max-height:70vh;overflow-y:auto;padding:20px 0 32px;">
+  let html = `<div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:420px;max-height:70vh;overflow-y:auto;padding:20px 0 32px;">
     <div style="padding:0 20px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid oklch(0.92 0.004 260);">
       <div>
         <div style="font-size:11px;font-weight:700;color:oklch(0.58 0.01 260);text-transform:uppercase;letter-spacing:0.5px;">Select player</div>
