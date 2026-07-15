@@ -1565,25 +1565,25 @@ function renderEventCard(ev,comp,isRoundOpen){
   const canPredict=isRoundOpen&&!hasRes&&!isLocked;
   const hasPred=comp.mode==='score'?(pred&&pred.h!==undefined&&pred.a!==undefined):comp.mode==='betting'?(pred&&typeof pred==='object'&&Object.keys(pred).length>0):(pred!==null&&pred!==undefined);
 
-  let correct=null,earnedPts=null,pointsBreakdown='';
+  let correct=null,earnedPts=null,pointsBreakdown='',bettingMarketDetails=null;
   if(hasRes&&hasPred){
     if(comp.mode==='lms'){const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';correct=pred===actual;}
     else if(comp.mode==='score'){[earnedPts,pointsBreakdown]=scorePoints(pred,ev.res,comp.scoring);correct=earnedPts>0;}
     else if(comp.mode==='betting'&&typeof pred==='object'){
       earnedPts=0;
-      const marketResults=[];
+      bettingMarketDetails=[];
       (comp.markets||[]).forEach(mkt=>{
-        const pick=pred[mkt.type]; if(!pick) return;
+        const pick=pred[mkt.type];
         let actualM=null;
         if(mkt.type==='1x2') actualM = ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
         else if(mkt.type==='ou25') actualM = (ev.res.h+ev.res.a)>2.5?'O':'U';
         else if(mkt.type==='btts') actualM = (ev.res.h>0&&ev.res.a>0)?'Y':'N';
-        const isRight = pick===actualM;
-        if(isRight) earnedPts+=(mkt.points||0);
-        marketResults.push(mkt.label+(isRight?' \u2713':' \u2717'));
+        const isRight = !!pick && pick===actualM;
+        const pts = isRight ? (mkt.points||0) : 0;
+        if(isRight) earnedPts+=pts;
+        bettingMarketDetails.push({mkt,pick,pts,isRight});
       });
       correct=earnedPts>0;
-      pointsBreakdown=marketResults.join(' \u00b7 ');
     }
   }
 
@@ -1650,9 +1650,23 @@ function renderEventCard(ev,comp,isRoundOpen){
       pl=Object.entries(pred).map(([k,v])=>k.toUpperCase()+': '+v).join(' · ');
     }
 
-    if(hasRes&&(comp.mode==='score'||comp.mode==='betting')&&earnedPts!=null){
+    if(hasRes&&comp.mode==='score'&&earnedPts!=null){
       html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div><span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'✗ 0 pts'}</span></div>`;
       if(pointsBreakdown)html+=`<div style="font-size:12px;color:${earnedPts>0?'var(--green)':'var(--text-3)'};margin-top:4px;font-weight:600;">${pointsBreakdown}</div>`;
+    } else if(hasRes&&comp.mode==='betting'&&bettingMarketDetails){
+      html+='<div style="display:flex;flex-direction:column;gap:8px;">';
+      bettingMarketDetails.forEach(({mkt,pick,pts,isRight})=>{
+        html+=`<div><div style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);display:flex;justify-content:space-between;align-items:center;">
+          <span>${mkt.label}</span>
+          <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:800;color:${isRight?'var(--green)':'var(--text-3)'};">+${pts} pts</span>
+        </div>`;
+        if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${pick==='H'?' selected home':''}" disabled>Home Win</button><button class="btn-1x2${pick==='D'?' selected draw':''}" disabled>X</button><button class="btn-1x2${pick==='A'?' selected away':''}" disabled>Away</button></div>`;
+        else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='O'?' selected':''}" disabled>Over</button><button class="btn-ou under${pick==='U'?' selected':''}" disabled>Under</button></div>`;
+        else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='Y'?' selected':''}" disabled>Yes</button><button class="btn-ou under${pick==='N'?' selected':''}" disabled>No</button></div>`;
+        html+='</div>';
+      });
+      html+=`<div style="text-align:right;font-family:'DM Mono',monospace;font-size:15px;font-weight:800;color:${earnedPts>0?'var(--green)':'var(--text-3)'};padding-top:6px;border-top:1px solid oklch(0.92 0.004 260);">Total: ${earnedPts>0?'+':''}${earnedPts} pts</div>`;
+      html+='</div>';
     } else if(hasRes&&correct!=null){
       html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div><span class="pred-correct ${correct?'yes':'no'}">${correct?'\u2713 Correct':'\u2717 Wrong'}</span></div>`;
       if(comp.mode==='lms'&&ev._survivorCount!==undefined){
@@ -2334,25 +2348,25 @@ function renderEventCard(ev,comp,isOpen){
   const canPredict=isOpen&&!hasRes&&!isLocked;
   const hasPred=comp.mode==='score'?(pred&&pred.h!==undefined&&pred.a!==undefined):comp.mode==='betting'?(pred&&typeof pred==='object'&&Object.keys(pred).length>0):(pred!==null&&pred!==undefined);
 
-  let correct=null,earnedPts=null,pointsBreakdown='';
+  let correct=null,earnedPts=null,pointsBreakdown='',bettingMarketDetails=null;
   if(hasRes&&hasPred){
     if(comp.mode==='lms'){const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';correct=pred===actual;}
     else if(comp.mode==='score'){[earnedPts,pointsBreakdown]=scorePoints(pred,ev.res,comp.scoring);correct=earnedPts>0;}
     else if(comp.mode==='betting'&&typeof pred==='object'){
       earnedPts=0;
-      const marketResults=[];
+      bettingMarketDetails=[];
       (comp.markets||[]).forEach(mkt=>{
-        const pick=pred[mkt.type]; if(!pick) return;
+        const pick=pred[mkt.type];
         let actualM=null;
         if(mkt.type==='1x2') actualM = ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
         else if(mkt.type==='ou25') actualM = (ev.res.h+ev.res.a)>2.5?'O':'U';
         else if(mkt.type==='btts') actualM = (ev.res.h>0&&ev.res.a>0)?'Y':'N';
-        const isRight = pick===actualM;
-        if(isRight) earnedPts+=(mkt.points||0);
-        marketResults.push(mkt.label+(isRight?' \u2713':' \u2717'));
+        const isRight = !!pick && pick===actualM;
+        const pts = isRight ? (mkt.points||0) : 0;
+        if(isRight) earnedPts+=pts;
+        bettingMarketDetails.push({mkt,pick,pts,isRight});
       });
       correct=earnedPts>0;
-      pointsBreakdown=marketResults.join(' \u00b7 ');
     }
   }
 
@@ -2404,9 +2418,23 @@ function renderEventCard(ev,comp,isOpen){
     else if(comp.mode==='score')pl=(pred.h??'-')+' \u2013 '+(pred.a??'-');
     else if(comp.mode==='betting'&&typeof pred==='object')pl=Object.entries(pred).map(([k,v])=>k.toUpperCase()+': '+v).join(' \u00b7 ');
 
-    if(hasRes&&(comp.mode==='score'||comp.mode==='betting')&&earnedPts!=null){
+    if(hasRes&&comp.mode==='score'&&earnedPts!=null){
       html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div><span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'\u2717 0 pts'}</span></div>`;
       if(pointsBreakdown)html+=`<div style="font-size:12px;color:${earnedPts>0?'var(--green)':'var(--text-3)'};margin-top:4px;font-weight:600;">${pointsBreakdown}</div>`;
+    } else if(hasRes&&comp.mode==='betting'&&bettingMarketDetails){
+      html+='<div style="display:flex;flex-direction:column;gap:8px;">';
+      bettingMarketDetails.forEach(({mkt,pick,pts,isRight})=>{
+        html+=`<div><div style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);display:flex;justify-content:space-between;align-items:center;">
+          <span>${mkt.label}</span>
+          <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:800;color:${isRight?'var(--green)':'var(--text-3)'};">+${pts} pts</span>
+        </div>`;
+        if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${pick==='H'?' selected home':''}" disabled>Home Win</button><button class="btn-1x2${pick==='D'?' selected draw':''}" disabled>X</button><button class="btn-1x2${pick==='A'?' selected away':''}" disabled>Away</button></div>`;
+        else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='O'?' selected':''}" disabled>Over</button><button class="btn-ou under${pick==='U'?' selected':''}" disabled>Under</button></div>`;
+        else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='Y'?' selected':''}" disabled>Yes</button><button class="btn-ou under${pick==='N'?' selected':''}" disabled>No</button></div>`;
+        html+='</div>';
+      });
+      html+=`<div style="text-align:right;font-family:'DM Mono',monospace;font-size:15px;font-weight:800;color:${earnedPts>0?'var(--green)':'var(--text-3)'};padding-top:6px;border-top:1px solid oklch(0.92 0.004 260);">Total: ${earnedPts>0?'+':''}${earnedPts} pts</div>`;
+      html+='</div>';
     } else if(hasRes&&correct!=null){
       html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div><span class="pred-correct ${correct?'yes':'no'}">${correct?'\u2713 Correct':'\u2717 Wrong'}</span></div>`;
       if(comp.mode==='lms'&&ev._survivorCount!==undefined){
