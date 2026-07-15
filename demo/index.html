@@ -1436,7 +1436,7 @@ function rankRowHTML(t, idx, opts){
 
   return `<div class="rank-item" data-tid="${t.id}" ${draggable?'draggable="true"':''} style="position:relative;background:${showResult?(isCorrect?'var(--green-light)':'var(--white)'):'var(--white)'};border:1px solid ${showResult&&isCorrect?'var(--green)':'var(--border)'};border-radius:14px;box-shadow:0 1px 2px rgba(20,20,50,0.05);margin-bottom:8px;overflow:hidden;${draggable?'cursor:grab;user-select:none;-webkit-user-select:none;':''}">
     <div class="rank-row-desktop" style="padding:12px 14px;align-items:center;gap:12px;grid-template-columns:auto 1fr auto;">
-      <div style="display:flex;align-items:center;gap:10px;"><div style="font-family:var(--mono);font-weight:800;font-size:15px;color:var(--text);min-width:20px;text-align:center;">${idx+1}</div>${dragHandle}</div>
+      <div style="display:flex;align-items:center;gap:10px;"><div class="rank-num" style="font-family:var(--mono);font-weight:800;font-size:15px;color:var(--text);min-width:20px;text-align:center;">${idx+1}</div>${dragHandle}</div>
       <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;min-width:0;">
         <div style="display:flex;justify-content:flex-end;min-width:0;">${homePill}</div>
         <div style="font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text-3);">${prep}</div>
@@ -1446,7 +1446,7 @@ function rankRowHTML(t, idx, opts){
     </div>
     <div class="rank-row-mobile" style="padding:10px 12px;align-items:center;gap:10px;">
       <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;">
-        <div style="font-family:var(--mono);font-weight:800;font-size:15px;color:var(--text);">${idx+1}</div>
+        <div class="rank-num" style="font-family:var(--mono);font-weight:800;font-size:15px;color:var(--text);">${idx+1}</div>
         ${dragHandle}
       </div>
       <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;">
@@ -1469,11 +1469,58 @@ function rankRowHTML(t, idx, opts){
   </div>`;
 }
 
+function renumberRankItems(list){
+  // Numbers reflect whichever slot a row currently sits in — recomputed fresh
+  // from DOM order, never carried along with a team as it moves.
+  list.querySelectorAll('.rank-item').forEach((el,i)=>{
+    el.querySelectorAll('.rank-num').forEach(num=>{ num.textContent=(i+1); });
+  });
+}
+
 function initDragSort(){
   const list=document.getElementById('ranking-list');
   if(!list)return;
   const roundId=list.dataset.roundid;
-  let dragItem=null, placeholder=null, startY=0, itemH=0;
+  let dragItem=null, startY=0, itemH=0;
+  // The row currently highlighted as the drop target, and whether the
+  // dragged item would land before or after it. Nothing actually moves
+  // until the user releases — dragging only highlights a candidate slot.
+  let dropTarget=null, dropAfter=false;
+
+  function commitReorder(){
+    if(dragItem && dropTarget && dropTarget!==dragItem){
+      list.insertBefore(dragItem, dropAfter ? dropTarget.nextSibling : dropTarget);
+    }
+    list.querySelectorAll('.rank-item').forEach(el=>el.classList.remove('drag-over'));
+    renumberRankItems(list);
+    const newOrder=[...list.querySelectorAll('.rank-item')].map(el=>el.dataset.tid);
+    preds[roundId+'_ranking']=newOrder;
+    predsDirty=true;
+    const btn=document.querySelector('.submit-preds-btn');
+    if(btn){btn.classList.remove('disabled');}
+    dropTarget=null;
+  }
+
+  function updateDropTarget(clientY){
+    const items=[...list.querySelectorAll('.rank-item')];
+    items.forEach(it=>it.classList.remove('drag-over'));
+    for(const it of items){
+      if(it===dragItem)continue;
+      const rect=it.getBoundingClientRect();
+      const mid=rect.top+rect.height/2;
+      if(clientY<mid){
+        dropTarget=it; dropAfter=false;
+        it.classList.add('drag-over');
+        return;
+      }
+    }
+    // Below every other row — highlight the last one as an "insert after" target
+    const last=items[items.length-1];
+    if(last && last!==dragItem){
+      dropTarget=last; dropAfter=true;
+      last.classList.add('drag-over');
+    }
+  }
 
   list.querySelectorAll('.rank-item').forEach(item=>{
     // Touch events — drag can start anywhere on the row, but only activates
@@ -1517,69 +1564,35 @@ function initDragSort(){
     });
     item.addEventListener('dragend',()=>{
       if(dragItem){dragItem.classList.remove('dragging');}
+      commitReorder();
       dragItem=null;
     });
     item.addEventListener('dragover',e=>{
       e.preventDefault();
       if(!dragItem||dragItem===item)return;
-      const rect=item.getBoundingClientRect();
-      const mid=rect.top+rect.height/2;
-      if(e.clientY<mid)list.insertBefore(dragItem,item);
-      else list.insertBefore(dragItem,item.nextSibling);
+      updateDropTarget(e.clientY);
     });
   });
 
-  // Touch move/end on list
+  // Touch move/end on list — highlight only, no live reordering
   list.addEventListener('touchmove',e=>{
     if(!dragItem)return;
     e.preventDefault();
-    const touch=e.touches[0];
-    const items=[...list.querySelectorAll('.rank-item')];
-    items.forEach(it=>it.classList.remove('drag-over'));
-    for(const it of items){
-      if(it===dragItem)continue;
-      const rect=it.getBoundingClientRect();
-      const mid=rect.top+rect.height/2;
-      if(touch.clientY<mid){
-        it.classList.add('drag-over');
-        list.insertBefore(dragItem,it);
-        break;
-      }
-      if(it===items[items.length-1])list.appendChild(dragItem);
-    }
+    updateDropTarget(e.touches[0].clientY);
   },{passive:false});
 
   list.addEventListener('touchend',()=>{
     if(!dragItem)return;
     dragItem.classList.remove('dragging');
     dragItem.style.zIndex='';
-    list.querySelectorAll('.rank-item').forEach(el=>el.classList.remove('drag-over'));
+    commitReorder();
     dragItem=null;
-    // Save new order
-    const newOrder=[...list.querySelectorAll('.rank-item')].map(el=>el.dataset.tid);
-    preds[roundId+'_ranking']=newOrder;
-    predsDirty=true;
-    const btn=document.querySelector('.submit-preds-btn');
-    if(btn){btn.classList.remove('disabled');}
-    // Update rank numbers
-    list.querySelectorAll('.rank-item').forEach((el,i)=>{
-      const num=el.querySelector('span:nth-child(2)');
-      if(num)num.textContent='#'+(i+1);
-    });
   });
 
   list.addEventListener('drop',e=>{
     e.preventDefault();
     if(dragItem){dragItem.classList.remove('dragging');}
-    const newOrder=[...list.querySelectorAll('.rank-item')].map(el=>el.dataset.tid);
-    preds[roundId+'_ranking']=newOrder;
-    predsDirty=true;
-    const sbtn=document.querySelector('.submit-preds-btn');
-    if(sbtn){sbtn.classList.remove('disabled');}
-    list.querySelectorAll('.rank-item').forEach((el,i)=>{
-      const num=el.querySelector('span:nth-child(2)');
-      if(num)num.textContent='#'+(i+1);
-    });
+    commitReorder();
     dragItem=null;
   });
 }
