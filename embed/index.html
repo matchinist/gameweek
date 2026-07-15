@@ -1839,7 +1839,7 @@ function rankRowHTML(t, idx, opts){
     return `<div style="display:inline-flex;align-items:center;gap:${isTarget?'10px':'7px'};padding:${isTarget?'6px 12px':'3px 2px'};${isTarget?'background:var(--accent-light);border:1.5px solid var(--accent);border-radius:12px;':'opacity:0.75;'}">${inner}</div>`;
   }
 
-  const dragHandle = draggable ? `<span class="drag-handle" style="display:flex;flex-direction:column;gap:3px;cursor:grab;flex-shrink:0;">
+  const dragHandle = draggable ? `<span class="drag-handle" style="display:flex;flex-direction:column;gap:3px;cursor:grab;flex-shrink:0;padding:8px;margin:-8px;touch-action:none;user-select:none;-webkit-user-select:none;">
     <span style="width:14px;height:2px;border-radius:2px;background:var(--border);"></span>
     <span style="width:14px;height:2px;border-radius:2px;background:var(--border);"></span>
     <span style="width:14px;height:2px;border-radius:2px;background:var(--border);"></span>
@@ -1859,9 +1859,9 @@ function rankRowHTML(t, idx, opts){
   const homePill = isHome ? pill(t,true,true) : pill({id:'opp',name:oppName,logo:oppLogo},false,true);
   const awayPill = isHome ? pill({id:'opp',name:oppName,logo:oppLogo},false,false) : pill(t,true,false);
 
-  return `<div class="rank-item" data-tid="${t.id}" ${draggable?'draggable="true"':''} style="position:relative;background:${showResult?(isCorrect?'var(--green-light)':'var(--white)'):'var(--white)'};border:1px solid ${showResult&&isCorrect?'var(--green)':'var(--border)'};border-radius:14px;box-shadow:0 1px 2px rgba(20,20,50,0.05);margin-bottom:8px;overflow:hidden;${draggable?'cursor:grab;user-select:none;touch-action:none;-webkit-user-select:none;':''}">
+  return `<div class="rank-item" data-tid="${t.id}" ${draggable?'draggable="true"':''} style="position:relative;background:${showResult?(isCorrect?'var(--green-light)':'var(--white)'):'var(--white)'};border:1px solid ${showResult&&isCorrect?'var(--green)':'var(--border)'};border-radius:14px;box-shadow:0 1px 2px rgba(20,20,50,0.05);margin-bottom:8px;overflow:hidden;">
     <div class="rank-row-desktop" style="padding:12px 14px;align-items:center;gap:12px;grid-template-columns:auto 1fr auto;">
-      <div style="display:flex;align-items:center;gap:10px;">${dragHandle}<div style="font-family:var(--mono);font-weight:800;font-size:15px;color:${rankColor};min-width:24px;text-align:center;">#${idx+1}</div></div>
+      <div style="display:flex;align-items:center;gap:10px;">${dragHandle}</div>
       <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;min-width:0;">
         <div style="display:flex;justify-content:flex-end;min-width:0;">${homePill}</div>
         <div style="font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text-3);">${prep}</div>
@@ -1871,7 +1871,7 @@ function rankRowHTML(t, idx, opts){
     </div>
     <div class="rank-row-mobile" style="padding:10px 12px;align-items:center;gap:10px;">
       <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;">
-        <div style="font-family:var(--mono);font-weight:800;font-size:15px;color:${rankColor};">#${idx+1}</div>
+        
         ${dragHandle}
       </div>
       <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;">
@@ -1901,18 +1901,23 @@ function initDragSort(){
   let dragItem=null, placeholder=null, startY=0, itemH=0;
 
   list.querySelectorAll('.rank-item').forEach(item=>{
-    // Touch events
-    item.addEventListener('touchstart',e=>{
-      dragItem=item;
-      startY=e.touches[0].clientY;
-      itemH=item.offsetHeight;
-      item.classList.add('dragging');
-      item.style.zIndex='100';
-      e.preventDefault();
-    },{passive:false});
+    // Touch events — only start a drag if the touch began on the handle,
+    // so the rest of the row remains normal, scrollable content on mobile.
+    const handle=item.querySelector('.drag-handle');
+    if(handle){
+      handle.addEventListener('touchstart',e=>{
+        dragItem=item;
+        startY=e.touches[0].clientY;
+        itemH=item.offsetHeight;
+        item.classList.add('dragging');
+        item.style.zIndex='100';
+        e.preventDefault();
+      },{passive:false});
+    }
 
-    // Mouse drag
+    // Mouse drag — also only initiate from the handle
     item.addEventListener('dragstart',e=>{
+      if(handle && !handle.contains(e.target)){ e.preventDefault(); return; }
       dragItem=item;
       e.dataTransfer.effectAllowed='move';
       setTimeout(()=>item.classList.add('dragging'),0);
