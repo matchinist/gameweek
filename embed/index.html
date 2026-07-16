@@ -2518,10 +2518,10 @@ function renderPredictionsPane(comp){
     html+=`<div class="deadline-banner" style="background:var(--bg);color:var(--text-2);">🔒 Predictions locked${statusHtml}</div>`;
   }
 
-  // LMS summary bars above events (participants vs survivors)
-  if(comp.mode==='lms'&&events.length){
-    html+=renderLMSSummaryBars(comp,round,events);
-  }
+  // (LMS summary bars — participants vs survivors overview — planned but not
+  // yet implemented; removing the call here since it referenced a function
+  // that was never defined, which crashed the entire LMS predictions render
+  // whenever a round actually had events in it.)
 
 
   // ── RANKING MODE ────────────────────────────────────────────────────────
