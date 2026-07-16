@@ -477,7 +477,21 @@ function parseKickoffMs(s){
     const day=parseInt(m[1]), monStr=m[2], hh=parseInt(m[3]), mm=parseInt(m[4]);
     const months={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
     const mon = months[monStr]; if(mon==null) return null;
-    const d = new Date(Date.UTC(2026, mon, day, hh, mm));
+    // This string has no year (e.g. a display-formatted fallback), so infer one:
+    // try the current year first, and if that lands more than ~90 days in the
+    // past, assume it actually means next year's occurrence. A hardcoded year
+    // here previously caused any far-future event without a proper ISO kickoff
+    // to be silently treated as already past and locked.
+    // A kickoff being parsed here is, by definition, meant to represent an
+    // upcoming fixture (used to compute a future lock time) — so if the
+    // current-year interpretation already falls in the past at all, this
+    // almost certainly means next year's occurrence, not a stale one.
+    const now = new Date();
+    let year = now.getFullYear();
+    let d = new Date(Date.UTC(year, mon, day, hh, mm));
+    if(d.getTime() < now.getTime()){
+      d = new Date(Date.UTC(year+1, mon, day, hh, mm));
+    }
     return d.getTime();
   }
   const t = new Date(s).getTime();
@@ -748,7 +762,7 @@ function renderLineupPredictor(comp){
         </div>
       </div>` : '';
 
-  const countdownBanner = (isOpen && lineupLockAt) ? `<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;Lineup locks in <span id="countdown-text">Calculating...</span></div>` : '';
+  const countdownBanner = (isOpen && lineupLockAt) ? `<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;<span id="countdown-text">Calculating...</span> until lineup locks</div>` : '';
   if(isOpen && lineupLockAt) setTimeout(()=>startCountdown(lineupLockAt,()=>renderPredict()),50);
 
   return `
@@ -928,13 +942,13 @@ function renderPredictionsPane(comp){
 
   if(comp.mode==='score'){
     if(isOpen&&nextScoreLock){
-      html+=`<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;Predictions lock in <span id="countdown-text">Calculating...</span></div>`;
+      html+=`<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;<span id="countdown-text">Calculating...</span> until predictions lock</div>`;
       setTimeout(()=>startCountdown(nextScoreLock._scoreLockAt,()=>renderPredict()),50);
     } else if(isOpen&&events.length&&events.every(ev=>ev.res||(ev._scoreLockAt!=null&&ev._scoreLockAt<=Date.now()))){
       html+=`<div class="deadline-banner" style="background:var(--bg);color:var(--text-2);">🔒 All predictions locked</div>`;
     }
   } else if(isOpen&&round.deadline){
-    html+=`<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;<span id="countdown-text">Calculating...</span></div>`;
+    html+=`<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;<span id="countdown-text">Calculating...</span> until predictions lock</div>`;
     setTimeout(()=>startCountdown(round.deadline),50);
   }
   if(!isOpen&&comp.mode==='lms'){
