@@ -417,10 +417,15 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
       <div class="modal-title" id="score-modal-title">Enter Result</div>
       <button class="modal-close" onclick="closeModal('modal-score-entry')">×</button>
     </div>
+    <div style="display:flex;gap:4px;padding:0 20px;border-bottom:1px solid var(--border);">
+      <button class="btn btn-ghost btn-sm score-tab-btn" id="score-tab-btn-result" onclick="switchScoreTab('result')" style="border-radius:8px 8px 0 0;border-bottom:2px solid var(--accent);color:var(--text);font-weight:700;">Result</button>
+      <button class="btn btn-ghost btn-sm score-tab-btn" id="score-tab-btn-lineups" onclick="switchScoreTab('lineups')" style="border-radius:8px 8px 0 0;border-bottom:2px solid transparent;color:var(--text-3);font-weight:600;">Lineups</button>
+      <button class="btn btn-ghost btn-sm score-tab-btn" id="score-tab-btn-scorers" onclick="switchScoreTab('scorers')" style="border-radius:8px 8px 0 0;border-bottom:2px solid transparent;color:var(--text-3);font-weight:600;">Scorers</button>
+    </div>
     <div class="modal-body">
       <input type="hidden" id="score-modal-eid">
 
-      <!-- STEP 1: Score / Status / xG / Shots -->
+      <!-- RESULT TAB -->
       <div id="score-step-1" style="max-width:340px;margin:0 auto;">
         <div class="form-group">
           <label class="form-label">Kickoff Date & Time</label>
@@ -439,14 +444,14 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
             <label class="form-label" id="score-modal-home-label" style="text-align:center;">Home</label>
             <input class="form-input" type="number" id="score-modal-h" min="0" max="30" placeholder="—"
               style="text-align:center;font-family:var(--mono);font-size:28px;font-weight:700;padding:8px;width:80px;"
-              onkeydown="if(event.key==='Enter')goScoreStep(2)">
+              onkeydown="if(event.key==='Enter')saveResultTab()">
           </div>
           <div style="font-family:var(--mono);font-size:22px;color:var(--text-3);font-weight:700;padding-top:22px;">–</div>
           <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
             <label class="form-label" id="score-modal-away-label" style="text-align:center;">Away</label>
             <input class="form-input" type="number" id="score-modal-a" min="0" max="30" placeholder="—"
               style="text-align:center;font-family:var(--mono);font-size:28px;font-weight:700;padding:8px;width:80px;"
-              onkeydown="if(event.key==='Enter')goScoreStep(2)">
+              onkeydown="if(event.key==='Enter')saveResultTab()">
           </div>
         </div>
         <div class="divider" style="margin:8px 0;"></div>
@@ -476,7 +481,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
         </div>
       </div>
 
-      <!-- STEP 2: Lineups -->
+      <!-- LINEUPS TAB -->
       <div id="score-step-2" style="display:none;">
         <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;">Starting Lineups</div>
         <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;">Tap players to add or remove them from the starting XI.</div>
@@ -492,10 +497,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
         </div>
       </div>
 
-      <!-- STEP 3: Goal Scorers -->
+      <!-- SCORERS TAB -->
       <div id="score-step-3" style="display:none;max-width:420px;margin:0 auto;">
         <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;">Goal Scorers</div>
-        <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;">Add scorers in order — player and minute. Only starting XI players from Step 2 are selectable.</div>
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;">Add scorers in order — player and minute. Only starting XI players from the Lineups tab are selectable.</div>
         <div style="display:flex;gap:8px;margin-bottom:12px;">
           <select class="form-select" id="scorer-player" style="flex:2;"></select>
           <input class="form-input" type="number" id="scorer-minute" min="1" max="120" placeholder="Min" style="flex:0 0 70px;text-align:center;">
@@ -509,15 +514,15 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
       <button class="btn btn-ghost" id="score-step1-clear" onclick="clearScore()" style="color:var(--red);">Clear Result</button>
       <div style="display:flex;gap:6px;" id="score-step1-actions">
         <button class="btn btn-ghost" onclick="closeModal('modal-score-entry')">Cancel</button>
-        <button class="btn btn-primary" onclick="goScoreStep(2)">Next: Lineups →</button>
+        <button class="btn btn-primary" id="score-save-btn" onclick="saveResultTab()">Save Result</button>
       </div>
       <div style="display:flex;gap:6px;display:none;" id="score-step2-actions">
-        <button class="btn btn-ghost" onclick="goScoreStep(1)">← Back</button>
-        <button class="btn btn-primary" onclick="goScoreStep(3)">Next: Scorers →</button>
+        <button class="btn btn-ghost" onclick="closeModal('modal-score-entry')">Cancel</button>
+        <button class="btn btn-primary" id="lineups-save-btn" onclick="saveLineupsTab()">Save Lineups</button>
       </div>
       <div style="display:flex;gap:6px;display:none;" id="score-step3-actions">
-        <button class="btn btn-ghost" onclick="goScoreStep(2)">← Back</button>
-        <button class="btn btn-primary" id="score-save-btn" onclick="saveScore()">Save Result</button>
+        <button class="btn btn-ghost" onclick="closeModal('modal-score-entry')">Cancel</button>
+        <button class="btn btn-primary" id="scorers-save-btn" onclick="saveScorersTab()">Save Scorers</button>
       </div>
     </div>
   </div>
@@ -1177,19 +1182,28 @@ function openScoreModal(eid){
   scoreLineup={home:(ev.lineup?.home||[]).slice(),away:(ev.lineup?.away||[]).slice()};
   scoreScorers=(ev.scorers||[]).slice();
 
-  goScoreStep(1);
+  switchScoreTab('result');
   document.getElementById('modal-score-entry').classList.add('open');
   setTimeout(()=>document.getElementById('score-modal-h').focus(),80);
 }
 
-function goScoreStep(step){
+function switchScoreTab(tab){
+  const stepOf={result:1,lineups:2,scorers:3}[tab];
   [1,2,3].forEach(s=>{
-    document.getElementById('score-step-'+s).style.display=(s===step?'block':'none');
-    document.getElementById('score-step'+s+'-actions').style.display=(s===step?'flex':'none');
+    document.getElementById('score-step-'+s).style.display=(s===stepOf?'block':'none');
+    document.getElementById('score-step'+s+'-actions').style.display=(s===stepOf?'flex':'none');
   });
-  document.getElementById('score-step1-clear').style.display=(step===1?'block':'none');
-  if(step===2)renderLineupPitches();
-  if(step===3)renderScorerControls();
+  document.getElementById('score-step1-clear').style.display=(stepOf===1?'block':'none');
+  ['result','lineups','scorers'].forEach(t=>{
+    const btn=document.getElementById('score-tab-btn-'+t);
+    if(!btn)return;
+    const active=t===tab;
+    btn.style.borderBottom=active?'2px solid var(--accent)':'2px solid transparent';
+    btn.style.color=active?'var(--text)':'var(--text-3)';
+    btn.style.fontWeight=active?'700':'600';
+  });
+  if(tab==='lineups')renderLineupPitches();
+  if(tab==='scorers')renderScorerControls();
 }
 
 function renderLineupPitches(){
@@ -1288,7 +1302,7 @@ function renderScorersList(){
     </div>`).join('');
 }
 
-async function saveScore(){
+async function saveResultTab(){
   const eid=document.getElementById('score-modal-eid').value;
   const h=document.getElementById('score-modal-h').value;
   const a=document.getElementById('score-modal-a').value;
@@ -1316,27 +1330,55 @@ async function saveScore(){
   } else {
     ev.result=null;
   }
-  ev.lineup=(scoreLineup.home.length||scoreLineup.away.length)?{home:scoreLineup.home,away:scoreLineup.away}:null;
-  ev.scorers=scoreScorers.length?scoreScorers:null;
 
   const btn=document.getElementById('score-save-btn');
   if(btn){btn.disabled=true;btn.textContent='Saving...';}
   const ok = await save(); // wait for the actual Supabase write before doing anything else —
-                 // closing/toasting before this resolves risks the edit being lost
-                 // if the user refreshes right after (this was the root cause of
-                 // edits appearing to save but reverting after a page reload).
+                 // reporting success before this resolves risks the edit being lost
+                 // if the user refreshes right after.
   if(btn){btn.disabled=false;btn.textContent='Save Result';}
 
   if(!ok){
     // save() already showed its own "Save failed" toast — stop here rather
-    // than closing the modal and claiming success on top of that failure.
+    // than claiming success on top of that failure.
     return;
   }
 
-  closeModal('modal-score-entry');
   const el=document.getElementById('evmini-'+eid);
   if(el)el.outerHTML=renderEventMini(eid);
   toast(status==='completed'?`Result saved: ${h}–${a}`:'Status updated: '+status);
+}
+
+async function saveLineupsTab(){
+  const eid=document.getElementById('score-modal-eid').value;
+  const ev=S.events[eid];if(!ev)return;
+  ev.lineup=(scoreLineup.home.length||scoreLineup.away.length)?{home:scoreLineup.home,away:scoreLineup.away}:null;
+
+  const btn=document.getElementById('lineups-save-btn');
+  if(btn){btn.disabled=true;btn.textContent='Saving...';}
+  const ok = await save();
+  if(btn){btn.disabled=false;btn.textContent='Save Lineups';}
+  if(!ok)return;
+
+  const el=document.getElementById('evmini-'+eid);
+  if(el)el.outerHTML=renderEventMini(eid);
+  toast('Lineups saved');
+}
+
+async function saveScorersTab(){
+  const eid=document.getElementById('score-modal-eid').value;
+  const ev=S.events[eid];if(!ev)return;
+  ev.scorers=scoreScorers.length?scoreScorers:null;
+
+  const btn=document.getElementById('scorers-save-btn');
+  if(btn){btn.disabled=true;btn.textContent='Saving...';}
+  const ok = await save();
+  if(btn){btn.disabled=false;btn.textContent='Save Scorers';}
+  if(!ok)return;
+
+  const el=document.getElementById('evmini-'+eid);
+  if(el)el.outerHTML=renderEventMini(eid);
+  toast('Scorers saved');
 }
 
 async function clearScore(){
