@@ -1706,42 +1706,41 @@ function rlBoardHTML(eventId){
     </div>
 
     <div style="max-width:420px;margin:0 auto;">
-      <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px 2px;text-align:center;">Match markets <span style="font-weight:400;text-transform:none;">— hover to preview matching scores</span></div>
       <div style="display:flex;gap:8px;margin-bottom:16px;">
         <div style="flex:1;display:flex;flex-direction:column;gap:5px;">
-          <div style="font-size:10px;color:var(--text-3);text-align:center;font-weight:600;">Both Teams to Score</div>
+          <div style="font-size:10px;color:var(--text-2);text-align:center;font-weight:600;">Both Teams to Score (Pays x2)</div>
           <div style="display:flex;gap:6px;">
             <div id="rlbtts_Y" onclick="rlAddChip('rlbtts_Y')" onmouseenter="rlPreviewHighlight('rlbtts_Y')" onmouseleave="rlHighlightGrid()" style="flex:1;position:relative;text-align:center;padding:9px 4px;border-radius:8px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">
               <span id="rlminus_rlbtts_Y" onclick="event.stopPropagation();rlRemoveChip('rlbtts_Y')" style="position:absolute;top:-7px;right:-7px;width:17px;height:17px;border-radius:50%;background:var(--red);color:white;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;z-index:6;">−</span>
-              Yes <span style="color:var(--text-3);font-size:10px;">×3</span>
+              Yes
               <div id="rlchip_rlbtts_Y" style="display:none;margin-top:3px;font-family:var(--mono);font-size:11px;font-weight:700;color:white;background:var(--accent);border-radius:6px;padding:1px 6px;"></div>
             </div>
             <div id="rlbtts_N" onclick="rlAddChip('rlbtts_N')" onmouseenter="rlPreviewHighlight('rlbtts_N')" onmouseleave="rlHighlightGrid()" style="flex:1;position:relative;text-align:center;padding:9px 4px;border-radius:8px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">
               <span id="rlminus_rlbtts_N" onclick="event.stopPropagation();rlRemoveChip('rlbtts_N')" style="position:absolute;top:-7px;right:-7px;width:17px;height:17px;border-radius:50%;background:var(--red);color:white;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;z-index:6;">−</span>
-              No <span style="color:var(--text-3);font-size:10px;">×3</span>
+              No
               <div id="rlchip_rlbtts_N" style="display:none;margin-top:3px;font-family:var(--mono);font-size:11px;font-weight:700;color:white;background:var(--accent);border-radius:6px;padding:1px 6px;"></div>
             </div>
           </div>
         </div>
         <div style="flex:1;display:flex;flex-direction:column;gap:5px;">
-          <div style="font-size:10px;color:var(--text-3);text-align:center;font-weight:600;">Over/Under 2.5 Goals</div>
+          <div style="font-size:10px;color:var(--text-2);text-align:center;font-weight:600;">Over/Under 2.5 Goals (Pays x2)</div>
           <div style="display:flex;gap:6px;">
             <div id="rlou_O" onclick="rlAddChip('rlou_O')" onmouseenter="rlPreviewHighlight('rlou_O')" onmouseleave="rlHighlightGrid()" style="flex:1;position:relative;text-align:center;padding:9px 4px;border-radius:8px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">
               <span id="rlminus_rlou_O" onclick="event.stopPropagation();rlRemoveChip('rlou_O')" style="position:absolute;top:-7px;right:-7px;width:17px;height:17px;border-radius:50%;background:var(--red);color:white;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;z-index:6;">−</span>
-              Over <span style="color:var(--text-3);font-size:10px;">×3</span>
+              Over
               <div id="rlchip_rlou_O" style="display:none;margin-top:3px;font-family:var(--mono);font-size:11px;font-weight:700;color:white;background:var(--accent);border-radius:6px;padding:1px 6px;"></div>
             </div>
             <div id="rlou_U" onclick="rlAddChip('rlou_U')" onmouseenter="rlPreviewHighlight('rlou_U')" onmouseleave="rlHighlightGrid()" style="flex:1;position:relative;text-align:center;padding:9px 4px;border-radius:8px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">
               <span id="rlminus_rlou_U" onclick="event.stopPropagation();rlRemoveChip('rlou_U')" style="position:absolute;top:-7px;right:-7px;width:17px;height:17px;border-radius:50%;background:var(--red);color:white;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;z-index:6;">−</span>
-              Under <span style="color:var(--text-3);font-size:10px;">×3</span>
+              Under
               <div id="rlchip_rlou_U" style="display:none;margin-top:3px;font-family:var(--mono);font-size:11px;font-weight:700;color:white;background:var(--accent);border-radius:6px;padding:1px 6px;"></div>
             </div>
           </div>
         </div>
       </div>
 
-      <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 10px 2px;text-align:center;">
-        Correct score <span style="font-weight:400;text-transform:none;">— tap a score to place a bet</span>
+      <div style="font-size:11px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 10px 2px;text-align:center;">
+        Correct score (Pays x16 for correct answer)
       </div>
       <div id="rl-scale-outer" style="width:100%;overflow:hidden;display:flex;justify-content:center;">
       <div id="rl-scale-inner" style="width:fit-content;flex-shrink:0;transform-origin:top center;">
@@ -1800,17 +1799,16 @@ function initRouletteBoard(){
       div.style.cssText=`position:relative;border-radius:12px;border:1px solid var(--border);background:${bg};display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;user-select:none;transition:transform .1s,outline .15s,box-shadow .15s;`;
       div.onclick=()=>rlAddChip(id);
       div.innerHTML=`<span id="rlminus_${id}" onclick="event.stopPropagation();rlRemoveChip('${id}')" style="position:absolute;top:-7px;right:-7px;width:19px;height:19px;border-radius:50%;background:var(--red);color:white;font-size:12px;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;z-index:6;">−</span>
-        <span style="font-family:var(--mono);font-size:9px;color:var(--text-3);position:absolute;top:6px;right:7px;">×16</span>
         <span style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);">${rlScoreLabel(r,c)}</span>
         <span id="rlchip_${id}" style="display:none;margin-top:5px;font-family:var(--mono);font-size:12px;font-weight:700;color:white;background:var(--accent);border-radius:8px;padding:2px 9px;min-width:24px;text-align:center;"></span>`;
       gridEl.appendChild(div);
       rlMeta[id]={label:rlScoreLabel(r,c)+' correct score',mult:16,type:'SCORE'};
     }
   }
-  rlMeta['rlbtts_Y']={label:'Both teams to score: Yes',mult:3,type:'MARKET'};
-  rlMeta['rlbtts_N']={label:'Both teams to score: No',mult:3,type:'MARKET'};
-  rlMeta['rlou_O']={label:'Over 2.5 goals',mult:3,type:'MARKET'};
-  rlMeta['rlou_U']={label:'Under 2.5 goals',mult:3,type:'MARKET'};
+  rlMeta['rlbtts_Y']={label:'Both teams to score: Yes',mult:2,type:'MARKET'};
+  rlMeta['rlbtts_N']={label:'Both teams to score: No',mult:2,type:'MARKET'};
+  rlMeta['rlou_O']={label:'Over 2.5 goals',mult:2,type:'MARKET'};
+  rlMeta['rlou_U']={label:'Under 2.5 goals',mult:2,type:'MARKET'};
 
   Object.keys(rlMeta).forEach(rlRender);
   rlUpdateFooter();
