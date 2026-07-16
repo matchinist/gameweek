@@ -916,7 +916,7 @@ function renderPredictionsPane(comp){
     if(upcoming.length) nextScoreLock=upcoming[0];
   }
   let eliminatedAtIdx=-1;
-  if(comp.mode==='lms'&&!isOpen){
+  if(comp.mode==='lms'){
     for(let i=0;i<events.length;i++){
       const p=preds[events[i].id];
       if(events[i].res&&p){const actual=events[i].res.h>events[i].res.a?'H':events[i].res.h<events[i].res.a?'A':'D';if(p!==actual){eliminatedAtIdx=i;break;}}
@@ -940,7 +940,11 @@ function renderPredictionsPane(comp){
     </div>
   </div>`;
 
-  if(comp.mode==='score'){
+  if(comp.mode==='lms'&&eliminatedAtIdx>=0){
+    // Eliminated — shows immediately rather than waiting for the whole round
+    // to finish, and takes priority over the generic countdown below.
+    html+=`<div class="deadline-banner" style="background:var(--bg);color:var(--text-2);">🔒 You've been eliminated <span style="color:var(--red);font-weight:700;"> · ✗ You failed!</span></div>`;
+  } else if(comp.mode==='score'){
     if(isOpen&&nextScoreLock){
       html+=`<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;<span id="countdown-text">Calculating...</span> until predictions lock</div>`;
       setTimeout(()=>startCountdown(nextScoreLock._scoreLockAt,()=>renderPredict()),50);
@@ -950,20 +954,7 @@ function renderPredictionsPane(comp){
   } else if(isOpen&&round.deadline){
     html+=`<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;<span id="countdown-text">Calculating...</span> until predictions lock</div>`;
     setTimeout(()=>startCountdown(round.deadline),50);
-  }
-  if(!isOpen&&comp.mode==='lms'){
-    let userAlive=true;
-    events.filter(ev=>ev.res).forEach(ev=>{
-      if(!userAlive)return;
-      const p=preds[ev.id];
-      if(!p){userAlive=false;return;}
-      const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
-      if(p!==actual)userAlive=false;
-    });
-    const statusHtml=events.some(ev=>ev.res)?(userAlive?'<span style="color:var(--green);font-weight:700;"> · ✓ You survived!</span>':'<span style="color:var(--red);font-weight:700;"> · ✗ You failed!</span>'):'';
-    html+=`<div class="deadline-banner" style="background:var(--bg);color:var(--text-2);">🔒 Predictions locked${statusHtml}</div>`;
-  }
-  if(!isOpen&&comp.mode==='lms'){
+  } else if(!isOpen&&comp.mode==='lms'){
     let userStatus='';
     const resultedEvs=events.filter(ev=>ev.res);
     if(resultedEvs.length){
@@ -1239,7 +1230,7 @@ function renderEventCard(ev,comp,isRoundOpen){
   }
 
   let cls='event-card';
-  if(canPredict&&hasPred)cls+=' predicted';
+  if(canPredict&&hasPred&&comp.mode!=='lms')cls+=' predicted';
   if(!canPredict)cls+=' locked-pred';
 
   const hv=(pred&&pred.h!==undefined)?pred.h:'';

@@ -1762,7 +1762,7 @@ function renderEventCard(ev,comp,isRoundOpen){
   }
 
   let cls='event-card';
-  if(canPredict&&hasPred)cls+=' predicted';
+  if(canPredict&&hasPred&&comp.mode!=='lms')cls+=' predicted';
   if(!canPredict)cls+=' locked-pred';
 
   const hv=(pred&&pred.h!==undefined)?pred.h:'';
@@ -2467,21 +2467,32 @@ function renderPredictionsPane(comp){
     const upcoming=events.filter(ev=>!ev.res&&ev._scoreLockAt!=null&&ev._scoreLockAt>nowTs).sort((a,b)=>a._scoreLockAt-b._scoreLockAt);
     if(upcoming.length) nextScoreLock=upcoming[0];
   }
+  if(comp.mode==='lms'){
+    // Each event locks 1 hour before its OWN kickoff — a surviving player
+    // should be able to keep predicting later events in a multi-week round
+    // even after an earlier event in that same round has already kicked off.
+    events.forEach(ev=>{
+      const raw=ev.kickoffRaw||ev.kickoff;
+      const ko=parseKickoffMs(raw);
+      ev._lmsLockAt = ko!=null ? ko-3600000 : null;
+    });
+  }
 
   let eliminatedAtIdx=-1;
   if(comp.mode==='lms'){
     events.sort((a,b)=>new Date(a.kickoffRaw||0)-new Date(b.kickoffRaw||0));
-    if(!isOpen){
-      for(let i=0;i<events.length;i++){
-        const ev=events[i], p=preds[ev.id];
-        if(ev.res&&p){ const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D'; if(p!==actual){ eliminatedAtIdx=i; break; } }
-      }
+    // Checked regardless of whether the whole round is "complete" — a user is
+    // eliminated the moment any one of their resulted picks was wrong, not
+    // only once every event in the round has been resulted.
+    for(let i=0;i<events.length;i++){
+      const ev=events[i], p=preds[ev.id];
+      if(ev.res&&p){ const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D'; if(p!==actual){ eliminatedAtIdx=i; break; } }
     }
   }
 
   // ALL MODES: open immediately, lock 1 hour before the first event's kick-off
   let lockedByTime=false, timeLockAt=null;
-  if(isOpen&&events.length){
+  if(isOpen&&events.length&&comp.mode!=='lms'){
     const kickoffTimes=events.map(e=>e.kickoffRaw?new Date(e.kickoffRaw).getTime():null).filter(Boolean);
     if(kickoffTimes.length){
       const firstKickoff=Math.min(...kickoffTimes);
@@ -2489,10 +2500,25 @@ function renderPredictionsPane(comp){
       lockedByTime=Date.now()>=timeLockAt;
     }
   }
-  const lmsLockedByTime=comp.mode==='lms'&&lockedByTime; // keep var for LMS-specific survived/failed banner
 
-  const badgeText = (isOpen&&lockedByTime) ? '🔒 Locked' : (isOpen?'● Open':'✓ Done');
-  const badgeCls = (isOpen&&lockedByTime) ? 'completed' : round.status;
+  // LMS: a "next lock" countdown for whichever unresolved event locks soonest,
+  // same idea as score mode's nextScoreLock — used instead of a single
+  // whole-round lock so surviving players still see useful info about
+  // upcoming events in a multi-week round.
+  let nextLmsLock=null, lmsAllLocked=false;
+  if(comp.mode==='lms'&&isOpen&&eliminatedAtIdx<0){
+    const nowTs=Date.now();
+    const upcoming=events.filter(ev=>!ev.res&&ev._lmsLockAt!=null&&ev._lmsLockAt>nowTs).sort((a,b)=>a._lmsLockAt-b._lmsLockAt);
+    if(upcoming.length) nextLmsLock=upcoming[0];
+    lmsAllLocked = events.length>0 && events.every(ev=>ev.res||(ev._lmsLockAt!=null&&ev._lmsLockAt<=nowTs));
+  }
+
+  const badgeText = comp.mode==='lms'
+    ? (isOpen?'● Open':'✓ Done')
+    : (isOpen&&lockedByTime) ? '🔒 Locked' : (isOpen?'● Open':'✓ Done');
+  const badgeCls = comp.mode==='lms'
+    ? round.status
+    : (isOpen&&lockedByTime) ? 'completed' : round.status;
   let html=`<div class="round-bar">
     <select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select>
     <span class="round-status ${badgeCls}">${badgeText}</span>
@@ -2509,7 +2535,16 @@ function renderPredictionsPane(comp){
     </div>
   </div>`;
 
-  if(comp.mode==='score'){
+  if(comp.mode==='lms'&&eliminatedAtIdx>=0){
+    // Eliminated — this takes priority over any generic "locks soon" message,
+    // and shows immediately rather than waiting for the whole round to finish.
+    html+=`<div class="deadline-banner" style="background:var(--bg);color:var(--text-2);">🔒 You've been eliminated <span style="color:var(--red);font-weight:700;"> · ✗ You failed!</span></div>`;
+  } else if(comp.mode==='lms'&&isOpen&&nextLmsLock){
+    html+=`<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;<span id="countdown-text">Calculating...</span> until predictions lock</div>`;
+    setTimeout(()=>startCountdown(nextLmsLock._lmsLockAt,()=>renderPredict()),50);
+  } else if(comp.mode==='lms'&&isOpen&&lmsAllLocked){
+    html+=`<div class="deadline-banner" style="background:var(--bg);color:var(--text-2);">🔒 All predictions locked</div>`;
+  } else if(comp.mode==='score'){
     if(isOpen&&nextScoreLock){
       html+=`<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;<span id="countdown-text">Calculating...</span> until predictions lock</div>`;
       setTimeout(()=>startCountdown(nextScoreLock._scoreLockAt,()=>renderPredict()),50);
@@ -2620,7 +2655,8 @@ function renderPredictionsPane(comp){
       const isEliminationPoint=i===eliminatedAtIdx;
       if(comp.mode==='lms'&&isEliminated) lmsBlocked=true;
       const effectiveOpen=comp.mode==='score'?(isOpen&&(ev._scoreLockAt==null||Date.now()<ev._scoreLockAt))
-        :isOpen&&!lockedByTime&&(comp.mode==='lms'?(!lmsBlocked):true);
+        :comp.mode==='lms'?(isOpen&&!lmsBlocked&&(ev._lmsLockAt==null||Date.now()<ev._lmsLockAt))
+        :isOpen&&!lockedByTime;
       html+=`<div style="opacity:${isEliminated?'0.4':'1'};">${renderEventCard(ev,comp,effectiveOpen)}</div>`;
     });
   }
@@ -2680,7 +2716,7 @@ function renderEventCard(ev,comp,isOpen){
   }
 
   let cls='event-card';
-  if(canPredict&&hasPred)cls+=' predicted';
+  if(canPredict&&hasPred&&comp.mode!=='lms')cls+=' predicted';
   if(!canPredict)cls+=' locked-pred';
 
   const hv=(pred&&pred.h!==undefined)?pred.h:'';
