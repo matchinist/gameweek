@@ -1763,7 +1763,7 @@ function rlBoardHTML(eventId){
       <button onclick="rlClearAll()" style="font-size:12px;font-weight:600;color:var(--text-2);background:var(--surface);border:1px solid var(--border);border-radius:8px;cursor:pointer;padding:7px 14px;">Clear all</button>
     </div>
 
-    <div style="max-width:640px;">
+    <div style="max-width:640px;margin:0 auto;">
       <div style="display:flex;gap:8px;margin-bottom:16px;">
         <div style="flex:1;display:flex;flex-direction:column;gap:5px;">
           <div style="font-size:11px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;text-align:center;">Both Teams to Score (Pays x2)</div>
@@ -1813,11 +1813,11 @@ function rlBoardHTML(eventId){
         <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:#FFEDD5;border:1px solid #EA580C;"></span>Away win</div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;max-width:640px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+    <div style="display:flex;align-items:center;justify-content:space-between;max-width:640px;margin:20px auto 0;padding-top:16px;border-top:1px solid var(--border);">
       <div style="font-size:12px;color:var(--text-2);"><strong id="rl-staked-count" style="color:var(--text);font-family:var(--mono);">0</strong> of 100 staked</div>
       <button id="rl-place-btn" disabled onclick="rlPlaceBets()" style="font-family:var(--mono);font-size:12px;font-weight:700;color:white;background:var(--accent);border:none;border-radius:8px;padding:12px 24px;cursor:pointer;">Save</button>
     </div>
-    <div id="rl-betslip" style="margin-top:16px;max-width:640px;"></div>
+    <div id="rl-betslip" style="margin-top:16px;max-width:640px;margin-left:auto;margin-right:auto;"></div>
   </div>`;
 }
 
