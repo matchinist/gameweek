@@ -58,7 +58,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 @keyframes authshake{10%,90%{transform:translateX(-1px);}20%,80%{transform:translateX(2px);}30%,50%,70%{transform:translateX(-4px);}40%,60%{transform:translateX(4px);}}
 .auth-modal.shake{animation:authshake 0.4s;}
 .auth-terms{font-size:11px;color:var(--text-3);text-align:center;margin-top:14px;line-height:1.5;}
-.comp-tabs{display:flex;gap:0;overflow-x:auto;border-bottom:1px solid oklch(0.92 0.004 260);padding:0 20px;-webkit-overflow-scrolling:touch;align-items:center;}
+.comp-tabs{display:flex;gap:0;overflow-x:auto;border-bottom:1px solid oklch(0.92 0.004 260);padding:0 16px;-webkit-overflow-scrolling:touch;align-items:center;}
 .comp-tabs::-webkit-scrollbar{display:none;}
 .comp-tabs::-webkit-scrollbar{display:none;}
 .comp-tabs{-ms-overflow-style:none;scrollbar-width:none;}
@@ -68,7 +68,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .comp-tab-name{font-size:13px;}
 
 
-.round-bar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--white);border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.round-bar{display:flex;align-items:center;gap:8px;padding:10px 0;background:var(--white);border-bottom:1px solid var(--border);flex-wrap:wrap;}
 .round-select{font-family:var(--mono);font-size:11px;border:1px solid var(--border);background:var(--white);padding:5px 8px;border-radius:5px;cursor:pointer;outline:none;color:var(--text);}
 .round-select:focus{border-color:var(--accent);}
 .round-status{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap;}
@@ -87,7 +87,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
   .events-list{grid-template-columns:1fr;padding:10px 0;}
   .event-card-top{padding:0;}
   .pred-area{padding:9px 10px;}
-  .round-bar{padding:8px 8px;}
+  .round-bar{padding:8px 0;}
 }
 /* ── INLINE SCORE INPUTS ── */
 .score-num-inline{width:32px;height:31px;border:1.5px solid oklch(0.88 0.006 260);border-radius:8px;text-align:center;font-family:"DM Mono",monospace;font-size:13px;font-weight:700;color:oklch(0.25 0.01 260);background:oklch(0.98 0.002 260);outline:none;-moz-appearance:textfield;transition:border-color 0.13s;flex-shrink:0;}
