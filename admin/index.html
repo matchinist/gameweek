@@ -1587,7 +1587,7 @@ function loadLineupTeams(){
   teamGroup.style.display = 'block';
 }
 
-function createComp(){
+async function createComp(){
   const mode = document.getElementById('new-comp-mode').value;
   const name = MODE_DESCRIPTIONS[mode]?.title || mode;
   let scoring = null, markets = null;
@@ -1637,13 +1637,14 @@ function createComp(){
     status: 'draft', color: mode==='lineup'?'#0EA5E9':'#8B5CF6', users: 0, predictions: 0, rounds: []
   };
   state.competitions.push(c);
+  updateModeDescription();
+  const ok = await saveAdminState();
+  if(!ok){ state.competitions = state.competitions.filter(x=>x.id!==c.id); return; } // saveAdminState already toasted the failure
   closeModal('modal-create-comp');
   document.getElementById('new-comp-mode').value='lms';
   const lt = document.getElementById('lineup-team'); if(lt) lt.value='';
   const ltg = document.getElementById('lineup-team-group'); if(ltg) ltg.style.display='none';
   const rc = document.getElementById('roulette-config'); if(rc) rc.style.display='none';
-  updateModeDescription();
-  saveAdminState();
   state.currentComp = c.id;
   nav('comp-detail', c.name);
   renderCompDetail();
@@ -2235,7 +2236,7 @@ function updateEditRankingTeamCount(){
   document.getElementById('edit-ranking-team-count').textContent = checked + ' team' + (checked!==1?'s':'') + ' selected';
 }
 
-function saveRoundEdit(){
+async function saveRoundEdit(){
   const rid = document.getElementById('edit-round-id').value;
   const comp = getComp(state.currentComp);
   const r = comp.rounds.find(r=>r.id===rid);
@@ -2259,8 +2260,10 @@ function saveRoundEdit(){
     }));
     r.eventIds = roundAddedEvents.map(e=>e.id);
     r.prizes = getCleanPrizes('edit-round');
+    const ok = await saveAdminState();
+    if(!ok) return; // saveAdminState already toasted the failure; modal stays open to retry
     closeModal('modal-edit-round');
-    saveAdminState(); renderCompDetail(); toast('Round updated with '+r.rankingTeams.length+' teams');
+    renderCompDetail(); toast('Round updated with '+r.rankingTeams.length+' teams');
     return;
   }
   
@@ -2272,20 +2275,22 @@ function saveRoundEdit(){
   r.tournamentNames = [...new Set(roundAddedEvents.map(e=>e.tName))];
   r.eventIds = roundAddedEvents.map(e=>e.id);
   r.prizes = getCleanPrizes('edit-round');
+  const ok = await saveAdminState();
+  if(!ok) return; // saveAdminState already toasted the failure; modal stays open to retry
   closeModal('modal-edit-round');
-  saveAdminState(); renderCompDetail(); toast('Round updated');
+  renderCompDetail(); toast('Round updated');
 }
 
 
 // ── MISC ACTIONS ──────────────────────────────────────────────────────────
-function toggleLongTerm(id,val){ getComp(id).longTerm=val; saveAdminState(); }
+async function toggleLongTerm(id,val){ getComp(id).longTerm=val; await saveAdminState(); }
 
-function updateCompColor(id,val){
+async function updateCompColor(id,val){
   getComp(id).color=val;
-  saveAdminState();
+  await saveAdminState();
 }
 
-function saveCompSettings(){
+async function saveCompSettings(){
   const c = getComp(state.currentComp);
   // Score mode — check if points changed and warn
   if(c.mode==='score'){
@@ -2312,7 +2317,8 @@ function saveCompSettings(){
     }
   }
   c.overallPrizes = getCleanPrizes('overall');
-  saveAdminState();
+  const ok = await saveAdminState();
+  if(!ok) return; // saveAdminState already toasted the failure
   renderCompDetail();
   toast('Changes saved');
 }
@@ -2332,21 +2338,23 @@ async function setCompStatus(id,status){
   toast('Status updated');
 }
 
-function deleteComp(id){
+async function deleteComp(id){
   if(!confirm('Delete this competition and all its rounds?')) return;
+  const {error} = await supa.from('gw_competitions').delete().eq('id',id);
+  if(error){ console.error('deleteComp failed:',error); toast('⚠ Delete failed: '+error.message); return; }
   state.competitions = state.competitions.filter(c=>c.id!==id);
-  supa.from('gw_competitions').delete().eq('id',id).then(()=>{});
-  saveAdminState();
   nav('competitions');
   toast('Competition deleted');
 }
 
-function confirmRound(id){
+async function confirmRound(id){
+  let target=null;
   state.competitions.forEach(c=>{
     const r = c.rounds.find(r=>r.id===id);
-    if(r) r.status='completed';
+    if(r){ target=r; r.status='completed'; }
   });
-  saveAdminState();
+  const ok = await saveAdminState();
+  if(!ok){ if(target) target.status='open'; return; } // roll back the local status too
   renderCompDetail();
   toast('Round locked');
 }
@@ -2391,20 +2399,31 @@ function renderEmbedInfo(){
   renderDomains();
 }
 
-function addDomain(){
+async function saveDomains(){
+  if(!currentOperator?.auth_id) return false;
+  const {error} = await supa.from('gw_operators').update({domains:state.domains}).eq('auth_id',currentOperator.auth_id);
+  if(error){ console.error('saveDomains failed:',error); toast('⚠ Save failed: '+error.message); return false; }
+  currentOperator.domains = state.domains;
+  return true;
+}
+
+async function addDomain(){
   const d = document.getElementById('new-domain').value.trim();
   if(!d){ toast('Enter a domain'); return; }
   state.domains.push(d);
-  saveAdminState();
+  const ok = await saveDomains();
+  if(!ok){ state.domains = state.domains.filter(x=>x!==d); return; } // saveDomains already toasted the failure
   renderDomains();
   closeModal('modal-add-domain');
   document.getElementById('new-domain').value='';
   toast('Domain added');
 }
 
-function removeDomain(d){
+async function removeDomain(d){
+  const prev = state.domains.slice();
   state.domains = state.domains.filter(x=>x!==d);
-  saveAdminState();
+  const ok = await saveDomains();
+  if(!ok){ state.domains = prev; return; } // saveDomains already toasted the failure
   renderDomains();
   toast('Domain removed');
 }
@@ -2643,6 +2662,7 @@ function initOperatorChrome(){
   console.log('GW: Operator loaded', op.company_name);
   currentOperator = op;
   state.operatorProfile = op;
+  state.domains = op.domains||[];
   CLIENT_KEY = op.client_key;
 
 
