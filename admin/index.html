@@ -384,7 +384,7 @@ tbody tr:hover td{background:var(--bg);}
               <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">Paste this snippet into any page on your site. The widget loads your competitions automatically.</p>
               <div class="embed-box" id="embed-code-box">
 &lt;iframe
-  src="https://www.gameweek.cloud/embed?client=<span style="color:#FCD34D" id="embed-client-key">...</span>"
+  src="https://www.gameweek.cloud/embed?<span style="color:#FCD34D" id="embed-query-string">client=...</span>"
   width="100%"
   height="620"
   frameborder="0"
@@ -394,6 +394,14 @@ tbody tr:hover td{background:var(--bg);}
               </div>
               <p style="font-size:11px;color:var(--text-3);margin-top:10px;">Your client key: <span style="font-family:var(--mono);color:var(--text)" id="embed-client-key-label">...</span></p>
               <p style="font-size:11px;color:var(--text-3);margin-top:4px;">Domain not live yet? <a href="#" id="embed-test-link" target="_blank" style="color:var(--accent);text-decoration:none;">Test your live embed →</a></p>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:14px;">
+            <div class="card-header"><span class="card-title">Filter by Competition</span></div>
+            <div class="card-body">
+              <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">By default the embed shows every active competition as tabs. Pick one (or a few) to embed just those — useful for putting a specific competition on its own page. Selecting exactly one hides the tab bar entirely.</p>
+              <div id="embed-comp-filter" style="display:flex;flex-direction:column;gap:6px;"></div>
             </div>
           </div>
 
@@ -2375,8 +2383,18 @@ function syncColorFromHex(){
   }
 }
 
+let embedFilterComps = null; // null = All competitions; else array of selected competition IDs
+
+function buildEmbedQueryString(){
+  let qs = `client=${CLIENT_KEY}`;
+  if(embedFilterComps && embedFilterComps.length){
+    qs += `&comp=${embedFilterComps.join(',')}`;
+  }
+  return qs;
+}
+
 function copyEmbed(){
-  const code = `<iframe src="https://www.gameweek.cloud/embed?client=${CLIENT_KEY}" width="100%" height="620" frameborder="0" style="border-radius:10px;"></iframe>`;
+  const code = `<iframe src="https://www.gameweek.cloud/embed?${buildEmbedQueryString()}" width="100%" height="620" frameborder="0" style="border-radius:10px;"></iframe>`;
   navigator.clipboard.writeText(code).then(()=>toast('Copied to clipboard'));
 }
 
@@ -2390,12 +2408,53 @@ function renderDomains(){
   el.innerHTML = state.domains.map(d=>`<div class="domain-tag">${d} <button onclick="removeDomain('${d}')">×</button></div>`).join('');
 }
 
-function renderEmbedInfo(){
-  document.getElementById('embed-client-key').textContent = CLIENT_KEY;
-  document.getElementById('embed-client-key-label').textContent = CLIENT_KEY;
+function updateEmbedCodeDisplay(){
+  const qsEl = document.getElementById('embed-query-string');
+  if(qsEl) qsEl.textContent = buildEmbedQueryString();
   const testLink = document.getElementById('embed-test-link');
-  const liveUrl = `https://www.gameweek.cloud/embed?client=${CLIENT_KEY}`;
-  if(testLink) testLink.href = liveUrl;
+  if(testLink) testLink.href = `https://www.gameweek.cloud/embed?${buildEmbedQueryString()}`;
+}
+
+function toggleEmbedFilterAll(){
+  embedFilterComps = null;
+  renderEmbedCompFilter();
+}
+
+function toggleEmbedFilterComp(id){
+  if(!embedFilterComps) embedFilterComps = [];
+  const idx = embedFilterComps.indexOf(id);
+  if(idx>=0) embedFilterComps.splice(idx,1);
+  else embedFilterComps.push(id);
+  if(!embedFilterComps.length) embedFilterComps = null; // nothing left selected — fall back to "All"
+  renderEmbedCompFilter();
+}
+
+function renderEmbedCompFilter(){
+  const el = document.getElementById('embed-comp-filter');
+  if(!el) return;
+  const isAll = !embedFilterComps;
+  let html = `<label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;cursor:pointer;padding:7px 8px;border-radius:6px;${isAll?'background:var(--bg);':''}">
+    <input type="checkbox" ${isAll?'checked':''} onchange="toggleEmbedFilterAll()"> All competitions
+  </label>`;
+  if(!state.competitions.length){
+    html += `<div style="font-size:12px;color:var(--text-3);padding:4px 8px;">No competitions yet.</div>`;
+  }
+  state.competitions.forEach(c=>{
+    const checked = !isAll && embedFilterComps.includes(c.id);
+    html += `<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:7px 8px;border-radius:6px;${checked?'background:var(--bg);':''}">
+      <input type="checkbox" ${checked?'checked':''} onchange="toggleEmbedFilterComp('${c.id}')">
+      <span style="width:8px;height:8px;border-radius:50%;background:${c.color};flex-shrink:0;"></span>
+      ${c.name}
+    </label>`;
+  });
+  el.innerHTML = html;
+  updateEmbedCodeDisplay();
+}
+
+function renderEmbedInfo(){
+  document.getElementById('embed-client-key-label').textContent = CLIENT_KEY;
+  embedFilterComps = null; // reset to "All" whenever this page is opened fresh
+  renderEmbedCompFilter();
   renderDomains();
 }
 

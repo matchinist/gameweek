@@ -345,6 +345,8 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const supa = supabase.createClient(SUPA_URL, SUPA_KEY, {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'gw-player'}});
 
 const CLIENT_PARAM = new URLSearchParams(location.search).get('client') || 'demo';
+const COMP_FILTER = (new URLSearchParams(location.search).get('comp')||'').split(',').map(s=>s.trim()).filter(Boolean);
+let COMP_FILTER_INVALID = false; // set true if a comp filter was given but matched nothing real
 
 // ── DATA LOAD ─────────────────────────────────────────────────────────────────
 let COMPS=[], EVENTS={}, EVENTS_RAW={};
@@ -427,6 +429,14 @@ async function buildCompsFromRealData(){
         tournamentNames:[...new Set(cRounds.flatMap(r=>r.tournamentNames||[]).filter(Boolean))]
       });
     });
+    if(COMP_FILTER.length){
+      const filtered = COMPS.filter(c=>COMP_FILTER.includes(c.id));
+      if(!filtered.length){
+        COMP_FILTER_INVALID = true;
+      } else {
+        COMPS = filtered;
+      }
+    }
     console.log('Loaded:',{comps:COMPS.length,events:Object.keys(EVENTS).length,client:CLIENT_PARAM});
   }catch(err){ console.error('buildCompsFromRealData:',err); }
 }
@@ -659,12 +669,14 @@ function updateHeaderUser(){
   }
 }
 
+let compTabsHidden = false; // set when comp= filter narrows to exactly one competition
+
 // ── TABS ──────────────────────────────────────────────────────────────────────
 function goTab(tab){
   if(tab==='profile'&&!currentPlayer){ openAuthModal('Sign in to view your profile'); return; }
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('tab-'+tab)?.classList.add('active');
-  document.getElementById('comp-tabs-wrap').style.display=tab==='predict'?'block':'none';
+  document.getElementById('comp-tabs-wrap').style.display=(tab==='predict'&&!compTabsHidden)?'block':'none';
   document.getElementById('scroll-area').scrollTop=0;
   if(tab==='predict') renderPredict();
   if(tab==='profile') renderProfile();
@@ -679,6 +691,11 @@ function toggleProfile(){
 // ── COMP TABS ─────────────────────────────────────────────────────────────────
 function renderCompTabs(){
   const el=document.getElementById('comp-tabs');
+  const wrap=document.getElementById('comp-tabs-wrap');
+  // A comp= filter that narrows things to exactly one competition means the
+  // embed is meant to show just that competition on its own — no switcher.
+  compTabsHidden = COMP_FILTER.length>0 && COMPS.length===1;
+  if(wrap) wrap.style.display = compTabsHidden ? 'none' : 'block';
   el.innerHTML=COMPS.map((c,i)=>`<button class="comp-tab${i===currentCompIdx?' active':''}" onclick="switchComp(${i})"><span style="display:inline-block;padding:7px 14px;border-radius:8px;background:${i===currentCompIdx?'oklch(0.94 0.05 275 / 0.7)':'transparent'};">${c.name}</span></button>`).join('');
   document.documentElement.style.setProperty('--comp-color',COMPS[currentCompIdx].color);
 }
@@ -3125,7 +3142,20 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
       }catch(e){}
     }
   }catch(err){ console.error('Init:',err); }
-  finally{ updateHeaderUser(); renderCompTabs(); goTab('predict'); }
+  finally{
+    if(COMP_FILTER_INVALID){
+      const appEl = document.getElementById('app');
+      if(appEl) appEl.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;min-height:400px;padding:40px 20px;text-align:center;">
+        <div>
+          <div style="font-size:32px;margin-bottom:10px;">⚠️</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px;">Competition not found</div>
+          <div style="font-size:13px;color:var(--text-3);max-width:340px;">The competition this embed points to doesn't exist, is inactive, or was removed. Double-check the embed code's <code style="background:var(--bg);padding:1px 5px;border-radius:4px;">comp</code> parameter.</div>
+        </div>
+      </div>`;
+    } else {
+      updateHeaderUser(); renderCompTabs(); goTab('predict');
+    }
+  }
 })();
 </script>
 </body>
