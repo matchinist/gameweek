@@ -1024,9 +1024,8 @@ function renderLineupPredictor(comp){
     </div>` : '';
 
   const fixtureHeader = ev.home ? `
-    <div style="background:#fff;border:1px solid oklch(0.92 0.004 260);border-radius:16px;padding:18px 20px;margin-bottom:16px;">
-      <div style="text-align:center;font-size:10px;font-weight:700;color:oklch(0.58 0.01 260);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px;">${ev.tournament||'Next Fixture'}${ev.kickoff?' · '+ev.kickoff:''}</div>
-      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;">
+      <div style="text-align:center;font-size:10px;font-weight:700;color:oklch(0.58 0.01 260);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">${ev.tournament||'Next Fixture'}${ev.kickoff?' · '+ev.kickoff:''}</div>
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;margin-bottom:10px;">
         <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;min-width:0;">
           <span class="ev-name" style="text-align:right;">${ev.home}</span>
           ${teamBadge(ev.homeLogo, ev.home)}
@@ -1036,8 +1035,11 @@ function renderLineupPredictor(comp){
           ${teamBadge(ev.awayLogo, ev.away)}
           <span class="ev-name">${ev.away}</span>
         </div>
-      </div>
-    </div>` : '';
+      </div>` : '';
+
+  const countdownBanner = (isOpen && lineupLockAt) ? `
+      <div class="deadline-banner" id="countdown-banner" style="margin:16px 16px 0;">⏱ &nbsp;<span id="countdown-text">Calculating...</span> until lineup locks</div>` : '';
+  if(isOpen && lineupLockAt) setTimeout(()=>startCountdown(lineupLockAt,()=>renderPredict()),50);
 
   return `
     <div style="padding:0 0 30px;">
@@ -1057,11 +1059,11 @@ function renderLineupPredictor(comp){
       </div>
 
       <div style="padding:16px 16px 0;">
-        ${fixtureHeader}
-
         ${scoreSection}
 
-        <!-- Pitch -->
+      <!-- Fixture header + pitch merged into one component -->
+      <div style="background:#fff;border:1px solid oklch(0.92 0.004 260);border-radius:16px;padding:10px 16px;overflow:hidden;">
+        ${fixtureHeader}
         <div class="pitch-wrap" style="position:relative;">
         <div class="lineup-pitch-container">
           <!-- Pitch markings -->
@@ -1078,7 +1080,11 @@ function renderLineupPredictor(comp){
           </div>
         </div>
         </div>
+      </div>
+      </div>
+      ${countdownBanner}
 
+      <div style="padding:0 16px;">
         <div class="pitch-wrap">
         ${isOpen && pickCount===11 ? (lineupSaved[round.id] ? `
         <button disabled style="width:100%;margin-top:16px;background:oklch(0.93 0.006 260);color:oklch(0.5 0.01 260);border:none;border-radius:10px;padding:14px;font-family:'DM Mono',monospace;font-size:14px;font-weight:700;cursor:default;">
@@ -2880,7 +2886,7 @@ function showRules(mode){
 </div>`,
     lineup:`<h3 style="margin-bottom:12px;">Lineup Predictor Rules</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
-<div><strong style="color:var(--text);">How to play:</strong> Pick the starting XI (11 players) for the team's next fixture before it kicks off. Formation is fixed at 4-2-3-1.</div>
+<div><strong style="color:var(--text);">How to play:</strong> Pick the starting XI (11 players) for the team's next fixture. Formation is fixed at 4-2-3-1. Locks 2 hours before kickoff.</div>
 <div><strong style="color:var(--text);">Points:</strong></div>
 <div style="padding-left:12px;">
 • Each correct player in your lineup — <strong style="color:var(--green);">+10 pts</strong><br>

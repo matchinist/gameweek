@@ -323,7 +323,7 @@ const COMPS=[
     tournamentNames:['Champions League'],
     overallPrizes:[{pos:1,text:'€250 cash prize'},{pos:2,text:'€100 cash prize'},{pos:3,text:'€50 cash prize'}],
     rounds:[
-      {id:'r3',label:'Matchday 1',status:'open',deadline:'2026-10-01T17:00',eventIds:['e201','e202','e203'],prizes:[{pos:1,text:'Season ticket voucher'}]},
+      {id:'r3',label:'Matchday 1',status:'open',deadline:'2026-10-01T17:00',eventIds:['e201','e202','e203','e204'],prizes:[{pos:1,text:'Season ticket voucher'}]},
     ]},
   {id:'c3',name:'Betting Markets',mode:'betting',color:'#059669',
     markets:[{type:'1x2',label:'Match Result',points:3},{type:'ou25',label:'Over / Under',points:2},{type:'btts',label:'Both Teams to Score',points:2}],
@@ -527,7 +527,7 @@ function renderPredict(){
   if(selectedRound[currentCompIdx]===undefined)selectedRound[currentCompIdx]=getDefaultRoundIdx(COMPS[currentCompIdx]);
   const comp=COMPS[currentCompIdx];
   // Game description + rules button below comp tabs
-  const descriptions={score:'Predict the exact score for each match. Points awarded for correct scores, correct team goals, or correct total.',lms:'Pick a winner for each event. Get it wrong and you are eliminated. Last one standing wins.',betting:'Predict multiple markets per match: result, over/under, both teams to score. Points per correct market.',ranking:'Rank teams from highest to lowest expected goals (xG) for the gameweek. Points for each correct position.',roulette:'Spend 100 coins across a score matrix. Straight, split, and corner bets pay out purely on probability — no odds.',lineup:'Pick the starting XI for Liverpool. Earn 3 pts for exact position, 1 pt for correct player in wrong position.'};
+  const descriptions={score:'Predict the exact score for each match. Points awarded for correct scores, correct team goals, or correct total.',lms:'Pick a winner for each event. Get it wrong and you are eliminated. Last one standing wins.',betting:'Predict multiple markets per match: result, over/under, both teams to score. Points per correct market.',ranking:'Rank teams from highest to lowest expected goals (xG) for the gameweek. Points for each correct position.',roulette:'Spend 100 coins across a score matrix. Straight, split, and corner bets pay out purely on probability — no odds.',lineup:'Pick the starting XI for the next fixture. Earn 10 pts for each correct player, plus a 30 pt bonus if all 11 are correct. Locks 2 hours before kickoff.'};
   let html=`<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:20px;"><p style="margin:0;font-size:15px;line-height:1.55;color:oklch(0.4 0.01 260);max-width:640px;">${descriptions[comp.mode]||''}</p><button onclick="showRules('${comp.mode}')" style="flex-shrink:0;border:1px solid oklch(0.88 0.006 260);background:#fff;color:oklch(0.35 0.01 260);font-size:13px;font-weight:600;padding:9px 18px;border-radius:10px;cursor:pointer;">Rules</button></div>`;
   html+=predictSubTab==='predictions'?renderPredictionsPane(comp):(comp.mode==='lineup'?renderLineupLeaderboardShell(comp):renderLeaderboardPane(comp));
   document.getElementById('predict-content').innerHTML=html;
@@ -626,7 +626,7 @@ function renderLineupPredictor(comp){
   const ev = EVENTS[round.eventId||round.id] || {};
   // Locks 2 hours before kickoff, regardless of round.status, so predictions
   // can't be changed once the team news / lineup window has effectively closed.
-  const kickoffMs = ev.kickoffRaw ? new Date(ev.kickoffRaw).getTime() : null;
+  const kickoffMs = ev.sortKey ? new Date(ev.sortKey).getTime() : null;
   const lineupLockAt = kickoffMs!=null ? kickoffMs - 2*3600*1000 : null;
   const timeLocked = lineupLockAt!=null && Date.now() >= lineupLockAt;
   const isOpen = round.status==='open' && !timeLocked;
@@ -735,9 +735,8 @@ function renderLineupPredictor(comp){
     </div>` : '';
 
   const fixtureHeader = ev.home ? `
-    <div style="background:#fff;border:1px solid oklch(0.92 0.004 260);border-radius:16px;padding:18px 20px;margin-bottom:16px;">
-      <div style="text-align:center;font-size:10px;font-weight:700;color:oklch(0.58 0.01 260);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px;">${ev.tournament||'Next Fixture'}${ev.kickoff?' · '+ev.kickoff:''}</div>
-      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;">
+      <div style="text-align:center;font-size:10px;font-weight:700;color:oklch(0.58 0.01 260);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">${ev.tournament||'Next Fixture'}${ev.kickoff?' · '+ev.kickoff:''}</div>
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;margin-bottom:10px;">
         <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;min-width:0;">
           <span class="ev-name" style="text-align:right;">${ev.home}</span>
           ${teamBadge(ev.homeLogo, ev.home)}
@@ -747,8 +746,11 @@ function renderLineupPredictor(comp){
           ${teamBadge(ev.awayLogo, ev.away)}
           <span class="ev-name">${ev.away}</span>
         </div>
-      </div>
-    </div>` : '';
+      </div>` : '';
+
+  const countdownBanner = (isOpen && lineupLockAt) ? `
+      <div class="deadline-banner" id="countdown-banner" style="margin:16px 16px 0;">⏱ &nbsp;<span id="countdown-text">Calculating...</span> until lineup locks</div>` : '';
+  if(isOpen && lineupLockAt) setTimeout(()=>startCountdown(lineupLockAt,()=>renderPredict()),50);
 
   return `
     <div style="padding:0 0 30px;">
@@ -768,29 +770,32 @@ function renderLineupPredictor(comp){
       </div>
 
       <div style="padding:16px 16px 0;">
-        ${fixtureHeader}
-
         ${scoreSection}
 
-      <!-- Pitch -->
-      <div class="pitch-wrap">
-      <div class="lineup-pitch-container">
-        <!-- Pitch markings -->
-        <div style="position:absolute;inset:0;">
-          <div class="pitch-midline"></div>
-          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80px;height:80px;border-radius:50%;border:1px solid rgba(255,255,255,0.2);pointer-events:none;"></div>
-          <div class="pitch-box-a"></div>
-          <div class="pitch-box-b"></div>
-          <div style="position:absolute;inset:1px;border:1px solid rgba(255,255,255,0.15);border-radius:15px;pointer-events:none;"></div>
+      <!-- Fixture header + pitch merged into one component -->
+      <div style="background:#fff;border:1px solid oklch(0.92 0.004 260);border-radius:16px;padding:10px 16px;overflow:hidden;">
+        ${fixtureHeader}
+        <div class="pitch-wrap">
+        <div class="lineup-pitch-container">
+          <!-- Pitch markings -->
+          <div style="position:absolute;inset:0;">
+            <div class="pitch-midline"></div>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80px;height:80px;border-radius:50%;border:1px solid rgba(255,255,255,0.2);pointer-events:none;"></div>
+            <div class="pitch-box-a"></div>
+            <div class="pitch-box-b"></div>
+            <div style="position:absolute;inset:1px;border:1px solid rgba(255,255,255,0.15);border-radius:15px;pointer-events:none;"></div>
+          </div>
+          <!-- Players -->
+          <div style="position:absolute;inset:0;z-index:2;">
+            ${pitchSlots.join('')}
+          </div>
         </div>
-        <!-- Players -->
-        <div style="position:absolute;inset:0;z-index:2;">
-          ${pitchSlots.join('')}
         </div>
       </div>
       </div>
+      ${countdownBanner}
 
-      <div class="pitch-wrap">
+      <div class="pitch-wrap" style="padding:0 16px;">
       ${isOpen && pickCount===11 ? `
       <button onclick="saveLineup('${round.id}')" style="width:100%;margin-top:16px;background:oklch(0.55 0.19 275);color:#fff;border:none;border-radius:10px;padding:14px;font-family:'DM Mono',monospace;font-size:14px;font-weight:700;cursor:pointer;">
         Save Lineup (${pickCount}/11)
@@ -798,7 +803,6 @@ function renderLineupPredictor(comp){
       <div style="width:100%;margin-top:16px;background:oklch(0.93 0.006 260);color:oklch(0.5 0.01 260);border:none;border-radius:10px;padding:14px;font-size:13px;font-weight:600;text-align:center;">
         Select all 11 players to save
       </div>` : ''}
-      </div>
       </div>
     </div>`;
 }
@@ -2110,7 +2114,7 @@ function showRules(mode){
 </div>`,
     lineup:`<h3 style="margin-bottom:12px;">Lineup Predictor Rules</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
-<div><strong style="color:var(--text);">How to play:</strong> Pick the starting XI (11 players) for the team's next fixture before it kicks off. Formation is fixed at 4-2-3-1.</div>
+<div><strong style="color:var(--text);">How to play:</strong> Pick the starting XI (11 players) for the team's next fixture. Formation is fixed at 4-2-3-1. Locks 2 hours before kickoff.</div>
 <div><strong style="color:var(--text);">Points:</strong></div>
 <div style="padding-left:12px;">
 • Each correct player in your lineup — <strong style="color:var(--green);">+10 pts</strong><br>
