@@ -1136,7 +1136,7 @@ let dmState = { teams:[], tournaments:[], events:{} };
 
 // ── SUPABASE SAVE ─────────────────────────────────────────────────────────
 async function saveAdminState(){
-  if(!CLIENT_KEY) return;
+  if(!CLIENT_KEY) return false;
   try{
     // Upsert competitions
     if(state.competitions.length){
@@ -1150,7 +1150,8 @@ async function saveAdminState(){
         overall_prizes:c.overallPrizes||null,
         users:c.users||0, predictions:c.predictions||0
       }));
-      await supa.from('gw_competitions').upsert(compRows,{onConflict:'id'});
+      const {error:e1} = await supa.from('gw_competitions').upsert(compRows,{onConflict:'id'});
+      if(e1){ console.error('saveAdminState (competitions) failed:',e1); toast('⚠ Save failed: '+e1.message); return false; }
     }
     // Upsert all rounds across all competitions
     const allRounds = state.competitions.flatMap((c,ci)=>
@@ -1163,10 +1164,15 @@ async function saveAdminState(){
         prizes:r.prizes||null
       }))
     );
-    if(allRounds.length) await supa.from('gw_rounds').upsert(allRounds,{onConflict:'id'});
+    if(allRounds.length){
+      const {error:e2} = await supa.from('gw_rounds').upsert(allRounds,{onConflict:'id'});
+      if(e2){ console.error('saveAdminState (rounds) failed:',e2); toast('⚠ Save failed: '+e2.message); return false; }
+    }
+    return true;
   }catch(e){
     console.error('saveAdminState failed:',e.message);
     toast('⚠ Save failed: '+e.message);
+    return false;
   }
 }
 
@@ -2104,7 +2110,7 @@ function validateRoundOverlap(prefix){
   else { warnEl.style.display='none'; }
 }
 
-function createRound(){
+async function createRound(){
   const name = document.getElementById('new-round-name').value.trim();
   if(!name){ toast('Enter a round name'); return; }
   if(!state.currentComp){ toast('Open a competition first'); return; }
@@ -2135,11 +2141,13 @@ function createRound(){
       prizes: getCleanPrizes('new-round')
     };
     comp.rounds.push(r);
+    const ok = await saveAdminState();
+    if(!ok){ comp.rounds = comp.rounds.filter(x=>x.id!==r.id); return; } // saveAdminState already toasted the failure
     closeModal('modal-create-round');
     document.getElementById('new-round-name').value='';
     roundAddedEvents=[];
     prizeState['new-round']=[];
-    saveAdminState(); renderCompDetail(); toast('Ranking round created with '+rankingTeams.length+' teams');
+    renderCompDetail(); toast('Ranking round created with '+rankingTeams.length+' teams');
     return;
   }
 
@@ -2158,11 +2166,13 @@ function createRound(){
     prizes: getCleanPrizes('new-round')
   };
   comp.rounds.push(r);
+  const ok = await saveAdminState();
+  if(!ok){ comp.rounds = comp.rounds.filter(x=>x.id!==r.id); return; } // saveAdminState already toasted the failure
   closeModal('modal-create-round');
   document.getElementById('new-round-name').value='';
   roundAddedEvents=[];
   prizeState['new-round']=[];
-  saveAdminState(); renderCompDetail(); toast('Round created');
+  renderCompDetail(); toast('Round created');
 }
 
 // ── EDIT ROUND ────────────────────────────────────────────────────────────
@@ -2316,7 +2326,8 @@ async function setCompStatus(id,status){
     }
   }
   getComp(id).status=status;
-  saveAdminState();
+  const ok = await saveAdminState();
+  if(!ok) return; // saveAdminState already toasted the failure
   renderCompDetail();
   toast('Status updated');
 }
