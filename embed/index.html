@@ -1132,7 +1132,7 @@ function renderLineupPredictor(comp){
 
   const fixtureHeader = ev.home ? `
       <div style="text-align:center;font-size:10px;font-weight:700;color:oklch(0.58 0.01 260);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">${scored!==null?'Final Result':(ev.tournament||'Next Fixture')}${ev.kickoff?' · '+ev.kickoff:''}</div>
-      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;margin-bottom:10px;">
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;margin-bottom:18px;">
         <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;min-width:0;">
           <span class="ev-name" style="text-align:right;">${ev.home}</span>
           ${teamBadge(ev.homeLogo, ev.home)}
@@ -1165,7 +1165,7 @@ function renderLineupPredictor(comp){
       </div>
       ${countdownBanner}
 
-      <div style="padding:16px 0 0;">
+      <div style="padding:${countdownBanner?'0':'16px'} 0 0;">
         ${scoreSection}
 
       <!-- Fixture header + pitch merged into one component -->
@@ -1197,13 +1197,13 @@ function renderLineupPredictor(comp){
       <div style="padding:0 16px;">
         <div class="pitch-wrap">
         ${isOpen && pickCount===11 ? (lineupSaved[round.id] ? `
-        <button disabled style="width:100%;margin-top:16px;background:oklch(0.93 0.006 260);color:oklch(0.5 0.01 260);border:none;border-radius:10px;padding:14px;font-family:'DM Mono',monospace;font-size:14px;font-weight:700;cursor:default;">
+        <button disabled style="width:100%;margin-top:16px;background:var(--bg);color:oklch(0.5 0.01 260);border:none;border-radius:10px;padding:14px;font-family:'DM Mono',monospace;font-size:14px;font-weight:700;cursor:default;">
           ✓ Lineup Saved
         </button>` : `
         <button onclick="saveLineup('${round.id}')" style="width:100%;margin-top:16px;background:oklch(0.55 0.19 275);color:#fff;border:none;border-radius:10px;padding:14px;font-family:'DM Mono',monospace;font-size:14px;font-weight:700;cursor:pointer;">
           Save Lineup (${pickCount}/11)
         </button>`) : isOpen ? `
-        <div style="width:100%;margin-top:16px;background:oklch(0.93 0.006 260);color:oklch(0.5 0.01 260);border:none;border-radius:10px;padding:14px;font-size:13px;font-weight:600;text-align:center;">
+        <div style="width:100%;margin-top:16px;background:var(--bg);color:oklch(0.5 0.01 260);border:none;border-radius:10px;padding:14px;font-size:13px;font-weight:600;text-align:center;">
           Select all 11 players to save
         </div>` : ''}
         </div>
