@@ -587,12 +587,12 @@ async function save(){
     if(S.teams.length){
       const {error:e1} = await supa.from('gw_dm_teams')
         .upsert(S.teams.map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||'',sport:t.sport||'football'})),{onConflict:'id'});
-      if(e1){ toast('Save failed: '+e1.message); console.error('teams save:',e1); return; }
+      if(e1){ toast('Save failed: '+e1.message); console.error('teams save:',e1); return false; }
     }
     if(S.tournaments.length){
       const {error:e2} = await supa.from('gw_dm_tournaments')
         .upsert(S.tournaments.map(t=>({id:t.id,name:t.name,country:t.country||'',type:t.type||'league',color:t.color||'#4F46E5',seasons:t.seasons||{}})),{onConflict:'id'});
-      if(e2){ toast('Save failed: '+e2.message); console.error('tournaments save:',e2); return; }
+      if(e2){ toast('Save failed: '+e2.message); console.error('tournaments save:',e2); return false; }
     }
     const evArr = Object.entries(S.events).map(([id,ev])=>({
       id, home_id:ev.homeId, away_id:ev.awayId,
@@ -602,9 +602,10 @@ async function save(){
     }));
     if(evArr.length){
       const {error:e3} = await supa.from('gw_dm_events').upsert(evArr,{onConflict:'id'});
-      if(e3){ toast('Save failed: '+e3.message); console.error('events save:',e3); return; }
+      if(e3){ toast('Save failed: '+e3.message); console.error('events save:',e3); return false; }
     }
-  }catch(e){ console.error('DM save failed:',e.message); toast('Save failed: '+e.message); }
+    return true;
+  }catch(e){ console.error('DM save failed:',e.message); toast('Save failed: '+e.message); return false; }
 }
 
 async function resetClientData(){
@@ -1320,11 +1321,17 @@ async function saveScore(){
 
   const btn=document.getElementById('score-save-btn');
   if(btn){btn.disabled=true;btn.textContent='Saving...';}
-  await save(); // wait for the actual Supabase write before doing anything else —
+  const ok = await save(); // wait for the actual Supabase write before doing anything else —
                  // closing/toasting before this resolves risks the edit being lost
                  // if the user refreshes right after (this was the root cause of
                  // edits appearing to save but reverting after a page reload).
   if(btn){btn.disabled=false;btn.textContent='Save Result';}
+
+  if(!ok){
+    // save() already showed its own "Save failed" toast — stop here rather
+    // than closing the modal and claiming success on top of that failure.
+    return;
+  }
 
   closeModal('modal-score-entry');
   const el=document.getElementById('evmini-'+eid);
@@ -1332,13 +1339,14 @@ async function saveScore(){
   toast(status==='completed'?`Result saved: ${h}–${a}`:'Status updated: '+status);
 }
 
-function clearScore(){
+async function clearScore(){
   const eid=document.getElementById('score-modal-eid').value;
   const ev=S.events[eid];if(!ev)return;
   if(!confirm('Clear result and reset status? All points from this event will be recalculated as if it never happened.'))return;
   ev.result=null;
   ev.status='upcoming';
-  save();
+  const ok=await save();
+  if(!ok)return;
   closeModal('modal-score-entry');
   const el=document.getElementById('evmini-'+eid);
   if(el)el.outerHTML=renderEventMini(eid);
