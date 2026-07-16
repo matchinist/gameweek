@@ -1100,8 +1100,7 @@ function renderLineupPredictor(comp){
         </div>
       </div>` : '';
 
-  const countdownBanner = (isOpen && lineupLockAt) ? `
-      <div class="deadline-banner" id="countdown-banner" style="margin:16px 16px 0;">⏱ &nbsp;<span id="countdown-text">Calculating...</span> until lineup locks</div>` : '';
+  const countdownBanner = (isOpen && lineupLockAt) ? `<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;Lineup locks in <span id="countdown-text">Calculating...</span></div>` : '';
   if(isOpen && lineupLockAt) setTimeout(()=>startCountdown(lineupLockAt,()=>renderPredict()),50);
 
   return `
@@ -1120,6 +1119,7 @@ function renderLineupPredictor(comp){
           </select>
         </div>
       </div>
+      ${countdownBanner}
 
       <div style="padding:16px 16px 0;">
         ${scoreSection}
@@ -1149,7 +1149,6 @@ function renderLineupPredictor(comp){
         </div>` : ''}
       </div>
       </div>
-      ${countdownBanner}
 
       <div style="padding:0 16px;">
         <div class="pitch-wrap">
