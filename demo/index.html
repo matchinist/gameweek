@@ -1650,6 +1650,48 @@ function rlCellType(h,a){const hv=rlNumVal(h),av=rlNumVal(a);if(hv===av)return'd
 function rlCellId(r,c){return 'rlscore_'+RL_HOME[r]+'_'+RL_AWAY[c];}
 function rlScoreLabel(r,c){return RL_HOME[r]+'-'+RL_AWAY[c];}
 
+const ROULETTE_LB = [
+  {u:'footy_oracle',winnings:840},{u:'coin_flip_king',winnings:610},
+  {u:'lucky_stripes',winnings:470},{u:'demo_user',winnings:320},
+  {u:'xavi_8',winnings:280},{u:'golazo99',winnings:150},
+  {u:'stadyum76',winnings:90},{u:'bet_master',winnings:0},
+];
+
+function renderRouletteLeaderboardShell(comp){
+  const ri=selectedRound[currentCompIdx]??0;
+  const round=comp.rounds[ri]||comp.rounds[0];
+  const roundSelect=comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('');
+  let html=`<div class="round-bar">
+    <select class="round-select" onchange="rlChangeGameweek(this.value)">${roundSelect}</select>
+    <span class="round-status open">● Open</span>
+    <div class="round-bar-spacer"></div>
+    <div class="predict-subtabs">
+      <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button>
+      <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
+    </div>
+    <div class="predict-subtabs-mobile">
+      <select onchange="switchPredictSubTab(this.value)">
+        <option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option>
+        <option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option>
+      </select>
+    </div>
+  </div>
+  <div style="padding:16px;">`;
+  html+='<div style="background:#fff;border:1px solid oklch(0.92 0.004 260);border-radius:16px;overflow:hidden;">';
+  ROULETTE_LB.forEach((row,i)=>{
+    const isMe=row.u==='demo_user';
+    html+=`<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;${i>0?'border-top:1px solid oklch(0.95 0.004 260);':''}${isMe?'background:oklch(0.97 0.01 275);':''}">
+      <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:oklch(0.5 0.01 260);min-width:22px;">${i+1}</span>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:${isMe?'700':'600'};color:oklch(0.2 0.01 260);">${row.u}${isMe?' 👤':''}</div>
+      </div>
+      <span style="font-family:'DM Mono',monospace;font-size:16px;font-weight:800;color:oklch(0.42 0.12 275);">${row.winnings} coins</span>
+    </div>`;
+  });
+  html+='</div></div>';
+  return html;
+}
+
 function renderRouletteHTML(){
   const comp=COMPS[currentCompIdx];
   const ri=selectedRound[currentCompIdx]??0;
@@ -1661,11 +1703,24 @@ function renderRouletteHTML(){
   if(rlExpandedEventId===null && eventIds.length) rlExpandedEventId=eventIds[0];
 
   let html=`<div style="padding:0 0 30px;">
-    <div style="padding:10px 16px 0;display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+    <div class="round-bar">
       <select class="round-select" onchange="rlChangeGameweek(this.value)">${roundSelect}</select>
-      <span class="round-status open" style="font-size:11px;">● Open</span>
+      <span class="round-status open">● Open</span>
+      <div class="round-bar-spacer"></div>
+      <div class="predict-subtabs">
+        <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button>
+        <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
+      </div>
+      <div class="predict-subtabs-mobile">
+        <select onchange="switchPredictSubTab(this.value)">
+          <option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option>
+          <option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option>
+        </select>
+      </div>
     </div>
-    <div style="padding:0 16px;display:flex;flex-direction:column;gap:10px;">`;
+    <div class="deadline-banner" id="countdown-banner">⏱ &nbsp;Bets lock in <span id="countdown-text">Calculating...</span></div>
+    <div style="padding:16px 16px 0;display:flex;flex-direction:column;gap:10px;">`;
+  setTimeout(()=>startCountdown(round.deadline||new Date(Date.now()+3*86400000).toISOString(),()=>renderPredict()),50);
 
   eventIds.forEach(eid=>{
     const ev=EVENTS[eid]; if(!ev) return;
@@ -1708,10 +1763,10 @@ function rlBoardHTML(eventId){
       <button onclick="rlClearAll()" style="font-size:12px;font-weight:600;color:var(--text-2);background:var(--surface);border:1px solid var(--border);border-radius:8px;cursor:pointer;padding:7px 14px;">Clear all</button>
     </div>
 
-    <div style="max-width:420px;margin:0 auto;">
+    <div style="max-width:640px;">
       <div style="display:flex;gap:8px;margin-bottom:16px;">
         <div style="flex:1;display:flex;flex-direction:column;gap:5px;">
-          <div style="font-size:10px;color:var(--text-2);text-align:center;font-weight:600;">Both Teams to Score (Pays x2)</div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;text-align:center;">Both Teams to Score (Pays x2)</div>
           <div style="display:flex;gap:6px;">
             <div id="rlbtts_Y" onclick="rlAddChip('rlbtts_Y')" onmouseenter="rlPreviewHighlight('rlbtts_Y')" onmouseleave="rlHighlightGrid()" style="flex:1;position:relative;text-align:center;padding:9px 4px;border-radius:8px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">
               <span id="rlminus_rlbtts_Y" onclick="event.stopPropagation();rlRemoveChip('rlbtts_Y')" style="position:absolute;top:-7px;right:-7px;width:17px;height:17px;border-radius:50%;background:var(--red);color:white;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;z-index:6;">−</span>
@@ -1726,7 +1781,7 @@ function rlBoardHTML(eventId){
           </div>
         </div>
         <div style="flex:1;display:flex;flex-direction:column;gap:5px;">
-          <div style="font-size:10px;color:var(--text-2);text-align:center;font-weight:600;">Over/Under 2.5 Goals (Pays x2)</div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;text-align:center;">Over/Under 2.5 Goals (Pays x2)</div>
           <div style="display:flex;gap:6px;">
             <div id="rlou_O" onclick="rlAddChip('rlou_O')" onmouseenter="rlPreviewHighlight('rlou_O')" onmouseleave="rlHighlightGrid()" style="flex:1;position:relative;text-align:center;padding:9px 4px;border-radius:8px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">
               <span id="rlminus_rlou_O" onclick="event.stopPropagation();rlRemoveChip('rlou_O')" style="position:absolute;top:-7px;right:-7px;width:17px;height:17px;border-radius:50%;background:var(--red);color:white;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;z-index:6;">−</span>
@@ -1758,11 +1813,11 @@ function rlBoardHTML(eventId){
         <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:#FFEDD5;border:1px solid #EA580C;"></span>Away win</div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;max-width:420px;margin:20px auto 0;padding-top:16px;border-top:1px solid var(--border);">
+    <div style="display:flex;align-items:center;justify-content:space-between;max-width:640px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
       <div style="font-size:12px;color:var(--text-2);"><strong id="rl-staked-count" style="color:var(--text);font-family:var(--mono);">0</strong> of 100 staked</div>
-      <button id="rl-place-btn" disabled onclick="rlPlaceBets()" style="font-family:var(--mono);font-size:12px;font-weight:700;color:white;background:var(--accent);border:none;border-radius:8px;padding:12px 24px;cursor:pointer;">Place Bets</button>
+      <button id="rl-place-btn" disabled onclick="rlPlaceBets()" style="font-family:var(--mono);font-size:12px;font-weight:700;color:white;background:var(--accent);border:none;border-radius:8px;padding:12px 24px;cursor:pointer;">Save</button>
     </div>
-    <div id="rl-betslip" style="margin-top:16px;max-width:420px;margin-left:auto;margin-right:auto;"></div>
+    <div id="rl-betslip" style="margin-top:16px;max-width:640px;"></div>
   </div>`;
 }
 
@@ -1864,10 +1919,6 @@ function rlRender(id){
     chipEl.style.display=val>0?(isMarket?'block':'inline-block'):'none';
   }
   if(minusEl){minusEl.style.display=val>0?'flex':'none';}
-  if(el && isMarket){
-    if(val>0){ el.style.background='var(--accent)'; el.style.borderColor='var(--accent)'; el.style.color='white'; }
-    else { el.style.background='var(--white)'; el.style.borderColor='var(--border)'; el.style.color='var(--text)'; }
-  }
   rlUpdateFooter();
 }
 // Which score cells match a given special market ("both teams to score" / "over-under")
@@ -1921,7 +1972,6 @@ function rlRenderBetslip(){
     const typeColor=m.type==='MARKET'?'#0891B2':'var(--accent)';
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;margin-bottom:6px;background:var(--surface);border-radius:8px;border-left:3px solid ${typeColor};">
       <div>
-        <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:${typeColor};margin-bottom:2px;">${m.type} · ×${m.mult}</div>
         <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);">${m.label}</div>
         <div style="font-size:11px;color:var(--text-3);margin-top:1px;">${stake} coins staked</div>
       </div>
@@ -1989,7 +2039,7 @@ function renderLineupLeaderboardShell(comp){
 function renderLeaderboardPane(comp){
   if(comp.mode==='lineup') return renderLineupPredictor(comp);
   if(comp.mode==='roulette'){
-    return `<div class="empty" style="padding:60px 20px;"><div class="empty-icon">🎰</div><div class="empty-title">Leaderboard coming soon</div><div class="empty-sub">Roulette winnings will rank here in a future update.</div></div>`;
+    return renderRouletteLeaderboardShell(comp);
   }
   if(lbSelection[currentCompIdx]===undefined)lbSelection[currentCompIdx]=getDefaultRoundIdx(comp);
   const sel=lbSelection[currentCompIdx],isOverall=sel==='overall';
