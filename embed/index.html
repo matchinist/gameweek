@@ -736,6 +736,15 @@ function computeCurrentRoundIdx(comp){
   return Math.min(idx, rounds.length-1);
 }
 function getDefaultRoundIdx(comp){
+  if(comp.mode==='lineup'){
+    // Lineup rounds go 'completed' the moment the admin saves the actual XI —
+    // often hours before kickoff — so "open" is no longer a reliable signal
+    // for which fixture the user actually cares about. Prefer whichever round
+    // is time-current; only fall back to open-status if there's no kickoff
+    // data to compute that from at all.
+    const computed = computeCurrentRoundIdx(comp);
+    if(computed!==null) return computed;
+  }
   const openIdxs = comp.rounds.map((r,i)=>r.status==='open'?i:null).filter(i=>i!==null);
   if(openIdxs.length===1) return openIdxs[0];
   if(openIdxs.length>1){
