@@ -1034,8 +1034,11 @@ function renderLineupPredictor(comp){
   // Calculate player positions based on formation
   // X = left%, Y = top% — GK at far left, FWD at far right
   // Detect if pitch is horizontal (wide) or vertical (tall)
-  const pitchEl = document.querySelector('.lineup-pitch-container');
-  const isHorizontal = pitchEl ? (pitchEl.offsetWidth > pitchEl.offsetHeight) : window.innerWidth >= 560;
+  // Match the CSS breakpoint exactly (.lineup-pitch-container switches aspect
+  // ratio at 560px) rather than measuring offsetWidth/offsetHeight, which can be
+  // 0x0 or stale at the moment this runs and silently apply the wrong layout
+  // (e.g. the horizontal shape on a narrow portrait screen).
+  const isHorizontal = window.innerWidth >= 560;
 
   function calcPositions(){
     // Only 4-2-3-1 exists now, so use an explicit shape matching a real 4-2-3-1
@@ -1134,12 +1137,12 @@ function renderLineupPredictor(comp){
       </div>
       ${countdownBanner}
 
-      <div style="padding:16px 16px 0;">
+      <div style="padding:16px 0 0;">
         ${scoreSection}
 
       <!-- Fixture header + pitch merged into one component -->
-      <div style="background:#fff;border:1px solid oklch(0.92 0.004 260);border-radius:16px;padding:10px 16px;overflow:hidden;">
-        ${fixtureHeader}
+      <div style="background:#fff;border:1px solid oklch(0.92 0.004 260);border-radius:16px;padding:10px 0;overflow:hidden;">
+        <div style="padding:0 16px;">${fixtureHeader}</div>
         <div class="pitch-wrap" style="position:relative;">
         <div class="lineup-pitch-container">
           <!-- Pitch markings -->
