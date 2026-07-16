@@ -623,11 +623,16 @@ function lineupPlayerInRound(roundId, pid){
 function renderLineupPredictor(comp){
   const ri = selectedRound[currentCompIdx]??0;
   const round = comp.rounds[ri]||comp.rounds[0];
-  const isOpen = round.status==='open';
+  const ev = EVENTS[round.eventId||round.id] || {};
+  // Locks 2 hours before kickoff, regardless of round.status, so predictions
+  // can't be changed once the team news / lineup window has effectively closed.
+  const kickoffMs = ev.kickoffRaw ? new Date(ev.kickoffRaw).getTime() : null;
+  const lineupLockAt = kickoffMs!=null ? kickoffMs - 2*3600*1000 : null;
+  const timeLocked = lineupLockAt!=null && Date.now() >= lineupLockAt;
+  const isOpen = round.status==='open' && !timeLocked;
   const picks = lineupPicks[round.id]||{};
   const slots = getLineupSlots(lineupFormation);
   const pickCount = Object.keys(picks).length;
-  const ev = EVENTS[round.eventId||round.id] || {};
 
   // Score if completed
   let scored = null;
@@ -825,7 +830,9 @@ function openLineupPicker(roundId, slotIdx, pos){
   }
 
   // Only show players from the slot's own position — a GK slot only offers GKs, etc.
-  const list = byPos[pos]||[];
+  // GK slots only offer keepers; any outfield slot offers all outfield players
+  // (DEF/MID/FWD combined), not just that one specific position.
+  const list = pos==='GK' ? (byPos.GK||[]) : [...(byPos.DEF||[]),...(byPos.MID||[]),...(byPos.FWD||[])];
   list.forEach(pl=>{
     const alreadyUsed = Object.entries(picks).some(([k,v])=>v===pl.id && parseInt(k)!==slotIdx);
     html+=`<div onclick="${alreadyUsed?'':` pickLineupPlayer('${roundId}',${slotIdx},'${pl.id}');closeLineupPicker();renderPredict();`}" style="display:flex;align-items:center;gap:12px;padding:10px 20px;cursor:${alreadyUsed?'default':'pointer'};opacity:${alreadyUsed?'0.35':'1'};">

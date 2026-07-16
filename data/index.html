@@ -517,7 +517,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
       </div>
       <div style="display:flex;gap:6px;display:none;" id="score-step3-actions">
         <button class="btn btn-ghost" onclick="goScoreStep(2)">← Back</button>
-        <button class="btn btn-primary" onclick="saveScore()">Save Result</button>
+        <button class="btn btn-primary" id="score-save-btn" onclick="saveScore()">Save Result</button>
       </div>
     </div>
   </div>
@@ -1142,6 +1142,19 @@ function updateEventScore(eid,side,val){
 let scoreLineup={home:[],away:[]}; // arrays of player IDs in starting XI
 let scoreScorers=[]; // [{playerId, playerName, team, minute}]
 
+function toDatetimeLocalValue(raw){
+  if(!raw) return '';
+  const d = new Date(raw);
+  if(isNaN(d.getTime())) return '';
+  // Build YYYY-MM-DDTHH:MM in LOCAL time explicitly, rather than relying on
+  // the stored string already being in that exact shape (some import paths
+  // store kickoff with a space separator or without minutes-precision,
+  // which a plain .slice(0,16) silently fails to turn into a valid
+  // datetime-local value, leaving the field blank).
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 function openScoreModal(eid){
   const ev=S.events[eid];if(!ev)return;
   const home=getTeam(ev.homeId),away=getTeam(ev.awayId);
@@ -1158,7 +1171,7 @@ function openScoreModal(eid){
   document.getElementById('lineup-home-title').textContent=home?.name||'Home';
   document.getElementById('lineup-away-title').textContent=away?.name||'Away';
   document.getElementById('score-modal-status').value=ev.status||'upcoming';
-  document.getElementById('score-modal-kickoff').value=ev.kickoff?ev.kickoff.slice(0,16):'';
+  document.getElementById('score-modal-kickoff').value=toDatetimeLocalValue(ev.kickoff);
 
   scoreLineup={home:(ev.lineup?.home||[]).slice(),away:(ev.lineup?.away||[]).slice()};
   scoreScorers=(ev.scorers||[]).slice();
@@ -1274,7 +1287,7 @@ function renderScorersList(){
     </div>`).join('');
 }
 
-function saveScore(){
+async function saveScore(){
   const eid=document.getElementById('score-modal-eid').value;
   const h=document.getElementById('score-modal-h').value;
   const a=document.getElementById('score-modal-a').value;
@@ -1289,7 +1302,10 @@ function saveScore(){
   if(status==='completed'&&(h===''||a==='')){toast('Enter both scores for a finished match');return;}
 
   ev.status=status;
-  if(kickoff)ev.kickoff=kickoff;
+  if(kickoff){
+    const parsed=new Date(kickoff);
+    if(!isNaN(parsed.getTime())) ev.kickoff=parsed.toISOString();
+  }
   if(h!==''&&a!==''){
     ev.result={h:parseInt(h),a:parseInt(a)};
     if(hxg!=='')ev.result.home_xg=parseFloat(hxg);
@@ -1302,7 +1318,14 @@ function saveScore(){
   ev.lineup=(scoreLineup.home.length||scoreLineup.away.length)?{home:scoreLineup.home,away:scoreLineup.away}:null;
   ev.scorers=scoreScorers.length?scoreScorers:null;
 
-  save();
+  const btn=document.getElementById('score-save-btn');
+  if(btn){btn.disabled=true;btn.textContent='Saving...';}
+  await save(); // wait for the actual Supabase write before doing anything else —
+                 // closing/toasting before this resolves risks the edit being lost
+                 // if the user refreshes right after (this was the root cause of
+                 // edits appearing to save but reverting after a page reload).
+  if(btn){btn.disabled=false;btn.textContent='Save Result';}
+
   closeModal('modal-score-entry');
   const el=document.getElementById('evmini-'+eid);
   if(el)el.outerHTML=renderEventMini(eid);
