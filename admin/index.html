@@ -564,6 +564,24 @@ tbody tr:hover td{background:var(--bg);}
         </div>
 
         <div class="card">
+          <div class="card-header"><span class="card-title">Logo</span></div>
+          <div class="card-body">
+            <div style="font-size:12px;color:var(--text-3);margin-bottom:14px;">Replace the default "gameweek" wordmark with your own logo in the embed widget.</div>
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+              <div id="brand-logo-preview" style="width:56px;height:56px;border-radius:10px;border:1px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+                <span style="font-size:10px;color:var(--text-3);text-align:center;">No logo</span>
+              </div>
+              <div style="flex:1;">
+                <input type="file" id="brand-logo-file" accept="image/*" style="display:none;" onchange="uploadOperatorLogo(this.files[0])">
+                <button class="btn btn-ghost btn-sm" onclick="document.getElementById('brand-logo-file').click()">Upload logo</button>
+                <button class="btn btn-ghost btn-sm" id="brand-logo-remove" style="display:none;color:var(--red);" onclick="removeOperatorLogo()">Remove</button>
+              </div>
+            </div>
+            <div style="font-size:11px;color:var(--text-3);">PNG, JPG, or SVG. Square images work best — recommended at least 128×128px.</div>
+          </div>
+        </div>
+
+        <div class="card">
           <div class="card-header"><span class="card-title">Widget Theme</span></div>
           <div class="card-body">
             <div class="form-group">
@@ -1645,6 +1663,49 @@ function renderBranding(){
       <span style="font-size:12px;font-weight:600;color:var(--text);flex:1;">${c.name}</span>
       <span style="font-family:var(--mono);font-size:11px;color:var(--text-3);">${c.color}</span>
     </div>`).join('');
+  renderLogoPreview();
+}
+
+function renderLogoPreview(){
+  const preview = document.getElementById('brand-logo-preview');
+  const removeBtn = document.getElementById('brand-logo-remove');
+  if(!preview) return;
+  const url = currentOperator?.logo_url;
+  if(url){
+    preview.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:contain;padding:6px;">`;
+    if(removeBtn) removeBtn.style.display='inline-block';
+  } else {
+    preview.innerHTML = `<span style="font-size:10px;color:var(--text-3);text-align:center;">No logo</span>`;
+    if(removeBtn) removeBtn.style.display='none';
+  }
+}
+
+async function uploadOperatorLogo(file){
+  if(!file) return;
+  if(!currentOperator?.auth_id){ toast('Save your account details first'); return; }
+  try{
+    const ext = file.name.split('.').pop();
+    const path = 'logos/'+currentOperator.auth_id+'_'+Date.now()+'.'+ext;
+    const {error:upErr} = await supa.storage.from('player-photos').upload(path, file, {contentType:file.type});
+    if(upErr){ toast('Upload failed: '+upErr.message); console.error('logo upload:',upErr); return; }
+    const {data:urlData} = supa.storage.from('player-photos').getPublicUrl(path);
+    const logoUrl = urlData?.publicUrl;
+    if(!logoUrl){ toast('Upload failed: could not get file URL'); return; }
+    const {error:dbErr} = await supa.from('gw_operators').update({logo_url:logoUrl}).eq('auth_id',currentOperator.auth_id);
+    if(dbErr){ toast('Save failed: '+dbErr.message); console.error('logo save:',dbErr); return; }
+    currentOperator.logo_url = logoUrl;
+    renderLogoPreview();
+    toast('Logo updated');
+  }catch(e){ console.error('logo upload failed:',e); toast('Upload failed: '+e.message); }
+}
+
+async function removeOperatorLogo(){
+  if(!currentOperator?.auth_id) return;
+  const {error} = await supa.from('gw_operators').update({logo_url:null}).eq('auth_id',currentOperator.auth_id);
+  if(error){ toast('Save failed: '+error.message); return; }
+  currentOperator.logo_url = null;
+  renderLogoPreview();
+  toast('Logo removed — back to default');
 }
 
 function saveBrandingAccent(val){

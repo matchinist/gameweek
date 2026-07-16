@@ -24,7 +24,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .app{display:flex;flex-direction:column;position:fixed;top:0;left:0;right:0;bottom:0;max-width:860px;margin:0 auto;width:100%;background:var(--white);overflow:hidden;border-left:1px solid oklch(0.92 0.004 260);border-right:1px solid oklch(0.92 0.004 260);}
 .scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:#F9FAFB;}
 .app-header{background:#fff;border-bottom:1px solid oklch(0.92 0.004 260);flex-shrink:0;z-index:50;}
-.header-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;}
+.header-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 20px;}
 .header-logo{font-family:Inter,sans-serif;font-size:19px;font-weight:800;letter-spacing:-0.02em;color:oklch(0.22 0.01 260);}
 .header-logo span{color:oklch(0.55 0.19 275);}
 .header-user{display:flex;align-items:center;gap:8px;cursor:pointer;}
@@ -315,7 +315,7 @@ table.lb-table{width:100%;border-collapse:collapse;}
   <div id="screen-app" style="flex:1;min-height:0;display:flex;flex-direction:column;">
     <div class="app-header">
       <div class="header-top">
-        <div class="header-logo">game<span>week</span><span id="hdr-operator-badge" style="font-family:var(--sans);font-weight:500;color:var(--text-3);font-size:11px;margin-left:6px;"></span></div>
+        <div class="header-logo" id="hdr-logo">game<span>week</span><span id="hdr-operator-badge" style="font-family:var(--sans);font-weight:500;color:var(--text-3);font-size:11px;margin-left:6px;"></span></div>
         <div class="header-user" onclick="toggleProfile()">
           <div class="header-avatar" id="hdr-avatar">?</div>
           <div class="header-username" id="hdr-username">Sign in</div>
@@ -3087,8 +3087,14 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
 
     if(CLIENT_PARAM&&CLIENT_PARAM!=='demo'){
       try{
-        const {data:op} = await supa.from('gw_operators').select('company_name').eq('client_key',CLIENT_PARAM).single();
-        if(op) document.getElementById('hdr-operator-badge').textContent='· '+op.company_name;
+        const {data:op} = await supa.from('gw_operators').select('company_name,logo_url').eq('client_key',CLIENT_PARAM).single();
+        if(op){
+          document.getElementById('hdr-operator-badge').textContent='· '+op.company_name;
+          if(op.logo_url){
+            const logoEl = document.getElementById('hdr-logo');
+            if(logoEl) logoEl.innerHTML = `<img src="${op.logo_url}" alt="${op.company_name||'Logo'}" style="height:28px;max-width:160px;object-fit:contain;vertical-align:middle;">`;
+          }
+        }
       }catch(e){}
     }
   }catch(err){ console.error('Init:',err); }
