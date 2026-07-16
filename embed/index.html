@@ -397,11 +397,15 @@ async function buildCompsFromRealData(){
             const isHome = ev.home_id===lTeamId;
             const opp = teamById(isHome?ev.away_id:ev.home_id);
             const hasResult = ev.result && ev.result.h!=null && ev.result.a!=null;
+            // A round should stop being "open" — and points should start
+            // showing — the moment the admin saves the actual starting XI,
+            // not only once the final score has also been entered.
+            const hasLineup = ev.lineup && ((ev.lineup.home&&ev.lineup.home.length) || (ev.lineup.away&&ev.lineup.away.length));
             const dateStr = ev.kickoff ? new Date(ev.kickoff).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '';
             return {
               id: ev.id,
               label: `${isHome?'vs':'@'} ${opp?.name||'TBD'}${dateStr?' · '+dateStr:''}`,
-              status: hasResult?'completed':'open',
+              status: (hasResult||hasLineup)?'completed':'open',
               eventId: ev.id,
               kickoffRaw: ev.kickoff||null,
             };
