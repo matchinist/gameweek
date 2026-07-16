@@ -587,6 +587,19 @@ const S={
 };
 
 // ── SAVE TO SUPABASE ─────────────────────────────────────────────────────
+// Updates only the given fields on ONE event, rather than bulk-upserting every
+// field of every event (which is what save() does). This means a schema issue
+// or bad value in one tab (e.g. a missing 'lineup' column) can never block an
+// unrelated tab's save (e.g. just changing the kickoff date) — each tab's
+// save is fully isolated to the fields that tab actually owns.
+async function saveEventFields(eid, fields){
+  try{
+    const {error} = await supa.from('gw_dm_events').update(fields).eq('id',eid);
+    if(error){ toast('Save failed: '+error.message); console.error('event field save:',error); return false; }
+    return true;
+  }catch(e){ console.error('event field save failed:',e.message); toast('Save failed: '+e.message); return false; }
+}
+
 async function save(){
   try{
     if(S.teams.length){
@@ -1333,14 +1346,17 @@ async function saveResultTab(){
 
   const btn=document.getElementById('score-save-btn');
   if(btn){btn.disabled=true;btn.textContent='Saving...';}
-  const ok = await save(); // wait for the actual Supabase write before doing anything else —
-                 // reporting success before this resolves risks the edit being lost
-                 // if the user refreshes right after.
+  const ok = await saveEventFields(eid, {
+    status: ev.status,
+    kickoff: ev.kickoff||'',
+    result: ev.result||null
+  }); // only touches Result-tab fields — a schema issue with lineup/scorers
+      // (owned by other tabs) can never block this save.
   if(btn){btn.disabled=false;btn.textContent='Save Result';}
 
   if(!ok){
-    // save() already showed its own "Save failed" toast — stop here rather
-    // than claiming success on top of that failure.
+    // saveEventFields() already showed its own "Save failed" toast — stop
+    // here rather than claiming success on top of that failure.
     return;
   }
 
@@ -1356,7 +1372,7 @@ async function saveLineupsTab(){
 
   const btn=document.getElementById('lineups-save-btn');
   if(btn){btn.disabled=true;btn.textContent='Saving...';}
-  const ok = await save();
+  const ok = await saveEventFields(eid, {lineup: ev.lineup});
   if(btn){btn.disabled=false;btn.textContent='Save Lineups';}
   if(!ok)return;
 
@@ -1372,7 +1388,7 @@ async function saveScorersTab(){
 
   const btn=document.getElementById('scorers-save-btn');
   if(btn){btn.disabled=true;btn.textContent='Saving...';}
-  const ok = await save();
+  const ok = await saveEventFields(eid, {scorers: ev.scorers});
   if(btn){btn.disabled=false;btn.textContent='Save Scorers';}
   if(!ok)return;
 
@@ -1387,7 +1403,7 @@ async function clearScore(){
   if(!confirm('Clear result and reset status? All points from this event will be recalculated as if it never happened.'))return;
   ev.result=null;
   ev.status='upcoming';
-  const ok=await save();
+  const ok=await saveEventFields(eid, {result:null, status:'upcoming'});
   if(!ok)return;
   closeModal('modal-score-entry');
   const el=document.getElementById('evmini-'+eid);
