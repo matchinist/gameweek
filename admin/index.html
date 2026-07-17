@@ -1195,7 +1195,15 @@ const modeChip  = {lms:'LMS', score:'SCORE', betting:'BET', ranking:'RANKING', l
 
 function getEvent(id){ return state.events.find(e=>e.id===id); }
 function getComp(id){ return state.competitions.find(c=>c.id===id); }
-function uid(){ return Math.random().toString(36).slice(2,8); }
+function uid(){
+  // crypto.randomUUID() is effectively collision-proof and available in all
+  // modern browsers; the previous 6-character Math.random() id had enough
+  // collision risk across many operators' data that two different accounts
+  // could end up with the same competition/round id — which is how deleting
+  // one operator's competition was able to delete another's.
+  if(window.crypto && typeof window.crypto.randomUUID==='function') return window.crypto.randomUUID().replace(/-/g,'').slice(0,12);
+  return Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,10);
+}
 
 function fmtDt(dt){
   if(!dt) return '—';
@@ -2353,8 +2361,14 @@ async function setCompStatus(id,status){
 
 async function deleteComp(id){
   if(!confirm('Delete this competition and all its rounds?')) return;
-  const {error} = await supa.from('gw_competitions').delete().eq('id',id);
+  // client_key is included here as a hard safety boundary, not just a
+  // convenience filter — id alone should be unique, but should a collision
+  // ever occur between two different operators' data, this guarantees a
+  // delete can never reach past this operator's own rows.
+  const {error} = await supa.from('gw_competitions').delete().eq('id',id).eq('client_key',CLIENT_KEY);
   if(error){ console.error('deleteComp failed:',error); toast('⚠ Delete failed: '+error.message); return; }
+  const {error:roundsErr} = await supa.from('gw_rounds').delete().eq('competition_id',id).eq('client_key',CLIENT_KEY);
+  if(roundsErr){ console.error('deleteComp rounds cleanup failed:',roundsErr); } // competition is already gone; don't block on this
   state.competitions = state.competitions.filter(c=>c.id!==id);
   nav('competitions');
   toast('Competition deleted');
