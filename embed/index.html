@@ -518,6 +518,7 @@ async function buildCompsFromRealData(){
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let currentPlayer=null; // {id, auth_id, username, email, client_key}
+let rankingSubmitted={}; // tracks which ranking predictions are genuinely saved to the DB, vs an unsaved local default shown for the drag-to-reorder UI
 let authModalMouseDownTarget=null; // tracks where a mousedown started, so a text-selection drag that ends outside the modal doesn't get treated as a click-to-close
 let preds={};
 let currentCompIdx=0, selectedRound={}, predictSubTab='predictions', lbSelection={}, predsDirty=false;
@@ -720,6 +721,7 @@ async function loadPlayerPreds(){
     .eq('client_key',CLIENT_PARAM)
     .eq('player_id',currentPlayer.id);
   preds={};
+  rankingSubmitted={};
   const lineupComps = (COMPS||[]).filter(c=>c.mode==='lineup');
   const lineupRoundToComp = {};
   lineupComps.forEach(c=>(c.rounds||[]).forEach(r=>{ lineupRoundToComp[r.id]=c; }));
@@ -734,6 +736,7 @@ async function loadPlayerPreds(){
       reconstructLineupPicks(p.event_id, val, owningComp);
     } else {
       preds[p.event_id] = val;
+      if(p.event_id.endsWith('_ranking')) rankingSubmitted[p.event_id]=true;
     }
   }
 }
@@ -2680,6 +2683,7 @@ async function submitRanking(roundId){
     toast('⚠ Could not save — check your connection and try again');
     return;
   }
+  rankingSubmitted[rk]=true;
   predsDirty=false;
   if(btn){btn.classList.add('disabled');btn.textContent='\u2713 Saved';}
   toast('\u2713 Ranking saved');
@@ -2840,19 +2844,25 @@ function renderPredictionsPane(comp){
       userOrder=teams.map(t=>t.id);
       preds[predKey]=userOrder;
     }
+    // isCompleted alone isn't enough to show a scored result — that also
+    // requires this player to have actually submitted a prediction. Without
+    // this check, a player who never clicked Save would still see "Your
+    // prediction vs Actual: X pts" computed from the untouched default order,
+    // making an unsubmitted prediction look identical to a real, saved one.
+    const hasRealSubmission = !!rankingSubmitted[predKey];
     let actualOrder=null;
     if(isCompleted){
       actualOrder=[...teams].sort((a,b)=>(b.actualXG||0)-(a.actualXG||0)).map(t=>t.id);
     }
     const teamMap={};teams.forEach(t=>{teamMap[t.id]=t;});
     let totalPts=0,correctCount=0;
-    if(actualOrder){
+    if(actualOrder&&hasRealSubmission){
       userOrder.forEach((tid,i)=>{if(tid===actualOrder[i])correctCount++;});
       totalPts=correctCount*(comp.rankingConfig?.pointsPerCorrect||2);
       if(correctCount===teams.length)totalPts+=(comp.rankingConfig?.perfectBonus||5);
     }
     html+=`<div style="padding:0 8px 12px;">`;
-    if(isCompleted&&actualOrder){
+    if(isCompleted&&actualOrder&&hasRealSubmission){
       html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 8px 12px;"><span style="font-size:13px;font-weight:700;color:var(--text);">Your prediction vs Actual (${comp.rankingConfig?.metric||'xG'})</span><span style="font-family:var(--mono);font-size:14px;font-weight:800;color:${correctCount===teams.length?'var(--green)':'var(--accent)'};">${totalPts} pts</span></div>`;
       userOrder.forEach((tid,i)=>{
         const t=teamMap[tid];const isCorrect=tid===actualOrder[i];
@@ -2870,7 +2880,7 @@ function renderPredictionsPane(comp){
       html+=`<button class="submit-preds-btn" onclick="submitRanking('${round.id}')">Save Ranking</button>`;
       setTimeout(()=>initDragSort(),50);
     } else {
-      html+=`<div style="padding:8px 8px 12px;font-size:12px;color:var(--text-3);font-weight:600;">Predictions locked</div>`;
+      html+=`<div style="padding:8px 8px 12px;font-size:12px;color:var(--text-3);font-weight:600;">${isCompleted?'You didn\u2019t submit a prediction for this round':'Predictions locked'}</div>`;
       userOrder.forEach((tid,i)=>{
         const t=teamMap[tid];
         html+=rankRowHTML(t, i, {});
