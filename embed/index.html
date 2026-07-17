@@ -1047,7 +1047,7 @@ function renderLineupPredictor(comp){
       </div>` : '';
       return `<div onclick="${click}" style="position:absolute;left:${xPct}%;top:${yPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:${isOpen?'pointer':'default'};z-index:3;width:80px;">
         <div style="position:relative;width:52px;height:52px;">
-          <div style="width:52px;height:52px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#000;font-weight:800;font-size:15px;border:2px solid ${borderColor};box-shadow:0 2px 8px rgba(0,0,0,0.4);${isResulted&&!isCorrect?'opacity:0.6;':''}">${flagUrl?`<img src="${flagUrl}" alt="${player.nationality||''}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.textContent='${fallback}';">`:fallback}</div>
+          <div style="width:52px;height:52px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#000;font-weight:800;font-size:15px;box-shadow:0 2px 8px rgba(0,0,0,0.4);${isResulted&&!isCorrect?'opacity:0.6;':''}">${flagUrl?`<img src="${flagUrl}" alt="${player.nationality||''}" style="width:100%;height:100%;object-fit:cover;filter:brightness(0.9);" onerror="this.parentElement.textContent='${fallback}';">`:fallback}</div>
           ${ptsBadge}
           ${checkBadge}
         </div>
@@ -1149,9 +1149,17 @@ function renderLineupPredictor(comp){
   const countdownBanner = (isOpen && lineupLockAt) ? `<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;<span id="countdown-text">Calculating...</span> until lineup locks</div>` : '';
   if(isOpen && lineupLockAt) setTimeout(()=>startCountdown(lineupLockAt,()=>renderPredict()),50);
 
+  // Only the current gameweek and past ones are selectable — a gameweek only
+  // becomes "current" 4 hours after the previous one's last kickoff, matching
+  // computeCurrentRoundIdx used elsewhere for this same rule.
+  const currentIdx = computeCurrentRoundIdx(comp);
+  const maxIdx = currentIdx!=null ? currentIdx : comp.rounds.length-1;
+  const roundSelect = comp.rounds.slice(0, maxIdx+1).map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('');
+
   return `
     <div style="padding:0 0 30px;">
       <div class="round-bar">
+        <select class="round-select" onchange="changeRound(this.value)">${roundSelect}</select>
         <span class="round-status ${round.status==='open'?'open':'upcoming'}">${round.status==='open'?'● Open':'◷ Soon'}</span>
         <div class="round-bar-spacer"></div>
         <div class="predict-subtabs">
@@ -1205,7 +1213,7 @@ function renderLineupPredictor(comp){
         <button onclick="saveLineup('${round.id}')" style="width:100%;margin-top:16px;background:var(--comp-color);color:#fff;border:none;border-radius:10px;padding:14px;font-family:'DM Mono',monospace;font-size:14px;font-weight:700;cursor:pointer;">
           Save Lineup (${pickCount}/11)
         </button>`) : isOpen ? `
-        <div style="width:100%;margin-top:16px;background:#fff;color:oklch(0.5 0.01 260);border:none;border-radius:10px;padding:14px;font-size:13px;font-weight:600;text-align:center;">
+        <div style="width:100%;margin-top:16px;background:color-mix(in srgb, var(--comp-color) 12%, white);color:oklch(0.5 0.01 260);border:none;border-radius:10px;padding:14px;font-size:13px;font-weight:600;text-align:center;">
           Select all 11 players to save
         </div>` : ''}
         </div>
@@ -1216,7 +1224,11 @@ function renderLineupPredictor(comp){
 function renderLineupLeaderboardShell(comp){
   const ri = selectedRound[currentCompIdx]??0;
   const round = comp.rounds[ri]||comp.rounds[0];
+  const currentIdx = computeCurrentRoundIdx(comp);
+  const maxIdx = currentIdx!=null ? currentIdx : comp.rounds.length-1;
+  const roundSelect = comp.rounds.slice(0, maxIdx+1).map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('');
   return `<div class="round-bar">
+    <select class="round-select" onchange="changeRound(this.value)">${roundSelect}</select>
     <span class="round-status ${round?.status==='open'?'open':'upcoming'}">${round?.status==='open'?'● Open':'◷ Soon'}</span>
     <div class="round-bar-spacer"></div>
     <div class="predict-subtabs">
