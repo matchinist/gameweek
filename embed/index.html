@@ -390,11 +390,21 @@ async function buildCompsFromRealData(){
 
     // Gameweek labels for lineup mode come straight from Data Manager's own
     // round structure (e.g. a round the admin named "Gameweek 4"), not from
-    // team/date text — build a lookup from event id to that label.
+    // team/date text — build a lookup from event id to that label. Also track
+    // which season each event belongs to, and which season key is the most
+    // recent — gw_dm_events has no season field of its own, so without this,
+    // a team's fixtures from an old, fully-played-out season would show up
+    // in the lineup gameweek dropdown right alongside the current season's.
+    const eventSeasonKey = {};
+    let latestSeasonKey = null;
     (tournamentRows||[]).forEach(t=>{
-      Object.values(t.seasons||{}).forEach(season=>{
+      Object.entries(t.seasons||{}).forEach(([seasonKey,season])=>{
+        if(latestSeasonKey===null || seasonKey>latestSeasonKey) latestSeasonKey=seasonKey;
         (season.rounds||[]).forEach(r=>{
-          (r.eventIds||[]).forEach(eid=>{ EVENT_GAMEWEEK[eid]=r.label; });
+          (r.eventIds||[]).forEach(eid=>{
+            EVENT_GAMEWEEK[eid]=r.label;
+            eventSeasonKey[eid]=seasonKey;
+          });
         });
       });
     });
@@ -419,6 +429,13 @@ async function buildCompsFromRealData(){
       if(c.mode==='lineup' && c.lineup_config?.teamId){
         const lTeamId = c.lineup_config.teamId;
         cRounds = (evRows||[]).filter(ev=>ev.home_id===lTeamId||ev.away_id===lTeamId)
+          .filter(ev=>{
+            const sk = eventSeasonKey[ev.id];
+            // Keep it if it's in the latest season, or if it isn't assigned
+            // to any season/round at all yet (an unorganized fixture) —
+            // only exclude events confirmed to belong to an OLDER season.
+            return sk===undefined || latestSeasonKey===null || sk===latestSeasonKey;
+          })
           .sort((a,b)=>{
             const at=a.kickoff?new Date(a.kickoff).getTime():Infinity;
             const bt=b.kickoff?new Date(b.kickoff).getTime():Infinity;
