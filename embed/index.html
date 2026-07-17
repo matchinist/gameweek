@@ -763,18 +763,19 @@ function reconstructLineupPicks(roundId, pickedIds, comp){
 }
 
 async function savePred(eventId, prediction){
-  if(!currentPlayer) return;
+  if(!currentPlayer) return false;
   const comp=COMPS[currentCompIdx];
   const round=comp?.rounds[selectedRound[currentCompIdx]];
-  if(!round) return;
+  if(!round) return false;
   const stored = (typeof prediction==='string'||typeof prediction==='number')
     ? {value:prediction} : prediction;
-  supa.from('gw_predictions').upsert({
+  const {error} = await supa.from('gw_predictions').upsert({
     client_key:CLIENT_PARAM, player_id:currentPlayer.id,
     username:currentPlayer.username, competition_id:comp.id,
     round_id:round.id, event_id:eventId, prediction:stored
-  },{onConflict:'player_id,competition_id,event_id'})
-  .then(({error})=>{ if(error) console.error('savePred:',error.message); });
+  },{onConflict:'player_id,competition_id,event_id'});
+  if(error){ console.error('savePred:',error.message); return false; }
+  return true;
 }
 
 // ── AUTH MODAL ────────────────────────────────────────────────────────────────
@@ -2660,7 +2661,7 @@ function submitPreds(){
   toast('\u2713 '+done+' of '+events.length+' predictions saved');
 }
 
-function submitRanking(roundId){
+async function submitRanking(roundId){
   const comp=COMPS[currentCompIdx],round=comp?.rounds[selectedRound[currentCompIdx]];
   if(!round||round.id!==roundId)return;
   if(!currentPlayer){
@@ -2671,9 +2672,15 @@ function submitRanking(roundId){
   const rk=round.id+'_ranking';
   const order=preds[rk];
   if(!order||!order.length){ toast('Reorder the teams first'); return; }
-  savePred(rk, order);
-  predsDirty=false;
   const btn=document.querySelector('.submit-preds-btn');
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  const ok = await savePred(rk, order);
+  if(!ok){
+    if(btn){btn.disabled=false;btn.textContent='Save Ranking';}
+    toast('⚠ Could not save — check your connection and try again');
+    return;
+  }
+  predsDirty=false;
   if(btn){btn.classList.add('disabled');btn.textContent='\u2713 Saved';}
   toast('\u2713 Ranking saved');
 }
