@@ -1883,7 +1883,13 @@ async function refreshDMState(){
     supa.from('gw_dm_events').select('*'),
   ]);
   dmState.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||''}));
-  dmState.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,color:t.color,seasons:t.seasons||{}}));
+  // A tournament restricted to a specific client's email should only be
+  // visible/selectable to that one operator — everyone else shouldn't see
+  // it at all when building competitions or rounds.
+  const myEmail = (currentOperator?.email||'').toLowerCase();
+  dmState.tournaments = (tournaments||[])
+    .filter(t=>!t.restricted_email || t.restricted_email.toLowerCase()===myEmail)
+    .map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,color:t.color,seasons:t.seasons||{}}));
   const evMap={};
   (events||[]).forEach(e=>{ evMap[e.id]={homeId:e.home_id,awayId:e.away_id,kickoff:e.kickoff,result:e.result,status:e.status,line:e.line||2.5}; });
   dmState.events=evMap;
@@ -1893,13 +1899,12 @@ function populateTournamentDropdown(prefix){
   const sel = document.getElementById(prefix+'-round-tournament-select');
   if(!sel) return;
   const tournaments = getDMTournaments();
-  const pl = tournaments.filter(t => t.name.toLowerCase().includes('premier league'));
-  if(!pl.length){
+  if(!tournaments.length){
     sel.innerHTML=`<option value="">No tournaments available yet</option>`;
     return;
   }
   sel.innerHTML=`<option value="">— choose a tournament —</option>`+
-    pl.map(t=>`<option value="${t.id}">${t.name}${t.country?' · '+t.country:''}</option>`).join('');
+    tournaments.map(t=>`<option value="${t.id}">${t.name}${t.country?' · '+t.country:''}</option>`).join('');
 }
 
 const CURRENT_SEASON = '2026/27';
@@ -2754,7 +2759,10 @@ function initOperatorChrome(){
     supa.from('gw_dm_events').select('*'),
   ]);
   dmState.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color}));
-  dmState.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,color:t.color,seasons:t.seasons||{}}));
+  const myEmailBoot = (currentOperator?.email||'').toLowerCase();
+  dmState.tournaments = (tournaments||[])
+    .filter(t=>!t.restricted_email || t.restricted_email.toLowerCase()===myEmailBoot)
+    .map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,color:t.color,seasons:t.seasons||{}}));
   const evMap = {};
   (events||[]).forEach(e=>{
     evMap[e.id]={homeId:e.home_id,awayId:e.away_id,kickoff:e.kickoff,result:e.result,status:e.status,line:e.line||2.5};

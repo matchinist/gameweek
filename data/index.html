@@ -130,7 +130,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .event-mini{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--white);border:1px solid var(--border);border-radius:6px;}
 .em-teams{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);flex:1;}
 .em-teams .sep{color:var(--text-3);font-weight:400;margin:0 4px;}
-.em-time{font-family:var(--mono);font-size:10px;color:var(--text-3);white-space:nowrap;}
+.em-time{font-family:var(--mono);font-size:10px;color:var(--text-2);white-space:nowrap;}
 .em-result{display:flex;align-items:center;gap:4px;}
 .em-score-input{width:36px;height:28px;border:1px solid var(--border);border-radius:4px;text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;outline:none;-moz-appearance:textfield;}
 .em-score-input::-webkit-inner-spin-button,.em-score-input::-webkit-outer-spin-button{-webkit-appearance:none;}
@@ -537,6 +537,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
         <div><label class="form-label">Country / Region</label><input class="form-input" id="nt-country" placeholder="e.g. England" /></div>
         <div><label class="form-label">Type</label><select class="form-select" id="nt-type"><option value="league">League</option><option value="cup">Cup</option><option value="international">International</option></select></div>
       </div>
+      <div class="form-group">
+        <label class="form-label">Restrict to a specific client (optional)</label>
+        <input class="form-input" id="nt-restrict-email" placeholder="e.g. ercanvural.bm+admin@gmail.com — leave blank to make it available to everyone" />
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-create-tournament')">Cancel</button>
@@ -609,7 +613,7 @@ async function save(){
     }
     if(S.tournaments.length){
       const {error:e2} = await supa.from('gw_dm_tournaments')
-        .upsert(S.tournaments.map(t=>({id:t.id,name:t.name,country:t.country||'',type:t.type||'league',color:t.color||'#4F46E5',seasons:t.seasons||{}})),{onConflict:'id'});
+        .upsert(S.tournaments.map(t=>({id:t.id,name:t.name,country:t.country||'',type:t.type||'league',color:t.color||'#4F46E5',seasons:t.seasons||{},restricted_email:t.restrictedEmail||null})),{onConflict:'id'});
       if(e2){ toast('Save failed: '+e2.message); console.error('tournaments save:',e2); return false; }
     }
     const evArr = Object.entries(S.events).map(([id,ev])=>({
@@ -641,7 +645,7 @@ function getTeam(id){return S.teams.find(t=>t.id===id);}
 function getTournament(id){return S.tournaments.find(t=>t.id===id);}
 function abbr(name){return name.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();}
 function getSeasonData(tid,season){const t=getTournament(tid);if(!t.seasons[season])t.seasons[season]={teamIds:[],rounds:[]};return t.seasons[season];}
-function fmtKickoff(dt){if(!dt)return '—';try{const d=new Date(dt);return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' · '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}catch(e){return dt;}}
+function fmtKickoff(dt){if(!dt)return '—';try{const d=new Date(dt);return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' · '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});}catch(e){return dt;}}
 
 
 // ── PLAYERS ──────────────────────────────────────────────────────────────────
@@ -915,9 +919,13 @@ function renderTournamentView(){
   document.getElementById('main-header').innerHTML=`
     <div class="mh-left">
       <div class="tni-badge" style="background:${t.color};width:28px;height:28px;border-radius:6px;font-size:8px;">${abbr(t.name)}</div>
-      <div><div class="mh-title">${t.name}</div><div class="mh-sub">${t.country} · ${t.type}</div></div>
+      <div><div class="mh-title">${t.name}</div><div class="mh-sub">${t.country} · ${t.type}${t.restrictedEmail?` · <span style="color:var(--accent);font-weight:600;">🔒 restricted to ${t.restrictedEmail}</span>`:''}</div></div>
     </div>
-    <div><button class="btn btn-danger btn-sm" onclick="deleteTournament('${t.id}')">Delete</button></div>`;
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input id="tv-restrict-email" class="form-input" style="width:220px;font-size:12px;padding:6px 10px;" placeholder="Restrict to client email…" value="${t.restrictedEmail||''}">
+      <button class="btn btn-ghost btn-sm" onclick="updateTournamentRestriction('${t.id}')">Save</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteTournament('${t.id}')">Delete</button>
+    </div>`;
 
   let html='';
   html+=`<div class="season-bar">
@@ -1424,10 +1432,21 @@ function removeEventFromRound(eid){
 function createTournament(){
   const name=document.getElementById('nt-name').value.trim();
   if(!name){toast('Enter tournament name');return;}
-  const t={id:'t'+uid(),name,country:document.getElementById('nt-country').value.trim()||'—',type:document.getElementById('nt-type').value,color:'#4F46E5',seasons:{'2026/27':{teamIds:[],rounds:[]}}};
+  const restrictEmail=document.getElementById('nt-restrict-email').value.trim().toLowerCase()||null;
+  const t={id:'t'+uid(),name,country:document.getElementById('nt-country').value.trim()||'—',type:document.getElementById('nt-type').value,color:'#4F46E5',seasons:{'2026/27':{teamIds:[],rounds:[]}},restrictedEmail:restrictEmail};
   S.tournaments.push(t);closeModal('modal-create-tournament');
-  document.getElementById('nt-name').value='';document.getElementById('nt-country').value='';
-  save();renderTournamentNav();navTo('tournament',t.id);toast(name+' created');
+  document.getElementById('nt-name').value='';document.getElementById('nt-country').value='';document.getElementById('nt-restrict-email').value='';
+  save();renderTournamentNav();navTo('tournament',t.id);toast(name+' created'+(restrictEmail?' (restricted to '+restrictEmail+')':''));
+}
+
+async function updateTournamentRestriction(id){
+  const t=getTournament(id);if(!t)return;
+  const email=document.getElementById('tv-restrict-email').value.trim().toLowerCase()||null;
+  t.restrictedEmail=email;
+  const ok=await save();
+  if(!ok)return; // save() already toasted the failure
+  renderTournamentView();
+  toast(email?'Restricted to '+email:'Now available to every client');
 }
 
 function deleteTournament(id){
@@ -1598,7 +1617,7 @@ async function loadDMData(){
 
   S.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||''}))
     .sort((a,b)=>a.name.localeCompare(b.name));
-  S.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,color:t.color,seasons:t.seasons||{}}));
+  S.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,color:t.color,seasons:t.seasons||{},restrictedEmail:t.restricted_email||null}));
   const evMap={};
   (events||[]).forEach(e=>{
     evMap[e.id]={homeId:e.home_id,awayId:e.away_id,kickoff:e.kickoff,result:e.result,status:e.status,line:e.line||2.5,lineup:e.lineup||null,scorers:e.scorers||null};
