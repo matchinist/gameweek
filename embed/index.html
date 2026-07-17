@@ -287,7 +287,7 @@ table.lb-table{width:100%;border-collapse:collapse;}
 <div class="app" id="app">
 
   <!-- ── AUTH MODAL (overlay) ── -->
-  <div class="auth-modal-overlay" id="auth-modal-overlay" onclick="if(event.target===this)closeAuthModal()">
+  <div class="auth-modal-overlay" id="auth-modal-overlay" onmousedown="authModalMouseDownTarget=event.target" onclick="if(event.target===this&&authModalMouseDownTarget===this)closeAuthModal()">
     <div class="auth-modal">
       <div class="auth-modal-logo">game<span>week</span></div>
       <div class="auth-modal-reason" id="auth-modal-reason">Sign in to make predictions</div>
@@ -458,6 +458,7 @@ async function buildCompsFromRealData(){
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let currentPlayer=null; // {id, auth_id, username, email, client_key}
+let authModalMouseDownTarget=null; // tracks where a mousedown started, so a text-selection drag that ends outside the modal doesn't get treated as a click-to-close
 let preds={};
 let currentCompIdx=0, selectedRound={}, predictSubTab='predictions', lbSelection={}, predsDirty=false;
 const MEDALS=['🥇','🥈','🥉'];
@@ -564,7 +565,16 @@ async function doLogin(){
   // Fetch player profile
   const {data:player, error:playerErr} = await supa.from('gw_players')
     .select('*').eq('auth_id',authData.user.id).eq('client_key',CLIENT_PARAM).single();
-  if(playerErr||!player){ resetBtn(btn); shakeAuth(); return; }
+  if(playerErr||!player){
+    resetBtn(btn); shakeAuth();
+    // The email/password were correct — this account just doesn't have a
+    // player profile registered on THIS particular site yet (profiles are
+    // per-site, not shared across every gameweek embed). Previously this
+    // showed the exact same silent shake as a wrong password, which made it
+    // look like the reset had failed when it hadn't.
+    toast("That account exists, but isn't registered on this site yet — try Register instead");
+    return;
+  }
 
   await loginPlayer(player);
 }
@@ -639,7 +649,7 @@ async function loginPlayer(player){
 async function doLogout(){
   await supa.auth.signOut();
   currentPlayer=null; preds={};
-  updateHeaderUser(); renderPredict();
+  updateHeaderUser(); goTab('predict');
 }
 
 // ── PREDICTIONS ───────────────────────────────────────────────────────────────
