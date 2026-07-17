@@ -296,8 +296,9 @@ table.lb-table{width:100%;border-collapse:collapse;}
         <button class="auth-tab" id="tab-register" onclick="switchAuth('register')">Register</button>
       </div>
       <div id="form-login">
-        <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="login-username" placeholder="your username" autocomplete="username" /></div>
+        <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="login-username" placeholder="your@email.com" autocomplete="username" /></div>
         <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" /></div>
+        <div style="text-align:right;margin:-6px 0 12px;"><a href="#" onclick="event.preventDefault();showForgotPassword();" style="font-size:12px;color:var(--accent);text-decoration:none;">Forgot password?</a></div>
         <button class="auth-btn" onclick="doLogin()">Sign in →</button>
               </div>
       <div id="form-register" style="display:none;">
@@ -306,6 +307,24 @@ table.lb-table{width:100%;border-collapse:collapse;}
         <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="reg-password" placeholder="min 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()" /></div>
         <button class="auth-btn" onclick="doRegister()">Create account →</button>
                 <div class="auth-terms">Free to play. No deposit required.</div>
+      </div>
+      <div id="form-forgot" style="display:none;">
+        <div style="font-size:13px;color:var(--text-2);line-height:1.5;margin-bottom:16px;">Enter the email on your account and we'll send you a link to reset your password.</div>
+        <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="forgot-email" placeholder="your@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')sendPasswordReset()" /></div>
+        <button class="auth-btn" onclick="sendPasswordReset()">Send reset link →</button>
+        <div style="text-align:center;margin-top:14px;"><a href="#" onclick="event.preventDefault();backToLogin();" style="font-size:12px;color:var(--text-3);text-decoration:none;">← Back to sign in</a></div>
+      </div>
+      <div id="form-forgot-sent" style="display:none;text-align:center;">
+        <div style="font-size:32px;margin-bottom:10px;">📬</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">Check your email</div>
+        <div style="font-size:13px;color:var(--text-3);line-height:1.5;margin-bottom:18px;">We've sent a password reset link to <span id="forgot-sent-email" style="font-weight:600;color:var(--text-2);"></span>. It'll expire in 1 hour.</div>
+        <a href="#" onclick="event.preventDefault();backToLogin();" style="font-size:12px;color:var(--accent);text-decoration:none;">← Back to sign in</a>
+      </div>
+      <div id="form-reset" style="display:none;">
+        <div style="font-size:13px;color:var(--text-2);line-height:1.5;margin-bottom:16px;">Choose a new password for your account.</div>
+        <div class="form-group"><label class="form-label">New password</label><input class="form-input" type="password" id="reset-password" placeholder="min 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')submitNewPassword()" /></div>
+        <div class="form-group"><label class="form-label">Confirm new password</label><input class="form-input" type="password" id="reset-password-confirm" placeholder="min 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')submitNewPassword()" /></div>
+        <button class="auth-btn" onclick="submitNewPassword()">Set new password →</button>
       </div>
     </div>
   </div>
@@ -456,6 +475,74 @@ function switchAuth(tab){
   document.getElementById('tab-register').classList.toggle('active',tab==='register');
   document.getElementById('form-login').style.display=tab==='login'?'block':'none';
   document.getElementById('form-register').style.display=tab==='register'?'block':'none';
+  document.getElementById('form-forgot').style.display='none';
+  document.getElementById('form-forgot-sent').style.display='none';
+  document.getElementById('form-reset').style.display='none';
+  document.querySelector('.auth-toggle').style.display='flex';
+}
+
+function showForgotPassword(){
+  document.querySelector('.auth-toggle').style.display='none';
+  document.getElementById('form-login').style.display='none';
+  document.getElementById('form-register').style.display='none';
+  document.getElementById('form-forgot-sent').style.display='none';
+  document.getElementById('form-reset').style.display='none';
+  document.getElementById('form-forgot').style.display='block';
+  // Carry over whatever they'd already typed as their email, if anything.
+  const typed=document.getElementById('login-username').value.trim();
+  if(typed) document.getElementById('forgot-email').value=typed;
+  document.getElementById('auth-modal-reason').textContent='Reset your password';
+}
+
+function backToLogin(){
+  document.getElementById('auth-modal-reason').textContent='Sign in to make predictions';
+  switchAuth('login');
+}
+
+async function sendPasswordReset(){
+  const email=document.getElementById('forgot-email').value.trim().toLowerCase();
+  const btn=document.querySelector('#form-forgot .auth-btn');
+  if(!email||!email.includes('@')){ shakeAuth(); return; }
+  setBtnLoading(btn,'Sending…');
+  try{
+    // Supabase always returns success here regardless of whether the email
+    // exists, so we don't reveal which emails have accounts — this is
+    // expected behavior, not a bug, if it looks like it "works" either way.
+    const {error}=await supa.auth.resetPasswordForEmail(email,{redirectTo:location.href});
+    resetBtn(btn);
+    if(error){ toast('Something went wrong — please try again'); return; }
+    document.getElementById('forgot-sent-email').textContent=email;
+    document.getElementById('form-forgot').style.display='none';
+    document.getElementById('form-forgot-sent').style.display='block';
+  }catch(e){
+    resetBtn(btn);
+    toast('Something went wrong — please try again');
+  }
+}
+
+async function submitNewPassword(){
+  const pw=document.getElementById('reset-password').value;
+  const pw2=document.getElementById('reset-password-confirm').value;
+  const btn=document.querySelector('#form-reset .auth-btn');
+  if(!pw||pw.length<6){ shakeAuth(); return; }
+  if(pw!==pw2){ shakeAuth(); toast("Passwords don't match"); return; }
+  setBtnLoading(btn,'Saving…');
+  try{
+    const {error}=await supa.auth.updateUser({password:pw});
+    resetBtn(btn);
+    if(error){ toast('Could not update password — try the reset link again'); return; }
+    toast("Password updated — you're signed in");
+    closeAuthModal();
+    switchAuth('login'); // reset the modal's own state for next time it opens
+    const {data:{session}}=await supa.auth.getSession();
+    if(session){
+      const {data:player}=await supa.from('gw_players').select('*').eq('auth_id',session.user.id).eq('client_key',CLIENT_PARAM).single();
+      if(player) await loginPlayer(player);
+    }
+  }catch(e){
+    resetBtn(btn);
+    toast('Could not update password — try the reset link again');
+  }
 }
 
 function shakeAuth(){
@@ -3150,8 +3237,35 @@ let toastT;
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2200); }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
+// ── PASSWORD RECOVERY ────────────────────────────────────────────────────────
+// detectSessionInUrl is off (see supa client above) so this isn't handled
+// automatically — check for it ourselves without touching that global setting,
+// which could affect other URL-based flows.
+async function handlePasswordRecoveryLink(){
+  const hash=location.hash.startsWith('#')?location.hash.slice(1):'';
+  const params=new URLSearchParams(hash);
+  if(params.get('type')!=='recovery') return false;
+  const access_token=params.get('access_token'), refresh_token=params.get('refresh_token');
+  if(!access_token||!refresh_token) return false;
+  try{
+    const {error}=await supa.auth.setSession({access_token,refresh_token});
+    if(error) return false;
+    history.replaceState(null,'',location.pathname+location.search); // clean the token out of the URL bar
+    document.getElementById('auth-modal-reason').textContent='Set your new password';
+    document.querySelector('.auth-toggle').style.display='none';
+    document.getElementById('form-login').style.display='none';
+    document.getElementById('form-register').style.display='none';
+    document.getElementById('form-forgot').style.display='none';
+    document.getElementById('form-forgot-sent').style.display='none';
+    document.getElementById('form-reset').style.display='block';
+    document.getElementById('auth-modal-overlay').classList.add('open');
+    return true;
+  }catch(e){ console.error('Password recovery link:',e); return false; }
+}
+
 (async()=>{
   try{
+    await handlePasswordRecoveryLink(); // shows the reset-password modal on top if applicable; boot continues underneath either way
     // Wait for Supabase to fully restore session from storage
     const session = await new Promise(resolve => {
       const {data:{subscription}} = supa.auth.onAuthStateChange((event, sess) => {
