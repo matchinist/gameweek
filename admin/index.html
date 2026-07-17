@@ -2373,7 +2373,15 @@ async function setCompStatus(id,status){
 }
 
 async function deleteComp(id){
-  if(!confirm('Delete this competition and all its rounds?')) return;
+  let warning = 'Delete this competition and all its rounds?';
+  try{
+    const {data:preds} = await supa.from('gw_predictions').select('username,player_id').eq('competition_id',id).eq('client_key',CLIENT_KEY);
+    if(preds && preds.length){
+      const players = new Set(preds.map(p=>p.username||p.player_id));
+      warning = `${players.size} player${players.size===1?' has':'s have'} already predicted in this competition. Deleting it will permanently lose ${players.size===1?'their':'all their'} picks — this can't be undone.\n\nDelete anyway?`;
+    }
+  }catch(e){ console.error('deleteComp predictions check:',e); } // if this check fails, fall through to the generic confirm rather than blocking the delete entirely
+  if(!confirm(warning)) return;
   // client_key is included here as a hard safety boundary, not just a
   // convenience filter — id alone should be unique, but should a collision
   // ever occur between two different operators' data, this guarantees a
