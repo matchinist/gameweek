@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reset your password — gameweek</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#F9FAFB;--white:#FFFFFF;--border:#E2E4EA;
+    --text:#0F1117;--text-2:#6B7280;--text-3:#9CA3AF;
+    --accent:#4F46E5;--accent-2:#3730A3;--accent-light:#EEF2FF;
+    --green:#16A34A;--green-light:#DCFCE7;
+    --red:#DC2626;--red-light:#FEE2E2;
+    --mono:'Space Mono',monospace;--sans:'Inter',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .card{background:var(--white);border:1px solid var(--border);border-radius:16px;box-shadow:0 4px 24px rgba(15,17,23,0.06);width:100%;max-width:380px;padding:32px 28px;}
+  .logo{font-family:var(--mono);font-size:17px;font-weight:700;color:var(--text);text-align:center;margin-bottom:4px;}
+  .logo span{color:var(--accent);}
+  .subtitle{font-size:13px;color:var(--text-3);text-align:center;margin-bottom:26px;}
+  .form-group{margin-bottom:16px;}
+  .form-label{display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;}
+  .form-input{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:var(--sans);color:var(--text);background:var(--white);outline:none;transition:border-color .13s;}
+  .form-input:focus{border-color:var(--accent);}
+  .btn{width:100%;padding:12px;border:none;border-radius:9px;background:var(--accent);color:#fff;font-size:14px;font-weight:700;font-family:var(--sans);cursor:pointer;transition:opacity .13s;}
+  .btn:hover{opacity:.9;}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .hint{font-size:11px;color:var(--text-3);margin-top:6px;}
+  .state{display:none;text-align:center;}
+  .state.active{display:block;}
+  .state-icon{font-size:36px;margin-bottom:12px;}
+  .state-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px;}
+  .state-body{font-size:13px;color:var(--text-3);line-height:1.55;}
+  .error-box{background:var(--red-light);color:var(--red);font-size:12px;font-weight:600;border-radius:8px;padding:10px 12px;margin-bottom:16px;display:none;}
+  .error-box.show{display:block;}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:6px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .shake{animation:shake .4s;}
+  @keyframes shake{10%,90%{transform:translateX(-1px);}20%,80%{transform:translateX(2px);}30%,50%,70%{transform:translateX(-4px);}40%,60%{transform:translateX(4px);}}
+</style>
+</head>
+<body>
+  <div class="card" id="card">
+
+    <div id="state-loading" class="state active">
+      <div class="logo">game<span>week</span></div>
+      <div class="subtitle">Checking your reset link…</div>
+    </div>
+
+    <div id="state-form" class="state">
+      <div class="logo">game<span>week</span></div>
+      <div class="subtitle">Choose a new password for your account</div>
+      <div class="error-box" id="error-box"></div>
+      <div class="form-group">
+        <label class="form-label">New password</label>
+        <input class="form-input" type="password" id="pw1" placeholder="min 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')document.getElementById('pw2').focus()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirm new password</label>
+        <input class="form-input" type="password" id="pw2" placeholder="min 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')submitNewPassword()">
+      </div>
+      <button class="btn" id="submit-btn" onclick="submitNewPassword()">Set new password →</button>
+      <div class="hint">This applies to your gameweek account across every site you use it on.</div>
+    </div>
+
+    <div id="state-success" class="state">
+      <div style="text-align:center;">
+        <div class="state-icon">✅</div>
+        <div class="state-title">Password updated</div>
+        <div class="state-body">You're all set. You can close this tab and sign in again wherever you were using gameweek.</div>
+      </div>
+    </div>
+
+    <div id="state-invalid" class="state">
+      <div style="text-align:center;">
+        <div class="state-icon">⚠️</div>
+        <div class="state-title">This link isn't valid</div>
+        <div class="state-body">Reset links expire after 1 hour and can only be used once. Go back to where you were and request a new one from "Forgot password?".</div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY, {auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+
+function showState(id){
+  document.querySelectorAll('.state').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function shakeCard(){
+  const c=document.getElementById('card');
+  c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake');
+}
+
+function showError(msg){
+  const box=document.getElementById('error-box');
+  box.textContent=msg;
+  box.classList.add('show');
+  shakeCard();
+}
+
+async function submitNewPassword(){
+  const pw1=document.getElementById('pw1').value;
+  const pw2=document.getElementById('pw2').value;
+  const btn=document.getElementById('submit-btn');
+  document.getElementById('error-box').classList.remove('show');
+
+  if(!pw1||pw1.length<6){ showError('Password needs to be at least 6 characters.'); return; }
+  if(pw1!==pw2){ showError("Passwords don't match."); return; }
+
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span>Saving…';
+  try{
+    const {error}=await supa.auth.updateUser({password:pw1});
+    if(error){
+      btn.disabled=false; btn.textContent='Set new password →';
+      showError(error.message||'Could not update your password. Try requesting a new link.');
+      return;
+    }
+    showState('state-success');
+  }catch(e){
+    btn.disabled=false; btn.textContent='Set new password →';
+    showError('Something went wrong. Try requesting a new link.');
+  }
+}
+
+// This page only exists to handle the recovery token from the reset email —
+// it doesn't know or care which client/embed the person originally came
+// from, since setting a password is an account-level action, not tied to
+// any one site.
+(async()=>{
+  const hash = location.hash.startsWith('#') ? location.hash.slice(1) : '';
+  const params = new URLSearchParams(hash);
+  const access_token = params.get('access_token');
+  const refresh_token = params.get('refresh_token');
+  const type = params.get('type');
+
+  if(type!=='recovery' || !access_token || !refresh_token){
+    showState('state-invalid');
+    return;
+  }
+
+  try{
+    const {error} = await supa.auth.setSession({access_token, refresh_token});
+    if(error){ showState('state-invalid'); return; }
+    history.replaceState(null,'',location.pathname+location.search); // strip the token from the visible URL
+    showState('state-form');
+  }catch(e){
+    showState('state-invalid');
+  }
+})();
+</script>
+</body>
+</html>
