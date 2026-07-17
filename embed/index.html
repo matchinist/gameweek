@@ -390,16 +390,13 @@ async function buildCompsFromRealData(){
 
     // Gameweek labels for lineup mode come straight from Data Manager's own
     // round structure (e.g. a round the admin named "Gameweek 4"), not from
-    // team/date text — build a lookup from event id to that label. Also track
-    // which season each event belongs to, and which season key is the most
-    // recent — gw_dm_events has no season field of its own, so without this,
-    // a team's fixtures from an old, fully-played-out season would show up
-    // in the lineup gameweek dropdown right alongside the current season's.
+    // team/date text — build a lookup from event id to that label, and which
+    // season each event belongs to. Which season/group is actually "current"
+    // is decided per-team further down, based on real kickoff dates rather
+    // than season key naming — see the comment there for why.
     const eventSeasonKey = {};
-    let latestSeasonKey = null;
     (tournamentRows||[]).forEach(t=>{
       Object.entries(t.seasons||{}).forEach(([seasonKey,season])=>{
-        if(latestSeasonKey===null || seasonKey>latestSeasonKey) latestSeasonKey=seasonKey;
         (season.rounds||[]).forEach(r=>{
           (r.eventIds||[]).forEach(eid=>{
             EVENT_GAMEWEEK[eid]=r.label;
@@ -428,18 +425,38 @@ async function buildCompsFromRealData(){
       let cRounds;
       if(c.mode==='lineup' && c.lineup_config?.teamId){
         const lTeamId = c.lineup_config.teamId;
-        cRounds = (evRows||[]).filter(ev=>ev.home_id===lTeamId||ev.away_id===lTeamId)
-          .filter(ev=>{
-            const sk = eventSeasonKey[ev.id];
-            // If there's no season/round organization anywhere for this team
-            // at all, there's nothing to filter by — keep everything. But
-            // once real organization exists (some events assigned to a
-            // season), an unassigned fixture is far more likely a stray
-            // leftover than a genuinely new one — exclude it rather than
-            // showing it alongside properly organized gameweeks.
-            if(latestSeasonKey===null) return true;
-            return sk===latestSeasonKey;
-          })
+        const teamEvents = (evRows||[]).filter(ev=>ev.home_id===lTeamId||ev.away_id===lTeamId);
+
+        // Group THIS team's events by season (events with no round assignment
+        // form their own "unassigned" group), then score each group by how
+        // temporally relevant it is to right now, and keep only the winning
+        // group. This has to be done per-team and based on actual kickoff
+        // dates rather than trusting season key strings or a global "latest
+        // season" — a team's real current fixtures might not be organized
+        // into Data Manager rounds yet at all, while an old season sits there
+        // fully organized; in that case the unassigned group (containing the
+        // real current fixtures) needs to win over the organized-but-stale one.
+        const groups = {}; // key: seasonKey or '__unassigned__' -> array of events
+        teamEvents.forEach(ev=>{
+          const key = eventSeasonKey[ev.id] || '__unassigned__';
+          (groups[key]=groups[key]||[]).push(ev);
+        });
+        const now = Date.now();
+        let bestKey = null, bestScore = null;
+        Object.entries(groups).forEach(([key,evs])=>{
+          const kos = evs.map(ev=>ev.kickoff?new Date(ev.kickoff).getTime():null).filter(t=>t!=null);
+          if(!kos.length) return; // no usable dates in this group at all — can't score it
+          // Whichever group has an event closest to right now (whether that
+          // event is slightly in the past or slightly in the future) is the
+          // one that's actually "current" — a group of fixtures 5 days from
+          // now should win over one a year in the past, which a simple
+          // "most recent past beats any future" comparison got backwards.
+          const minDistance = Math.min(...kos.map(ko=>Math.abs(ko-now)));
+          const score = -minDistance; // smaller distance = higher (less negative) score
+          if(bestScore===null || score>bestScore){ bestScore=score; bestKey=key; }
+        });
+        // If nothing had usable dates at all, fall back to everything rather than showing nothing.
+        cRounds = (bestKey===null ? teamEvents : groups[bestKey])
           .sort((a,b)=>{
             const at=a.kickoff?new Date(a.kickoff).getTime():Infinity;
             const bt=b.kickoff?new Date(b.kickoff).getTime():Infinity;
