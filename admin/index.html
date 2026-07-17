@@ -1156,6 +1156,7 @@ async function saveAdminState(){
         lineup_config:c.lineupConfig||null,
         roulette_config:c.rouletteConfig||null,
         overall_prizes:c.overallPrizes||null,
+        comp_aliases:c.aliases||[],
         users:c.users||0, predictions:c.predictions||0
       }));
       const {error:e1} = await supa.from('gw_competitions').upsert(compRows,{onConflict:'id'});
@@ -1445,6 +1446,14 @@ function renderCompDetail(){
             <div style="font-size:11px;color:var(--amber);background:var(--amber-light);padding:7px 10px;border-radius:5px;margin-top:6px;">
               Game mode cannot be changed after creation. To use a different mode, create a new competition from scratch.
             </div>
+          </div>
+          <div class="divider"></div>
+          <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:8px;">Alternate embed IDs</div>
+          <div style="font-size:11.5px;color:var(--text-2);line-height:1.5;margin-bottom:10px;">
+            If a client already has an old competition id embedded on their site, add it here — the embed will keep treating that old id as this competition, so their existing code doesn't break. Comma-separated if there's more than one.
+          </div>
+          <div class="form-group">
+            <input class="form-input" id="edit-comp-aliases" placeholder="e.g. cly3bif, old-comp-id-2" value="${(c.aliases||[]).join(', ')}" style="font-family:var(--mono);font-size:12px;" />
           </div>
           ${c.mode==='lineup' ? `
           <div class="divider"></div>
@@ -2338,6 +2347,10 @@ async function saveCompSettings(){
     }
   }
   c.overallPrizes = getCleanPrizes('overall');
+  const aliasInput = document.getElementById('edit-comp-aliases');
+  if(aliasInput){
+    c.aliases = aliasInput.value.split(',').map(s=>s.trim()).filter(Boolean);
+  }
   const ok = await saveAdminState();
   if(!ok) return; // saveAdminState already toasted the failure
   renderCompDetail();
@@ -2756,6 +2769,7 @@ function initOperatorChrome(){
     lineupConfig:c.lineup_config||null,
     rouletteConfig:c.roulette_config||null,
     overallPrizes:c.overall_prizes||null,
+    aliases:c.comp_aliases||[],
     users:c.users, predictions:c.predictions,
     rounds: (rounds||[]).filter(r=>r.competition_id===c.id).map(r=>({
       id:r.id, label:r.label, status:r.status, deadline:r.deadline||'',

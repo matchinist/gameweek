@@ -499,12 +499,13 @@ async function buildCompsFromRealData(){
         rankingConfig:c.ranking_config||null,
         lineupConfig:c.lineup_config||null,
         overallPrizes:c.overall_prizes||null,
+        aliases:c.comp_aliases||[],
         rounds:cRounds,
         tournamentNames:[...new Set(cRounds.flatMap(r=>r.tournamentNames||[]).filter(Boolean))]
       });
     });
     if(COMP_FILTER.length){
-      const filtered = COMPS.filter(c=>COMP_FILTER.includes(c.id));
+      const filtered = COMPS.filter(c=>COMP_FILTER.includes(c.id) || (c.aliases||[]).some(a=>COMP_FILTER.includes(a)));
       if(!filtered.length){
         COMP_FILTER_INVALID = true;
       } else {
