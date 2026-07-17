@@ -800,7 +800,7 @@ function renderTournamentLabels(comp){
 // ── PREDICT ───────────────────────────────────────────────────────────────────
 function parseKickoffMs(s){
   if(!s) return null;
-  if(/\d{4}-\d{2}-\d{2}T/.test(s)){ const t=new Date(s).getTime(); return isNaN(t)?null:t; }
+  if(/\d{4}-\d{2}-\d{2}[T ]/.test(s)){ const t=new Date(s.replace(' ','T')).getTime(); return isNaN(t)?null:t; }
   const m = s.replace('\u00b7','').match(/(\d{1,2})\s+([A-Za-z]{3})\s+(\d{1,2}):(\d{2})/);
   if(m){
     const day=parseInt(m[1]), monStr=m[2], hh=parseInt(m[3]), mm=parseInt(m[4]);
@@ -1238,7 +1238,7 @@ function renderLineupPredictor(comp){
   // becomes "current" 4 hours after the previous one's last kickoff, matching
   // computeCurrentRoundIdx used elsewhere for this same rule.
   const currentIdx = computeCurrentRoundIdx(comp);
-  const maxIdx = currentIdx!=null ? currentIdx : comp.rounds.length-1;
+  const maxIdx = currentIdx!=null ? currentIdx : 0; // if kickoff data can't be parsed at all, show just the earliest round rather than silently falling back to "show everything"
   const roundSelect = comp.rounds.slice(0, maxIdx+1).map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('');
 
   return `
@@ -1308,7 +1308,7 @@ function renderLineupPredictor(comp){
 
 function renderLineupLeaderboardShell(comp){
   const currentIdx = computeCurrentRoundIdx(comp);
-  const maxIdx = currentIdx!=null ? currentIdx : comp.rounds.length-1;
+  const maxIdx = currentIdx!=null ? currentIdx : 0; // if kickoff data can't be parsed at all, show just the earliest round rather than silently falling back to "show everything"
   if(lbSelection[currentCompIdx]===undefined) lbSelection[currentCompIdx]=maxIdx; // default: current gameweek, not Overall
   const sel = lbSelection[currentCompIdx];
   const round = sel==='overall' ? null : (comp.rounds[sel]||comp.rounds[maxIdx]);
@@ -1420,7 +1420,7 @@ async function loadAndRenderLineupLeaderboard(comp){
 async function loadAndRenderLineupLeaderboardOverall(comp, target){
   try{
     const currentIdx = computeCurrentRoundIdx(comp);
-    const maxIdx = currentIdx!=null ? currentIdx : comp.rounds.length-1;
+    const maxIdx = currentIdx!=null ? currentIdx : 0; // if kickoff data can't be parsed at all, show just the earliest round rather than silently falling back to "show everything"
     const rounds = comp.rounds.slice(0, maxIdx+1); // same current+historical set as the dropdown
     if(!rounds.length){
       target.innerHTML = '<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">No gameweeks yet</div></div>';
