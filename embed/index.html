@@ -3170,7 +3170,22 @@ async function loadAndRenderLeaderboard(comp){
         '<th style="width:90px;text-align:right;">Points</th>',
         round.prizes);
     } else if(comp.mode==='ranking'&&round.rankingTeams){
-      const teams=round.rankingTeams;
+      // round.rankingTeams from the DB never has actualXG set directly —
+      // it has to be derived from each team's match result the same way
+      // the prediction/builder view already does. Without this, every
+      // team defaults to 0, ties don't get reordered by a stable sort, and
+      // the leaderboard silently scores against the original stored order
+      // instead of the real result — which is how an untouched, unsaved
+      // default prediction was scoring as "perfect."
+      const teams=round.rankingTeams.map(t=>{
+        const copy={...t};
+        (round.eventIds||[]).forEach(eid=>{
+          const ev=EVENTS[eid]; if(!ev||!ev.res) return;
+          if(ev.home===t.name){ const v=ev.res.home_xg; if(v!=null&&copy.actualXG==null) copy.actualXG=parseFloat(v); }
+          else if(ev.away===t.name){ const v=ev.res.away_xg; if(v!=null&&copy.actualXG==null) copy.actualXG=parseFloat(v); }
+        });
+        return copy;
+      });
       const actualOrder = round.status==='completed' ? [...teams].sort((a,b)=>(b.actualXG||0)-(a.actualXG||0)).map(t=>t.id) : null;
       Object.entries(byUser).forEach(([uname,userPreds])=>{
         const p = userPreds.find(pp=>pp.event_id===round.id+'_ranking');
