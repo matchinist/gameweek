@@ -431,10 +431,14 @@ async function buildCompsFromRealData(){
         cRounds = (evRows||[]).filter(ev=>ev.home_id===lTeamId||ev.away_id===lTeamId)
           .filter(ev=>{
             const sk = eventSeasonKey[ev.id];
-            // Keep it if it's in the latest season, or if it isn't assigned
-            // to any season/round at all yet (an unorganized fixture) —
-            // only exclude events confirmed to belong to an OLDER season.
-            return sk===undefined || latestSeasonKey===null || sk===latestSeasonKey;
+            // If there's no season/round organization anywhere for this team
+            // at all, there's nothing to filter by — keep everything. But
+            // once real organization exists (some events assigned to a
+            // season), an unassigned fixture is far more likely a stray
+            // leftover than a genuinely new one — exclude it rather than
+            // showing it alongside properly organized gameweeks.
+            if(latestSeasonKey===null) return true;
+            return sk===latestSeasonKey;
           })
           .sort((a,b)=>{
             const at=a.kickoff?new Date(a.kickoff).getTime():Infinity;
