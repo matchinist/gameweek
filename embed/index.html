@@ -364,7 +364,7 @@ const COMP_FILTER = (new URLSearchParams(location.search).get('comp')||'').split
 let COMP_FILTER_INVALID = false; // set true if a comp filter was given but matched nothing real
 
 // ── DATA LOAD ─────────────────────────────────────────────────────────────────
-let COMPS=[], EVENTS={}, EVENTS_RAW={};
+let COMPS=[], EVENTS={}, EVENTS_RAW={}, EVENT_GAMEWEEK={};
 
 function fmtKickoff(dt){
   if(!dt) return 'TBD';
@@ -372,19 +372,32 @@ function fmtKickoff(dt){
 }
 
 async function buildCompsFromRealData(){
-  COMPS=[]; EVENTS={}; EVENTS_RAW={};
+  COMPS=[]; EVENTS={}; EVENTS_RAW={}; EVENT_GAMEWEEK={};
   try{
     const [
       {data:teams},
       {data:evRows},
       {data:compsRows},
-      {data:roundsRows}
+      {data:roundsRows},
+      {data:tournamentRows}
     ] = await Promise.all([
       supa.from('gw_dm_teams').select('*'),
       supa.from('gw_dm_events').select('*'),
       supa.from('gw_competitions').select('*').eq('client_key',CLIENT_PARAM),
       supa.from('gw_rounds').select('*').eq('client_key',CLIENT_PARAM).order('sort_order'),
+      supa.from('gw_dm_tournaments').select('id,seasons'),
     ]);
+
+    // Gameweek labels for lineup mode come straight from Data Manager's own
+    // round structure (e.g. a round the admin named "Gameweek 4"), not from
+    // team/date text — build a lookup from event id to that label.
+    (tournamentRows||[]).forEach(t=>{
+      Object.values(t.seasons||{}).forEach(season=>{
+        (season.rounds||[]).forEach(r=>{
+          (r.eventIds||[]).forEach(eid=>{ EVENT_GAMEWEEK[eid]=r.label; });
+        });
+      });
+    });
 
     const teamById = id => (teams||[]).find(t=>t.id===id);
     (evRows||[]).forEach(ev=>{
@@ -407,7 +420,7 @@ async function buildCompsFromRealData(){
         const lTeamId = c.lineup_config.teamId;
         cRounds = (evRows||[]).filter(ev=>ev.home_id===lTeamId||ev.away_id===lTeamId)
           .sort((a,b)=>new Date(a.kickoff||0)-new Date(b.kickoff||0))
-          .map(ev=>{
+          .map((ev,idx)=>{
             const isHome = ev.home_id===lTeamId;
             const opp = teamById(isHome?ev.away_id:ev.home_id);
             const hasResult = ev.result && ev.result.h!=null && ev.result.a!=null;
@@ -415,10 +428,14 @@ async function buildCompsFromRealData(){
             // showing — the moment the admin saves the actual starting XI,
             // not only once the final score has also been entered.
             const hasLineup = ev.lineup && ((ev.lineup.home&&ev.lineup.home.length) || (ev.lineup.away&&ev.lineup.away.length));
-            const dateStr = ev.kickoff ? new Date(ev.kickoff).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '';
+            // Gameweek label comes from Data Manager's own round structure
+            // when the event belongs to one there; otherwise fall back to a
+            // sequential number based on chronological order so the dropdown
+            // always shows something reasonable rather than an event name.
+            const label = EVENT_GAMEWEEK[ev.id] || `Gameweek ${idx+1}`;
             return {
               id: ev.id,
-              label: `${isHome?'vs':'@'} ${opp?.name||'TBD'}${dateStr?' · '+dateStr:''}`,
+              label,
               status: (hasResult||hasLineup)?'completed':'open',
               eventId: ev.id,
               kickoffRaw: ev.kickoff||null,
@@ -1290,14 +1307,16 @@ function renderLineupPredictor(comp){
 }
 
 function renderLineupLeaderboardShell(comp){
-  const ri = selectedRound[currentCompIdx]??0;
-  const round = comp.rounds[ri]||comp.rounds[0];
   const currentIdx = computeCurrentRoundIdx(comp);
   const maxIdx = currentIdx!=null ? currentIdx : comp.rounds.length-1;
-  const roundSelect = comp.rounds.slice(0, maxIdx+1).map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('');
+  if(lbSelection[currentCompIdx]===undefined) lbSelection[currentCompIdx]=maxIdx; // default: current gameweek, not Overall
+  const sel = lbSelection[currentCompIdx];
+  const round = sel==='overall' ? null : (comp.rounds[sel]||comp.rounds[maxIdx]);
+  const roundOptions = comp.rounds.slice(0, maxIdx+1).map((r,i)=>`<option value="${i}"${sel===i?' selected':''}>${r.label}</option>`).join('');
+  const roundSelect = `<option value="overall"${sel==='overall'?' selected':''}>Overall</option>${roundOptions}`;
   return `<div class="round-bar">
-    <select class="round-select" onchange="changeRound(this.value)">${roundSelect}</select>
-    <span class="round-status ${round?.status==='open'?'open':'upcoming'}">${round?.status==='open'?'● Open':'◷ Soon'}</span>
+    <select class="round-select" onchange="changeLineupLbSelection(this.value)">${roundSelect}</select>
+    <span class="round-status ${round?(round.status==='open'?'open':'upcoming'):'completed'}">${round?(round.status==='open'?'● Open':'◷ Soon'):'Σ All gameweeks'}</span>
     <div class="round-bar-spacer"></div>
     <div class="predict-subtabs">
       <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Builder</button>
@@ -1315,11 +1334,24 @@ function renderLineupLeaderboardShell(comp){
   </div>`;
 }
 
+function changeLineupLbSelection(val){
+  lbSelection[currentCompIdx] = val==='overall' ? 'overall' : parseInt(val);
+  renderPredict();
+}
+
 async function loadAndRenderLineupLeaderboard(comp){
-  const ri = selectedRound[currentCompIdx]??0;
-  const round = comp.rounds[ri]||comp.rounds[0];
+  const sel = lbSelection[currentCompIdx];
   const target = document.getElementById('lineup-lb-content');
-  if(!round||!target) return;
+  if(!target) return;
+
+  if(sel==='overall'){
+    await loadAndRenderLineupLeaderboardOverall(comp, target);
+    return;
+  }
+
+  const ri = typeof sel==='number' ? sel : (selectedRound[currentCompIdx]??0);
+  const round = comp.rounds[ri]||comp.rounds[0];
+  if(!round) return;
 
   try{
     const {data:allPreds,error} = await supa.from('gw_predictions')
@@ -1381,6 +1413,81 @@ async function loadAndRenderLineupLeaderboard(comp){
     target.innerHTML = html;
   }catch(e){
     console.error('loadAndRenderLineupLeaderboard:',e);
+    target.innerHTML = '<div class="empty" style="padding:40px 20px;"><div class="empty-icon">⚠️</div><div class="empty-title">Could not load leaderboard</div></div>';
+  }
+}
+
+async function loadAndRenderLineupLeaderboardOverall(comp, target){
+  try{
+    const currentIdx = computeCurrentRoundIdx(comp);
+    const maxIdx = currentIdx!=null ? currentIdx : comp.rounds.length-1;
+    const rounds = comp.rounds.slice(0, maxIdx+1); // same current+historical set as the dropdown
+    if(!rounds.length){
+      target.innerHTML = '<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">No gameweeks yet</div></div>';
+      return;
+    }
+
+    const {data:allPreds,error} = await supa.from('gw_predictions')
+      .select('username,player_id,prediction,round_id')
+      .eq('client_key',CLIENT_PARAM)
+      .eq('competition_id',comp.id)
+      .in('round_id', rounds.map(r=>r.id));
+    if(error) throw error;
+
+    if(!allPreds || !allPreds.length){
+      target.innerHTML = '<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">No lineups saved yet</div><div class="empty-sub">Be the first to submit your XI.</div></div>';
+      return;
+    }
+
+    // Each gameweek is a different fixture, so it has its own actual XI —
+    // build that lookup per round first, same logic as the single-round view.
+    const teamId = comp.lineupConfig?.teamId;
+    const actualXIByRound = {};
+    rounds.forEach(r=>{
+      const ev = EVENTS[r.eventId||r.id];
+      if(ev && ev.lineup && teamId){
+        if(ev.homeId===teamId) actualXIByRound[r.id]=ev.lineup.home||null;
+        else if(ev.awayId===teamId) actualXIByRound[r.id]=ev.lineup.away||null;
+      }
+    });
+
+    const unwrap = (v)=> (v && typeof v==='object' && 'value' in v) ? v.value : v;
+    const totals = {}; // username -> {pts, correct, gwsScored}
+    allPreds.forEach(p=>{
+      const uname = p.username || p.player_id;
+      const actualXI = actualXIByRound[p.round_id];
+      if(!actualXI || !actualXI.length) return; // this gameweek isn't scored yet — doesn't count either way
+      const picks = unwrap(p.prediction);
+      const pickedArr = Array.isArray(picks) ? picks : [];
+      const correct = pickedArr.filter(pid=>actualXI.includes(pid)).length;
+      const pts = correct*10 + (correct===11 ? 30 : 0);
+      if(!totals[uname]) totals[uname]={pts:0, correct:0, gwsScored:0};
+      totals[uname].pts += pts;
+      totals[uname].correct += correct;
+      totals[uname].gwsScored += 1;
+    });
+
+    const rows = Object.entries(totals).map(([u,t])=>({
+      u, pts:t.pts, accuracy:`${t.correct}/${t.gwsScored*11}`
+    }));
+
+    if(!rows.length){
+      target.innerHTML = '<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">No gameweeks scored yet</div><div class="empty-sub">Check back once a lineup has been resulted.</div></div>';
+      return;
+    }
+
+    rows.sort((a,b)=>b.pts-a.pts);
+    let rank=1;
+    rows.forEach((r,i)=>{ if(i>0 && rows[i].pts<rows[i-1].pts) rank=i+1; r.rank=rank; });
+
+    const prizes = comp.overallPrizes || [];
+    const html = buildLBTable(comp.name, `Overall · ${rounds.length} gameweek${rounds.length===1?'':'s'}`, rows,
+      r=>`<td class="lb-num">${r.accuracy}</td>`, '<th class="r" style="width:80px;">Accuracy</th>',
+      prizes,
+      r=>`<td class="lb-num">${r.pts} pts</td>`, '<th class="r" style="width:80px;">Points</th>');
+    target.innerHTML = html;
+  }catch(e){
+    console.error('loadAndRenderLineupLeaderboardOverall:',e);
     target.innerHTML = '<div class="empty" style="padding:40px 20px;"><div class="empty-icon">⚠️</div><div class="empty-title">Could not load leaderboard</div></div>';
   }
 }
