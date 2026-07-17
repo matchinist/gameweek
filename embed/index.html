@@ -419,7 +419,11 @@ async function buildCompsFromRealData(){
       if(c.mode==='lineup' && c.lineup_config?.teamId){
         const lTeamId = c.lineup_config.teamId;
         cRounds = (evRows||[]).filter(ev=>ev.home_id===lTeamId||ev.away_id===lTeamId)
-          .sort((a,b)=>new Date(a.kickoff||0)-new Date(b.kickoff||0))
+          .sort((a,b)=>{
+            const at=a.kickoff?new Date(a.kickoff).getTime():Infinity;
+            const bt=b.kickoff?new Date(b.kickoff).getTime():Infinity;
+            return at-bt;
+          })
           .map((ev,idx)=>{
             const isHome = ev.home_id===lTeamId;
             const opp = teamById(isHome?ev.away_id:ev.home_id);
@@ -845,7 +849,13 @@ function computeCurrentRoundIdx(comp){
   const now = Date.now();
   let idx = 0;
   for(let i=0;i<rounds.length;i++){
-    const startTime = i===0 ? -Infinity : (lastKo[i-1]!=null ? lastKo[i-1] + 4*3600*1000 : -Infinity);
+    // An unknown kickoff for the PRECEDING round must never be treated as
+    // "that round has definitely already happened" (-Infinity) — that was
+    // the actual bug: any one unset kickoff earlier in the list would cascade
+    // the "current" index all the way to the end, showing every round as
+    // current-or-past even when the season hadn't started. Unknown means we
+    // can't confirm it's passed, so treat it as not-yet (+Infinity) instead.
+    const startTime = i===0 ? -Infinity : (lastKo[i-1]!=null ? lastKo[i-1] + 4*3600*1000 : Infinity);
     if(now >= startTime) idx = i; else break;
   }
   return Math.min(idx, rounds.length-1);
