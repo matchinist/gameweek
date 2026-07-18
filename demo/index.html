@@ -315,12 +315,6 @@ const COMPS=[
       {id:'r0b',label:'Gameweek 2',status:'completed',deadline:'2026-08-23T14:00',eventIds:['e0e','e0f','e0g','e0h'],prizes:[{pos:1,text:'€20 bookmaker credit'},{pos:2,text:'Free bet token'}]},
       {id:'r1',label:'Gameweek 3',status:'open',deadline:'2026-08-31T14:00',eventIds:['e1','e2','e3','e4','e5','e6'],prizes:[{pos:1,text:'€20 bookmaker credit'},{pos:2,text:'Free bet token'}]},
     ]},
-  {id:'c2',name:'Last Man Standing',mode:'lms',color:'#DC2626',
-    tournamentNames:['Champions League'],
-    overallPrizes:[{pos:1,text:'€250 cash prize'},{pos:2,text:'€100 cash prize'},{pos:3,text:'€50 cash prize'}],
-    rounds:[
-      {id:'r3',label:'Gameweek 1',status:'open',deadline:'2026-10-01T17:00',eventIds:['e201','e202','e203','e204'],prizes:[{pos:1,text:'Season ticket voucher'}]},
-    ]},
   {id:'c3',name:'Betting Markets',mode:'betting',color:'#059669',
     markets:[{type:'1x2',label:'Match Result',points:3},{type:'ou25',label:'Over / Under',points:2},{type:'btts',label:'Both Teams to Score',points:2}],
     tournamentNames:['La Liga','Serie A'],
@@ -2210,9 +2204,7 @@ function renderProfile(){
     {name:'Score Predictor',mode:'score',points:18,rank:2,total:6},
     {name:'Betting Markets',mode:'betting',points:10,rank:3,total:5},
   ];
-  const endedComps=[
-    {name:'Last Man Standing',mode:'lms',points:0,rank:4,total:7,note:'Eliminated MD1'},
-  ];
+  const endedComps=[];
 
   document.getElementById('profile-content').innerHTML=`
     <div style="padding:10px 16px 0;"><button onclick="goTab('predict')" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--accent);font-weight:700;font-family:var(--mono);">← Back to predictions</button></div>

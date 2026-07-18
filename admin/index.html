@@ -783,7 +783,6 @@ tbody tr:hover td{background:var(--bg);}
       <div class="form-group">
         <label class="form-label">Game Mode</label>
         <select class="form-select" id="new-comp-mode" onchange="updateModeDescription()">
-          <option value="lms">Last Man Standing</option>
           <option value="score">Score Predictor</option>
           <option value="betting">Betting Markets</option>
                   <option value="ranking">Ranking</option>
@@ -791,8 +790,8 @@ tbody tr:hover td{background:var(--bg);}
           <option value="roulette">Soccer Roulette</option>
         </select>
         <div id="mode-description" style="margin-top:10px;padding:12px;background:var(--bg);border-radius:6px;border-left:3px solid var(--accent);">
-          <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;">Last Man Standing</div>
-          <div style="font-size:12px;color:var(--text-2);line-height:1.6;">Users predict the result (Home / Draw / Away) for each event in the round. A wrong prediction eliminates them from the competition. Events resolve in kick-off order — tension builds with every result. The last survivor wins.</div>
+          <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;">Score Predictor</div>
+          <div style="font-size:12px;color:var(--text-2);line-height:1.6;">Users predict the exact final score for each event in the round. Points are awarded for the correct result, correct goal difference, and the exact scoreline.</div>
         </div>
       </div>
 
@@ -1690,7 +1689,7 @@ async function createComp(){
   const ok = await saveAdminState();
   if(!ok){ state.competitions = state.competitions.filter(x=>x.id!==c.id); return; } // saveAdminState already toasted the failure
   closeModal('modal-create-comp');
-  document.getElementById('new-comp-mode').value='lms';
+  document.getElementById('new-comp-mode').value='score';
   const lt = document.getElementById('lineup-team'); if(lt) lt.value='';
   const ltg = document.getElementById('lineup-team-group'); if(ltg) ltg.style.display='none';
   const rc = document.getElementById('roulette-config'); if(rc) rc.style.display='none';
