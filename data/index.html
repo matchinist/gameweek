@@ -890,13 +890,18 @@ function renderTournamentNav(){
 async function renderCoverage(){
   if(!S.clients.length){
     try{
-      const {data} = await supa.from('gw_operators').select('client_key,company_name,email').order('company_name');
+      const {data,error} = await supa.from('gw_operators').select('client_key,company_name,email').order('company_name');
+      if(error) throw error;
       S.clients = (data||[]).filter(o=>o.client_key).map(o=>({client_key:o.client_key, label:o.company_name||o.email||o.client_key}));
-    }catch(e){ console.error('renderCoverage clients:',e); }
+      if(!S.clients.length) console.warn('renderCoverage: gw_operators returned no rows — check RLS allows gw_admins to read all operators.');
+    }catch(e){
+      console.error('renderCoverage clients:',e);
+      toast('⚠ Could not load clients: '+e.message);
+    }
   }
   const sel = document.getElementById('coverage-client-select');
   const prevVal = sel.value;
-  sel.innerHTML = '<option value="">— choose a client —</option>' +
+  sel.innerHTML = (S.clients.length ? '<option value="">— choose a client —</option>' : '<option value="">No clients found — check console</option>') +
     S.clients.map(c=>`<option value="${c.client_key}">${c.label}</option>`).join('');
   if(prevVal){ sel.value=prevVal; loadCoverageForClient(prevVal); }
   else { document.getElementById('coverage-body').style.display='none'; }
