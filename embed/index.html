@@ -919,10 +919,13 @@ function getDefaultRoundIdx(comp){
   return Math.max(0, comp.rounds.length-1);
 }
 
-function roundBarMiddle(comp){
+function getModeDescription(comp){
   const teamNameForDesc = comp?.lineupConfig?.teamName || 'the team';
   const descriptions={score:'Predict the exact score for each match. Points awarded for correct scores, correct team goals, or correct total.',betting:'Predict multiple markets per match: result, over/under, both teams to score. Points per correct market.',ranking:'Rank teams from highest to lowest expected goals (xG) for the gameweek. Points for each correct position.',roulette:'Spend 100 coins across a score matrix. Straight, split, and corner bets pay out purely on probability — no odds.',lineup:`Pick the starting XI for ${teamNameForDesc}. Earn 10 pts for each correct player, plus a 30 pt bonus if you get all 11 right.`};
-  return `<span style="flex:1;min-width:0;font-size:12px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${descriptions[comp.mode]||''}</span><button class="ps-tab" onclick="showRules('${comp.mode}')" style="border:1px solid var(--border);flex-shrink:0;">Rules</button>`;
+  return descriptions[comp?.mode]||'';
+}
+function roundBarRules(mode){
+  return `<button class="ps-tab" onclick="showRules('${mode}')" style="border:1px solid var(--border);flex-shrink:0;">Rules</button><div class="round-bar-spacer"></div>`;
 }
 
 function renderPredict(){
@@ -932,7 +935,8 @@ function renderPredict(){
   }
   if(selectedRound[currentCompIdx]===undefined) selectedRound[currentCompIdx]=getDefaultRoundIdx(COMPS[currentCompIdx]);
   const comp=COMPS[currentCompIdx];
-  let html=predictSubTab==='predictions'?renderPredictionsPane(comp):(comp.mode==='lineup'?renderLineupLeaderboardShell(comp):renderLeaderboardShell(comp));
+  let html=`<p style="margin:0 0 20px;padding:10px 16px 0;font-size:15px;line-height:1.55;color:oklch(0.4 0.01 260);">${getModeDescription(comp)}</p>`;
+  html+=predictSubTab==='predictions'?renderPredictionsPane(comp):(comp.mode==='lineup'?renderLineupLeaderboardShell(comp):renderLeaderboardShell(comp));
   document.getElementById('predict-content').innerHTML=html;
   if(predictSubTab==='leaderboard'){
     if(comp.mode==='lineup') loadAndRenderLineupLeaderboard(comp);
@@ -1293,7 +1297,7 @@ function renderLineupPredictor(comp){
     <div style="padding:0 0 30px;">
       <div class="round-bar">
         <select class="round-select" onchange="changeRound(this.value)">${roundSelect}</select>
-        ${roundBarMiddle(comp)}
+        ${roundBarRules(comp.mode)}
         <div class="predict-subtabs">
           <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Builder</button>
           <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
@@ -1363,7 +1367,7 @@ function renderLineupLeaderboardShell(comp){
   const roundSelect = `<option value="overall"${sel==='overall'?' selected':''}>Overall</option>${roundOptions}`;
   return `<div class="round-bar">
     <select class="round-select" onchange="changeLineupLbSelection(this.value)">${roundSelect}</select>
-    ${roundBarMiddle(comp)}
+    ${roundBarRules(comp.mode)}
     <div class="predict-subtabs">
       <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Builder</button>
       <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
@@ -1666,7 +1670,7 @@ function renderPredictionsPane(comp){
   // Combined bar: [round dropdown] [status] ... [Predictions|Leaderboard]
   let html=`<div class="round-bar">
     <select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select>
-    ${roundBarMiddle(comp)}
+    ${roundBarRules(comp.mode)}
     <div class="predict-subtabs">
       <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button>
       <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
@@ -2426,7 +2430,7 @@ function renderRouletteHTML(){
   return `<div style="padding:0 0 30px;">
     <div style="padding:10px 16px 0;display:flex;align-items:center;gap:8px;margin-bottom:8px;">
       <select class="round-select" onchange="rlChangeRound(this.value)">${roundSelect}</select>
-      ${roundBarMiddle({mode:'roulette'})}
+      ${roundBarRules('roulette')}
     </div>
     <div style="padding:0 16px;">
     <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px;">
@@ -2755,7 +2759,7 @@ function renderPredictionsPane(comp){
     : (isOpen&&lockedByTime) ? 'completed' : round.status;
   let html=`<div class="round-bar">
     <select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select>
-    ${roundBarMiddle(comp)}
+    ${roundBarRules(comp.mode)}
     <div class="predict-subtabs">
       <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button>
       <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
@@ -3057,7 +3061,7 @@ function renderLeaderboardShell(comp){
   const roundSelect=`<option value="overall"${isOverall?' selected':''}>Overall</option>${roundOptions}`;
   return `<div class="round-bar">
     <select class="round-select" onchange="changeLBSelection(this.value)">${roundSelect}</select>
-    ${roundBarMiddle(comp)}
+    ${roundBarRules(comp.mode)}
     <div class="predict-subtabs">
       <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button>
       <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
