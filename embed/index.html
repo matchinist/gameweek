@@ -1148,10 +1148,10 @@ function renderLineupPredictor(comp){
     if(draft) lineupPicks[round.id] = draft;
   }
   const ev = EVENTS[round.eventId||round.id] || {};
-  // Locks 2 hours before kickoff, regardless of round.status, so predictions
+  // Locks 3 hours before kickoff, regardless of round.status, so predictions
   // can't be changed once the team news / lineup window has effectively closed.
   const kickoffMs = ev.kickoffRaw ? new Date(ev.kickoffRaw).getTime() : null;
-  const lineupLockAt = kickoffMs!=null ? kickoffMs - 2*3600*1000 : null;
+  const lineupLockAt = kickoffMs!=null ? kickoffMs - 3*3600*1000 : null;
   const timeLocked = lineupLockAt!=null && Date.now() >= lineupLockAt;
   const isOpen = round.status==='open' && !timeLocked;
   const picks = lineupPicks[round.id]||{};
@@ -1257,7 +1257,7 @@ function renderLineupPredictor(comp){
       : `<span style="font-size:11.5px;font-weight:700;color:var(--comp-color);">${pickCount}/11</span>`}
   </div>`;
 
-  const countdownInner = (isOpen && lineupLockAt) ? controlBandCountdown('⏱','Locks in','<span id="countdown-text">Calculating...</span>', `${pickCount} / 11 set`) : '';
+  const countdownInner = (isOpen && lineupLockAt) ? controlBandCountdown('⏱','Round locks in','<span id="countdown-text">Calculating...</span>', `${pickCount} / 11 set`) : '';
   if(isOpen && lineupLockAt) setTimeout(()=>startCountdown(lineupLockAt,()=>renderPredict()),50);
 
   // Only the current gameweek and past ones are selectable — a gameweek only
@@ -2668,6 +2668,20 @@ function renderPredictionsPane(comp){
     const upcoming=events.filter(ev=>!ev.res&&ev._scoreLockAt!=null&&ev._scoreLockAt>nowTs).sort((a,b)=>a._scoreLockAt-b._scoreLockAt);
     if(upcoming.length) nextScoreLock=upcoming[0];
   }
+  let nextBettingLock=null;
+  if(comp.mode==='betting'){
+    // Each event locks 1 hour before its own kickoff, same rule as Score
+    // Predictor — not every event in a betting round locks at once, so this
+    // always reflects whichever upcoming event locks soonest.
+    const nowTs=Date.now();
+    events.forEach(ev=>{
+      const raw=ev.kickoffRaw||ev.kickoff;
+      const ko=parseKickoffMs(raw);
+      ev._bettingLockAt = ko!=null ? ko-3600000 : null;
+    });
+    const upcoming=events.filter(ev=>!ev.res&&ev._bettingLockAt!=null&&ev._bettingLockAt>nowTs).sort((a,b)=>a._bettingLockAt-b._bettingLockAt);
+    if(upcoming.length) nextBettingLock=upcoming[0];
+  }
   if(comp.mode==='lms'){
     // Each event locks 1 hour before its OWN kickoff — a surviving player
     // should be able to keep predicting later events in a multi-week round
@@ -2691,9 +2705,12 @@ function renderPredictionsPane(comp){
     }
   }
 
-  // ALL MODES: open immediately, lock 1 hour before the first event's kick-off
+  // Ranking only: whole round locks 1 hour before the FIRST assigned event's
+  // kick-off, since you're ranking a whole set of teams together rather than
+  // predicting each match individually — not used for betting anymore, which
+  // has its own per-event lock above, same as Score Predictor.
   let lockedByTime=false, timeLockAt=null;
-  if(isOpen&&events.length&&comp.mode!=='lms'){
+  if(isOpen&&events.length&&comp.mode==='ranking'){
     const kickoffTimes=events.map(e=>e.kickoffRaw?new Date(e.kickoffRaw).getTime():null).filter(Boolean);
     if(kickoffTimes.length){
       const firstKickoff=Math.min(...kickoffTimes);
@@ -2742,10 +2759,19 @@ function renderPredictionsPane(comp){
     } else if(isOpen&&events.length&&events.every(ev=>ev.res||(ev._scoreLockAt!=null&&ev._scoreLockAt<=Date.now()))){
       html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 All predictions locked</div>`;
     }
+  } else if(comp.mode==='betting'){
+    if(isOpen&&nextBettingLock){
+      html+=controlBandCountdown('⏱','Locks in','<span id="countdown-text">Calculating...</span>', events.length?`${bettingSetCount} / ${events.length} set`:'');
+      setTimeout(()=>startCountdown(nextBettingLock._bettingLockAt,()=>renderPredict()),50);
+    } else if(isOpen&&events.length&&events.every(ev=>ev.res||(ev._bettingLockAt!=null&&ev._bettingLockAt<=Date.now()))){
+      html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 All predictions locked</div>`;
+    }
   } else if(isOpen&&lockedByTime){
-    html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 Predictions locked — match starts soon</div>`;
+    html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 Round locked</div>`;
   } else if(isOpen&&timeLockAt){
-    html+=controlBandCountdown('⏱','Locks in','<span id="countdown-text">Calculating...</span>', comp.mode==='betting'&&events.length?`${bettingSetCount} / ${events.length} set`:'');
+    // "Round locks in" (not "Locks in") since this is a single whole-round
+    // deadline covering every team in the ranking, not one specific match.
+    html+=controlBandCountdown('⏱','Round locks in','<span id="countdown-text">Calculating...</span>', '');
     setTimeout(()=>startCountdown(timeLockAt,'lock'),50);
   } else if(!isOpen&&comp.mode==='lms'){
     let userAlive=true;

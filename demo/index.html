@@ -321,7 +321,7 @@ const COMPS=[
     rankingConfig:{metric:'xG',pointsPerCorrect:2,perfectBonus:5},
     overallPrizes:[{pos:1,text:'Signed team shirt'},{pos:2,text:'€50 bookmaker credit'},{pos:3,text:'Free bet token'}],
     rounds:[
-      {id:'r7',label:'Gameweek 3',status:'open',deadline:'2026-08-31T14:00',prizes:[{pos:1,text:'€10 free bet'}],
+      {id:'r7',label:'Gameweek 3',status:'open',deadline:'2026-08-31T14:00',eventIds:['e_rank_r7_1','e_rank_r7_2','e_rank_r7_3','e_rank_r7_4'],prizes:[{pos:1,text:'€10 free bet'}],
         rankingTeams:[
           {id:'rt1',name:'Arsenal',logo:lg('Arsenal'),opponent:'vs Wolves · 30 Aug',actualXG:2.1,matchResult:'2-0',matchXG:'2.1',isHome:true,opponentName:'Wolves',opponentLogo:lg('Wolves'),dateShort:'30 Aug'},
           {id:'rt2',name:'Man City',logo:lg('Man City'),opponent:'vs Chelsea · 30 Aug',actualXG:3.4,matchResult:'3-1',matchXG:'3.4',isHome:true,opponentName:'Chelsea',opponentLogo:lg('Chelsea'),dateShort:'30 Aug'},
@@ -345,6 +345,13 @@ const COMPS=[
 ];
 
 const EVENTS={
+  // Ranking mode fixtures (kickoff times for the round-lock countdown)
+  e_rank_r7_1:{home:'Arsenal',away:'Wolves',homeLogo:lg('Arsenal'),awayLogo:lg('Wolves'),tournament:'Premier League',kickoff:'30 Aug · 14:00'},
+  e_rank_r7_2:{home:'Liverpool',away:'Man Utd',homeLogo:lg('Liverpool'),awayLogo:lg('Man Utd'),tournament:'Premier League',kickoff:'31 Aug · 16:30'},
+  e_rank_r7_3:{home:'Spurs',away:'Everton',homeLogo:lg('Spurs'),awayLogo:lg('Everton'),tournament:'Premier League',kickoff:'31 Aug · 14:00'},
+  e_rank_r7_4:{home:'Man Utd',away:'Newcastle',homeLogo:lg('Man Utd'),awayLogo:lg('Newcastle'),tournament:'Premier League',kickoff:'01 Sep · 20:00'},
+  e_rank_r8_1:{home:'Arsenal',away:'Newcastle',homeLogo:lg('Arsenal'),awayLogo:lg('Newcastle'),tournament:'Premier League',kickoff:'23 Aug · 14:00',res:{h:3,a:1}},
+  e_rank_r8_2:{home:'Man City',away:'Wolves',homeLogo:lg('Man City'),awayLogo:lg('Wolves'),tournament:'Premier League',kickoff:'23 Aug · 16:30',res:{h:4,a:0}},
   // GW1 — all resulted
   e0a:{home:'Arsenal',away:'Newcastle',homeLogo:lg('Arsenal'),awayLogo:lg('Newcastle'),tournament:'Premier League',kickoff:'16 Aug · 15:00',res:{h:2,a:0},locked:true},
   e0b:{home:'Man City',away:'Everton',homeLogo:lg('Man City'),awayLogo:lg('Everton'),tournament:'Premier League',kickoff:'16 Aug · 17:30',res:{h:4,a:1},locked:true},
@@ -663,10 +670,10 @@ function renderLineupPredictor(comp){
   const ri = selectedRound[currentCompIdx]??0;
   const round = comp.rounds[ri]||comp.rounds[0];
   const ev = EVENTS[round.eventId||round.id] || {};
-  // Locks 2 hours before kickoff, regardless of round.status, so predictions
+  // Locks 3 hours before kickoff, regardless of round.status, so predictions
   // can't be changed once the team news / lineup window has effectively closed.
   const kickoffMs = ev.sortKey ? new Date(ev.sortKey).getTime() : null;
-  const lineupLockAt = kickoffMs!=null ? kickoffMs - 2*3600*1000 : null;
+  const lineupLockAt = kickoffMs!=null ? kickoffMs - 3*3600*1000 : null;
   const timeLocked = lineupLockAt!=null && Date.now() >= lineupLockAt;
   const isOpen = round.status==='open' && !timeLocked;
   const picks = lineupPicks[round.id]||{};
@@ -765,7 +772,7 @@ function renderLineupPredictor(comp){
       : `<span style="font-size:11.5px;font-weight:700;color:var(--comp-color);">${pickCount}/11</span>`}
   </div>`;
 
-  const countdownInner = (isOpen && lineupLockAt) ? controlBandCountdown('⏱','Locks in','<span id="countdown-text">Calculating...</span>', `${pickCount} / 11 set`) : '';
+  const countdownInner = (isOpen && lineupLockAt) ? controlBandCountdown('⏱','Round locks in','<span id="countdown-text">Calculating...</span>', `${pickCount} / 11 set`) : '';
   if(isOpen && lineupLockAt) setTimeout(()=>startCountdown(lineupLockAt,()=>renderPredict()),50);
 
   // Only the current gameweek and past ones are selectable — a gameweek only
@@ -922,6 +929,28 @@ function renderPredictionsPane(comp){
     const upcoming=events.filter(ev=>!ev.res&&ev._scoreLockAt!=null&&ev._scoreLockAt>nowTs).sort((a,b)=>a._scoreLockAt-b._scoreLockAt);
     if(upcoming.length) nextScoreLock=upcoming[0];
   }
+  let nextBettingLock=null;
+  if(comp.mode==='betting'){
+    // Each event locks 1 hour before its own kickoff, same rule as Score
+    // Predictor — not every event in a betting round locks at once, so this
+    // always reflects whichever upcoming event locks soonest.
+    const nowTs=Date.now();
+    events.forEach(ev=>{
+      const raw=ev.kickoffRaw||ev.kickoff;
+      const ko=parseKickoffMs(raw);
+      ev._bettingLockAt = ko!=null ? ko-3600000 : null;
+    });
+    const upcoming=events.filter(ev=>!ev.res&&ev._bettingLockAt!=null&&ev._bettingLockAt>nowTs).sort((a,b)=>a._bettingLockAt-b._bettingLockAt);
+    if(upcoming.length) nextBettingLock=upcoming[0];
+  }
+  let rankingRoundLockAt=null;
+  if(comp.mode==='ranking'){
+    // Ranking locks as a whole round, not event-by-event — 1 hour before the
+    // FIRST assigned event's kickoff, since you're ranking the whole set of
+    // teams together, not predicting each match individually.
+    const kickoffs=events.map(ev=>parseKickoffMs(ev.kickoffRaw||ev.kickoff)).filter(ko=>ko!=null);
+    if(kickoffs.length) rankingRoundLockAt = Math.min(...kickoffs) - 3600000;
+  }
   let eliminatedAtIdx=-1;
   if(comp.mode==='lms'){
     for(let i=0;i<events.length;i++){
@@ -953,10 +982,23 @@ function renderPredictionsPane(comp){
     } else if(isOpen&&events.length&&events.every(ev=>ev.res||(ev._scoreLockAt!=null&&ev._scoreLockAt<=Date.now()))){
       html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 All predictions locked</div>`;
     }
-  } else if(isOpen&&round.deadline){
-    const setCount = comp.mode==='betting' ? events.filter(ev=>{const p=preds[ev.id];return p&&typeof p==='object'&&Object.keys(p).length>0;}).length : null;
-    html+=controlBandCountdown('⏱','Locks in','<span id="countdown-text">Calculating...</span>', setCount!=null&&events.length?`${setCount} / ${events.length} set`:'');
-    setTimeout(()=>startCountdown(round.deadline),50);
+  } else if(comp.mode==='betting'){
+    if(isOpen&&nextBettingLock){
+      const setCount = events.filter(ev=>{const p=preds[ev.id];return p&&typeof p==='object'&&Object.keys(p).length>0;}).length;
+      html+=controlBandCountdown('⏱','Locks in','<span id="countdown-text">Calculating...</span>', events.length?`${setCount} / ${events.length} set`:'');
+      setTimeout(()=>startCountdown(nextBettingLock._bettingLockAt,()=>renderPredict()),50);
+    } else if(isOpen&&events.length&&events.every(ev=>ev.res||(ev._bettingLockAt!=null&&ev._bettingLockAt<=Date.now()))){
+      html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 All predictions locked</div>`;
+    }
+  } else if(comp.mode==='ranking'){
+    if(isOpen&&rankingRoundLockAt&&rankingRoundLockAt>Date.now()){
+      // "Round locks in" (not "Locks in") since this is a single whole-round
+      // deadline covering every team in the ranking, not one specific match.
+      html+=controlBandCountdown('⏱','Round locks in','<span id="countdown-text">Calculating...</span>', '');
+      setTimeout(()=>startCountdown(rankingRoundLockAt,()=>renderPredict()),50);
+    } else if(isOpen&&rankingRoundLockAt&&rankingRoundLockAt<=Date.now()){
+      html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 Round locked</div>`;
+    }
   } else if(!isOpen&&comp.mode==='lms'){
     let userStatus='';
     const resultedEvs=events.filter(ev=>ev.res);
