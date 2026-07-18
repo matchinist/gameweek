@@ -1040,17 +1040,31 @@ tbody tr:hover td{background:var(--bg);}
         <div style="font-size:11px;color:var(--text-3);margin-top:6px;" id="edit-ranking-team-count">0 teams selected</div>
       </div>
 
-      <div class="divider" style="margin:16px 0;"></div>
-      <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:6px;">Round Prizes</div>
-      <div style="font-size:12px;color:var(--text-3);margin-bottom:14px;">Optional — add a text prize for top finishers in this round's leaderboard.</div>
-      <div id="edit-round-prizes-list"></div>
-      <button class="btn btn-ghost btn-sm" onclick="addPrizePosition('edit-round')" style="margin-top:8px;">+ Add position</button>
-
     </div>
     <div class="modal-footer">
       <div style="font-size:11px;color:var(--text-3);">Changes do not affect submitted predictions.</div>
       <button class="btn btn-ghost" onclick="closeModal('modal-edit-round')">Cancel</button>
       <button class="btn btn-primary" onclick="saveRoundEdit()">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Round Prizes (separated from Edit Round) -->
+<div class="modal-overlay" id="modal-round-prizes">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <div class="modal-title">Round Prizes</div>
+      <button class="modal-close" onclick="closeModal('modal-round-prizes')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="round-prizes-id" />
+      <div style="font-size:12px;color:var(--text-3);margin-bottom:14px;">Optional — add a text prize for top finishers in this round's leaderboard.</div>
+      <div id="round-prizes-prizes-list"></div>
+      <button class="btn btn-ghost btn-sm" onclick="addPrizePosition('round-prizes')" style="margin-top:8px;">+ Add position</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-round-prizes')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRoundPrizes()">Save prizes</button>
     </div>
   </div>
 </div>
@@ -1445,7 +1459,8 @@ function renderCompDetail(){
                 </div>
                 ${statusBadge(r.status)}
                 <button class="btn btn-ghost btn-sm" onclick="openEditRound('${r.id}')">Edit</button>
-                ${r.status==='open'?`<button class="btn btn-outline btn-sm" onclick="confirmRound('${r.id}')">Lock →</button>`:''}
+                <button class="btn btn-ghost btn-sm" onclick="openRoundPrizes('${r.id}')">Prizes</button>
+                ${(r.status==='open' && !['score','betting','ranking'].includes(c.mode))?`<button class="btn btn-outline btn-sm" onclick="confirmRound('${r.id}')">Lock →</button>`:''}
               </div>`).join('')}</div>`
           }
         </div>
@@ -2312,7 +2327,6 @@ async function saveRoundEdit(){
       dateShort: cb.dataset.dateShort || '',
     }));
     r.eventIds = roundAddedEvents.map(e=>e.id);
-    r.prizes = getCleanPrizes('edit-round');
     const ok = await saveAdminState();
     if(!ok) return; // saveAdminState already toasted the failure; modal stays open to retry
     closeModal('modal-edit-round');
@@ -2327,11 +2341,33 @@ async function saveRoundEdit(){
   r.deadline = kickoffs.length ? new Date(Math.min(...kickoffs)-2*60*60*1000).toISOString().slice(0,16) : r.deadline;
   r.tournamentNames = [...new Set(roundAddedEvents.map(e=>e.tName))];
   r.eventIds = roundAddedEvents.map(e=>e.id);
-  r.prizes = getCleanPrizes('edit-round');
   const ok = await saveAdminState();
   if(!ok) return; // saveAdminState already toasted the failure; modal stays open to retry
   closeModal('modal-edit-round');
   renderCompDetail(); toast('Round updated');
+}
+
+function openRoundPrizes(roundId){
+  const comp = getComp(state.currentComp);
+  const r = comp.rounds.find(r=>r.id===roundId);
+  if(!r){ toast('Round not found'); return; }
+  document.getElementById('round-prizes-id').value = roundId;
+  prizeState['round-prizes'] = (r.prizes||[]).map(p=>({pos:p.pos, text:p.text}));
+  renderPrizesEditor('round-prizes');
+  document.getElementById('modal-round-prizes').classList.add('open');
+}
+
+async function saveRoundPrizes(){
+  const roundId = document.getElementById('round-prizes-id').value;
+  const comp = getComp(state.currentComp);
+  const r = comp.rounds.find(r=>r.id===roundId);
+  if(!r){ toast('Round not found'); return; }
+  const prevPrizes = r.prizes;
+  r.prizes = getCleanPrizes('round-prizes');
+  const ok = await saveAdminState();
+  if(!ok){ r.prizes = prevPrizes; return; } // saveAdminState already toasted the failure; roll back and let them retry
+  closeModal('modal-round-prizes');
+  renderCompDetail(); toast('Prizes updated');
 }
 
 
