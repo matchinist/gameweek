@@ -169,7 +169,20 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .submit-hint{font-size:11px;color:var(--text-3);}
 .submit-btn{font-family:var(--mono);font-size:11px;font-weight:700;padding:9px 20px;background:var(--comp-color);color:white;border:none;border-radius:6px;cursor:pointer;transition:background 0.13s;letter-spacing:0.3px;}
 .submit-btn:disabled{background:var(--bg);color:var(--text-3);cursor:not-allowed;}
-.lb-wrap{background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.lb-wrap{background:var(--white);border:1px solid var(--border);border-radius:8px;}
+.lb-table thead tr:first-child th:first-child{border-top-left-radius:8px;}
+.lb-table thead tr:first-child th:last-child{border-top-right-radius:8px;}
+.lb-table tbody tr:last-child td:first-child{border-bottom-left-radius:8px;}
+.lb-table tbody tr:last-child td:last-child{border-bottom-right-radius:8px;}
+.prize-cell-wrap{position:relative;display:inline-flex;cursor:help;}
+.prize-badge{position:relative;width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all 160ms ease;}
+.prize-cell-wrap:hover .prize-badge{transform:translateY(-2px);box-shadow:0 4px 12px rgba(224,161,58,0.3);}
+.prize-info-dot{position:absolute;top:-6px;right:-6px;width:14px;height:14px;border-radius:50%;background:var(--accent);color:#fff;font-size:9px;font-weight:700;font-style:normal;display:flex;align-items:center;justify-content:center;border:2px solid #fff;}
+.prize-tooltip{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);width:200px;padding:10px 12px;background:#26283b;color:#fff;border-radius:8px;box-shadow:0 10px 30px rgba(20,20,45,0.25);pointer-events:none;z-index:50;opacity:0;visibility:hidden;transition:opacity 160ms ease;text-align:left;}
+.prize-cell-wrap:hover .prize-tooltip{opacity:1;visibility:visible;}
+.prize-tooltip-title{font-size:12px;font-weight:700;margin-bottom:3px;}
+.prize-tooltip-desc{font-size:11px;color:#c7c9d9;line-height:1.5;}
+.prize-tooltip-arrow{position:absolute;top:100%;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid #26283b;}
 table.lb-table{width:100%;border-collapse:collapse;}
 .lb-table th{font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:7px 14px;text-align:left;border-bottom:1px solid var(--border);}
 .lb-table th.r{text-align:right;}
@@ -3325,7 +3338,15 @@ function buildLBTable(title,sub,rows,cellFn,colHeader,prizes,extraCellFn,extraCo
     const prizeText=prizeMap[row.rank];
     const icon=prizeIcon[row.rank]||'🏆';
     const bg=prizeBg[row.rank]||'oklch(0.95 0.02 275)';
-    const prizeCell=hasPrizes?`<td style="width:56px;" title="${prizeText?prizeText.replace(/"/g,'&quot;'):'No prize for this position'}"><div style="display:flex;align-items:center;justify-content:center;">${prizeText?`<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;font-size:14px;background:${bg};">${icon}</span>`:'<span style="color:var(--text-3);">—</span>'}</div></td>`:'';
+    let prizeCell='';
+    if(hasPrizes){
+      if(prizeText){
+        const safeText=prizeText.replace(/</g,'&lt;').replace(/"/g,'&quot;');
+        prizeCell=`<td style="width:56px;"><div class="prize-cell-wrap"><div class="prize-badge" style="background:${bg};">${icon}<span class="prize-info-dot">i</span></div><div class="prize-tooltip"><div class="prize-tooltip-title">${ordinal(row.rank)} place prize</div><div class="prize-tooltip-desc">${safeText}</div><div class="prize-tooltip-arrow"></div></div></div></td>`;
+      } else {
+        prizeCell=`<td style="width:56px;" title="No prize for this position"><div style="display:flex;align-items:center;justify-content:center;"><span style="color:var(--text-3);">—</span></div></td>`;
+      }
+    }
     const extraCell = hasExtra ? extraCellFn(row).replace('<td ','<td class="lb-col-extra" ') : '';
     html+=`<tr class="${isMe?'me':''}"><td class="lb-rank" style="color:${rankColor};">${row.rank}</td><td><div style="display:flex;align-items:center;gap:8px;min-width:0;"><div style="width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:${isMe?'#fff':'var(--text-2)'};background:${avatarBg};">${lbInitials(row.u)}</div><span class="lb-uname ${isMe?'me':''}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row.u}</span>${isMe?'<span style="flex-shrink:0;margin-left:2px;font-size:9px;font-weight:800;color:var(--accent);background:var(--accent-light);padding:2px 6px;border-radius:5px;letter-spacing:0.3px;">YOU</span>':''}</div></td>${cellFn(row)}${extraCell}${prizeCell}</tr>`;
   });
