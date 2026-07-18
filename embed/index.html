@@ -1502,13 +1502,13 @@ async function loadAndRenderLineupLeaderboardOverall(comp, target){
     const totals = {}; // username -> {pts, correct, gwsScored}
     allPreds.forEach(p=>{
       const uname = p.username || p.player_id;
+      if(!totals[uname]) totals[uname]={pts:0, correct:0, gwsScored:0};
       const actualXI = actualXIByRound[p.round_id];
-      if(!actualXI || !actualXI.length) return; // this gameweek isn't scored yet — doesn't count either way
+      if(!actualXI || !actualXI.length) return; // still registered above even if this gameweek isn't scored yet
       const picks = unwrap(p.prediction);
       const pickedArr = Array.isArray(picks) ? picks : [];
       const correct = pickedArr.filter(pid=>actualXI.includes(pid)).length;
       const pts = correct*10 + (correct===11 ? 30 : 0);
-      if(!totals[uname]) totals[uname]={pts:0, correct:0, gwsScored:0};
       totals[uname].pts += pts;
       totals[uname].correct += correct;
       totals[uname].gwsScored += 1;
@@ -1519,7 +1519,7 @@ async function loadAndRenderLineupLeaderboardOverall(comp, target){
     }));
 
     if(!rows.length){
-      target.innerHTML = '<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">No gameweeks scored yet</div><div class="empty-sub">Check back once a lineup has been resulted.</div></div>';
+      target.innerHTML = '<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">No predictions yet</div></div>';
       return;
     }
 
@@ -3250,19 +3250,19 @@ async function loadAndRenderLeaderboardOverall(comp, target){
 
     if(comp.mode==='score'){
       allPreds.forEach(p=>{
-        const ev=EVENTS[p.event_id]; if(!ev||!ev.res) return;
         const uname=p.username||p.player_id;
+        if(!totals[uname]) totals[uname]={pts:0,correct:0,total:0};
+        const ev=EVENTS[p.event_id]; if(!ev||!ev.res) return; // still registered above even if not yet resulted
         const val=unwrap(p.prediction);
         const [earned]=scorePoints(val,ev.res,comp.scoring);
-        if(!totals[uname]) totals[uname]={pts:0,correct:0,total:0};
         totals[uname].pts+=earned; if(earned>0)totals[uname].correct++; totals[uname].total++;
       });
     } else if(comp.mode==='betting'){
       allPreds.forEach(p=>{
-        const ev=EVENTS[p.event_id]; if(!ev||!ev.res) return;
         const uname=p.username||p.player_id;
-        const val=(p.prediction&&typeof p.prediction==='object')?p.prediction:{};
         if(!totals[uname]) totals[uname]={pts:0};
+        const ev=EVENTS[p.event_id]; if(!ev||!ev.res) return; // still registered above even if not yet resulted
+        const val=(p.prediction&&typeof p.prediction==='object')?p.prediction:{};
         (comp.markets||[]).forEach(mkt=>{
           const pick=val[mkt.type]; if(!pick) return;
           let actual=null;
@@ -3280,6 +3280,7 @@ async function loadAndRenderLeaderboardOverall(comp, target){
         if(!p.event_id.endsWith('_ranking')) return;
         const round=roundById[p.round_id]; if(!round||!round.rankingTeams) return;
         const uname=p.username||p.player_id;
+        if(!totals[uname]) totals[uname]={pts:0,correct:0,total:0};
         const teams=round.rankingTeams.map(t=>{
           const copy={...t};
           (round.eventIds||[]).forEach(eid=>{
@@ -3289,7 +3290,7 @@ async function loadAndRenderLeaderboardOverall(comp, target){
           });
           return copy;
         });
-        if(round.status!=='completed') return;
+        if(round.status!=='completed') return; // still registered above even if this round isn't scored yet
         const actualOrder=[...teams].sort((a,b)=>(b.actualXG||0)-(a.actualXG||0)).map(t=>t.id);
         const order=unwrap(p.prediction);
         if(!Array.isArray(order)) return;
@@ -3297,14 +3298,13 @@ async function loadAndRenderLeaderboardOverall(comp, target){
         order.forEach((tid,i)=>{ if(tid===actualOrder[i]) correct++; });
         let pts=correct*(comp.rankingConfig?.pointsPerCorrect||2);
         if(correct===teams.length) pts+=(comp.rankingConfig?.perfectBonus||5);
-        if(!totals[uname]) totals[uname]={pts:0,correct:0,total:0};
         totals[uname].pts+=pts; totals[uname].correct+=correct; totals[uname].total+=teams.length;
       });
     }
 
     const rows=Object.entries(totals).map(([u,t])=>({u,pts:t.pts,correct:t.correct,total:t.total}));
     if(!rows.length){
-      target.innerHTML='<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">No rounds scored yet</div></div>';
+      target.innerHTML='<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">No predictions yet</div></div>';
       return;
     }
     rows.sort((a,b)=>b.pts-a.pts);
