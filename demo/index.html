@@ -429,6 +429,10 @@ const LB_DATA={
 
 // ── STATE ─────────────────────────────────────────────────────────────────
 const currentUser='demo_user';
+const MODE_DESCRIPTIONS={score:'Predict the exact score for each match. Points awarded for correct scores, correct team goals, or correct total.',betting:'Predict multiple markets per match: result, over/under, both teams to score. Points per correct market.',ranking:'Rank teams from highest to lowest expected goals (xG) for the gameweek. Points for each correct position.',roulette:'Spend 100 coins across a score matrix. Straight, split, and corner bets pay out purely on probability — no odds.',lineup:'Pick the starting XI for the next fixture. Earn 10 pts for each correct player, plus a 30 pt bonus if all 11 are correct. Locks 2 hours before kickoff.'};
+function roundBarMiddle(mode){
+  return `<span style="flex:1;min-width:0;font-size:12px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${MODE_DESCRIPTIONS[mode]||''}</span><button class="ps-tab" onclick="showRules('${mode}')" style="border:1px solid var(--border);flex-shrink:0;">Rules</button>`;
+}
 let currentCompIdx=0, selectedRound={}, predictSubTab='predictions', lbSelection={}, predsDirty=false;
 
 // ── TABS ──────────────────────────────────────────────────────────────────
@@ -521,10 +525,7 @@ function getDefaultRoundIdx(comp){
 function renderPredict(){
   if(selectedRound[currentCompIdx]===undefined)selectedRound[currentCompIdx]=getDefaultRoundIdx(COMPS[currentCompIdx]);
   const comp=COMPS[currentCompIdx];
-  // Game description + rules button below comp tabs
-  const descriptions={score:'Predict the exact score for each match. Points awarded for correct scores, correct team goals, or correct total.',lms:'Pick a winner for each event. Get it wrong and you are eliminated. Last one standing wins.',betting:'Predict multiple markets per match: result, over/under, both teams to score. Points per correct market.',ranking:'Rank teams from highest to lowest expected goals (xG) for the gameweek. Points for each correct position.',roulette:'Spend 100 coins across a score matrix. Straight, split, and corner bets pay out purely on probability — no odds.',lineup:'Pick the starting XI for the next fixture. Earn 10 pts for each correct player, plus a 30 pt bonus if all 11 are correct. Locks 2 hours before kickoff.'};
-  let html=`<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:20px;"><p style="margin:0;font-size:15px;line-height:1.55;color:oklch(0.4 0.01 260);max-width:640px;">${descriptions[comp.mode]||''}</p><button onclick="showRules('${comp.mode}')" style="flex-shrink:0;border:1px solid oklch(0.88 0.006 260);background:#fff;color:oklch(0.35 0.01 260);font-size:13px;font-weight:600;padding:9px 18px;border-radius:10px;cursor:pointer;">Rules</button></div>`;
-  html+=predictSubTab==='predictions'?renderPredictionsPane(comp):(comp.mode==='lineup'?renderLineupLeaderboardShell(comp):renderLeaderboardPane(comp));
+  let html=predictSubTab==='predictions'?renderPredictionsPane(comp):(comp.mode==='lineup'?renderLineupLeaderboardShell(comp):renderLeaderboardPane(comp));
   document.getElementById('predict-content').innerHTML=html;
 }
 function switchPredictSubTab(tab){predictSubTab=tab;renderPredict();}
@@ -760,8 +761,7 @@ function renderLineupPredictor(comp){
     <div style="padding:0 0 30px;">
       <div class="round-bar">
         <select class="round-select" onchange="changeRound(this.value)">${roundSelect}</select>
-        <span class="round-status ${round.status==='open'?'open':'upcoming'}">${round.status==='open'?'● Open':'◷ Soon'}</span>
-        <div class="round-bar-spacer"></div>
+        ${roundBarMiddle(comp.mode)}
         <div class="predict-subtabs">
           <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Builder</button>
           <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
@@ -918,8 +918,7 @@ function renderPredictionsPane(comp){
   // Combined bar: [round dropdown] [status] ... [Predictions|Leaderboard]
   let html=`<div class="round-bar">
     <select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select>
-    <span class="round-status ${round.status}">${isOpen?'\u25cf Open':'\u2713 Done'}</span>
-    <div class="round-bar-spacer"></div>
+    ${roundBarMiddle(comp.mode)}
     <div class="predict-subtabs">
       <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button>
       <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
@@ -1660,8 +1659,7 @@ function renderRouletteLeaderboardShell(comp){
   const roundSelect=comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('');
   let html=`<div class="round-bar">
     <select class="round-select" onchange="rlChangeGameweek(this.value)">${roundSelect}</select>
-    <span class="round-status open">● Open</span>
-    <div class="round-bar-spacer"></div>
+    ${roundBarMiddle('roulette')}
     <div class="predict-subtabs">
       <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button>
       <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
@@ -1702,8 +1700,7 @@ function renderRouletteHTML(){
   let html=`<div style="padding:0 0 30px;">
     <div class="round-bar">
       <select class="round-select" onchange="rlChangeGameweek(this.value)">${roundSelect}</select>
-      <span class="round-status open">● Open</span>
-      <div class="round-bar-spacer"></div>
+      ${roundBarMiddle('roulette')}
       <div class="predict-subtabs">
         <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button>
         <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
@@ -2011,8 +2008,7 @@ function renderLineupLeaderboardShell(comp){
   const roundSelect = `<option value="overall"${isOverall?' selected':''}>Overall</option>${roundOptions}`;
   let html=`<div class="round-bar">
     <select class="round-select" onchange="changeLBSelection(this.value)">${roundSelect}</select>
-    <span class="round-status ${round?(round.status==='open'?'open':'upcoming'):'completed'}">${round?(round.status==='open'?'● Open':'◷ Soon'):'Σ All gameweeks'}</span>
-    <div class="round-bar-spacer"></div>
+    ${roundBarMiddle(comp.mode)}
     <div class="predict-subtabs">
       <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Builder</button>
       <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
@@ -2048,7 +2044,7 @@ function renderLeaderboardPane(comp){
   // Same combined bar as predictions pane
   let html=`<div class="round-bar">
     <select class="lb-week-select" style="font-size:11px;padding:4px 8px;max-width:180px;border:1px solid var(--border);border-radius:5px;font-family:var(--mono);" onchange="changeLBSelection(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}" ${(!isOverall&&sel===i)?'selected':''}>${r.label}${r.status==='open'?' (Current)':''}</option>`).join('')}<option value="overall" ${isOverall?'selected':''}>Overall</option></select>
-    <div class="round-bar-spacer"></div>
+    ${roundBarMiddle(comp.mode)}
     <div class="predict-subtabs">
       <button class="ps-tab" onclick="switchPredictSubTab('predictions')">Predictions</button>
       <button class="ps-tab active" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
