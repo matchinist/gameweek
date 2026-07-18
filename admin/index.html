@@ -1056,6 +1056,30 @@ tbody tr:hover td{background:var(--bg);}
   </div>
 </div>
 
+<!-- Delete Competition confirmation -->
+<div class="modal-overlay" id="modal-delete-comp">
+  <div class="modal" style="max-width:460px;">
+    <div class="modal-header">
+      <div class="modal-title" style="color:var(--red);">⚠ Delete Competition</div>
+      <button class="modal-close" onclick="closeModal('modal-delete-comp')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="del-comp-id" />
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px;" id="del-comp-name"></div>
+      <div id="del-comp-summary" style="font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:14px;"></div>
+      <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:12px 14px;font-size:12.5px;color:#991B1B;line-height:1.55;margin-bottom:16px;">
+        This permanently deletes the competition, every one of its rounds, and every player's predictions in it. This cannot be undone, and only affects this competition — no other client's data is touched.
+      </div>
+      <label class="form-label">Type <strong>DELETE</strong> to confirm</label>
+      <input class="form-input" id="del-comp-confirm-text" placeholder="DELETE" autocomplete="off" oninput="updateDeleteCompButton()" onkeydown="if(event.key==='Enter')confirmDeleteComp()" />
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-delete-comp')">Cancel</button>
+      <button class="btn" id="del-comp-confirm-btn" disabled style="background:var(--red);color:#fff;opacity:0.4;cursor:default;" onclick="confirmDeleteComp()">Delete permanently</button>
+    </div>
+  </div>
+</div>
+
 <!-- Create Event -->
 <!-- Enter Result -->
 <div class="modal-overlay" id="modal-result">
@@ -2373,24 +2397,62 @@ async function setCompStatus(id,status){
 }
 
 async function deleteComp(id){
-  let warning = 'Delete this competition and all its rounds?';
+  const comp = getComp(id);
+  if(!comp) return;
+  document.getElementById('del-comp-id').value = id;
+  document.getElementById('del-comp-name').textContent = comp.name;
+  document.getElementById('del-comp-confirm-text').value = '';
+  updateDeleteCompButton();
+  document.getElementById('del-comp-summary').textContent = 'Checking rounds and predictions…';
+  document.getElementById('modal-delete-comp').classList.add('open');
+
+  const roundCount = (comp.rounds||[]).length;
+  let summary = `${roundCount} round${roundCount===1?'':'s'}.`;
   try{
     const {data:preds} = await supa.from('gw_predictions').select('username,player_id').eq('competition_id',id).eq('client_key',CLIENT_KEY);
     if(preds && preds.length){
       const players = new Set(preds.map(p=>p.username||p.player_id));
-      warning = `${players.size} player${players.size===1?' has':'s have'} already predicted in this competition. Deleting it will permanently lose ${players.size===1?'their':'all their'} picks — this can't be undone.\n\nDelete anyway?`;
+      summary = `${roundCount} round${roundCount===1?'':'s'}, and ${players.size} player${players.size===1?' has':'s have'} already predicted — ${players.size===1?'their':'all their'} picks will be lost.`;
     }
-  }catch(e){ console.error('deleteComp predictions check:',e); } // if this check fails, fall through to the generic confirm rather than blocking the delete entirely
-  if(!confirm(warning)) return;
-  // client_key is included here as a hard safety boundary, not just a
-  // convenience filter — id alone should be unique, but should a collision
-  // ever occur between two different operators' data, this guarantees a
-  // delete can never reach past this operator's own rows.
+  }catch(e){ console.error('deleteComp predictions check:',e); summary = `${roundCount} round${roundCount===1?'':'s'}. (Could not check prediction count.)`; }
+  document.getElementById('del-comp-summary').textContent = summary;
+}
+
+function updateDeleteCompButton(){
+  const btn = document.getElementById('del-comp-confirm-btn');
+  const typed = document.getElementById('del-comp-confirm-text').value.trim();
+  const match = typed === 'DELETE';
+  btn.disabled = !match;
+  btn.style.opacity = match ? '1' : '0.4';
+  btn.style.cursor = match ? 'pointer' : 'default';
+}
+
+async function confirmDeleteComp(){
+  const id = document.getElementById('del-comp-id').value;
+  const typed = document.getElementById('del-comp-confirm-text').value.trim();
+  if(typed !== 'DELETE') return;
+  const btn = document.getElementById('del-comp-confirm-btn');
+  btn.disabled = true; btn.textContent = 'Deleting…';
+
+  // client_key is included on every one of these as a hard safety boundary,
+  // not just a convenience filter — even if an id were ever to collide
+  // between two different operators' data, this guarantees a delete can
+  // never reach past this operator's own rows, whatever mode the other
+  // client's competition happens to share.
   const {error} = await supa.from('gw_competitions').delete().eq('id',id).eq('client_key',CLIENT_KEY);
-  if(error){ console.error('deleteComp failed:',error); toast('⚠ Delete failed: '+error.message); return; }
+  if(error){
+    console.error('deleteComp failed:',error);
+    toast('⚠ Delete failed: '+error.message);
+    btn.disabled = false; btn.textContent = 'Delete permanently';
+    return;
+  }
   const {error:roundsErr} = await supa.from('gw_rounds').delete().eq('competition_id',id).eq('client_key',CLIENT_KEY);
-  if(roundsErr){ console.error('deleteComp rounds cleanup failed:',roundsErr); } // competition is already gone; don't block on this
+  if(roundsErr) console.error('deleteComp rounds cleanup failed:',roundsErr); // competition is already gone; don't block on this
+  const {error:predsErr} = await supa.from('gw_predictions').delete().eq('competition_id',id).eq('client_key',CLIENT_KEY);
+  if(predsErr) console.error('deleteComp predictions cleanup failed:',predsErr); // same — don't block, but surface it in console for follow-up
+
   state.competitions = state.competitions.filter(c=>c.id!==id);
+  closeModal('modal-delete-comp');
   nav('competitions');
   toast('Competition deleted');
 }
