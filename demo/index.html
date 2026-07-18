@@ -176,14 +176,9 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .lb-table tbody tr:hover td{background:var(--bg);}
 .lb-table tbody tr.me td{background:var(--accent-light);}
 @media(max-width:480px){.lb-col-extra{display:none;}}
-.lb-rank{font-family:var(--mono);font-size:11px;color:var(--text-3);text-align:center;width:32px;}
-.lb-rank.top{font-size:15px;}
-.lb-user{display:flex;align-items:center;gap:8px;}
-.lb-av{width:22px;height:22px;border-radius:50%;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:7px;font-weight:700;color:var(--text-2);flex-shrink:0;}
-.lb-av.me{background:var(--accent);color:white;border-color:var(--accent);}
+.lb-rank{font-family:var(--mono);font-size:12px;color:var(--text-3);text-align:center;width:32px;font-weight:700;}
 .lb-uname{font-weight:500;font-size:12px;}
-.lb-uname.me{color:var(--accent);}
-.you-tag{font-size:8px;background:var(--accent);color:white;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;vertical-align:middle;}
+.lb-uname.me{color:var(--accent);font-weight:700;}
 .lb-pts{font-family:var(--mono);font-size:12px;font-weight:700;text-align:right;}
 .lb-num{font-family:var(--mono);font-size:11px;color:var(--text-2);text-align:right;}
 .alive-tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;}
@@ -2006,14 +2001,17 @@ function submitPreds(){
 
 // ── LEADERBOARD ───────────────────────────────────────────────────────────
 function renderLineupLeaderboardShell(comp){
-  const ri=selectedRound[currentCompIdx]??0;
-  const round=comp.rounds[ri]||comp.rounds[0];
   const currentIdx = computeCurrentRoundIdx(comp);
   const maxIdx = currentIdx!=null ? currentIdx : comp.rounds.length-1;
-  const roundSelect = comp.rounds.slice(0, maxIdx+1).map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('');
+  if(lbSelection[currentCompIdx]===undefined) lbSelection[currentCompIdx]=maxIdx; // default: current gameweek, not Overall
+  const sel = lbSelection[currentCompIdx];
+  const isOverall = sel==='overall';
+  const round = isOverall ? null : (comp.rounds[sel]||comp.rounds[maxIdx]);
+  const roundOptions = comp.rounds.slice(0, maxIdx+1).map((r,i)=>`<option value="${i}"${sel===i?' selected':''}>${r.label}</option>`).join('');
+  const roundSelect = `<option value="overall"${isOverall?' selected':''}>Overall</option>${roundOptions}`;
   let html=`<div class="round-bar">
-    <select class="round-select" onchange="changeRound(this.value)">${roundSelect}</select>
-    <span class="round-status ${round?.status==='open'?'open':'upcoming'}">${round?.status==='open'?'● Open':'◷ Soon'}</span>
+    <select class="round-select" onchange="changeLBSelection(this.value)">${roundSelect}</select>
+    <span class="round-status ${round?(round.status==='open'?'open':'upcoming'):'completed'}">${round?(round.status==='open'?'● Open':'◷ Soon'):'Σ All gameweeks'}</span>
     <div class="round-bar-spacer"></div>
     <div class="predict-subtabs">
       <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Builder</button>
@@ -2026,12 +2024,12 @@ function renderLineupLeaderboardShell(comp){
       </select>
     </div>
   </div>`;
-  const rows=LINEUP_LB.map(row=>({u:row.u, points:row.pts, correct:row.correct}));
+  const rows=LINEUP_LB.map(row=>({u:row.u, points:isOverall?row.pts+row.pts:row.pts, correct:row.correct}));
   rows.sort((a,b)=>b.points-a.points);
   let rank=1;
   rows.forEach((r,i)=>{if(i>0&&rows[i].points<rows[i-1].points)rank=i+1;r.rank=rank;});
-  const activePrizes=round?.prizes;
-  html+=buildLBTable(comp.name, round?.label||'', rows,
+  const activePrizes=isOverall?comp.overallPrizes:round?.prizes;
+  html+=buildLBTable(comp.name, isOverall?'Overall':(round?.label||''), rows,
     r=>`<td class="lb-num">${r.points} pts</td>`, '<th class="r" style="width:80px;">Points</th>',
     activePrizes,
     r=>`<td class="lb-num">${r.correct||0}/11</td>`, '<th class="r" style="width:70px;">Accuracy</th>');
@@ -2092,13 +2090,13 @@ function buildLBTable(title,sub,rows,cellFn,colHeader,prizes,extraCellFn,extraCo
   const hasPrizes=Object.keys(prizeMap).length>0;
   const hasExtra=!!extraCellFn;
   const extraColHeaderMobile = extraColHeader ? extraColHeader.replace('<th ','<th class="lb-col-extra" ') : extraColHeader;
-  let html=`<div class="lb-wrap"><table class="lb-table" style="table-layout:fixed;"><thead><tr><th style="width:32px;text-align:center">#</th><th style="width:auto;">Player</th>${colHeader}${hasExtra?extraColHeaderMobile:''}${hasPrizes?'<th style="width:44px;text-align:center;">Prize</th>':''}</tr></thead><tbody>`;
+  let html=`<div class="lb-wrap"><table class="lb-table" style="table-layout:fixed;"><thead><tr><th style="width:32px;text-align:center">#</th><th style="width:auto;">Player</th>${colHeader}${hasExtra?extraColHeaderMobile:''}${hasPrizes?'<th style="width:56px;text-align:center;">Prize</th>':''}</tr></thead><tbody>`;
   rows.forEach(row=>{
-    const isMe=row.u===me,ini=(row.u||'?').slice(0,2).toUpperCase();
+    const isMe=row.u===me;
     const prizeText=prizeMap[row.rank];
-    const prizeCell=hasPrizes?`<td style="width:44px;text-align:center;" title="${prizeText?prizeText.replace(/"/g,'&quot;'):'No prize for this position'}">${prizeText?'🏆':'<span style="color:var(--text-3);">—</span>'}</td>`:'';
+    const prizeCell=hasPrizes?`<td style="width:56px;" title="${prizeText?prizeText.replace(/"/g,'&quot;'):'No prize for this position'}"><div style="display:flex;align-items:center;justify-content:center;">${prizeText?'🏆':'<span style="color:var(--text-3);">—</span>'}</div></td>`:'';
     const extraCell = hasExtra ? extraCellFn(row).replace('<td ','<td class="lb-col-extra" ') : '';
-    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank ${row.rank<=3?'top':''}">${row.rank<=3?MEDALS[row.rank-1]:row.rank}</td><td><div class="lb-user"><div class="lb-av ${isMe?'me':''}">${ini}</div><span class="lb-uname ${isMe?'me':''}">${row.u}${isMe?'<span class="you-tag">YOU</span>':''}</span></div></td>${cellFn(row)}${extraCell}${prizeCell}</tr>`;
+    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank">${row.rank}</td><td><span class="lb-uname ${isMe?'me':''}">${row.u}</span></td>${cellFn(row)}${extraCell}${prizeCell}</tr>`;
   });
   html+='</tbody></table></div>';return html;
 }

@@ -173,14 +173,9 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .lb-table tbody tr:hover td{background:var(--bg);}
 .lb-table tbody tr.me td{background:var(--accent-light);}
 @media(max-width:480px){.lb-col-extra{display:none;}}
-.lb-rank{font-family:var(--mono);font-size:11px;color:var(--text-3);text-align:center;width:32px;}
-.lb-rank.top{font-size:15px;}
-.lb-user{display:flex;align-items:center;gap:8px;}
-.lb-av{width:22px;height:22px;border-radius:50%;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:7px;font-weight:700;color:var(--text-2);flex-shrink:0;}
-.lb-av.me{background:var(--accent);color:white;border-color:var(--accent);}
+.lb-rank{font-family:var(--mono);font-size:12px;color:var(--text-3);text-align:center;width:32px;font-weight:700;}
 .lb-uname{font-weight:500;font-size:12px;}
-.lb-uname.me{color:var(--accent);}
-.you-tag{font-size:8px;background:var(--accent);color:white;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;vertical-align:middle;}
+.lb-uname.me{color:var(--accent);font-weight:700;}
 .lb-pts{font-family:var(--mono);font-size:12px;font-weight:700;text-align:right;}
 .lb-num{font-family:var(--mono);font-size:11px;color:var(--text-2);text-align:right;}
 .alive-tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;}
@@ -3056,13 +3051,16 @@ function renderEventCard(ev,comp,isOpen){
 }
 
 function renderLeaderboardShell(comp){
-  const ri=selectedRound[currentCompIdx]??0;
-  const round=comp.rounds[ri];
-  if(!round) return '<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">No rounds yet</div></div>';
-  const roundSelect=comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('');
+  if(lbSelection[currentCompIdx]===undefined) lbSelection[currentCompIdx]=selectedRound[currentCompIdx]??0;
+  const sel=lbSelection[currentCompIdx];
+  const isOverall=sel==='overall';
+  const round=isOverall?null:comp.rounds[sel];
+  if(!isOverall && !round) return '<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">No rounds yet</div></div>';
+  const roundOptions=comp.rounds.map((r,i)=>`<option value="${i}"${(!isOverall&&sel===i)?' selected':''}>${r.label}</option>`).join('');
+  const roundSelect=`<option value="overall"${isOverall?' selected':''}>Overall</option>${roundOptions}`;
   return `<div class="round-bar">
-    <select class="round-select" onchange="changeRound(this.value)">${roundSelect}</select>
-    <span class="round-status ${round.status==='open'?'open':'completed'}">${round.status==='open'?'\u25cf Open':'\u2713 Done'}</span>
+    <select class="round-select" onchange="changeLBSelection(this.value)">${roundSelect}</select>
+    <span class="round-status ${round?(round.status==='open'?'open':'completed'):'completed'}">${round?(round.status==='open'?'\u25cf Open':'\u2713 Done'):'\u03a3 All rounds'}</span>
     <div class="round-bar-spacer"></div>
     <div class="predict-subtabs">
       <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button>
@@ -3078,11 +3076,24 @@ function renderLeaderboardShell(comp){
   <div id="lb-content" style="padding:12px 16px 30px;"><div class="empty" style="padding:40px 20px;"><div class="empty-icon">⏳</div><div class="empty-title">Loading leaderboard…</div></div></div>`;
 }
 
+function changeLBSelection(val){
+  lbSelection[currentCompIdx] = val==='overall' ? 'overall' : parseInt(val);
+  renderPredict();
+}
+
 async function loadAndRenderLeaderboard(comp){
-  const ri=selectedRound[currentCompIdx]??0;
-  const round=comp.rounds[ri];
+  const sel=lbSelection[currentCompIdx];
   const target=document.getElementById('lb-content');
-  if(!round||!target) return;
+  if(!target) return;
+
+  if(sel==='overall'){
+    await loadAndRenderLeaderboardOverall(comp, target);
+    return;
+  }
+
+  const ri=typeof sel==='number'?sel:(selectedRound[currentCompIdx]??0);
+  const round=comp.rounds[ri];
+  if(!round) return;
 
   try{
     const {data:allPreds,error}=await supa.from('gw_predictions')
@@ -3215,6 +3226,106 @@ async function loadAndRenderLeaderboard(comp){
   }
 }
 
+async function loadAndRenderLeaderboardOverall(comp, target){
+  try{
+    const rounds = comp.rounds||[];
+    if(!rounds.length){
+      target.innerHTML='<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">No rounds yet</div></div>';
+      return;
+    }
+    const {data:allPreds,error}=await supa.from('gw_predictions')
+      .select('username,player_id,event_id,round_id,prediction')
+      .eq('client_key',CLIENT_PARAM)
+      .eq('competition_id',comp.id)
+      .in('round_id', rounds.map(r=>r.id));
+    if(error) throw error;
+    if(!allPreds || !allPreds.length){
+      target.innerHTML='<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">No predictions yet</div></div>';
+      return;
+    }
+
+    const unwrap=v=>(v&&typeof v==='object'&&'value'in v)?v.value:v;
+    const roundById={}; rounds.forEach(r=>{ roundById[r.id]=r; });
+    const totals={}; // username -> {pts, correct, total}
+
+    if(comp.mode==='score'){
+      allPreds.forEach(p=>{
+        const ev=EVENTS[p.event_id]; if(!ev||!ev.res) return;
+        const uname=p.username||p.player_id;
+        const val=unwrap(p.prediction);
+        const [earned]=scorePoints(val,ev.res,comp.scoring);
+        if(!totals[uname]) totals[uname]={pts:0,correct:0,total:0};
+        totals[uname].pts+=earned; if(earned>0)totals[uname].correct++; totals[uname].total++;
+      });
+    } else if(comp.mode==='betting'){
+      allPreds.forEach(p=>{
+        const ev=EVENTS[p.event_id]; if(!ev||!ev.res) return;
+        const uname=p.username||p.player_id;
+        const val=(p.prediction&&typeof p.prediction==='object')?p.prediction:{};
+        if(!totals[uname]) totals[uname]={pts:0};
+        (comp.markets||[]).forEach(mkt=>{
+          const pick=val[mkt.type]; if(!pick) return;
+          let actual=null;
+          if(mkt.type==='1x2') actual = ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
+          else if(mkt.type==='ou25') actual = (ev.res.h+ev.res.a)>2.5?'O':'U';
+          else if(mkt.type==='btts') actual = (ev.res.h>0&&ev.res.a>0)?'Y':'N';
+          if(pick===actual) totals[uname].pts+=(mkt.points||0);
+        });
+      });
+    } else if(comp.mode==='ranking'){
+      // Same actualXG derivation as the single-round view — round.rankingTeams
+      // never has it set directly, it has to be worked out from each team's
+      // match result.
+      allPreds.forEach(p=>{
+        if(!p.event_id.endsWith('_ranking')) return;
+        const round=roundById[p.round_id]; if(!round||!round.rankingTeams) return;
+        const uname=p.username||p.player_id;
+        const teams=round.rankingTeams.map(t=>{
+          const copy={...t};
+          (round.eventIds||[]).forEach(eid=>{
+            const ev=EVENTS[eid]; if(!ev||!ev.res) return;
+            if(ev.home===t.name){ const v=ev.res.home_xg; if(v!=null&&copy.actualXG==null) copy.actualXG=parseFloat(v); }
+            else if(ev.away===t.name){ const v=ev.res.away_xg; if(v!=null&&copy.actualXG==null) copy.actualXG=parseFloat(v); }
+          });
+          return copy;
+        });
+        if(round.status!=='completed') return;
+        const actualOrder=[...teams].sort((a,b)=>(b.actualXG||0)-(a.actualXG||0)).map(t=>t.id);
+        const order=unwrap(p.prediction);
+        if(!Array.isArray(order)) return;
+        let correct=0;
+        order.forEach((tid,i)=>{ if(tid===actualOrder[i]) correct++; });
+        let pts=correct*(comp.rankingConfig?.pointsPerCorrect||2);
+        if(correct===teams.length) pts+=(comp.rankingConfig?.perfectBonus||5);
+        if(!totals[uname]) totals[uname]={pts:0,correct:0,total:0};
+        totals[uname].pts+=pts; totals[uname].correct+=correct; totals[uname].total+=teams.length;
+      });
+    }
+
+    const rows=Object.entries(totals).map(([u,t])=>({u,pts:t.pts,correct:t.correct,total:t.total}));
+    if(!rows.length){
+      target.innerHTML='<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">No rounds scored yet</div></div>';
+      return;
+    }
+    rows.sort((a,b)=>b.pts-a.pts);
+    let rank=1; rows.forEach((r,i)=>{ if(i>0&&rows[i].pts<rows[i-1].pts) rank=i+1; r.rank=rank; });
+
+    const prizes = comp.overallPrizes || [];
+    if(comp.mode==='betting'){
+      target.innerHTML=buildLBTable('Leaderboard',`Overall · ${rounds.length} round${rounds.length===1?'':'s'}`,rows,
+        row=>`<td style="text-align:right;font-family:var(--mono);font-weight:800;color:var(--text);">${row.pts} pts</td>`,
+        '<th style="width:90px;text-align:right;">Points</th>', prizes);
+    } else {
+      target.innerHTML=buildLBTable('Leaderboard',`Overall · ${rounds.length} round${rounds.length===1?'':'s'}`,rows,
+        row=>`<td style="text-align:right;font-family:var(--mono);font-weight:800;color:var(--text);">${row.pts} pts</td><td style="text-align:right;font-size:11px;color:var(--text-3);">${row.correct}/${row.total}</td>`,
+        '<th style="width:80px;text-align:right;">Points</th><th style="width:80px;text-align:right;">Correct</th>', prizes);
+    }
+  }catch(e){
+    console.error('loadAndRenderLeaderboardOverall:',e);
+    target.innerHTML='<div class="empty" style="padding:40px 20px;"><div class="empty-icon">⚠️</div><div class="empty-title">Could not load leaderboard</div></div>';
+  }
+}
+
 function buildLBTable(title,sub,rows,cellFn,colHeader,prizes,extraCellFn,extraColHeader){
   const me=currentPlayer?.username;
   const prizeMap={};
@@ -3222,13 +3333,13 @@ function buildLBTable(title,sub,rows,cellFn,colHeader,prizes,extraCellFn,extraCo
   const hasPrizes=Object.keys(prizeMap).length>0;
   const hasExtra=!!extraCellFn;
   const extraColHeaderMobile = extraColHeader ? extraColHeader.replace('<th ','<th class="lb-col-extra" ') : extraColHeader;
-  let html=`<div class="lb-wrap"><table class="lb-table" style="table-layout:fixed;"><thead><tr><th style="width:32px;text-align:center">#</th><th style="width:auto;">Player</th>${colHeader}${hasExtra?extraColHeaderMobile:''}${hasPrizes?'<th style="width:44px;text-align:center;">Prize</th>':''}</tr></thead><tbody>`;
+  let html=`<div class="lb-wrap"><table class="lb-table" style="table-layout:fixed;"><thead><tr><th style="width:32px;text-align:center">#</th><th style="width:auto;">Player</th>${colHeader}${hasExtra?extraColHeaderMobile:''}${hasPrizes?'<th style="width:56px;text-align:center;">Prize</th>':''}</tr></thead><tbody>`;
   rows.forEach(row=>{
-    const isMe=row.u===me,ini=(row.u||'?').slice(0,2).toUpperCase();
+    const isMe=row.u===me;
     const prizeText=prizeMap[row.rank];
-    const prizeCell=hasPrizes?`<td style="width:44px;text-align:center;" title="${prizeText?prizeText.replace(/"/g,'&quot;'):'No prize for this position'}">${prizeText?'🏆':'<span style="color:var(--text-3);">—</span>'}</td>`:'';
+    const prizeCell=hasPrizes?`<td style="width:56px;" title="${prizeText?prizeText.replace(/"/g,'&quot;'):'No prize for this position'}"><div style="display:flex;align-items:center;justify-content:center;">${prizeText?'🏆':'<span style="color:var(--text-3);">—</span>'}</div></td>`:'';
     const extraCell = hasExtra ? extraCellFn(row).replace('<td ','<td class="lb-col-extra" ') : '';
-    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank ${row.rank<=3?'top':''}">${row.rank<=3?MEDALS[row.rank-1]:row.rank}</td><td><div class="lb-user"><div class="lb-av ${isMe?'me':''}">${ini}</div><span class="lb-uname ${isMe?'me':''}">${row.u}${isMe?'<span class="you-tag">YOU</span>':''}</span></div></td>${cellFn(row)}${extraCell}${prizeCell}</tr>`;
+    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank">${row.rank}</td><td><span class="lb-uname ${isMe?'me':''}">${row.u}</span></td>${cellFn(row)}${extraCell}${prizeCell}</tr>`;
   });
   html+=`</tbody></table></div>`; return html;
 }
