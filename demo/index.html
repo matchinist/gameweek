@@ -2083,6 +2083,10 @@ function renderLeaderboardPane(comp){
   return html;
 }
 function changeLBSelection(val){lbSelection[currentCompIdx]=val==='overall'?'overall':parseInt(val);renderPredict();}
+function lbInitials(name){
+  const parts=(name||'').replace(/[^a-z0-9_ ]/gi,'').split(/[_ ]/).filter(Boolean);
+  return ((parts[0]?.[0]||'')+(parts[1]?.[0]||parts[0]?.[1]||'')).toUpperCase();
+}
 function buildLBTable(title,sub,rows,cellFn,colHeader,prizes,extraCellFn,extraColHeader){
   const me=currentUser;
   const prizeMap={};
@@ -2090,13 +2094,20 @@ function buildLBTable(title,sub,rows,cellFn,colHeader,prizes,extraCellFn,extraCo
   const hasPrizes=Object.keys(prizeMap).length>0;
   const hasExtra=!!extraCellFn;
   const extraColHeaderMobile = extraColHeader ? extraColHeader.replace('<th ','<th class="lb-col-extra" ') : extraColHeader;
+  const medalColor={1:'#e8b53a',2:'#b9c0cc',3:'#cd8a52'};
+  const prizeIcon={1:'🏆',2:'🥈',3:'🥉'};
+  const prizeBg={1:'#fbf1cf',2:'#eef0f4',3:'#f4e3d3'};
   let html=`<div class="lb-wrap"><table class="lb-table" style="table-layout:fixed;"><thead><tr><th style="width:32px;text-align:center">#</th><th style="width:auto;">Player</th>${colHeader}${hasExtra?extraColHeaderMobile:''}${hasPrizes?'<th style="width:56px;text-align:center;">Prize</th>':''}</tr></thead><tbody>`;
   rows.forEach(row=>{
     const isMe=row.u===me;
+    const rankColor=row.rank<=3?medalColor[row.rank]:'var(--text-3)';
+    const avatarBg=isMe?'linear-gradient(135deg,var(--accent),oklch(0.62 0.15 275))':'oklch(0.94 0.006 260)';
     const prizeText=prizeMap[row.rank];
-    const prizeCell=hasPrizes?`<td style="width:56px;" title="${prizeText?prizeText.replace(/"/g,'&quot;'):'No prize for this position'}"><div style="display:flex;align-items:center;justify-content:center;">${prizeText?'🏆':'<span style="color:var(--text-3);">—</span>'}</div></td>`:'';
+    const icon=prizeIcon[row.rank]||'🏆';
+    const bg=prizeBg[row.rank]||'oklch(0.95 0.02 275)';
+    const prizeCell=hasPrizes?`<td style="width:56px;" title="${prizeText?prizeText.replace(/"/g,'&quot;'):'No prize for this position'}"><div style="display:flex;align-items:center;justify-content:center;">${prizeText?`<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;font-size:14px;background:${bg};">${icon}</span>`:'<span style="color:var(--text-3);">—</span>'}</div></td>`:'';
     const extraCell = hasExtra ? extraCellFn(row).replace('<td ','<td class="lb-col-extra" ') : '';
-    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank">${row.rank}</td><td><span class="lb-uname ${isMe?'me':''}">${row.u}</span></td>${cellFn(row)}${extraCell}${prizeCell}</tr>`;
+    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank" style="color:${rankColor};">${row.rank}</td><td><div style="display:flex;align-items:center;gap:8px;min-width:0;"><div style="width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:${isMe?'#fff':'var(--text-2)'};background:${avatarBg};">${lbInitials(row.u)}</div><span class="lb-uname ${isMe?'me':''}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row.u}</span>${isMe?'<span style="flex-shrink:0;margin-left:2px;font-size:9px;font-weight:800;color:var(--accent);background:var(--accent-light);padding:2px 6px;border-radius:5px;letter-spacing:0.3px;">YOU</span>':''}</div></td>${cellFn(row)}${extraCell}${prizeCell}</tr>`;
   });
   html+='</tbody></table></div>';return html;
 }
