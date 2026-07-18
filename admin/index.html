@@ -870,13 +870,7 @@ tbody tr:hover td{background:var(--bg);}
       <div id="lineup-config" style="display:none;">
         <div class="divider"></div>
         <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:12px;">Lineup Predictor Setup</div>
-        <div class="form-group">
-          <label class="form-label">Tournament</label>
-          <select class="form-select" id="lineup-tournament" onchange="loadLineupTeams()">
-            <option value="">— select tournament —</option>
-          </select>
-        </div>
-        <div class="form-group" id="lineup-team-group" style="display:none;">
+        <div class="form-group" id="lineup-team-group">
           <label class="form-label">Team to predict lineup for</label>
           <select class="form-select" id="lineup-team">
             <option value="">— select team —</option>
@@ -1649,36 +1643,19 @@ function updateModeDescription(){
   document.getElementById('betting-markets-config').style.display = mode==='betting' ? 'block' : 'none';
   document.getElementById('ranking-config').style.display         = mode==='ranking' ? 'block' : 'none';
   document.getElementById('lineup-config').style.display          = mode==='lineup'  ? 'block' : 'none';
-  if(mode==='lineup') populateLineupTournaments();
+  if(mode==='lineup') populateLineupTeams();
   document.getElementById('roulette-config').style.display        = mode==='roulette'? 'block' : 'none';
 }
 
-function populateLineupTournaments(){
-  const sel = document.getElementById('lineup-tournament');
-  if(!sel) return;
-  const tourns = getDMTournaments().filter(t => t.name.toLowerCase().includes('premier league'));
-  sel.innerHTML = '<option value="">— select tournament —</option>' +
-    tourns.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
-  if(tourns.length===1){ sel.value=tourns[0].id; loadLineupTeams(); }
-}
-
-function loadLineupTeams(){
-  const tId = document.getElementById('lineup-tournament').value;
-  const teamGroup = document.getElementById('lineup-team-group');
+function populateLineupTeams(){
   const teamSel = document.getElementById('lineup-team');
-  if(!tId){ teamGroup.style.display='none'; return; }
-  // Get team IDs from tournament season data
-  const tourn = getDMTournaments().find(t=>t.id===tId);
-  const seasons = tourn?.seasons||{};
-  // Collect all teamIds across all seasons
-  const tournTeamIds = new Set(Object.values(seasons).flatMap(s=>s.teamIds||[]));
-  const allTeams = getDMTeams();
-  // Filter teams to those in this tournament, fallback to all if none found
-  const teams = (tournTeamIds.size>0 ? allTeams.filter(t=>tournTeamIds.has(t.id)) : allTeams)
-    .sort((a,b)=>a.name.localeCompare(b.name));
+  if(!teamSel) return;
+  // Every team assigned to this client via Coverage, regardless of which
+  // tournament(s) it plays in — Lineup Predictor tracks one team across all
+  // of its fixtures, not one competition's worth of matches.
+  const teams = getDMTeams().sort((a,b)=>a.name.localeCompare(b.name));
   teamSel.innerHTML = '<option value="">— select team —</option>' +
     teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
-  teamGroup.style.display = 'block';
 }
 
 async function createComp(){
@@ -1720,10 +1697,9 @@ async function createComp(){
   let lineupConfig = null;
   if(mode==='lineup'){
     const teamId = document.getElementById('lineup-team')?.value;
-    const tournId = document.getElementById('lineup-tournament')?.value;
     if(!teamId){ toast('Select a team for the Lineup Predictor'); return; }
     const team = getDMTeams().find(t=>t.id===teamId);
-    lineupConfig = { teamId, tournamentId: tournId, teamName: team?.name||'' };
+    lineupConfig = { teamId, teamName: team?.name||'' };
   }
   const c = {
     id: 'c'+uid(), name, mode, scoring, markets, rankingConfig, lineupConfig, rouletteConfig,
