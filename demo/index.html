@@ -168,9 +168,6 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .submit-btn{font-family:var(--mono);font-size:11px;font-weight:700;padding:9px 20px;background:var(--comp-color);color:white;border:none;border-radius:6px;cursor:pointer;transition:background 0.13s;letter-spacing:0.3px;}
 .submit-btn:disabled{background:var(--bg);color:var(--text-3);cursor:not-allowed;}
 .lb-wrap{background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
-.lb-table-head{padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:space-between;}
-.lb-table-head-title{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);}
-.lb-table-head-sub{font-size:10px;color:var(--text-3);}
 table.lb-table{width:100%;border-collapse:collapse;}
 .lb-table th{font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:7px 14px;text-align:left;border-bottom:1px solid var(--border);}
 .lb-table th.r{text-align:right;}
@@ -178,6 +175,7 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .lb-table tbody tr:last-child td{border-bottom:none;}
 .lb-table tbody tr:hover td{background:var(--bg);}
 .lb-table tbody tr.me td{background:var(--accent-light);}
+@media(max-width:480px){.lb-col-extra{display:none;}}
 .lb-rank{font-family:var(--mono);font-size:11px;color:var(--text-3);text-align:center;width:32px;}
 .lb-rank.top{font-size:15px;}
 .lb-user{display:flex;align-items:center;gap:8px;}
@@ -2033,18 +2031,16 @@ function renderLineupLeaderboardShell(comp){
         <option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option>
       </select>
     </div>
-  </div>
-  <div style="padding:16px;">`;
+  </div>`;
   const rows=LINEUP_LB.map(row=>({u:row.u, points:row.pts, correct:row.correct}));
   rows.sort((a,b)=>b.points-a.points);
   let rank=1;
   rows.forEach((r,i)=>{if(i>0&&rows[i].points<rows[i-1].points)rank=i+1;r.rank=rank;});
   const activePrizes=round?.prizes;
   html+=buildLBTable(comp.name, round?.label||'', rows,
-    r=>`<td class="lb-num">${r.correct||0}/11</td>`, '<th class="r" style="width:70px;">Accuracy</th>',
+    r=>`<td class="lb-num">${r.points} pts</td>`, '<th class="r" style="width:80px;">Points</th>',
     activePrizes,
-    r=>`<td class="lb-num">${r.points} pts</td>`, '<th class="r" style="width:80px;">Points</th>');
-  html+='</div>';
+    r=>`<td class="lb-num">${r.correct||0}/11</td>`, '<th class="r" style="width:70px;">Accuracy</th>');
   return html;
 }
 function renderLeaderboardPane(comp){
@@ -2101,12 +2097,14 @@ function buildLBTable(title,sub,rows,cellFn,colHeader,prizes,extraCellFn,extraCo
   (prizes||[]).forEach(p=>{prizeMap[p.pos]=p.text;});
   const hasPrizes=Object.keys(prizeMap).length>0;
   const hasExtra=!!extraCellFn;
-  let html=`<div class="lb-wrap"><div class="lb-table-head"><span class="lb-table-head-title">${title}</span><span class="lb-table-head-sub">${sub}</span></div><table class="lb-table" style="table-layout:fixed;"><thead><tr><th style="width:32px;text-align:center">#</th><th style="width:auto;">Player</th>${colHeader}${hasExtra?extraColHeader:''}${hasPrizes?'<th style="width:150px;text-align:left;">Prize</th>':''}</tr></thead><tbody>`;
+  const extraColHeaderMobile = extraColHeader ? extraColHeader.replace('<th ','<th class="lb-col-extra" ') : extraColHeader;
+  let html=`<div class="lb-wrap"><table class="lb-table" style="table-layout:fixed;"><thead><tr><th style="width:32px;text-align:center">#</th><th style="width:auto;">Player</th>${colHeader}${hasExtra?extraColHeaderMobile:''}${hasPrizes?'<th style="width:44px;text-align:center;">Prize</th>':''}</tr></thead><tbody>`;
   rows.forEach(row=>{
     const isMe=row.u===me,ini=(row.u||'?').slice(0,2).toUpperCase();
     const prizeText=prizeMap[row.rank];
-    const prizeCell=hasPrizes?`<td style="width:150px;text-align:left;font-size:11px;color:${prizeText?'var(--text)':'var(--text-3)'};font-weight:${prizeText?'700':'400'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${prizeText||''}">${prizeText?'🏆 '+prizeText:'—'}</td>`:'';
-    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank ${row.rank<=3?'top':''}">${row.rank<=3?MEDALS[row.rank-1]:row.rank}</td><td><div class="lb-user"><div class="lb-av ${isMe?'me':''}">${ini}</div><span class="lb-uname ${isMe?'me':''}">${row.u}${isMe?'<span class="you-tag">YOU</span>':''}</span></div></td>${cellFn(row)}${hasExtra?extraCellFn(row):''}${prizeCell}</tr>`;
+    const prizeCell=hasPrizes?`<td style="width:44px;text-align:center;" title="${prizeText?prizeText.replace(/"/g,'&quot;'):'No prize for this position'}">${prizeText?'🏆':'<span style="color:var(--text-3);">—</span>'}</td>`:'';
+    const extraCell = hasExtra ? extraCellFn(row).replace('<td ','<td class="lb-col-extra" ') : '';
+    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank ${row.rank<=3?'top':''}">${row.rank<=3?MEDALS[row.rank-1]:row.rank}</td><td><div class="lb-user"><div class="lb-av ${isMe?'me':''}">${ini}</div><span class="lb-uname ${isMe?'me':''}">${row.u}${isMe?'<span class="you-tag">YOU</span>':''}</span></div></td>${cellFn(row)}${extraCell}${prizeCell}</tr>`;
   });
   html+='</tbody></table></div>';return html;
 }
