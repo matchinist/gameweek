@@ -235,20 +235,13 @@ table.lb-table{width:100%;border-collapse:collapse;}
 
 .round-bar-spacer{flex:1;}
 
-.pitch-wrap{width:100%;}
-@media(min-width:560px){.pitch-wrap{max-width:95%;margin:0 auto;}}
-.pitch-midline{position:absolute;top:0;bottom:0;left:50%;width:1px;background:rgba(255,255,255,0.2);}
-.pitch-box-a{position:absolute;left:0;top:20%;bottom:20%;width:10%;border:1px solid rgba(255,255,255,0.2);border-left:none;}
-.pitch-box-b{position:absolute;right:0;top:20%;bottom:20%;width:10%;border:1px solid rgba(255,255,255,0.2);border-right:none;}
-@media(max-width:559px){
-  .pitch-midline{top:50%;bottom:auto;left:0;right:0;width:auto;height:1px;}
-  .pitch-box-a{top:0;left:10%;right:10%;bottom:auto;width:auto;height:10%;border:1px solid rgba(255,255,255,0.2);border-top:none;border-left:1px solid rgba(255,255,255,0.2);}
-  .pitch-box-b{bottom:0;top:auto;left:10%;right:10%;width:auto;height:10%;border:1px solid rgba(255,255,255,0.2);border-bottom:none;border-right:1px solid rgba(255,255,255,0.2);}
-}
-/* Mobile: vertical pitch (portrait, like a real pitch viewed from above) */
-.lineup-pitch-container{background:#2d7a3a;border-radius:16px;position:relative;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.2);padding-bottom:140%;/* tall portrait */}
-/* Desktop: horizontal pitch (landscape) */
-@media(min-width:560px){.lineup-pitch-container{padding-bottom:52%;}}
+.pitch-wrap{width:100%;max-width:420px;margin:0 auto;}
+.pitch-midline{position:absolute;left:7px;right:7px;top:50%;height:2px;background:rgba(255,255,255,0.35);pointer-events:none;}
+.pitch-box-a{position:absolute;left:50%;top:7px;width:52%;height:14%;margin-left:-26%;border:2px solid rgba(255,255,255,0.3);border-top:none;pointer-events:none;}
+.pitch-box-a-six{position:absolute;left:50%;top:7px;width:26%;height:6.5%;margin-left:-13%;border:2px solid rgba(255,255,255,0.3);border-top:none;pointer-events:none;}
+.pitch-box-b{position:absolute;left:50%;bottom:7px;width:52%;height:14%;margin-left:-26%;border:2px solid rgba(255,255,255,0.3);border-bottom:none;pointer-events:none;}
+.pitch-box-b-six{position:absolute;left:50%;bottom:7px;width:26%;height:6.5%;margin-left:-13%;border:2px solid rgba(255,255,255,0.3);border-bottom:none;pointer-events:none;}
+.lineup-pitch-container{position:relative;margin:12px;border-radius:10px;overflow:hidden;aspect-ratio:5/6;background:repeating-linear-gradient(#3aa35a 0 34px,#359152 34px 68px);box-shadow:inset 0 0 0 2px rgba(255,255,255,0.25);}
 </style>
 </head>
 <body>
@@ -694,98 +687,60 @@ function renderLineupPredictor(comp){
     scored = {pts, correctCount};
   }
 
-  // Build pitch HTML
-  const rows = {GK:[],DEF:[],MID:[],FWD:[]};
-  slots.forEach((s,si)=>{
-    const pid = picks[si];
-    const player = pid ? [...LIV_SQUAD.GK,...LIV_SQUAD.DEF,...LIV_SQUAD.MID,...LIV_SQUAD.FWD].find(p=>p.id===pid) : null;
-    rows[s.pos].push({si, pid, player, pos:s.pos});
-  });
-
-  const posColor = {GK:'#F59E0B',DEF:'#0EA5E9',MID:'#10B981',FWD:'#EF4444'};
   const posLabel = {GK:'GK',DEF:'DEF',MID:'MID',FWD:'FWD'};
 
   function slotHTML(slot, xPct, yPct){
     const {si, player, pos} = slot;
-    const col = posColor[pos];
     const click = isOpen ? `openLineupPicker('${round.id}',${si},'${pos}')` : '';
     if(player){
       const isCorrect = !isOpen && actual && actual.includes(player.id);
-      const borderColor = !isOpen && actual ? (isCorrect ? '#4ade80' : 'rgba(255,255,255,0.4)') : col;
+      const ringColor = !isOpen && actual ? (isCorrect ? '#22c55e' : 'rgba(220,38,38,0.7)') : '#fff';
       const flagUrl = flagImgUrl(player.nationality);
       const fallback = player.no!=null && player.no!=='' ? player.no : '';
-      return `<div onclick="${click}" style="position:absolute;left:${xPct}%;top:${yPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:${isOpen?'pointer':'default'};z-index:3;width:80px;">
-        <div style="width:52px;height:52px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#000;font-weight:800;font-size:15px;box-shadow:0 2px 8px rgba(0,0,0,0.4);">${flagUrl?`<img src="${flagUrl}" alt="${player.nationality||''}" style="width:100%;height:100%;object-fit:cover;filter:brightness(0.9);" onerror="this.parentElement.textContent='${fallback}';">`:fallback}</div>
-        <div style="background:rgba(0,0,0,0.7);color:#fff;font-size:${isHorizontal?11:9}px;font-weight:700;padding:2px 6px;border-radius:999px;white-space:nowrap;${isHorizontal?'':'max-width:76px;overflow:hidden;text-overflow:ellipsis;'}text-align:center;">${player.name}</div>
+      const dim = (!isOpen && actual && !isCorrect) ? 'opacity:0.55;' : '';
+      const resultBadge = (!isOpen && actual) ? `<div style="position:absolute;bottom:-2px;right:-2px;width:15px;height:15px;border-radius:50%;background:${isCorrect?'#22c55e':'#dc2626'};display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:800;border:1.5px solid #fff;">${isCorrect?'✓':'✕'}</div>` : '';
+      return `<div onclick="${click}" style="position:absolute;left:${xPct}%;top:${yPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:${isOpen?'pointer':'default'};z-index:3;width:64px;${dim}">
+        <div style="position:relative;width:44px;height:44px;">
+          <div style="width:44px;height:44px;border-radius:50%;background:#fff;border:2px solid ${ringColor};display:flex;align-items:center;justify-content:center;overflow:hidden;color:#000;font-weight:800;font-size:13px;box-shadow:0 2px 6px rgba(0,0,0,0.25);">${flagUrl?`<img src="${flagUrl}" alt="${player.nationality||''}" style="width:100%;height:100%;object-fit:cover;filter:brightness(0.9);" onerror="this.parentElement.textContent='${fallback}';">`:fallback}</div>
+          ${resultBadge}
+        </div>
+        <span style="font-size:8.5px;font-weight:800;letter-spacing:0.3px;color:#fff;background:rgba(20,20,40,0.55);padding:1.5px 6px;border-radius:4px;white-space:nowrap;max-width:74px;overflow:hidden;text-overflow:ellipsis;">${player.name}</span>
       </div>`;
     } else {
-      return `<div onclick="${click}" style="position:absolute;left:${xPct}%;top:${yPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:${isOpen?'pointer':'default'};z-index:3;width:60px;">
-        <div style="width:47px;height:47px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px dashed rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.8);font-size:18px;">+</div>
-        <div style="background:rgba(0,0,0,0.45);color:rgba(255,255,255,0.8);font-size:9px;font-weight:700;padding:2px 5px;border-radius:999px;">${posLabel[pos]}</div>
+      return `<div onclick="${click}" style="position:absolute;left:${xPct}%;top:${yPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:${isOpen?'pointer':'default'};z-index:3;width:50px;">
+        <div style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px dashed rgba(255,255,255,0.75);background:rgba(255,255,255,0.18);"><span style="font-size:17px;font-weight:400;color:rgba(255,255,255,0.9);line-height:1;">+</span></div>
+        <span style="font-size:8.5px;font-weight:800;letter-spacing:0.3px;color:#fff;background:rgba(20,20,40,0.5);padding:1.5px 6px;border-radius:4px;">${posLabel[pos]}</span>
       </div>`;
     }
   }
 
-  // Calculate player positions based on formation
-  // X = left%, Y = top% — GK at far left, FWD at far right
-  // Detect if pitch is horizontal (wide) or vertical (tall)
-  // Match the CSS breakpoint exactly (.lineup-pitch-container switches aspect
-  // ratio at 560px) rather than measuring offsetWidth/offsetHeight, which can be
-  // 0x0 or stale at the moment this runs and silently apply the wrong layout
-  // (e.g. the horizontal shape on a narrow portrait screen).
-  const isHorizontal = window.innerWidth >= 560;
+  // Fixed 4-2-3-1 shape (fullbacks pushed wider/higher than centre-backs,
+  // DM+CM pair centrally, AM flanked by wingers, lone striker up top) —
+  // always vertical now, so only the one layout is needed.
+  const LAYOUT_V = [
+    {pos:'GK',  x:50, y:90}, // GK
+    {pos:'DEF', x:14, y:66}, // LB
+    {pos:'DEF', x:34, y:72}, // CB
+    {pos:'DEF', x:66, y:72}, // CB
+    {pos:'DEF', x:86, y:66}, // RB
+    {pos:'MID', x:37, y:48}, // DM
+    {pos:'MID', x:63, y:48}, // CM
+    {pos:'MID', x:50, y:30}, // AM
+    {pos:'MID', x:21, y:30}, // LW
+    {pos:'MID', x:79, y:30}, // RW
+    {pos:'FWD', x:50, y:12}, // CF
+  ];
 
-  function calcPositions(){
-    // Only 4-2-3-1 exists now, so use an explicit shape matching a real 4-2-3-1
-    // (fullbacks pushed wider/higher than centre-backs, DM+CM pair centrally,
-    // AM flanked by wingers, lone striker up top) rather than generic even-spacing.
-    const LAYOUT_H = [
-      {pos:'GK',  x:10, y:50}, // GK
-      {pos:'DEF', x:34, y:14}, // LB
-      {pos:'DEF', x:28, y:34}, // CB
-      {pos:'DEF', x:28, y:65}, // CB
-      {pos:'DEF', x:34, y:86}, // RB
-      {pos:'MID', x:47, y:37}, // DM
-      {pos:'MID', x:47, y:62}, // CM
-      {pos:'MID', x:63, y:50}, // AM
-      {pos:'MID', x:63, y:21}, // LW
-      {pos:'MID', x:63, y:79}, // RW
-      {pos:'FWD', x:79, y:50}, // CF
-    ];
-    const LAYOUT_V = [
-      {pos:'GK',  x:50, y:90}, // GK
-      {pos:'DEF', x:14, y:66}, // LB
-      {pos:'DEF', x:34, y:72}, // CB
-      {pos:'DEF', x:66, y:72}, // CB
-      {pos:'DEF', x:86, y:66}, // RB
-      // 2-3-1 bands, equal spacing between them, CF pulled back inside the pitch edge
-      {pos:'MID', x:37, y:48}, // DM
-      {pos:'MID', x:63, y:48}, // CM
-      {pos:'MID', x:50, y:30}, // AM
-      {pos:'MID', x:21, y:30}, // LW
-      {pos:'MID', x:79, y:30}, // RW
-      {pos:'FWD', x:50, y:12}, // CF
-    ];
-    const layout = isHorizontal ? LAYOUT_H : LAYOUT_V;
-    return layout.map((s,i)=>({si:i, pos:s.pos, x:s.x, y:s.y}));
-  }
-
-  const positions = calcPositions();
+  const positions = LAYOUT_V.map((s,i)=>({si:i, pos:s.pos, x:s.x, y:s.y}));
   const pitchSlots = positions.map(({si, pos, x, y}) => {
     const pid = picks[si];
     const player = pid ? [...LIV_SQUAD.GK,...LIV_SQUAD.DEF,...LIV_SQUAD.MID,...LIV_SQUAD.FWD].find(p=>p.id===pid) : null;
     return slotHTML({si, player, pos}, x, y);
   });
 
-  const scoreSection = scored!==null ? `
-    <div style="background:oklch(0.94 0.03 275/0.6);border:1px solid oklch(0.88 0.05 275/0.6);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
-      <span style="font-size:13px;font-weight:600;color:oklch(0.42 0.12 275);">Your score</span>
-      <span style="font-family:'DM Mono',monospace;font-size:22px;font-weight:800;color:oklch(0.42 0.12 275);">${scored.pts} <span style="font-size:13px;font-weight:500;">pts · ${scored.correctCount}/11 correct${scored.correctCount===11?' 🎯 +30 bonus!':''}</span></span>
-    </div>` : '';
-
   const fixtureHeader = ev.home ? `
       <div style="text-align:center;font-size:10px;font-weight:700;color:oklch(0.58 0.01 260);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">${ev.tournament||'Next Fixture'}${ev.kickoff?' · '+ev.kickoff:''}</div>
-      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;margin-bottom:28px;">
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;margin-bottom:14px;">
         <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;min-width:0;">
           <span class="ev-name" style="text-align:right;">${ev.home}</span>
           ${teamBadge(ev.homeLogo, ev.home)}
@@ -796,6 +751,19 @@ function renderLineupPredictor(comp){
           <span class="ev-name">${ev.away}</span>
         </div>
       </div>` : '';
+
+  // Form row: formation pill on the left; on the right, points+accuracy once
+  // scored, otherwise the fill count — this is what replaces the old separate
+  // "Your score" box above the pitch, folding it into the card itself.
+  const formRow = `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 16px;background:oklch(0.98 0.004 260);border-top:1px solid oklch(0.94 0.004 260);border-bottom:1px solid oklch(0.94 0.004 260);">
+    <div style="display:flex;align-items:center;gap:7px;">
+      <span style="font-size:10.5px;font-weight:700;color:oklch(0.58 0.01 260);text-transform:uppercase;letter-spacing:0.4px;">Form</span>
+      <span style="font-size:11.5px;font-weight:800;color:oklch(0.25 0.01 260);background:oklch(0.94 0.006 275);border-radius:6px;padding:4px 9px;">4-2-3-1</span>
+    </div>
+    ${scored!==null
+      ? `<span style="font-size:12px;font-weight:800;color:var(--comp-color);">${scored.pts} pts <span style="font-weight:600;color:oklch(0.5 0.01 260);">· ${scored.correctCount}/11${scored.correctCount===11?' 🎯':''}</span></span>`
+      : `<span style="font-size:11.5px;font-weight:700;color:var(--comp-color);">${pickCount}/11</span>`}
+  </div>`;
 
   const countdownInner = (isOpen && lineupLockAt) ? controlBandCountdown('⏱','Locks in','<span id="countdown-text">Calculating...</span>', `${pickCount} / 11 set`) : '';
   if(isOpen && lineupLockAt) setTimeout(()=>startCountdown(lineupLockAt,()=>renderPredict()),50);
@@ -819,39 +787,42 @@ function renderLineupPredictor(comp){
         ${countdownInner}
       </div>
 
-      <div style="padding:16px 0 0;">
-        ${scoreSection}
-
-      <!-- Fixture header + pitch merged into one component -->
-      <div style="background:#fff;border:1px solid oklch(0.92 0.004 260);border-radius:16px;padding:10px 0;overflow:hidden;">
-        <div style="padding:0 16px;">${fixtureHeader}</div>
-        <div class="pitch-wrap">
+      <div style="padding:16px 0 0;display:flex;justify-content:center;">
+      <div style="width:100%;max-width:420px;background:#fff;border:1px solid oklch(0.92 0.004 260);border-radius:16px;box-shadow:0 2px 8px rgba(20,20,40,0.05);overflow:hidden;">
+        <div style="padding:12px 16px 0;">${fixtureHeader}</div>
+        ${formRow}
+        <div class="pitch-wrap" style="max-width:none;margin:0;">
         <div class="lineup-pitch-container">
           <!-- Pitch markings -->
-          <div style="position:absolute;inset:0;">
-            <div class="pitch-midline"></div>
-            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80px;height:80px;border-radius:50%;border:1px solid rgba(255,255,255,0.2);pointer-events:none;"></div>
-            <div class="pitch-box-a"></div>
-            <div class="pitch-box-b"></div>
-            <div style="position:absolute;inset:1px;border:1px solid rgba(255,255,255,0.15);border-radius:15px;pointer-events:none;"></div>
-          </div>
+          <div style="position:absolute;inset:7px;border:2px solid rgba(255,255,255,0.35);border-radius:5px;pointer-events:none;"></div>
+          <div class="pitch-midline"></div>
+          <div style="position:absolute;left:50%;top:50%;width:64px;height:64px;margin:-32px 0 0 -32px;border:2px solid rgba(255,255,255,0.35);border-radius:50%;pointer-events:none;"></div>
+          <div class="pitch-box-a"></div>
+          <div class="pitch-box-a-six"></div>
+          <div class="pitch-box-b"></div>
+          <div class="pitch-box-b-six"></div>
           <!-- Players -->
           <div style="position:absolute;inset:0;z-index:2;">
             ${pitchSlots.join('')}
           </div>
         </div>
         </div>
+        <div style="padding:0 12px 14px;">
+          ${isOpen && pickCount===11 ? `
+          <button onclick="saveLineup('${round.id}')" style="width:100%;border:none;border-radius:9px;padding:11px;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;cursor:pointer;background:var(--comp-color);color:#fff;box-shadow:0 3px 10px rgba(20,20,40,0.15);">
+            Save starting XI
+          </button>` : isOpen ? `
+          <button disabled style="width:100%;border:none;border-radius:9px;padding:11px;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;background:oklch(0.95 0.004 260);color:oklch(0.65 0.01 260);cursor:not-allowed;">
+            Pick ${11-pickCount} more to save
+          </button>` : ''}
+          ${isOpen ? `<div style="display:flex;align-items:center;gap:8px;margin-top:9px;">
+            <div style="flex:1;height:5px;border-radius:3px;background:oklch(0.93 0.004 260);overflow:hidden;">
+              <div style="width:${(pickCount/11*100)}%;height:100%;background:var(--comp-color);border-radius:3px;transition:width .2s;"></div>
+            </div>
+            <span style="font-size:11px;font-weight:700;color:oklch(0.58 0.01 260);">${pickCount}/11</span>
+          </div>` : ''}
+        </div>
       </div>
-      </div>
-
-      <div class="pitch-wrap" style="padding:0 16px;">
-      ${isOpen && pickCount===11 ? `
-      <button onclick="saveLineup('${round.id}')" style="width:100%;margin-top:16px;background:var(--comp-color);color:#fff;border:none;border-radius:10px;padding:14px;font-family:'DM Mono',monospace;font-size:14px;font-weight:700;cursor:pointer;">
-        Save Lineup (${pickCount}/11)
-      </button>` : isOpen ? `
-      <div style="width:100%;margin-top:16px;background:color-mix(in srgb, var(--comp-color) 12%, white);color:oklch(0.5 0.01 260);border:none;border-radius:10px;padding:14px;font-size:13px;font-weight:600;text-align:center;">
-        Select all 11 players to save
-      </div>` : ''}
       </div>
     </div>`;
 }
