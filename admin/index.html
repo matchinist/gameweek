@@ -992,7 +992,7 @@ tbody tr:hover td{background:var(--bg);}
 <div class="modal-overlay" id="modal-edit-round">
   <div class="modal" style="max-width:560px;">
     <div class="modal-header">
-      <div class="modal-title">Edit Round</div>
+      <div class="modal-title" id="edit-round-modal-title">Edit Round</div>
       <button class="modal-close" onclick="closeModal('modal-edit-round')">×</button>
     </div>
     <div class="modal-body">
@@ -1000,12 +1000,12 @@ tbody tr:hover td{background:var(--bg);}
 
       <div class="form-group">
         <label class="form-label">Round Name</label>
-        <input class="form-input" id="edit-round-name" placeholder="e.g. Gameweek 4" />
+        <input class="form-input" id="edit-round-name" placeholder="e.g. Gameweek 4" oninput="markEditRoundDirty()" />
       </div>
 
       <div class="form-group">
         <label class="form-label">Select Tournament</label>
-        <select class="form-select" id="edit-round-tournament-select" onchange="roundSelectTournament('edit')">
+        <select class="form-select" id="edit-round-tournament-select" onchange="roundSelectTournament('edit');markEditRoundDirty()">
           <option value="">— choose a tournament —</option>
         </select>
         <div style="margin-top:8px;padding:10px 12px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;font-size:12px;color:#92400E;line-height:1.5;">
@@ -1044,7 +1044,7 @@ tbody tr:hover td{background:var(--bg);}
     <div class="modal-footer">
       <div style="font-size:11px;color:var(--text-3);">Changes do not affect submitted predictions.</div>
       <button class="btn btn-ghost" onclick="closeModal('modal-edit-round')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveRoundEdit()">Save changes</button>
+      <button class="btn btn-primary" id="edit-round-save-btn" disabled style="opacity:0.5;cursor:default;" onclick="saveRoundEdit()">Save changes</button>
     </div>
   </div>
 </div>
@@ -1247,6 +1247,36 @@ function fmtDt(dt){
   if(!dt) return '—';
   const d = new Date(dt);
   return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' · '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+}
+
+// Mirrors the exact lock logic used for player-facing countdowns, so the
+// admin round list shows the same lock time players actually see — the old
+// stored round.deadline (a flat "2h before earliest event" value set once at
+// creation) no longer matches how any mode actually locks predictions.
+function roundLockDisplay(round, mode){
+  if(mode==='lineup'){
+    const evId=(round.eventIds||[])[0];
+    const ev=evId?dmState.events[evId]:null;
+    const ko=ev&&ev.kickoff?new Date(ev.kickoff).getTime():null;
+    if(ko==null) return 'no fixture yet';
+    const lockAt=ko-3*3600*1000;
+    return (lockAt<=Date.now()?'locked ':'locks ')+fmtDt(new Date(lockAt).toISOString());
+  }
+  const kickoffs=(round.eventIds||[])
+    .map(id=>{ const ev=dmState.events[id]; return ev&&ev.kickoff?new Date(ev.kickoff).getTime():null; })
+    .filter(t=>t!=null);
+  if(!kickoffs.length) return 'no fixtures yet';
+  if(mode==='ranking'){
+    // Whole round locks 1 hour before the FIRST assigned event's kick-off.
+    const lockAt=Math.min(...kickoffs)-3600000;
+    return (lockAt<=Date.now()?'round locked ':'round locks ')+fmtDt(new Date(lockAt).toISOString());
+  }
+  // score / betting: each event locks 1 hour before its own kick-off — show
+  // whichever upcoming lock is soonest, same as the player-facing countdown.
+  const now=Date.now();
+  const upcoming=kickoffs.map(k=>k-3600000).filter(l=>l>now).sort((a,b)=>a-b);
+  if(!upcoming.length) return 'all events locked';
+  return 'next lock '+fmtDt(new Date(upcoming[0]).toISOString());
 }
 
 function statusBadge(s){
@@ -1455,10 +1485,10 @@ function renderCompDetail(){
               <div class="round-item">
                 <div style="flex:1;">
                   <div class="round-item-name">${r.label}</div>
-                  <div class="round-item-meta">${r.rankingTeams?r.rankingTeams.length+' teams':r.eventIds.length+' events'} · deadline ${fmtDt(r.deadline)}${r.tournamentId?` · ${r.tournamentName||r.tournamentId}`:''}</div>
+                  <div class="round-item-meta">${r.rankingTeams?r.rankingTeams.length+' teams':r.eventIds.length+' events'} · ${roundLockDisplay(r,c.mode)}${r.tournamentId?` · ${r.tournamentName||r.tournamentId}`:''}</div>
                 </div>
                 ${statusBadge(r.status)}
-                <button class="btn btn-ghost btn-sm" onclick="openEditRound('${r.id}')">Edit</button>
+                <button class="btn btn-ghost btn-sm" onclick="openEditRound('${r.id}')">${c.mode==='ranking'?'Teams':'Events'}</button>
                 <button class="btn btn-ghost btn-sm" onclick="openRoundPrizes('${r.id}')">Prizes</button>
                 ${(r.status==='open' && !['score','betting','ranking'].includes(c.mode))?`<button class="btn btn-outline btn-sm" onclick="confirmRound('${r.id}')">Lock →</button>`:''}
               </div>`).join('')}</div>`
@@ -1791,6 +1821,12 @@ function saveBrandingBg(val){
 // ── ROUND STATE ───────────────────────────────────────────────────────────
 // Tracks events added to the round currently being created/edited
 let roundAddedEvents = []; // [{id, home, away, kickoff, tName}]
+let editRoundDirty = false; // tracks whether anything has actually changed in the Edit Events/Teams modal
+function markEditRoundDirty(){
+  editRoundDirty = true;
+  const btn = document.getElementById('edit-round-save-btn');
+  if(btn){ btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
+}
 
 // ── PRIZES (shared editor for round prizes + overall prizes) ────────────────
 // prefix examples: 'new-round', 'edit-round', 'overall'
@@ -2058,12 +2094,14 @@ function roundAddEvent(prefix, eid, home, away, kickoff, tName){
   roundSelectTournament(prefix, true);
   renderAddedEvents(prefix);
   validateRoundOverlap(prefix);
+  if(prefix==='edit') markEditRoundDirty();
 }
 
 function roundRemoveEvent(prefix, eid){
   roundAddedEvents = roundAddedEvents.filter(e=>e.id!==eid);
   roundSelectTournament(prefix, true);
   renderAddedEvents(prefix);
+  if(prefix==='edit') markEditRoundDirty();
 }
 
 function renderAddedEvents(prefix){
@@ -2147,7 +2185,7 @@ function updateRankingTeamPreview(prefix){
     }
     return `
     <label style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg);border-radius:6px;cursor:pointer;">
-      <input type="checkbox" class="${prefix}-ranking-team-cb" value="${t.id}" data-name="${t.name}" data-logo="${t.logo}" data-opponent="${t.opponent}" data-is-home="${t.isHome?'1':'0'}" data-opponent-name="${t.opponentName||''}" data-opponent-logo="${t.opponentLogo||''}" data-date-short="${t.dateShort||''}" ${isChecked?'checked':''} style="accent-color:var(--accent);width:16px;height:16px;">
+      <input type="checkbox" class="${prefix}-ranking-team-cb" value="${t.id}" data-name="${t.name}" data-logo="${t.logo}" data-opponent="${t.opponent}" data-is-home="${t.isHome?'1':'0'}" data-opponent-name="${t.opponentName||''}" data-opponent-logo="${t.opponentLogo||''}" data-date-short="${t.dateShort||''}" ${isChecked?'checked':''} style="accent-color:var(--accent);width:16px;height:16px;" ${prefix==='edit'?'onchange="markEditRoundDirty()"':''}>
       ${t.logo?'<img src="'+t.logo+'" style="width:24px;height:24px;border-radius:50%;object-fit:contain;">':''}
       <div style="flex:1;">
         <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text);">${t.name}</span>
@@ -2249,9 +2287,13 @@ function openEditRound(roundId){
   const comp = getComp(state.currentComp);
   const r = comp.rounds.find(r=>r.id===roundId);
   if(!r) return;
+  editRoundDirty = false;
+  const saveBtn = document.getElementById('edit-round-save-btn');
+  if(saveBtn){ saveBtn.disabled = true; saveBtn.style.opacity = '0.5'; saveBtn.style.cursor = 'default'; }
   document.getElementById('edit-round-id').value = roundId;
   document.getElementById('edit-round-name').value = r.label;
-  
+  document.getElementById('edit-round-modal-title').textContent = comp.mode==='ranking' ? 'Edit Teams' : 'Edit Events';
+
   const isRanking = comp.mode === 'ranking';
   
   // Show/hide sections based on mode
@@ -2309,7 +2351,23 @@ async function saveRoundEdit(){
   const comp = getComp(state.currentComp);
   const r = comp.rounds.find(r=>r.id===rid);
   if(!r){ toast('Round not found'); return; }
-  
+
+  // Warn before saving if players have already predicted this round — an
+  // event added or removed here could mean a prediction now scores against
+  // something different than what the player actually saw, or a player's
+  // pick could go entirely unrecognized. Only applies to score/betting/ranking;
+  // Lineup Predictor doesn't use this modal at all.
+  if(['score','betting','ranking'].includes(comp.mode)){
+    try{
+      const {data:existingPreds} = await supa.from('gw_predictions').select('username,player_id').eq('round_id',rid).eq('client_key',CLIENT_KEY);
+      if(existingPreds && existingPreds.length){
+        const players = new Set(existingPreds.map(p=>p.username||p.player_id));
+        const ok = confirm(`${players.size} player${players.size===1?' has':'s have'} already predicted this round. Changing its events${comp.mode==='ranking'?'/teams':''} now could mean their picks no longer match what's actually being scored — they won't be notified of the change.\n\nSave anyway?`);
+        if(!ok) return;
+      }
+    }catch(e){ console.error('saveRoundEdit predictions check:',e); } // if this check fails, fall through rather than blocking the save entirely
+  }
+
   r.label = document.getElementById('edit-round-name').value.trim()||r.label;
   
   if(comp.mode==='ranking'){
