@@ -420,6 +420,7 @@ async function buildCompsFromRealData(){
 
     (compsRows||[]).forEach(c=>{
       if(c.status!=='active') return;
+      if(c.mode==='lms') return; // Last Man Standing has been fully retired — this hides it even for operators who already had one running
       let cRounds;
       if(c.mode==='lineup' && c.lineup_config?.teamId){
         const lTeamId = c.lineup_config.teamId;
