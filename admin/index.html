@@ -1178,6 +1178,7 @@ const state = {
 
 // DM data loaded into memory so round modal stays synchronous
 let dmState = { teams:[], tournaments:[], events:{} };
+let coverageState = { tournamentIds:null, teamIds:null }; // null = no coverage configured for this client yet, show everything
 
 // ── SUPABASE SAVE ─────────────────────────────────────────────────────────
 async function saveAdminState(){
@@ -1223,9 +1224,9 @@ async function saveAdminState(){
 }
 
 // ── DM HELPERS (read from in-memory dmState) ──────────────────────────────
-function getDMTournaments(){ return dmState.tournaments||[]; }
+function getDMTournaments(){ const all=dmState.tournaments||[]; return coverageState.tournamentIds ? all.filter(t=>coverageState.tournamentIds.has(t.id)) : all; }
 function getDMEvents(){ return dmState.events||{}; }
-function getDMTeams(){ return dmState.teams||[]; }
+function getDMTeams(){ const all=dmState.teams||[]; return coverageState.teamIds ? all.filter(t=>coverageState.teamIds.has(t.id)) : all; }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
 const modeLabel = {lms:'Last Man Standing', score:'Score Predictor', betting:'Betting Markets', ranking:'Ranking', lineup:'Lineup Predictor', roulette:'Soccer Roulette'};
@@ -1745,9 +1746,9 @@ async function createComp(){
 }
 
 // ── DATA MANAGER HELPERS (read from in-memory dmState, loaded from Supabase) ──
-function getDMTournaments(){ return dmState.tournaments||[]; }
+function getDMTournaments(){ const all=dmState.tournaments||[]; return coverageState.tournamentIds ? all.filter(t=>coverageState.tournamentIds.has(t.id)) : all; }
 function getDMEvents(){ return dmState.events||{}; }
-function getDMTeams(){ return dmState.teams||[]; }
+function getDMTeams(){ const all=dmState.teams||[]; return coverageState.teamIds ? all.filter(t=>coverageState.teamIds.has(t.id)) : all; }
 
 function renderBranding(){
   // Render competition colour pickers
@@ -1968,11 +1969,18 @@ function updateRankingTeamCount(){
 
 async function refreshDMState(){
   if(!CLIENT_KEY) return;
-  const [{data:teams},{data:tournaments},{data:events}] = await Promise.all([
+  const [{data:teams},{data:tournaments},{data:events},{data:coverage}] = await Promise.all([
     supa.from('gw_dm_teams').select('*'),
     supa.from('gw_dm_tournaments').select('*'),
     supa.from('gw_dm_events').select('*'),
+    supa.from('gw_client_coverage').select('*').eq('client_key',CLIENT_KEY).maybeSingle(),
   ]);
+  // No coverage row at all means this client hasn't been curated yet —
+  // show everything, same as before this feature existed, so nobody's
+  // picker suddenly goes empty. A saved row (even with an empty list) is
+  // a deliberate choice and gets honored as-is.
+  coverageState.tournamentIds = coverage ? new Set(coverage.tournament_ids||[]) : null;
+  coverageState.teamIds = coverage ? new Set(coverage.team_ids||[]) : null;
   dmState.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||''}));
   // A tournament restricted to a specific client's email should only be
   // visible/selectable to that one operator — everyone else shouldn't see
@@ -2944,11 +2952,14 @@ function initOperatorChrome(){
   }));
 
   // Load global DM data (shared across all clients — no client_key filter)
-  const [{data:teams},{data:tournaments},{data:events}] = await Promise.all([
+  const [{data:teams},{data:tournaments},{data:events},{data:coverage}] = await Promise.all([
     supa.from('gw_dm_teams').select('*'),
     supa.from('gw_dm_tournaments').select('*'),
     supa.from('gw_dm_events').select('*'),
+    supa.from('gw_client_coverage').select('*').eq('client_key',CLIENT_KEY).maybeSingle(),
   ]);
+  coverageState.tournamentIds = coverage ? new Set(coverage.tournament_ids||[]) : null;
+  coverageState.teamIds = coverage ? new Set(coverage.team_ids||[]) : null;
   dmState.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color}));
   const myEmailBoot = (currentOperator?.email||'').toLowerCase();
   dmState.tournaments = (tournaments||[])

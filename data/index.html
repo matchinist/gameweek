@@ -227,6 +227,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
             <span class="ni-icon">👤</span> Players
             <span class="ni-count" id="nav-players-count">0</span>
           </button>
+          <button class="nav-item" id="nav-coverage" onclick="navTo('coverage')">
+            <span class="ni-icon">🎯</span> Coverage
+          </button>
         </div>
         <div class="sidebar-section">
           <div style="display:flex;align-items:center;justify-content:space-between;padding:0 8px;margin-bottom:6px;">
@@ -274,6 +277,40 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
         </div>
         <div class="view" id="view-tournament">
           <div id="tournament-content"></div>
+        </div>
+        <div class="view" id="view-coverage">
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-body">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Client</label>
+                <select class="form-select" id="coverage-client-select" onchange="loadCoverageForClient(this.value)" style="max-width:360px;">
+                  <option value="">— choose a client —</option>
+                </select>
+                <div style="font-size:11.5px;color:var(--text-3);margin-top:6px;">Choosing what a client sees here doesn't affect anything they've already created — it only controls what's offered next time they build a competition or round.</div>
+              </div>
+            </div>
+          </div>
+          <div id="coverage-body" style="display:none;">
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-header">
+                <span class="card-title">Tournament coverage</span>
+                <span style="font-size:11px;color:var(--text-3);">Score Predictor · Betting Markets · Ranking</span>
+              </div>
+              <div class="card-body">
+                <div id="coverage-tournaments-list" style="display:flex;flex-direction:column;gap:2px;max-height:360px;overflow-y:auto;"></div>
+              </div>
+            </div>
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-header">
+                <span class="card-title">Team coverage</span>
+                <span style="font-size:11px;color:var(--text-3);">Lineup Predictor</span>
+              </div>
+              <div class="card-body">
+                <div id="coverage-teams-list" style="display:flex;flex-direction:column;gap:2px;max-height:360px;overflow-y:auto;"></div>
+              </div>
+            </div>
+            <button class="btn btn-primary" id="coverage-save-btn" onclick="saveCoverage()">Save coverage</button>
+          </div>
         </div>
       </div>
     </div>
@@ -588,6 +625,8 @@ const S={
   activePage:'teams', activeTournamentId:null, activeSeason:'2026/27',
   editingTeamId:null, openRounds:new Set(),
   teams:[], tournaments:[], events:{},
+  clients:[], // [{client_key, label}] — loaded once for the coverage picker
+  coverageClientKey:null, coverageTournamentIds:new Set(), coverageTeamIds:new Set(),
 };
 
 // ── SAVE TO SUPABASE ─────────────────────────────────────────────────────
@@ -825,6 +864,11 @@ function navTo(page,tournamentId){
     document.getElementById('view-tournament').classList.add('active');
     renderTournamentNav();
     renderTournamentView();
+  } else if(page==='coverage'){
+    document.getElementById('nav-coverage').classList.add('active');
+    document.getElementById('view-coverage').classList.add('active');
+    document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">// coverage</div></div>';
+    renderCoverage();
   }
 }
 
@@ -835,6 +879,90 @@ function renderTournamentNav(){
       <span class="tni-name">${t.name}</span>
       <span class="tni-count">${Object.keys(t.seasons).length}s</span>
     </button>`).join('');
+}
+
+// ── CLIENT COVERAGE ──────────────────────────────────────────────────────
+// Lets a super-admin pick, per client, which tournaments (Score/Betting/
+// Ranking) and which teams (Lineup) that client sees when building a
+// competition or round in their own admin panel. Purely a visibility
+// filter on the picker lists — never touches scoring, and never affects
+// anything the client has already created.
+async function renderCoverage(){
+  if(!S.clients.length){
+    try{
+      const {data} = await supa.from('gw_operators').select('client_key,company_name,email').order('company_name');
+      S.clients = (data||[]).filter(o=>o.client_key).map(o=>({client_key:o.client_key, label:o.company_name||o.email||o.client_key}));
+    }catch(e){ console.error('renderCoverage clients:',e); }
+  }
+  const sel = document.getElementById('coverage-client-select');
+  const prevVal = sel.value;
+  sel.innerHTML = '<option value="">— choose a client —</option>' +
+    S.clients.map(c=>`<option value="${c.client_key}">${c.label}</option>`).join('');
+  if(prevVal){ sel.value=prevVal; loadCoverageForClient(prevVal); }
+  else { document.getElementById('coverage-body').style.display='none'; }
+}
+
+async function loadCoverageForClient(clientKey){
+  if(!clientKey){ document.getElementById('coverage-body').style.display='none'; return; }
+  S.coverageClientKey = clientKey;
+  document.getElementById('coverage-body').style.display='block';
+  document.getElementById('coverage-tournaments-list').innerHTML = '<div style="padding:10px;font-size:12px;color:var(--text-3);">Loading…</div>';
+  document.getElementById('coverage-teams-list').innerHTML = '';
+  try{
+    const {data} = await supa.from('gw_client_coverage').select('*').eq('client_key',clientKey).maybeSingle();
+    S.coverageTournamentIds = new Set(data?.tournament_ids||[]);
+    S.coverageTeamIds = new Set(data?.team_ids||[]);
+  }catch(e){
+    console.error('loadCoverageForClient:',e);
+    S.coverageTournamentIds = new Set();
+    S.coverageTeamIds = new Set();
+  }
+  renderCoverageLists();
+}
+
+function renderCoverageLists(){
+  const tList = document.getElementById('coverage-tournaments-list');
+  const tSorted = [...S.tournaments].sort((a,b)=>a.name.localeCompare(b.name));
+  tList.innerHTML = tSorted.length ? tSorted.map(t=>`
+    <label style="display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:6px;cursor:pointer;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+      <input type="checkbox" ${S.coverageTournamentIds.has(t.id)?'checked':''} onchange="toggleCoverageId('tournament','${t.id}',this.checked)" style="accent-color:var(--accent);width:15px;height:15px;">
+      <div class="tni-badge" style="background:${t.color};width:20px;height:20px;font-size:9px;">${abbr(t.name)}</div>
+      <span style="font-size:13px;">${t.name}${t.country?' · '+t.country:''}</span>
+    </label>`).join('') : '<div style="padding:10px;font-size:12px;color:var(--text-3);">No tournaments yet.</div>';
+
+  const teamList = document.getElementById('coverage-teams-list');
+  const teamsSorted = [...S.teams].sort((a,b)=>a.name.localeCompare(b.name));
+  teamList.innerHTML = teamsSorted.length ? teamsSorted.map(t=>`
+    <label style="display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:6px;cursor:pointer;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+      <input type="checkbox" ${S.coverageTeamIds.has(t.id)?'checked':''} onchange="toggleCoverageId('team','${t.id}',this.checked)" style="accent-color:var(--accent);width:15px;height:15px;">
+      <div class="tpi-badge" style="background:${t.color};width:20px;height:20px;font-size:9px;">${t.short}</div>
+      <span style="font-size:13px;">${t.name}</span>
+    </label>`).join('') : '<div style="padding:10px;font-size:12px;color:var(--text-3);">No teams yet.</div>';
+}
+
+function toggleCoverageId(kind, id, checked){
+  const set = kind==='tournament' ? S.coverageTournamentIds : S.coverageTeamIds;
+  if(checked) set.add(id); else set.delete(id);
+}
+
+async function saveCoverage(){
+  if(!S.coverageClientKey) return;
+  const btn = document.getElementById('coverage-save-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try{
+    const {error} = await supa.from('gw_client_coverage').upsert({
+      client_key: S.coverageClientKey,
+      tournament_ids: [...S.coverageTournamentIds],
+      team_ids: [...S.coverageTeamIds],
+      updated_at: new Date().toISOString(),
+    }, {onConflict:'client_key'});
+    if(error) throw error;
+    toast('Coverage saved');
+  }catch(e){
+    console.error('saveCoverage:',e);
+    toast('⚠ Could not save coverage: '+e.message);
+  }
+  btn.disabled = false; btn.textContent = 'Save coverage';
 }
 
 function renderTeams(){
