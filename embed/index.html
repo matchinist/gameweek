@@ -940,7 +940,7 @@ function controlBandOpen(comp, roundOptionsHtml, tabsHtml, tabsMobileHtml, selec
   return `<div class="control-band">
     <div style="margin-bottom:12px;">
       <h1 style="margin:0 0 3px;font-size:16px;font-weight:800;letter-spacing:-0.3px;color:var(--text);">${title}</h1>
-      <p style="margin:0;font-size:12px;line-height:1.45;color:var(--text-3);">${getModeExplainer(comp)}</p>
+      <p style="margin:0;font-size:12px;line-height:1.45;color:var(--text-2);">${getModeExplainer(comp)}</p>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
       <div style="display:flex;align-items:center;gap:8px;">
@@ -1258,8 +1258,9 @@ function renderLineupPredictor(comp){
       </div>` : '';
 
   // Form row: formation pill on the left; on the right, points+accuracy+rank
-  // once scored, otherwise the fill count — this replaces the old separate
-  // "Your score" box above the pitch, folding it into the card itself.
+  // once scored — this replaces the old separate "Your score" box above the
+  // pitch, folding it into the card itself. Nothing shown here before scoring;
+  // the pick progress lives in the progress bar near the save button.
   const formRow = `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 16px;background:oklch(0.98 0.004 260);border-top:1px solid oklch(0.94 0.004 260);border-bottom:1px solid oklch(0.94 0.004 260);flex-wrap:wrap;gap:6px;">
     <div style="display:flex;align-items:center;gap:7px;">
       <span style="font-size:10.5px;font-weight:700;color:oklch(0.58 0.01 260);text-transform:uppercase;letter-spacing:0.4px;">Form</span>
@@ -1267,10 +1268,10 @@ function renderLineupPredictor(comp){
     </div>
     ${scored!==null
       ? `<span style="font-size:12px;font-weight:800;color:var(--comp-color);">${scored.pts} pts <span style="font-weight:600;color:oklch(0.5 0.01 260);">· ${scored.correctCount}/11${scored.correctCount===11?' 🎯':''}</span> <span id="lineup-rank-pill" style="font-weight:700;color:oklch(0.55 0.01 260);">·&nbsp;—</span></span>`
-      : `<span style="font-size:11.5px;font-weight:700;color:var(--comp-color);">${pickCount}/11</span>`}
+      : ''}
   </div>`;
 
-  const countdownInner = (isOpen && lineupLockAt) ? controlBandCountdown('⏱','Round locks in','<span id="countdown-text">Calculating...</span>', `${pickCount} / 11 set`) : '';
+  const countdownInner = (isOpen && lineupLockAt) ? controlBandCountdown('⏱','Round locks in','<span id="countdown-text">Calculating...</span>', '') : '';
   if(isOpen && lineupLockAt) setTimeout(()=>startCountdown(lineupLockAt,()=>renderPredict()),50);
 
   // Only the current gameweek and past ones are selectable — a gameweek only
@@ -1292,7 +1293,7 @@ function renderLineupPredictor(comp){
         ${countdownInner}
       </div>
 
-      <div style="padding:16px 0 0;display:flex;justify-content:center;">
+      <div style="display:flex;justify-content:center;">
       <div style="width:100%;max-width:420px;background:#fff;border:1px solid oklch(0.92 0.004 260);border-radius:16px;box-shadow:0 2px 8px rgba(20,20,40,0.05);overflow:hidden;">
         <div style="padding:12px 16px 0;">${fixtureHeader}</div>
         ${formRow}
