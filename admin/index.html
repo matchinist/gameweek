@@ -2904,6 +2904,7 @@ function initOperatorChrome(){
   CLIENT_KEY = op.client_key;
 
   if(op.subscription_active === false){
+    await supa.auth.signOut();
     showAdminLogin('Your subscription is currently inactive. Contact support to reactivate your account.');
     return;
   }
