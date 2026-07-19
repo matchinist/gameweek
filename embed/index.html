@@ -2691,8 +2691,13 @@ function renderPredictionsPane(comp){
   const ri=selectedRound[currentCompIdx];
   if(!comp.rounds.length) return '<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No rounds yet</div></div>';
   const round=comp.rounds[ri]; if(!round) return '';
-  const isOpen=round.status==='open';
   let events=(round.eventIds||[]).map(id=>({id,...EVENTS[id],tournament:(round.tournamentNames||[])[0]||''})).filter(e=>e.home);
+  // Score/Betting/Ranking rounds don't have a manual lock step — open/completed
+  // is purely a function of whether every one of the round's events has a
+  // result yet, so it can never get stuck out of sync with the actual events.
+  const isOpen = ['score','betting','ranking'].includes(comp.mode)
+    ? !(events.length && events.every(ev=>ev.res!=null))
+    : round.status==='open';
 
   let nextScoreLock=null;
   if(comp.mode==='score'){

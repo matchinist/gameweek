@@ -1274,6 +1274,18 @@ function roundLockDisplay(round, mode){
   return 'next lock '+fmtDt(new Date(upcoming[0]).toISOString());
 }
 
+// Score/Betting/Ranking rounds don't have a manual "lock" step — completion
+// is purely a function of whether every one of the round's events has a
+// result yet. There's deliberately no way to override this: it always
+// reflects the actual event data, so it can't get stuck out of sync with it.
+function computeRoundStatus(round, mode){
+  if(!['score','betting','ranking'].includes(mode)) return round.status;
+  const evIds = round.eventIds||[];
+  if(!evIds.length) return round.status==='completed' ? 'completed' : 'open';
+  const allResulted = evIds.every(id=>{ const ev=dmState.events[id]; return ev && ev.result!=null; });
+  return allResulted ? 'completed' : 'open';
+}
+
 function statusBadge(s){
   if(s==='active'||s==='open') return `<span class="badge badge-green">● ${s}</span>`;
   if(s==='draft') return `<span class="badge badge-gray">Draft</span>`;
@@ -1482,7 +1494,7 @@ function renderCompDetail(){
                   <div class="round-item-name">${r.label}</div>
                   <div class="round-item-meta">${r.rankingTeams?r.rankingTeams.length+' teams':r.eventIds.length+' events'} · ${roundLockDisplay(r,c.mode)}${r.tournamentId?` · ${r.tournamentName||r.tournamentId}`:''}</div>
                 </div>
-                ${statusBadge(r.status)}
+                ${statusBadge(computeRoundStatus(r,c.mode))}
                 <button class="btn btn-ghost btn-sm" onclick="openEditRound('${r.id}')">${c.mode==='ranking'?'Teams':'Events'}</button>
                 <button class="btn btn-ghost btn-sm" onclick="openRoundPrizes('${r.id}')">Prizes</button>
                 ${(r.status==='open' && !['score','betting','ranking'].includes(c.mode))?`<button class="btn btn-outline btn-sm" onclick="confirmRound('${r.id}')">Lock →</button>`:''}
