@@ -349,6 +349,15 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const supa = supabase.createClient(SUPA_URL, SUPA_KEY, {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'gw-player'}});
 
 const CLIENT_PARAM = new URLSearchParams(location.search).get('client') || 'demo';
+// Lineup data comes from Data Manager either as an old flat array of 11 player
+// IDs, or the newer {slotKey: playerId} shape (GK, DEF1-4, CM1-2, AM, LW, RW,
+// FWD) used for formation analysis. Scoring only cares "was this player in the
+// XI", so both get flattened to a plain array of IDs here.
+function flattenLineupSlots(sideLineup){
+  if(!sideLineup) return null;
+  if(Array.isArray(sideLineup)) return sideLineup;
+  return Object.values(sideLineup).filter(Boolean);
+}
 const COMP_FILTER = (new URLSearchParams(location.search).get('comp')||'').split(',').map(s=>s.trim()).filter(Boolean);
 let COMP_FILTER_INVALID = false; // set true if a comp filter was given but matched nothing real
 
@@ -459,7 +468,7 @@ async function buildCompsFromRealData(){
             // A round should stop being "open" — and points should start
             // showing — the moment the admin saves the actual starting XI,
             // not only once the final score has also been entered.
-            const hasLineup = ev.lineup && ((ev.lineup.home&&ev.lineup.home.length) || (ev.lineup.away&&ev.lineup.away.length));
+            const hasLineup = ev.lineup && ((flattenLineupSlots(ev.lineup.home)||[]).length || (flattenLineupSlots(ev.lineup.away)||[]).length);
             // Gameweek label comes from Data Manager's own round structure
             // when the event belongs to one there; otherwise fall back to a
             // sequential number based on chronological order so the dropdown
@@ -1126,8 +1135,8 @@ async function loadLineupRank(roundId, teamId, myPts){
     const ev = EVENTS[roundId];
     let actualXI=null;
     if(ev && ev.lineup && teamId){
-      if(ev.homeId===teamId) actualXI = ev.lineup.home||null;
-      else if(ev.awayId===teamId) actualXI = ev.lineup.away||null;
+      if(ev.homeId===teamId) actualXI = flattenLineupSlots(ev.lineup.home);
+      else if(ev.awayId===teamId) actualXI = flattenLineupSlots(ev.lineup.away);
     }
     if(!actualXI) return;
 
@@ -1176,8 +1185,8 @@ function renderLineupPredictor(comp){
   const teamId = comp.lineupConfig?.teamId;
   let actual = null;
   if(ev && ev.lineup && teamId){
-    if(ev.homeId===teamId) actual = ev.lineup.home||null;
-    else if(ev.awayId===teamId) actual = ev.lineup.away||null;
+    if(ev.homeId===teamId) actual = flattenLineupSlots(ev.lineup.home);
+    else if(ev.awayId===teamId) actual = flattenLineupSlots(ev.lineup.away);
   }
   if(!isOpen && actual && pickCount===11){
     const pickedIds = Object.values(picks);
@@ -1400,8 +1409,8 @@ async function loadAndRenderLineupLeaderboard(comp){
     const teamId = comp.lineupConfig?.teamId;
     let actualXI = null;
     if(ev && ev.lineup && teamId){
-      if(ev.homeId===teamId) actualXI = ev.lineup.home||null;
-      else if(ev.awayId===teamId) actualXI = ev.lineup.away||null;
+      if(ev.homeId===teamId) actualXI = flattenLineupSlots(ev.lineup.home);
+      else if(ev.awayId===teamId) actualXI = flattenLineupSlots(ev.lineup.away);
     }
 
     const rows = allPreds.map(p=>{
@@ -1473,8 +1482,8 @@ async function loadAndRenderLineupLeaderboardOverall(comp, target){
     rounds.forEach(r=>{
       const ev = EVENTS[r.eventId||r.id];
       if(ev && ev.lineup && teamId){
-        if(ev.homeId===teamId) actualXIByRound[r.id]=ev.lineup.home||null;
-        else if(ev.awayId===teamId) actualXIByRound[r.id]=ev.lineup.away||null;
+        if(ev.homeId===teamId) actualXIByRound[r.id]=flattenLineupSlots(ev.lineup.home);
+        else if(ev.awayId===teamId) actualXIByRound[r.id]=flattenLineupSlots(ev.lineup.away);
       }
     });
 
