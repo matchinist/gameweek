@@ -2903,7 +2903,8 @@ function initOperatorChrome(){
   state.domains = op.domains||[];
   CLIENT_KEY = op.client_key;
 
-  if(op.subscription_active === false){
+  const isAdminUser = op?.is_admin || ['ercanvural.bm@gmail.com','ercanvural.bm+admin@gmail.com','ercanvural.bm+spursweb@gmail.com'].includes((op?.email||'').toLowerCase());
+  if(op.subscription_active === false && !isAdminUser){
     await supa.auth.signOut();
     showAdminLogin('Your subscription is currently inactive. Contact support to reactivate your account.');
     return;
