@@ -903,24 +903,18 @@ function computeCurrentRoundIdx(comp){
   return Math.min(idx, rounds.length-1);
 }
 function getDefaultRoundIdx(comp){
-  if(comp.mode==='lineup'){
-    // Lineup rounds go 'completed' the moment the admin saves the actual XI —
-    // often hours before kickoff — so "open" is no longer a reliable signal
-    // for which fixture the user actually cares about. Prefer whichever round
-    // is time-current; only fall back to open-status if there's no kickoff
-    // data to compute that from at all.
-    const computed = computeCurrentRoundIdx(comp);
-    if(computed!==null) return computed;
-  }
-  const openIdxs = comp.rounds.map((r,i)=>r.status==='open'?i:null).filter(i=>i!==null);
-  if(openIdxs.length===1) return openIdxs[0];
-  if(openIdxs.length>1){
-    const computed = computeCurrentRoundIdx(comp);
-    if(computed!==null && openIdxs.includes(computed)) return computed;
-    return openIdxs[openIdxs.length-1];
-  }
+  // Rounds can never overlap (a 6-hour gap between them is enforced when
+  // they're created), so "which round is current" is always well-defined
+  // purely from kickoff times — 4 hours after the previous round's last
+  // event kicks off, the next one becomes current. This applies the same
+  // way to every mode now, not just Lineup Predictor: the stored round
+  // status is a separate, admin-facing concept that can drift out of sync
+  // with the actual events, so it's only a fallback when there's no
+  // kickoff data at all to compute from.
   const computed = computeCurrentRoundIdx(comp);
   if(computed!==null) return computed;
+  const openIdxs = comp.rounds.map((r,i)=>r.status==='open'?i:null).filter(i=>i!==null);
+  if(openIdxs.length) return openIdxs[openIdxs.length-1];
   return Math.max(0, comp.rounds.length-1);
 }
 
