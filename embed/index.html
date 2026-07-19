@@ -363,6 +363,11 @@ function fmtKickoff(dt){
 async function buildCompsFromRealData(){
   COMPS=[]; EVENTS={}; EVENTS_RAW={}; EVENT_GAMEWEEK={};
   try{
+    const {data:opRow} = await supa.from('gw_operators').select('subscription_active').eq('client_key',CLIENT_PARAM).maybeSingle();
+    if(opRow && opRow.subscription_active === false){
+      document.getElementById('predict-content').innerHTML = '<div class="empty" style="padding:60px 20px;"><div class="empty-icon">⚠️</div><div class="empty-title">Temporarily unavailable</div><div class="empty-sub">This service is currently inactive. Please check back later.</div></div>';
+      return;
+    }
     const [
       {data:teams},
       {data:evRows},

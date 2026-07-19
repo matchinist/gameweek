@@ -2903,6 +2903,11 @@ function initOperatorChrome(){
   state.domains = op.domains||[];
   CLIENT_KEY = op.client_key;
 
+  if(op.subscription_active === false){
+    showAdminLogin('Your subscription is currently inactive. Contact support to reactivate your account.');
+    return;
+  }
+
 
   // Load competitions + rounds from Supabase
   const [{data:comps},{data:rounds}] = await Promise.all([
