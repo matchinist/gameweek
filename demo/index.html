@@ -847,6 +847,15 @@ function renderLineupPredictor(comp){
     </div>`;
 }
 
+function lineupPickerRow(pl, roundId, slotIdx, picks){
+  const alreadyUsed = Object.entries(picks).some(([k,v])=>v===pl.id && parseInt(k)!==slotIdx);
+  return `<div onclick="${alreadyUsed?'':` pickLineupPlayer('${roundId}',${slotIdx},'${pl.id}');closeLineupPicker();renderPredict();`}" style="display:flex;align-items:center;gap:12px;padding:10px 20px;cursor:${alreadyUsed?'default':'pointer'};opacity:${alreadyUsed?'0.35':'1'};">
+      <div style="width:28px;text-align:center;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:oklch(0.45 0.01 260);flex-shrink:0;">${pl.no!=null&&pl.no!==''?pl.no:'-'}</div>
+      <div style="font-size:14px;font-weight:600;color:oklch(0.2 0.01 260);">${pl.name}</div>
+      ${alreadyUsed?`<span style="margin-left:auto;font-size:11px;color:oklch(0.6 0.01 260);">Selected</span>`:''}
+    </div>`;
+}
+
 function openLineupPicker(roundId, slotIdx, pos){
   const picks = lineupPicks[roundId]||{};
   const posColor = {GK:'#F59E0B',DEF:'#0EA5E9',MID:'#10B981',FWD:'#EF4444'};
@@ -874,19 +883,24 @@ function openLineupPicker(roundId, slotIdx, pos){
   }
 
   // Only show players from the slot's own position — a GK slot only offers GKs, etc.
-  // GK slots only offer keepers; any outfield slot offers all outfield players
-  // (DEF/MID/FWD combined), not just that one specific position.
-  const list = pos==='GK' ? (byPos.GK||[]) : [...(byPos.DEF||[]),...(byPos.MID||[]),...(byPos.FWD||[])];
-  list.forEach(pl=>{
-    const alreadyUsed = Object.entries(picks).some(([k,v])=>v===pl.id && parseInt(k)!==slotIdx);
-    html+=`<div onclick="${alreadyUsed?'':` pickLineupPlayer('${roundId}',${slotIdx},'${pl.id}');closeLineupPicker();renderPredict();`}" style="display:flex;align-items:center;gap:12px;padding:10px 20px;cursor:${alreadyUsed?'default':'pointer'};opacity:${alreadyUsed?'0.35':'1'};">
-      <div style="width:28px;text-align:center;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:oklch(0.45 0.01 260);flex-shrink:0;">${pl.no!=null&&pl.no!==''?pl.no:'-'}</div>
-      <div style="font-size:14px;font-weight:600;color:oklch(0.2 0.01 260);">${pl.name}</div>
-      ${alreadyUsed?`<span style="margin-left:auto;font-size:11px;color:oklch(0.6 0.01 260);">Selected</span>`:''}
-    </div>`;
-  });
-  if(!list.length){
-    html+=`<div style="padding:20px;text-align:center;font-size:13px;color:oklch(0.6 0.01 260);">No ${pos} players in the squad yet.</div>`;
+  // GK slots only offer keepers; any outfield slot offers all outfield players,
+  // grouped by position (Forward, then Midfielder, then Defender) and
+  // alphabetical within each group, rather than one flat list.
+  const posGroupLabel = {FWD:'Forward',MID:'Midfielder',DEF:'Defender'};
+  const alpha = (a,b)=>a.name.localeCompare(b.name);
+  if(pos==='GK'){
+    (byPos.GK||[]).slice().sort(alpha).forEach(pl=>{ html+=lineupPickerRow(pl,roundId,slotIdx,picks); });
+    if(!(byPos.GK||[]).length) html+=`<div style="padding:20px;text-align:center;font-size:13px;color:oklch(0.6 0.01 260);">No GK players in the squad yet.</div>`;
+  } else {
+    let anyOutfield=false;
+    ['FWD','MID','DEF'].forEach(groupPos=>{
+      const groupPlayers=(byPos[groupPos]||[]).slice().sort(alpha);
+      if(!groupPlayers.length) return;
+      anyOutfield=true;
+      html+=`<div style="padding:10px 20px 4px;font-size:10.5px;font-weight:700;color:oklch(0.58 0.01 260);text-transform:uppercase;letter-spacing:0.5px;">${posGroupLabel[groupPos]}</div>`;
+      groupPlayers.forEach(pl=>{ html+=lineupPickerRow(pl,roundId,slotIdx,picks); });
+    });
+    if(!anyOutfield) html+=`<div style="padding:20px;text-align:center;font-size:13px;color:oklch(0.6 0.01 260);">No ${pos} players in the squad yet.</div>`;
   }
 
   html+='</div>';
