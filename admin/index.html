@@ -2462,7 +2462,7 @@ async function setCompStatus(id,status){
   if(status==='active'){
     const op=state.operatorProfile;
     const bypass=op?.is_admin||['ercanvural.bm@gmail.com','ercanvural.bm+admin@gmail.com','ercanvural.bm+spursweb@gmail.com'].includes((op?.email||'').toLowerCase());
-    if(!bypass&&op?.plan!=='active'){
+    if(!bypass&&op?.subscription_required===true){
       showPaywall(); return;
     }
   }
@@ -2902,13 +2902,6 @@ function initOperatorChrome(){
   state.operatorProfile = op;
   state.domains = op.domains||[];
   CLIENT_KEY = op.client_key;
-
-  const isAdminUser = op?.is_admin || ['ercanvural.bm@gmail.com','ercanvural.bm+admin@gmail.com','ercanvural.bm+spursweb@gmail.com'].includes((op?.email||'').toLowerCase());
-  if(op.subscription_required === true && !isAdminUser){
-    await supa.auth.signOut();
-    showAdminLogin('A subscription is required for this account. Contact support to subscribe.');
-    return;
-  }
 
 
   // Load competitions + rounds from Supabase
