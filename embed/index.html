@@ -2105,9 +2105,9 @@ function startCountdown(deadline,onExpire){
     }
     const d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
     let txt='';
-    if(d>0)txt=`${d}d ${h}h ${m}m left`;
-    else if(h>0)txt=`${h}h ${m}m ${s}s left`;
-    else txt=`${m}m ${s}s left`;
+    if(d>0)txt=`${d}d ${h}h ${m}m`;
+    else if(h>0)txt=`${h}h ${m}m ${s}s`;
+    else txt=`${m}m ${s}s`;
     el.innerHTML=txt;
   }
   update();

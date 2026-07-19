@@ -760,7 +760,7 @@ function editPlayer(id){
   const p = players.find(pl=>pl.id===id);
   if(!p) return;
   editingPlayerId = id;
-  populatePlayerTeamDropdown();
+  openModal('modal-create-player'); // this repopulates the team dropdown itself — do it before setting values below, not after, or the selection gets wiped out
   document.getElementById('cp-modal-title').textContent = 'Edit Player';
   document.getElementById('cp-team').value = p.team_id||'';
   document.getElementById('cp-name').value = p.full_name||'';
@@ -771,7 +771,6 @@ function editPlayer(id){
   document.getElementById('cp-photo-url').value = p.photo_url||'';
   document.getElementById('cp-photo').value = '';
   document.getElementById('cp-submit-btn').textContent = 'Save Changes';
-  openModal('modal-create-player');
 }
 
 function resetPlayerForm(){
