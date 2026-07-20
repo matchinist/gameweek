@@ -298,7 +298,7 @@ table.lb-table{width:100%;border-collapse:collapse;}
         <div class="form-group"><label class="form-label" id="lbl-reg-password">Password</label><input class="form-input" type="password" id="reg-password" placeholder="min 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()" /></div>
         <div class="form-group" style="display:flex;align-items:flex-start;gap:8px;margin-bottom:14px;">
           <input type="checkbox" id="reg-terms" style="margin-top:3px;flex-shrink:0;width:15px;height:15px;accent-color:var(--accent);cursor:pointer;">
-          <label for="reg-terms" id="lbl-agree-terms" style="font-size:12.5px;color:var(--text-2);line-height:1.4;cursor:pointer;">I agree to the Terms and Conditions</label>
+          <label for="reg-terms" style="font-size:12.5px;color:var(--text-2);line-height:1.4;cursor:pointer;"><span id="lbl-agree-terms-prefix">I agree to the</span> <a href="/terms/" target="_blank" rel="noopener" id="lnk-terms" style="color:var(--accent);text-decoration:none;font-weight:600;">Terms and Conditions</a> <span id="lbl-agree-terms-and">and</span> <a href="/privacy/" target="_blank" rel="noopener" id="lnk-privacy" style="color:var(--accent);text-decoration:none;font-weight:600;">Privacy Policy</a></label>
         </div>
         <button class="auth-btn" id="btn-do-register" onclick="doRegister()">Create account →</button>
                 <div class="auth-terms" id="txt-free-to-play">Free to play. No deposit required.</div>
@@ -382,7 +382,8 @@ const I18N = {
     errInvalidEmail:'Please enter a valid email address', errWeakPassword:'Password must be at least 6 characters',
     errAccountExists:'An account with this email already exists — try signing in instead',
     errWrongCredentials:'Incorrect email or password', errRateLimit:'Too many attempts — please wait a moment and try again',
-    errMustAgreeTerms:'Please agree to the Terms and Conditions to continue', agreeTerms:'I agree to the Terms and Conditions',
+    errMustAgreeTerms:'Please agree to the Terms and Conditions to continue',
+    agreeTermsPrefix:'I agree to the', and:'and', termsAndConditions:'Terms and Conditions', privacyPolicy:'Privacy Policy',
     errNotRegisteredHere:"That account exists, but isn't registered on this site yet — try Register instead",
     errGeneric:'Something went wrong — please try again', creatingAccount:'Creating account…', signingIn:'Signing in…',
     homeWin:'1', away:'2', over:'Over', under:'Under', yes:'Yes', no:'No',
@@ -424,7 +425,8 @@ const I18N = {
     errInvalidEmail:'Lütfen geçerli bir e-posta adresi girin', errWeakPassword:'Şifre en az 6 karakter olmalı',
     errAccountExists:'Bu e-posta ile zaten bir hesap var — giriş yapmayı deneyin',
     errWrongCredentials:'E-posta veya şifre hatalı', errRateLimit:'Çok fazla deneme yapıldı — lütfen biraz bekleyip tekrar deneyin',
-    errMustAgreeTerms:'Devam etmek için Kullanım Koşullarını kabul etmelisiniz', agreeTerms:'Kullanım Koşullarını kabul ediyorum',
+    errMustAgreeTerms:'Devam etmek için Kullanım Koşullarını kabul etmelisiniz',
+    agreeTermsPrefix:'Kabul ediyorum:', and:'ve', termsAndConditions:'Kullanım Koşulları', privacyPolicy:'Gizlilik Politikası',
     errNotRegisteredHere:'Bu hesap var, ancak bu sitede henüz kayıtlı değil — Kayıt Ol\u0027u deneyin',
     errGeneric:'Bir şeyler ters gitti — lütfen tekrar deneyin', creatingAccount:'Hesap oluşturuluyor…', signingIn:'Giriş yapılıyor…',
     homeWin:'1', away:'2', over:'Üst', under:'Alt', yes:'Evet', no:'Hayır',
@@ -471,7 +473,10 @@ function applyTranslations(){
   set('lbl-reg-email', t('email'));
   set('lbl-reg-password', t('password'));
   set('txt-free-to-play', t('freeToPlay'));
-  set('lbl-agree-terms', t('agreeTerms'));
+  set('lbl-agree-terms-prefix', t('agreeTermsPrefix'));
+  set('lbl-agree-terms-and', t('and'));
+  set('lnk-terms', t('termsAndConditions'));
+  set('lnk-privacy', t('privacyPolicy'));
   set('txt-forgot-intro', t('forgotIntro'));
   set('lbl-forgot-email', t('email'));
   set('btn-send-reset', t('sendResetLink2'));
