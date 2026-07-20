@@ -2855,7 +2855,7 @@ function closeSidebar(){
 }
 
 function renderSettings(){
-  document.getElementById('settings-email').value = opSession||'';
+  document.getElementById('settings-email').value = currentOperator?.email||'';
   document.getElementById('settings-company').value = currentOperator?.company_name||'';
   document.getElementById('settings-language').value = currentOperator?.language||'en';
 }
@@ -2874,7 +2874,7 @@ async function saveSettingsAccount(){
 
 // ── INIT ──────────────────────────────────────────────────────────────────
 function initOperatorChrome(){
-  const name = currentOperator?.company_name || opSession;
+  const name = currentOperator?.company_name || currentOperator?.email || 'Operator';
   document.getElementById('sidebar-company').textContent = name;
   const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   document.getElementById('topbar-avatar').textContent = initials;

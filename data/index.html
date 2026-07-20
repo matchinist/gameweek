@@ -1197,9 +1197,8 @@ function renderRoundItem(r,i,season,t,isOpen){
       <span class="ri-chevron">›</span>
     </div>
     <div class="round-body">
-      <div class="form-row form-row-2" style="margin-bottom:12px;">
-        <div><label class="form-label">Round Name</label><input class="form-input" value="${r.label}" oninput="updateRoundLabel('${r.id}',this.value)"></div>
-        <div><label class="form-label">Prediction Deadline</label><input class="form-input" type="datetime-local" value="${r.deadline||''}" oninput="updateRoundDeadline('${r.id}',this.value)"></div>
+      <div style="margin-bottom:12px;">
+        <label class="form-label">Round Name</label><input class="form-input" value="${r.label}" oninput="updateRoundLabel('${r.id}',this.value)">
       </div>
       <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:0.6px;text-transform:uppercase;margin-bottom:8px;">Add Event</div>
       <div class="event-quick-add">
