@@ -2004,7 +2004,7 @@ function roundSelectTournament(prefix, keepGw){
 
   const tournament = getDMTournaments().find(t=>t.id===tId);
   const dmEvents = getDMEvents();
-  const teams = getDMTeams();
+  const teams = dmState.teams||[]; // unfiltered — team coverage is for Lineup Predictor's picker specifically, not for resolving a tournament's own fixture team names
   const teamById = id => teams.find(t=>t.id===id);
 
   const seasons = tournament?.seasons||{};
@@ -2139,7 +2139,7 @@ function updateRankingTeamPreview(prefix){
   }
 
   const dmEvents = getDMEvents();
-  const allTeams = getDMTeams();
+  const allTeams = dmState.teams||[]; // unfiltered — team coverage is for Lineup Predictor's picker, not for resolving a tournament's own fixture team names
   const teamById = id => allTeams.find(t=>t.id===id);
   const derivedTeams = [];
   const seen = new Set();
@@ -2305,7 +2305,7 @@ function openEditRound(roundId){
     editRoundSavedTeamIds = (r.rankingTeams && r.rankingTeams.length) ? new Set(r.rankingTeams.map(t=>t.id)) : null;
     // Pre-populate events from the round
     const dmEvents = getDMEvents();
-    const teamList = getDMTeams();
+    const teamList = dmState.teams||[]; // unfiltered — team coverage is for Lineup Predictor's picker, not for resolving a tournament's own fixture team names
     const teamById = id => teamList.find(t=>t.id===id);
     roundAddedEvents = (r.eventIds||[]).map(eid=>{
       const ev=dmEvents[eid]; if(!ev) return null;
@@ -2320,7 +2320,7 @@ function openEditRound(roundId){
   } else {
     // Pre-populate added events from the round
     const dmEvents = getDMEvents();
-    const teams = getDMTeams();
+    const teams = dmState.teams||[]; // unfiltered — team coverage is for Lineup Predictor's picker, not for resolving a tournament's own fixture team names
     const teamById = id => teams.find(t=>t.id===id);
     roundAddedEvents = (r.eventIds||[]).map(eid=>{
       const ev=dmEvents[eid]; if(!ev) return null;
