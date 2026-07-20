@@ -2287,6 +2287,18 @@ async function createRound(){
 }
 
 // ── EDIT ROUND ────────────────────────────────────────────────────────────
+function findTournamentNameForEvent(eventId){
+  const tournaments = getDMTournaments();
+  for(const t of tournaments){
+    const seasons = t.seasons||{};
+    for(const season of Object.values(seasons)){
+      const rounds = season.rounds||[];
+      if(rounds.some(r=>(r.eventIds||[]).includes(eventId))) return t.name;
+    }
+  }
+  return '';
+}
+
 function openEditRound(roundId){
   const comp = getComp(state.currentComp);
   const r = comp.rounds.find(r=>r.id===roundId);
@@ -2319,7 +2331,12 @@ function openEditRound(roundId){
     roundAddedEvents = (r.eventIds||[]).map(eid=>{
       const ev=dmEvents[eid]; if(!ev) return null;
       const home=teamById(ev.homeId), away=teamById(ev.awayId);
-      const tName=(r.tournamentNames||[])[0]||'';
+      // Look up each event's own tournament rather than assuming every event
+      // in the round shares the round's first tournament name — a round can
+      // mix events from different tournaments (e.g. Champions League +
+      // Europa League fixtures in the same gameweek), and using only the
+      // first name mislabeled every other event.
+      const tName=findTournamentNameForEvent(eid)||(r.tournamentNames||[])[0]||'';
       return {id:eid, home:home?.name||eid, away:away?.name||eid, kickoff:ev.kickoff||'', tName};
     }).filter(Boolean);
     populateTournamentDropdown('edit');
@@ -2334,7 +2351,12 @@ function openEditRound(roundId){
     roundAddedEvents = (r.eventIds||[]).map(eid=>{
       const ev=dmEvents[eid]; if(!ev) return null;
       const home=teamById(ev.homeId), away=teamById(ev.awayId);
-      const tName=(r.tournamentNames||[])[0]||'';
+      // Look up each event's own tournament rather than assuming every event
+      // in the round shares the round's first tournament name — a round can
+      // mix events from different tournaments (e.g. Champions League +
+      // Europa League fixtures in the same gameweek), and using only the
+      // first name mislabeled every other event.
+      const tName=findTournamentNameForEvent(eid)||(r.tournamentNames||[])[0]||'';
       return {id:eid, home:home?.name||eid, away:away?.name||eid, kickoff:ev.kickoff||'', tName};
     }).filter(Boolean);
     populateTournamentDropdown('edit');
