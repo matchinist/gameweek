@@ -589,10 +589,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
         <div><label class="form-label">Country / Region</label><input class="form-input" id="nt-country" placeholder="e.g. England" /></div>
         <div><label class="form-label">Type</label><select class="form-select" id="nt-type"><option value="league">League</option><option value="cup">Cup</option><option value="international">International</option></select></div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Restrict to a specific client (optional)</label>
-        <input class="form-input" id="nt-restrict-email" placeholder="e.g. ercanvural.bm+admin@gmail.com — leave blank to make it available to everyone" />
-      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-create-tournament')">Cancel</button>
@@ -667,7 +663,7 @@ async function save(){
     }
     if(S.tournaments.length){
       const {error:e2} = await supa.from('gw_dm_tournaments')
-        .upsert(S.tournaments.map(t=>({id:t.id,name:t.name,country:t.country||'',type:t.type||'league',color:t.color||'#4F46E5',seasons:t.seasons||{},restricted_email:t.restrictedEmail||null})),{onConflict:'id'});
+        .upsert(S.tournaments.map(t=>({id:t.id,name:t.name,country:t.country||'',type:t.type||'league',color:t.color||'#4F46E5',seasons:t.seasons||{}})),{onConflict:'id'});
       if(e2){ toast('Save failed: '+e2.message); console.error('tournaments save:',e2); return false; }
     }
     const evArr = Object.entries(S.events).map(([id,ev])=>({
@@ -1128,11 +1124,9 @@ function renderTournamentView(){
   document.getElementById('main-header').innerHTML=`
     <div class="mh-left">
       <div class="tni-badge" style="background:${t.color};width:28px;height:28px;border-radius:6px;font-size:8px;">${abbr(t.name)}</div>
-      <div><div class="mh-title">${t.name}</div><div class="mh-sub">${t.country} · ${t.type}${t.restrictedEmail?` · <span style="color:var(--accent);font-weight:600;">🔒 restricted to ${t.restrictedEmail}</span>`:''}</div></div>
+      <div><div class="mh-title">${t.name}</div><div class="mh-sub">${t.country} · ${t.type}</div></div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
-      <input id="tv-restrict-email" class="form-input" style="width:220px;font-size:12px;padding:6px 10px;" placeholder="Restrict to client email…" value="${t.restrictedEmail||''}">
-      <button class="btn btn-ghost btn-sm" onclick="updateTournamentRestriction('${t.id}')">Save</button>
       <button class="btn btn-danger btn-sm" onclick="deleteTournament('${t.id}')">Delete</button>
     </div>`;
 
@@ -1686,21 +1680,10 @@ function removeEventFromRound(eid){
 function createTournament(){
   const name=document.getElementById('nt-name').value.trim();
   if(!name){toast('Enter tournament name');return;}
-  const restrictEmail=document.getElementById('nt-restrict-email').value.trim().toLowerCase()||null;
-  const t={id:'t'+uid(),name,country:document.getElementById('nt-country').value.trim()||'—',type:document.getElementById('nt-type').value,color:'#4F46E5',seasons:{'2026/27':{teamIds:[],rounds:[]}},restrictedEmail:restrictEmail};
+  const t={id:'t'+uid(),name,country:document.getElementById('nt-country').value.trim()||'—',type:document.getElementById('nt-type').value,color:'#4F46E5',seasons:{'2026/27':{teamIds:[],rounds:[]}}};
   S.tournaments.push(t);closeModal('modal-create-tournament');
-  document.getElementById('nt-name').value='';document.getElementById('nt-country').value='';document.getElementById('nt-restrict-email').value='';
-  save();renderTournamentNav();navTo('tournament',t.id);toast(name+' created'+(restrictEmail?' (restricted to '+restrictEmail+')':''));
-}
-
-async function updateTournamentRestriction(id){
-  const t=getTournament(id);if(!t)return;
-  const email=document.getElementById('tv-restrict-email').value.trim().toLowerCase()||null;
-  t.restrictedEmail=email;
-  const ok=await save();
-  if(!ok)return; // save() already toasted the failure
-  renderTournamentView();
-  toast(email?'Restricted to '+email:'Now available to every client');
+  document.getElementById('nt-name').value='';document.getElementById('nt-country').value='';
+  save();renderTournamentNav();navTo('tournament',t.id);toast(name+' created');
 }
 
 function deleteTournament(id){
@@ -1871,7 +1854,7 @@ async function loadDMData(){
 
   S.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||''}))
     .sort((a,b)=>a.name.localeCompare(b.name));
-  S.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,color:t.color,seasons:t.seasons||{},restrictedEmail:t.restricted_email||null}));
+  S.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,color:t.color,seasons:t.seasons||{}}));
   const evMap={};
   (events||[]).forEach(e=>{
     evMap[e.id]={homeId:e.home_id,awayId:e.away_id,kickoff:e.kickoff,result:e.result,status:e.status,line:e.line||2.5,lineup:e.lineup||null,scorers:e.scorers||null};

@@ -1970,12 +1970,11 @@ async function refreshDMState(){
   coverageState.tournamentIds = coverage ? new Set(coverage.tournament_ids||[]) : null;
   coverageState.teamIds = coverage ? new Set(coverage.team_ids||[]) : null;
   dmState.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||''}));
-  // A tournament restricted to a specific client's email should only be
-  // visible/selectable to that one operator — everyone else shouldn't see
-  // it at all when building competitions or rounds.
-  const myEmail = (currentOperator?.email||'').toLowerCase();
+  // Tournament visibility per client is now entirely owned by Coverage
+  // (getDMTournaments applies that filter) — restricted_email was a single-
+  // operator-only mechanism that can't express "share this tournament across
+  // several clients," which Coverage needs to support.
   dmState.tournaments = (tournaments||[])
-    .filter(t=>!t.restricted_email || t.restricted_email.toLowerCase()===myEmail)
     .map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,color:t.color,seasons:t.seasons||{}}));
   const evMap={};
   (events||[]).forEach(e=>{ evMap[e.id]={homeId:e.home_id,awayId:e.away_id,kickoff:e.kickoff,result:e.result,status:e.status,line:e.line||2.5}; });
@@ -2949,9 +2948,7 @@ function initOperatorChrome(){
   coverageState.tournamentIds = coverage ? new Set(coverage.tournament_ids||[]) : null;
   coverageState.teamIds = coverage ? new Set(coverage.team_ids||[]) : null;
   dmState.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color}));
-  const myEmailBoot = (currentOperator?.email||'').toLowerCase();
   dmState.tournaments = (tournaments||[])
-    .filter(t=>!t.restricted_email || t.restricted_email.toLowerCase()===myEmailBoot)
     .map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,color:t.color,seasons:t.seasons||{}}));
   const evMap = {};
   (events||[]).forEach(e=>{
