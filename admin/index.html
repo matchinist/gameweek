@@ -229,6 +229,7 @@ tbody tr:hover td{background:var(--bg);}
   <div class="sidebar-logo">
     <div class="logo">game<span>week</span></div>
     <div class="logo-tag">ADMIN PANEL</div>
+    <div id="sidebar-company-name" style="font-size:11px;font-weight:600;color:var(--text-2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
   </div>
 
   <div class="sidebar-section">
@@ -2913,6 +2914,11 @@ function initOperatorChrome(){
   state.operatorProfile = op;
   state.domains = op.domains||[];
   CLIENT_KEY = op.client_key;
+  if(op.company_name){
+    const nameEl = document.getElementById('sidebar-company-name');
+    if(nameEl) nameEl.textContent = op.company_name;
+    document.title = op.company_name+' — Gameweek Admin';
+  }
 
 
   // Load competitions + rounds from Supabase
