@@ -380,7 +380,8 @@ const I18N = {
     errWrongCredentials:'Incorrect email or password', errRateLimit:'Too many attempts — please wait a moment and try again',
     errNotRegisteredHere:"That account exists, but isn't registered on this site yet — try Register instead",
     errGeneric:'Something went wrong — please try again', creatingAccount:'Creating account…', signingIn:'Signing in…',
-    homeWin:'Home Win', away:'Away', over:'Over', under:'Under', yes:'Yes', no:'No',
+    homeWin:'1', away:'2', over:'Over', under:'Under', yes:'Yes', no:'No',
+    mkt1x2:'1X2 Result', mktOu25:'Over/Under 2.5', mktBtts:'Both Teams to Score',
   },
   tr: {
     predictions:'Tahminler', leaderboard:'Lider Tablosu', builder:'Kadro Kur', rules:'Kurallar',
@@ -405,13 +406,22 @@ const I18N = {
     errWrongCredentials:'E-posta veya şifre hatalı', errRateLimit:'Çok fazla deneme yapıldı — lütfen biraz bekleyip tekrar deneyin',
     errNotRegisteredHere:'Bu hesap var, ancak bu sitede henüz kayıtlı değil — Kayıt Ol\u0027u deneyin',
     errGeneric:'Bir şeyler ters gitti — lütfen tekrar deneyin', creatingAccount:'Hesap oluşturuluyor…', signingIn:'Giriş yapılıyor…',
-    homeWin:'Ev Sahibi Kazanır', away:'Deplasman', over:'Üst', under:'Alt', yes:'Evet', no:'Hayır',
+    homeWin:'1', away:'2', over:'Üst', under:'Alt', yes:'Evet', no:'Hayır',
+    mkt1x2:'Maç Sonucu', mktOu25:'2.5 Alt / Üst', mktBtts:'Karşılıklı Gol Var',
   },
 };
 function t(key, vars){
   let s = (I18N[LANG]&&I18N[LANG][key]) || I18N.en[key] || key;
   if(vars) Object.entries(vars).forEach(([k,v])=>{ s = s.replace('{'+k+'}', v); });
   return s;
+}
+// Standard market types get a translated display name (matching the fixed
+// 1/X/2 option labels below) — an operator's own custom label is only used
+// as a fallback for a market type outside the built-in three.
+const MARKET_LABEL_KEYS = {'1x2':'mkt1x2', ou25:'mktOu25', btts:'mktBtts'};
+function marketLabel(mkt){
+  const key = MARKET_LABEL_KEYS[mkt.type];
+  return key ? t(key) : mkt.label;
 }
 function applyTranslations(){
   const set=(id,text)=>{ const el=document.getElementById(id); if(el) el.textContent=text; };
@@ -1037,7 +1047,7 @@ function getModeExplainer(comp){
     return `Earn <strong style="color:var(--accent);">${s.exactScore} pts</strong> for a spot-on scoreline, <strong style="color:var(--accent);">${s.homeGoals} pts</strong> for the right result, and <strong style="color:var(--accent);">${s.totalGoals} pt</strong> for the correct total goals.`;
   }
   if(comp.mode==='betting'){
-    const parts=(comp.markets||[]).map(m=>`<strong style="color:var(--accent);">${m.points} pts</strong> for ${m.label}`);
+    const parts=(comp.markets||[]).map(m=>`<strong style="color:var(--accent);">${m.points} pts</strong> for ${marketLabel(m)}`);
     return parts.length ? `Earn ${parts.join(', ')}. A wrong pick earns <strong style="color:var(--accent);">0 pts</strong> for that market.` : 'Predict multiple markets per match — points awarded per correct pick, 0 for a wrong one.';
   }
   if(comp.mode==='ranking'){
@@ -2091,7 +2101,7 @@ function renderEventCard(ev,comp,isRoundOpen){
         else if(mkt.type==='btts') actualM = (ev.res.h>0&&ev.res.a>0)?'Y':'N';
         const isRight = pick===actualM;
         if(isRight) earnedPts+=(mkt.points||0);
-        marketResults.push(mkt.label+(isRight?' \u2713':' \u2717'));
+        marketResults.push(marketLabel(mkt)+(isRight?' \u2713':' \u2717'));
       });
       correct=earnedPts>0;
       pointsBreakdown=marketResults.join(' \u00b7 ');
@@ -2129,7 +2139,7 @@ function renderEventCard(ev,comp,isRoundOpen){
       const markets=comp.markets||[];const mpred=(pred&&typeof pred==='object')?pred:{};
       html+='<div style="display:flex;flex-direction:column;gap:8px;">';
       markets.forEach(mkt=>{
-        html+=`<div><div class="pred-label" style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);">${mkt.label}</div>`;
+        html+=`<div><div class="pred-label" style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);">${marketLabel(mkt)}</div>`;
         const isLocked=ev.locked||false;
         const dis=isLocked?'disabled style="pointer-events:none;opacity:0.7;"':'';
         if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${mpred['1x2']==='H'?' selected home':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','H')"`}>${t('homeWin')}</button><button class="btn-1x2${mpred['1x2']==='D'?' selected draw':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','D')"`}>X</button><button class="btn-1x2${mpred['1x2']==='A'?' selected away':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','A')"`}>Away</button></div>`;
@@ -2149,7 +2159,7 @@ function renderEventCard(ev,comp,isRoundOpen){
         const mpred=pred; const markets=comp.markets||[];
         html+='<div style="display:flex;flex-direction:column;gap:10px;">';
         markets.forEach(mkt=>{
-          html+=`<div><div class="pred-label" style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);">${mkt.label}</div>`;
+          html+=`<div><div class="pred-label" style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);">${marketLabel(mkt)}</div>`;
           if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${mpred['1x2']==='H'?' selected home':''}" disabled>${t('homeWin')}</button><button class="btn-1x2${mpred['1x2']==='D'?' selected draw':''}" disabled>X</button><button class="btn-1x2${mpred['1x2']==='A'?' selected away':''}" disabled>Away</button></div>`;
           else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['ou25']==='O'?' selected':''}" disabled>${t('over')}</button><button class="btn-ou under${mpred['ou25']==='U'?' selected':''}" disabled>${t('under')}</button></div>`;
           else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['btts']==='Y'?' selected':''}" disabled>${t('yes')}</button><button class="btn-ou under${mpred['btts']==='N'?' selected':''}" disabled>${t('no')}</button></div>`;
@@ -2174,7 +2184,7 @@ function renderEventCard(ev,comp,isRoundOpen){
         var mpred2=pred;
         html+='<div style="display:flex;flex-direction:column;gap:8px;">';
         (comp.markets||[]).forEach(function(mkt){
-          html+='<div><div style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);">'+mkt.label+'</div>';
+          html+='<div><div style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);">'+marketLabel(mkt)+'</div>';
           var h=mpred2['1x2'],o=mpred2['ou25'],b=mpred2['btts'];
           if(mkt.type==='1x2')html+='<div class="btns-1x2">'
             +'<button class="btn-1x2'+(h==='H'?' selected home':'')+'" disabled>'+t('homeWin')+'</button>'
@@ -2723,7 +2733,7 @@ function rlRenderBetslip(){
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;margin-bottom:6px;background:var(--surface);border-radius:8px;border-left:3px solid ${typeColor};">
       <div>
         <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:${typeColor};margin-bottom:2px;">${type} · ×${m.mult}</div>
-        <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);">${m.label}</div>
+        <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);">${marketLabel(m)}</div>
         <div style="font-size:11px;color:var(--text-3);margin-top:1px;">${stake} coins staked</div>
       </div>
       <div style="text-align:right;">
@@ -3088,7 +3098,7 @@ function renderEventCard(ev,comp,isOpen){
         else if(mkt.type==='btts') actualM = (ev.res.h>0&&ev.res.a>0)?'Y':'N';
         const isRight = pick===actualM;
         if(isRight) earnedPts+=(mkt.points||0);
-        marketResults.push(mkt.label+(isRight?' \u2713':' \u2717'));
+        marketResults.push(marketLabel(mkt)+(isRight?' \u2713':' \u2717'));
       });
       correct=earnedPts>0;
       pointsBreakdown=marketResults.join(' \u00b7 ');
@@ -3126,7 +3136,7 @@ function renderEventCard(ev,comp,isOpen){
       const markets=comp.markets||[];const mpred=(pred&&typeof pred==='object')?pred:{};
       html+='<div style="display:flex;flex-direction:column;gap:8px;">';
       markets.forEach(mkt=>{
-        html+=`<div><div class="pred-label" style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);">${mkt.label}</div>`;
+        html+=`<div><div class="pred-label" style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);">${marketLabel(mkt)}</div>`;
         const isLocked=ev.locked||false;
         const dis=isLocked?'disabled style="pointer-events:none;opacity:0.7;"':'';
         if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${mpred['1x2']==='H'?' selected home':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','H')"`}>${t('homeWin')}</button><button class="btn-1x2${mpred['1x2']==='D'?' selected draw':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','D')"`}>X</button><button class="btn-1x2${mpred['1x2']==='A'?' selected away':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','A')"`}>Away</button></div>`;
@@ -3156,7 +3166,7 @@ function renderEventCard(ev,comp,isOpen){
         var mpred2=pred;
         html+='<div style="display:flex;flex-direction:column;gap:8px;">';
         (comp.markets||[]).forEach(function(mkt){
-          html+='<div><div style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);">'+mkt.label+'</div>';
+          html+='<div><div style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);">'+marketLabel(mkt)+'</div>';
           var h=mpred2['1x2'],o=mpred2['ou25'],b=mpred2['btts'];
           if(mkt.type==='1x2')html+='<div class="btns-1x2">'
             +'<button class="btn-1x2'+(h==='H'?' selected home':'')+'" disabled>'+t('homeWin')+'</button>'
@@ -3553,9 +3563,9 @@ function showRules(mode){
 <div><strong style="color:var(--text);">How to play:</strong> For each match, predict multiple markets. Each correct market earns points.</div>
 <div><strong style="color:var(--text);">Markets:</strong></div>
 <div style="padding-left:12px;">
-• Match Result (1X2) — Home Win, Draw, or Away Win<br>
-• Over/Under 2.5 Goals — Will there be 3+ goals?<br>
-• Both Teams to Score — Will both teams find the net?
+• ${t('mkt1x2')} — ${t('homeWin')}, X, or ${t('away')}<br>
+• ${t('mktOu25')} — Will there be 3+ goals?<br>
+• ${t('mktBtts')} — Will both teams find the net?
 </div>
 <div><strong style="color:var(--text);">Points:</strong> Each market has its own points value, set by the competition operator. A wrong pick on a market earns <strong>0 pts</strong> for that market — the others aren't affected.</div>
 </div>`,
