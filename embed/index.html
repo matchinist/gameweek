@@ -296,20 +296,24 @@ table.lb-table{width:100%;border-collapse:collapse;}
         <div class="form-group"><label class="form-label" id="lbl-reg-username">Username</label><input class="form-input" id="reg-username" placeholder="choose a username" autocomplete="username" /></div>
         <div class="form-group"><label class="form-label" id="lbl-reg-email">Email</label><input class="form-input" type="email" id="reg-email" placeholder="your@email.com" autocomplete="email" /></div>
         <div class="form-group"><label class="form-label" id="lbl-reg-password">Password</label><input class="form-input" type="password" id="reg-password" placeholder="min 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()" /></div>
+        <div class="form-group" style="display:flex;align-items:flex-start;gap:8px;margin-bottom:14px;">
+          <input type="checkbox" id="reg-terms" style="margin-top:3px;flex-shrink:0;width:15px;height:15px;accent-color:var(--accent);cursor:pointer;">
+          <label for="reg-terms" id="lbl-agree-terms" style="font-size:12.5px;color:var(--text-2);line-height:1.4;cursor:pointer;">I agree to the Terms and Conditions</label>
+        </div>
         <button class="auth-btn" id="btn-do-register" onclick="doRegister()">Create account →</button>
-                <div class="auth-terms">Free to play. No deposit required.</div>
+                <div class="auth-terms" id="txt-free-to-play">Free to play. No deposit required.</div>
       </div>
       <div id="form-forgot" style="display:none;">
-        <div style="font-size:13px;color:var(--text-2);line-height:1.5;margin-bottom:16px;">Enter the email on your account and we'll send you a link to reset your password.</div>
-        <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="forgot-email" placeholder="your@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')sendPasswordReset()" /></div>
-        <button class="auth-btn" onclick="sendPasswordReset()">Send reset link →</button>
-        <div style="text-align:center;margin-top:14px;"><a href="#" onclick="event.preventDefault();backToLogin();" style="font-size:12px;color:var(--text-3);text-decoration:none;">← Back to sign in</a></div>
+        <div style="font-size:13px;color:var(--text-2);line-height:1.5;margin-bottom:16px;" id="txt-forgot-intro">Enter the email on your account and we'll send you a link to reset your password.</div>
+        <div class="form-group"><label class="form-label" id="lbl-forgot-email">Email</label><input class="form-input" type="email" id="forgot-email" placeholder="your@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')sendPasswordReset()" /></div>
+        <button class="auth-btn" id="btn-send-reset" onclick="sendPasswordReset()">Send reset link →</button>
+        <div style="text-align:center;margin-top:14px;"><a href="#" onclick="event.preventDefault();backToLogin();" id="lnk-back-to-login-1" style="font-size:12px;color:var(--text-3);text-decoration:none;">← Back to sign in</a></div>
       </div>
       <div id="form-forgot-sent" style="display:none;text-align:center;">
         <div style="font-size:32px;margin-bottom:10px;">📬</div>
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">Check your email</div>
-        <div style="font-size:13px;color:var(--text-3);line-height:1.5;margin-bottom:18px;">We've sent a password reset link to <span id="forgot-sent-email" style="font-weight:600;color:var(--text-2);"></span>. It'll expire in 1 hour.</div>
-        <a href="#" onclick="event.preventDefault();backToLogin();" style="font-size:12px;color:var(--accent);text-decoration:none;">← Back to sign in</a>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;" id="txt-check-email">Check your email</div>
+        <div style="font-size:13px;color:var(--text-3);line-height:1.5;margin-bottom:18px;" id="txt-reset-sent">We've sent a password reset link to <span id="forgot-sent-email" style="font-weight:600;color:var(--text-2);"></span>. It'll expire in 1 hour.</div>
+        <a href="#" onclick="event.preventDefault();backToLogin();" id="lnk-back-to-login-2" style="font-size:12px;color:var(--accent);text-decoration:none;">← Back to sign in</a>
       </div>
     </div>
   </div>
@@ -378,10 +382,26 @@ const I18N = {
     errInvalidEmail:'Please enter a valid email address', errWeakPassword:'Password must be at least 6 characters',
     errAccountExists:'An account with this email already exists — try signing in instead',
     errWrongCredentials:'Incorrect email or password', errRateLimit:'Too many attempts — please wait a moment and try again',
+    errMustAgreeTerms:'Please agree to the Terms and Conditions to continue', agreeTerms:'I agree to the Terms and Conditions',
     errNotRegisteredHere:"That account exists, but isn't registered on this site yet — try Register instead",
     errGeneric:'Something went wrong — please try again', creatingAccount:'Creating account…', signingIn:'Signing in…',
     homeWin:'1', away:'2', over:'Over', under:'Under', yes:'Yes', no:'No',
     mkt1x2:'1X2 Result', mktOu25:'Over/Under 2.5', mktBtts:'Both Teams to Score',
+    explainerScore:'Earn {exact} for a spot-on scoreline, {home} for the right result, and {total} for the correct total goals.',
+    ptsForMarket:'{pts} for {market}',
+    explainerBetting:'Earn {parts}. A wrong pick earns <strong style="color:var(--accent);">0 pts</strong> for that market.',
+    explainerBettingNoMarkets:'Predict multiple markets per match — points awarded per correct pick, 0 for a wrong one.',
+    explainerRanking:'Earn {per} for each team ranked in the correct position, plus a {bonus} bonus for a perfect ranking.',
+    explainerLineup:'Pick the starting XI for {team}. Earn <strong style="color:var(--accent);">10 pts</strong> for each correct player, plus a <strong style="color:var(--accent);">30 pt</strong> bonus if all 11 are correct.',
+    theTeam:'the team',
+    freeToPlay:'Free to play. No deposit required.',
+    forgotIntro:"Enter the email on your account and we'll send you a link to reset your password.",
+    sendResetLink2:'Send reset link →', backToSignIn:'← Back to sign in', checkYourEmail:'Check your email',
+    resetSentMessage:"We've sent a password reset link to {span}. It'll expire in 1 hour.",
+    placePrize:'{ord} place prize', noPrizePosition:'No prize for this position',
+    totalPredictions:'Total Predictions', hitRate:'Hit Rate', activeCompetitions:'Active Competitions',
+    endedCompetitions:'Ended Competitions', account:'Account', competitionsLabel:'Competitions',
+    competitionNotFound:'Competition not found', signOut:'Sign out',
   },
   tr: {
     predictions:'Tahminler', leaderboard:'Lider Tablosu', builder:'Kadro Kur', rules:'Kurallar',
@@ -404,10 +424,26 @@ const I18N = {
     errInvalidEmail:'Lütfen geçerli bir e-posta adresi girin', errWeakPassword:'Şifre en az 6 karakter olmalı',
     errAccountExists:'Bu e-posta ile zaten bir hesap var — giriş yapmayı deneyin',
     errWrongCredentials:'E-posta veya şifre hatalı', errRateLimit:'Çok fazla deneme yapıldı — lütfen biraz bekleyip tekrar deneyin',
+    errMustAgreeTerms:'Devam etmek için Kullanım Koşullarını kabul etmelisiniz', agreeTerms:'Kullanım Koşullarını kabul ediyorum',
     errNotRegisteredHere:'Bu hesap var, ancak bu sitede henüz kayıtlı değil — Kayıt Ol\u0027u deneyin',
     errGeneric:'Bir şeyler ters gitti — lütfen tekrar deneyin', creatingAccount:'Hesap oluşturuluyor…', signingIn:'Giriş yapılıyor…',
     homeWin:'1', away:'2', over:'Üst', under:'Alt', yes:'Evet', no:'Hayır',
     mkt1x2:'Maç Sonucu', mktOu25:'2.5 Alt / Üst', mktBtts:'Karşılıklı Gol Var',
+    explainerScore:'Tam isabetli skor için {exact}, doğru sonuç için {home}, doğru toplam gol için {total} kazanın.',
+    ptsForMarket:'{market} için {pts}',
+    explainerBetting:'{parts} kazanın. Bir markette yanlış tahmin o market için <strong style="color:var(--accent);">0 pts</strong> kazandırır.',
+    explainerBettingNoMarkets:'Her maç için birden fazla marketi tahmin edin — her doğru tahmin puan kazandırır, yanlış tahmin 0 puan kazandırır.',
+    explainerRanking:'Doğru sıradaki her takım için {per}, artı mükemmel sıralama için {bonus} bonus kazanın.',
+    explainerLineup:'{team} için ilk 11\u0027i seçin. Her doğru oyuncu için <strong style="color:var(--accent);">10 pts</strong>, 11 oyuncunun tamamı doğruysa <strong style="color:var(--accent);">30 pt</strong> bonus kazanın.',
+    theTeam:'takım',
+    freeToPlay:'Ücretsiz oynanır. Yatırım gerekmez.',
+    forgotIntro:'Hesabınızdaki e-postayı girin, şifrenizi sıfırlamanız için bir bağlantı gönderelim.',
+    sendResetLink2:'Sıfırlama bağlantısı gönder →', backToSignIn:'← Girişe dön', checkYourEmail:'E-postanızı kontrol edin',
+    resetSentMessage:'{span} adresine bir şifre sıfırlama bağlantısı gönderdik. 1 saat içinde geçerliliğini yitirecek.',
+    placePrize:'{ord} sıra ödülü', noPrizePosition:'Bu sıra için ödül yok',
+    totalPredictions:'Toplam Tahmin', hitRate:'İsabet Oranı', activeCompetitions:'Aktif Yarışmalar',
+    endedCompetitions:'Biten Yarışmalar', account:'Hesap', competitionsLabel:'Yarışmalar',
+    competitionNotFound:'Yarışma bulunamadı', signOut:'Çıkış yap',
   },
 };
 function t(key, vars){
@@ -434,6 +470,19 @@ function applyTranslations(){
   set('lbl-reg-username', t('username'));
   set('lbl-reg-email', t('email'));
   set('lbl-reg-password', t('password'));
+  set('txt-free-to-play', t('freeToPlay'));
+  set('lbl-agree-terms', t('agreeTerms'));
+  set('txt-forgot-intro', t('forgotIntro'));
+  set('lbl-forgot-email', t('email'));
+  set('btn-send-reset', t('sendResetLink2'));
+  set('lnk-back-to-login-1', t('backToSignIn'));
+  set('lnk-back-to-login-2', t('backToSignIn'));
+  set('txt-check-email', t('checkYourEmail'));
+  // This one has a nested <span> that gets the actual email filled in later
+  // (sendPasswordReset), so it needs innerHTML with an empty placeholder span
+  // rather than overwriting textContent, which would destroy that span.
+  const resetSentEl = document.getElementById('txt-reset-sent');
+  if(resetSentEl) resetSentEl.innerHTML = t('resetSentMessage',{span:'<span id="forgot-sent-email" style="font-weight:600;color:var(--text-2);"></span>'});
   if(!currentPlayer) set('hdr-username', t('signIn'));
 }
 // Lineup data comes from Data Manager either as an old flat array of 11 player
@@ -701,12 +750,14 @@ async function doRegister(){
   const username = document.getElementById('reg-username').value.trim();
   const email    = document.getElementById('reg-email').value.trim().toLowerCase();
   const password = document.getElementById('reg-password').value;
+  const agreedTerms = document.getElementById('reg-terms')?.checked;
   const btn      = document.querySelector('#form-register .auth-btn');
   if(!username||!email||!password){ showAuthError(t('errFillAllFields')); return; }
   if(!/^[a-zA-Z0-9_]+$/.test(username)){ showAuthError(t('errUsernameChars')); return; }
   if(username.length<3){ showAuthError(t('errUsernameShort')); return; }
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showAuthError(t('errInvalidEmail')); return; }
   if(password.length<6){ showAuthError(t('errWeakPassword')); return; }
+  if(!agreedTerms){ showAuthError(t('errMustAgreeTerms')); return; }
   setBtnLoading(btn,t('creatingAccount'));
 
   // Check username not taken in this embed
@@ -1044,19 +1095,26 @@ const MODE_TITLES={score:'Predict the exact score',betting:'Predict the markets'
 function getModeExplainer(comp){
   if(comp.mode==='score'){
     const s=comp.scoring||{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1};
-    return `Earn <strong style="color:var(--accent);">${s.exactScore} pts</strong> for a spot-on scoreline, <strong style="color:var(--accent);">${s.homeGoals} pts</strong> for the right result, and <strong style="color:var(--accent);">${s.totalGoals} pt</strong> for the correct total goals.`;
+    return t('explainerScore',{
+      exact:`<strong style="color:var(--accent);">${s.exactScore} pts</strong>`,
+      home:`<strong style="color:var(--accent);">${s.homeGoals} pts</strong>`,
+      total:`<strong style="color:var(--accent);">${s.totalGoals} pt</strong>`,
+    });
   }
   if(comp.mode==='betting'){
-    const parts=(comp.markets||[]).map(m=>`<strong style="color:var(--accent);">${m.points} pts</strong> for ${marketLabel(m)}`);
-    return parts.length ? `Earn ${parts.join(', ')}. A wrong pick earns <strong style="color:var(--accent);">0 pts</strong> for that market.` : 'Predict multiple markets per match — points awarded per correct pick, 0 for a wrong one.';
+    const parts=(comp.markets||[]).map(m=>t('ptsForMarket',{pts:`<strong style="color:var(--accent);">${m.points} pts</strong>`,market:marketLabel(m)}));
+    return parts.length ? t('explainerBetting',{parts:parts.join(', ')}) : t('explainerBettingNoMarkets');
   }
   if(comp.mode==='ranking'){
     const per=comp.rankingConfig?.pointsPerCorrect||2, bonus=comp.rankingConfig?.perfectBonus||5;
-    return `Earn <strong style="color:var(--accent);">${per} pts</strong> for each team ranked in the correct position, plus a <strong style="color:var(--accent);">${bonus} pt</strong> bonus for a perfect ranking.`;
+    return t('explainerRanking',{
+      per:`<strong style="color:var(--accent);">${per} pts</strong>`,
+      bonus:`<strong style="color:var(--accent);">${bonus} pt</strong>`,
+    });
   }
   if(comp.mode==='lineup'){
-    const teamName = comp?.lineupConfig?.teamName || 'the team';
-    return `Pick the starting XI for ${teamName}. Earn <strong style="color:var(--accent);">10 pts</strong> for each correct player, plus a <strong style="color:var(--accent);">30 pt</strong> bonus if all 11 are correct.`;
+    const teamName = comp?.lineupConfig?.teamName || t('theTeam');
+    return t('explainerLineup',{team:teamName});
   }
   return '';
 }
@@ -1234,6 +1292,7 @@ function lineupPlayerInRound(roundId, pid){
 }
 
 function ordinal(n){
+  if(LANG==='tr') return n+'.';
   const s=['th','st','nd','rd'], v=n%100;
   return n+(s[(v-20)%10]||s[v]||s[0]);
 }
@@ -3495,9 +3554,9 @@ function buildLBTable(title,sub,rows,cellFn,colHeader,prizes,extraCellFn,extraCo
     if(hasPrizes){
       if(prizeText){
         const safeText=prizeText.replace(/</g,'&lt;').replace(/"/g,'&quot;');
-        prizeCell=`<td style="width:56px;"><div class="prize-cell-wrap"><div class="prize-badge" style="background:${bg};">${icon}<span class="prize-info-dot">i</span></div><div class="prize-tooltip"><div class="prize-tooltip-title">${ordinal(row.rank)} place prize</div><div class="prize-tooltip-desc">${safeText}</div><div class="prize-tooltip-arrow"></div></div></div></td>`;
+        prizeCell=`<td style="width:56px;"><div class="prize-cell-wrap"><div class="prize-badge" style="background:${bg};">${icon}<span class="prize-info-dot">i</span></div><div class="prize-tooltip"><div class="prize-tooltip-title">${t('placePrize',{ord:ordinal(row.rank)})}</div><div class="prize-tooltip-desc">${safeText}</div><div class="prize-tooltip-arrow"></div></div></div></td>`;
       } else {
-        prizeCell=`<td style="width:56px;" title="No prize for this position"><div style="display:flex;align-items:center;justify-content:center;"><span style="color:var(--text-3);">—</span></div></td>`;
+        prizeCell=`<td style="width:56px;" title="${t('noPrizePosition')}"><div style="display:flex;align-items:center;justify-content:center;"><span style="color:var(--text-3);">—</span></div></td>`;
       }
     }
     const extraCell = hasExtra ? extraCellFn(row).replace('<td ','<td class="lb-col-extra" ') : '';
@@ -3508,8 +3567,11 @@ function buildLBTable(title,sub,rows,cellFn,colHeader,prizes,extraCellFn,extraCo
 }
 
 // ── PROFILE ───────────────────────────────────────────────────────────────────
-function showRules(mode){
-  const rules={
+// Full rules text for the 4 active modes, translated per language. The
+// legacy modes below (lms/fantasy/roulette) are dead code — none of them can
+// be created anymore — so they're left English-only rather than translated.
+const RULES_HTML = {
+  en: {
     score:`<h3 style="margin-bottom:12px;">Score Predictor Rules</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
 <div><strong style="color:var(--text);">How to play:</strong> Predict the exact final score for each match before the deadline.</div>
@@ -3522,6 +3584,87 @@ function showRules(mode){
 </div>
 <div><strong style="color:var(--text);">Leaderboard:</strong> Players are ranked by total points. Highest score wins.</div>
 </div>`,
+    ranking:`<h3 style="margin-bottom:12px;">Ranking Rules</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">How to play:</strong> Sort the selected teams from highest to lowest expected goals (xG) for the gameweek.</div>
+<div><strong style="color:var(--text);">Points:</strong></div>
+<div style="padding-left:12px;">
+• Each team in the correct position — <strong style="color:var(--green);">+2 pts</strong><br>
+• All teams in perfect order — <strong style="color:var(--green);">+5 bonus pts</strong>
+</div>
+<div><strong style="color:var(--text);">Tip:</strong> Think about which teams are playing at home, their recent form, and the quality of their opponents.</div>
+</div>`,
+    betting:`<h3 style="margin-bottom:12px;">Betting Markets Rules</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">How to play:</strong> For each match, predict multiple markets. Each correct market earns points.</div>
+<div><strong style="color:var(--text);">Markets:</strong></div>
+<div style="padding-left:12px;">
+• 1X2 Result — Home Win, X, or Away<br>
+• Over/Under 2.5 Goals — Will there be 3+ goals?<br>
+• Both Teams to Score — Will both teams find the net?
+</div>
+<div><strong style="color:var(--text);">Points:</strong> Each market has its own points value, set by the competition operator. A wrong pick on a market earns <strong>0 pts</strong> for that market — the others aren't affected.</div>
+</div>`,
+    lineup:`<h3 style="margin-bottom:12px;">Lineup Predictor Rules</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">How to play:</strong> Pick the starting XI (11 players) for the team's next fixture. Formation is fixed at 4-2-3-1. Locks 2 hours before kickoff.</div>
+<div><strong style="color:var(--text);">Points:</strong></div>
+<div style="padding-left:12px;">
+• Each correct player in your lineup — <strong style="color:var(--green);">+10 pts</strong><br>
+• All 11 players correct — <strong style="color:var(--green);">+30 bonus pts</strong>
+</div>
+<div><strong style="color:var(--text);">Leaderboard:</strong> Players are ranked by total points across all correctly predicted lineups.</div>
+</div>`,
+  },
+  tr: {
+    score:`<h3 style="margin-bottom:12px;">Skor Tahmini Kuralları</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">Nasıl oynanır:</strong> Son tahmin süresi dolmadan önce her maçın tam sonucunu tahmin edin.</div>
+<div><strong style="color:var(--text);">Puanlar:</strong></div>
+<div style="padding-left:12px;">
+• Skor tam isabet — <strong style="color:var(--green);">+5 pts</strong><br>
+• Sadece ev sahibi gol sayısı doğru — <strong>+2 pts</strong><br>
+• Sadece deplasman gol sayısı doğru — <strong>+2 pts</strong><br>
+• Sadece toplam gol sayısı doğru — <strong>+1 pt</strong>
+</div>
+<div><strong style="color:var(--text);">Lider Tablosu:</strong> Oyuncular toplam puana göre sıralanır. En yüksek puan kazanır.</div>
+</div>`,
+    ranking:`<h3 style="margin-bottom:12px;">Sıralama Kuralları</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">Nasıl oynanır:</strong> Seçilen takımları o gameweek için beklenen gol (xG) değerine göre en yüksekten en düşüğe sıralayın.</div>
+<div><strong style="color:var(--text);">Puanlar:</strong></div>
+<div style="padding-left:12px;">
+• Her doğru sıradaki takım — <strong style="color:var(--green);">+2 pts</strong><br>
+• Tüm takımlar tam doğru sırada — <strong style="color:var(--green);">+5 bonus pts</strong>
+</div>
+<div><strong style="color:var(--text);">İpucu:</strong> Hangi takımların evinde oynadığını, son form durumlarını ve rakiplerinin kalitesini düşünün.</div>
+</div>`,
+    betting:`<h3 style="margin-bottom:12px;">Bahis Marketleri Kuralları</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">Nasıl oynanır:</strong> Her maç için birden fazla marketi tahmin edin. Her doğru market puan kazandırır.</div>
+<div><strong style="color:var(--text);">Marketler:</strong></div>
+<div style="padding-left:12px;">
+• Maç Sonucu — 1, X veya 2<br>
+• 2.5 Alt / Üst — 3 veya daha fazla gol olacak mı?<br>
+• Karşılıklı Gol Var — İki takım da gol atacak mı?
+</div>
+<div><strong style="color:var(--text);">Puanlar:</strong> Her marketin kendi puan değeri vardır, yarışma operatörü tarafından belirlenir. Bir markette yanlış tahmin o market için <strong>0 pts</strong> kazandırır — diğerleri etkilenmez.</div>
+</div>`,
+    lineup:`<h3 style="margin-bottom:12px;">Kadro Tahmini Kuralları</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">Nasıl oynanır:</strong> Takımın bir sonraki maçı için ilk 11'i seçin. Diziliş 4-2-3-1 olarak sabittir. Maç başlangıcından 2 saat önce kilitlenir.</div>
+<div><strong style="color:var(--text);">Puanlar:</strong></div>
+<div style="padding-left:12px;">
+• Kadronuzdaki her doğru oyuncu — <strong style="color:var(--green);">+10 pts</strong><br>
+• Tüm 11 oyuncu doğru — <strong style="color:var(--green);">+30 bonus pts</strong>
+</div>
+<div><strong style="color:var(--text);">Lider Tablosu:</strong> Oyuncular tüm doğru tahmin edilen kadrolardaki toplam puana göre sıralanır.</div>
+</div>`,
+  },
+};
+function showRules(mode){
+  const rules={
+    ...(RULES_HTML[LANG]||RULES_HTML.en),
     lms:`<h3 style="margin-bottom:12px;">Last Man Standing Rules</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
 <div><strong style="color:var(--text);">How to play:</strong> Predict the outcome (Home Win, Draw, or Away Win) for every event in the round.</div>
@@ -3536,16 +3679,6 @@ function showRules(mode){
 <div><strong style="color:var(--text);">Budget:</strong> $50,000 total. Player prices range from $7,000 to $12,500 based on form and rating.</div>
 <div><strong style="color:var(--text);">Winning:</strong> The manager with the highest total kills from their 5-player roster wins.</div>
 </div>`,
-    ranking:`<h3 style="margin-bottom:12px;">Ranking Rules</h3>
-<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
-<div><strong style="color:var(--text);">How to play:</strong> Sort the selected teams from highest to lowest expected goals (xG) for the gameweek.</div>
-<div><strong style="color:var(--text);">Points:</strong></div>
-<div style="padding-left:12px;">
-• Each team in the correct position — <strong style="color:var(--green);">+2 pts</strong><br>
-• All teams in perfect order — <strong style="color:var(--green);">+5 bonus pts</strong>
-</div>
-<div><strong style="color:var(--text);">Tip:</strong> Think about which teams are playing at home, their recent form, and the quality of their opponents.</div>
-</div>`,
     roulette:`<h3 style="margin-bottom:12px;">Soccer Roulette Rules</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
 <div><strong style="color:var(--text);">How to play:</strong> You get 100 coins per match. Place them anywhere on the score grid, or on Both Teams to Score / Over-Under 2.5.</div>
@@ -3557,27 +3690,6 @@ function showRules(mode){
 • BTTS / Over-Under 2.5 — <strong style="color:var(--green);">×2</strong>
 </div>
 <div><strong style="color:var(--text);">Payouts:</strong> Set purely by how many outcomes a bet covers — no bookmaker-style odds shading.</div>
-</div>`,
-    betting:`<h3 style="margin-bottom:12px;">Betting Markets Rules</h3>
-<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
-<div><strong style="color:var(--text);">How to play:</strong> For each match, predict multiple markets. Each correct market earns points.</div>
-<div><strong style="color:var(--text);">Markets:</strong></div>
-<div style="padding-left:12px;">
-• ${t('mkt1x2')} — ${t('homeWin')}, X, or ${t('away')}<br>
-• ${t('mktOu25')} — Will there be 3+ goals?<br>
-• ${t('mktBtts')} — Will both teams find the net?
-</div>
-<div><strong style="color:var(--text);">Points:</strong> Each market has its own points value, set by the competition operator. A wrong pick on a market earns <strong>0 pts</strong> for that market — the others aren't affected.</div>
-</div>`,
-    lineup:`<h3 style="margin-bottom:12px;">Lineup Predictor Rules</h3>
-<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
-<div><strong style="color:var(--text);">How to play:</strong> Pick the starting XI (11 players) for the team's next fixture. Formation is fixed at 4-2-3-1. Locks 2 hours before kickoff.</div>
-<div><strong style="color:var(--text);">Points:</strong></div>
-<div style="padding-left:12px;">
-• Each correct player in your lineup — <strong style="color:var(--green);">+10 pts</strong><br>
-• All 11 players correct — <strong style="color:var(--green);">+30 bonus pts</strong>
-</div>
-<div><strong style="color:var(--text);">Leaderboard:</strong> Players are ranked by total points across all correctly predicted lineups.</div>
 </div>`,
   };
   const content=rules[mode]||'';
@@ -3660,19 +3772,19 @@ async function renderProfile(){
     <div style="padding:10px 16px 0;"><button onclick="goTab('predict')" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--accent);font-weight:700;font-family:var(--mono);">← Back to predictions</button></div>
     <div class="profile-header"><div class="profile-av">${ini}</div><div class="profile-name">${currentPlayer.username}</div><div class="profile-joined">Joined ${joined}</div></div>
     <div class="profile-stats">
-      <div class="profile-stat"><div class="ps-val">${totalPreds}</div><div class="ps-label">Total Predictions</div></div>
-      <div class="profile-stat"><div class="ps-val">${hitRate}%</div><div class="ps-label">Hit Rate</div></div>
-      <div class="profile-stat"><div class="ps-val">${COMPS.length}</div><div class="ps-label">Competitions</div></div>
+      <div class="profile-stat"><div class="ps-val">${totalPreds}</div><div class="ps-label">${t('totalPredictions')}</div></div>
+      <div class="profile-stat"><div class="ps-val">${hitRate}%</div><div class="ps-label">${t('hitRate')}</div></div>
+      <div class="profile-stat"><div class="ps-val">${COMPS.length}</div><div class="ps-label">${t('competitionsLabel')}</div></div>
     </div>
-    ${activeHtml?`<div class="profile-section"><div class="profile-section-title">Active Competitions</div>${activeHtml}</div>`:''}
-    ${endedHtml?`<div class="profile-section"><div class="profile-section-title">Ended Competitions</div>${endedHtml}</div>`:''}
+    ${activeHtml?`<div class="profile-section"><div class="profile-section-title">${t('activeCompetitions')}</div>${activeHtml}</div>`:''}
+    ${endedHtml?`<div class="profile-section"><div class="profile-section-title">${t('endedCompetitions')}</div>${endedHtml}</div>`:''}
     <div class="profile-section">
-      <div class="profile-section-title">Account</div>
+      <div class="profile-section-title">${t('account')}</div>
       <div style="font-size:12px;color:var(--text-2);margin-bottom:14px;">
         <div>Username: <strong>${currentPlayer.username}</strong></div>
         ${currentPlayer.email?`<div>Email: <strong>${currentPlayer.email}</strong></div>`:''}
       </div>
-      <button class="logout-btn" onclick="doLogout()">Sign out</button>
+      <button class="logout-btn" onclick="doLogout()">${t('signOut')}</button>
     </div>`;
 }
 
@@ -3723,7 +3835,7 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
       if(appEl) appEl.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;min-height:400px;padding:40px 20px;text-align:center;">
         <div>
           <div style="font-size:32px;margin-bottom:10px;">⚠️</div>
-          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px;">Competition not found</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px;">${t('competitionNotFound')}</div>
           <div style="font-size:13px;color:var(--text-3);max-width:340px;">The competition this embed points to doesn't exist, is inactive, or was removed. Double-check the embed code's <code style="background:var(--bg);padding:1px 5px;border-radius:4px;">comp</code> parameter.</div>
         </div>
       </div>`;
