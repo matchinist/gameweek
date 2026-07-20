@@ -492,6 +492,14 @@ tbody tr:hover td{background:var(--bg);}
                 <label class="form-label">Workspace / Company name</label>
                 <input class="form-input" id="settings-company" value="" />
               </div>
+              <div class="form-group">
+                <label class="form-label">Player app language</label>
+                <select class="form-select" id="settings-language">
+                  <option value="en">English</option>
+                  <option value="tr">Türkçe (Turkish)</option>
+                </select>
+                <div style="font-size:11px;color:var(--text-3);margin-top:6px;">Controls the language shown to players in your embedded prediction app. Doesn't translate anything you've typed yourself (team names, prize text, round names).</div>
+              </div>
               <button class="btn btn-primary btn-sm" onclick="saveSettingsAccount()">Save changes</button>
             </div>
           </div>
@@ -2827,14 +2835,17 @@ function closeSidebar(){
 function renderSettings(){
   document.getElementById('settings-email').value = opSession||'';
   document.getElementById('settings-company').value = currentOperator?.company_name||'';
+  document.getElementById('settings-language').value = currentOperator?.language||'en';
 }
 
 async function saveSettingsAccount(){
   const newCompany = document.getElementById('settings-company').value.trim();
   if(!newCompany){ toast('Company name cannot be empty'); return; }
+  const newLanguage = document.getElementById('settings-language').value;
   const {data:{session}} = await supa.auth.getSession();
-  await supa.from('gw_operators').update({company_name:newCompany}).eq('auth_id',session.user.id);
+  await supa.from('gw_operators').update({company_name:newCompany, language:newLanguage}).eq('auth_id',session.user.id);
   currentOperator.company_name = newCompany;
+  currentOperator.language = newLanguage;
   initOperatorChrome();
   toast('Account saved');
 }

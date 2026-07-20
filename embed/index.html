@@ -286,15 +286,15 @@ table.lb-table{width:100%;border-collapse:collapse;}
         <button class="auth-tab" id="tab-register" onclick="switchAuth('register')">Register</button>
       </div>
       <div id="form-login">
-        <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="login-username" placeholder="your@email.com" autocomplete="username" /></div>
-        <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" /></div>
-        <div style="text-align:right;margin:-6px 0 12px;"><a href="#" onclick="event.preventDefault();showForgotPassword();" style="font-size:12px;color:var(--accent);text-decoration:none;">Forgot password?</a></div>
-        <button class="auth-btn" onclick="doLogin()">Sign in →</button>
+        <div class="form-group"><label class="form-label" id="lbl-login-email">Email</label><input class="form-input" id="login-username" placeholder="your@email.com" autocomplete="username" /></div>
+        <div class="form-group"><label class="form-label" id="lbl-login-password">Password</label><input class="form-input" type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" /></div>
+        <div style="text-align:right;margin:-6px 0 12px;"><a href="#" onclick="event.preventDefault();showForgotPassword();" id="lnk-forgot-password" style="font-size:12px;color:var(--accent);text-decoration:none;">Forgot password?</a></div>
+        <button class="auth-btn" id="btn-do-login" onclick="doLogin()">Sign in →</button>
               </div>
       <div id="form-register" style="display:none;">
-        <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="reg-username" placeholder="choose a username" autocomplete="username" /></div>
-        <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="reg-email" placeholder="your@email.com" autocomplete="email" /></div>
-        <div class="form-group"><label class="form-label">Password</label><input class="form-input" type="password" id="reg-password" placeholder="min 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()" /></div>
+        <div class="form-group"><label class="form-label" id="lbl-reg-username">Username</label><input class="form-input" id="reg-username" placeholder="choose a username" autocomplete="username" /></div>
+        <div class="form-group"><label class="form-label" id="lbl-reg-email">Email</label><input class="form-input" type="email" id="reg-email" placeholder="your@email.com" autocomplete="email" /></div>
+        <div class="form-group"><label class="form-label" id="lbl-reg-password">Password</label><input class="form-input" type="password" id="reg-password" placeholder="min 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()" /></div>
         <button class="auth-btn" onclick="doRegister()">Create account →</button>
                 <div class="auth-terms">Free to play. No deposit required.</div>
       </div>
@@ -350,6 +350,61 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const supa = supabase.createClient(SUPA_URL, SUPA_KEY, {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'gw-player'}});
 
 const CLIENT_PARAM = new URLSearchParams(location.search).get('client') || 'demo';
+// ── i18n ──────────────────────────────────────────────────────────────────
+// Pre-written translations for fixed UI text only — team names, prize text,
+// round labels, and anything else the operator typed in stay exactly as
+// entered. Language is set per-operator in their admin panel, not by players.
+let LANG = 'en';
+const I18N = {
+  en: {
+    predictions:'Predictions', leaderboard:'Leaderboard', builder:'Builder', rules:'Rules',
+    locksIn:'Locks in', roundLocksIn:'Round locks in', allLocked:'All predictions locked',
+    roundLocked:'Round locked', predictionsLocked:'Predictions locked',
+    signIn:'Sign in', register:'Register', login:'Login', logout:'Log out',
+    email:'Email', password:'Password', username:'Username', forgotPassword:'Forgot password?',
+    save:'Save', selected:'Selected', noPredictionMade:'No prediction made.', loading:'Loading…',
+    saveRanking:'Save Ranking', saveStartingXI:'Save starting XI', overall:'Overall',
+    rank:'#', player:'Player', points:'Points', prize:'Prize', you:'YOU',
+    noCompetitionsYet:'No competitions yet', noRoundsYet:'No rounds yet', checkBackSoon:'Check back soon.',
+    noPredictionsYet:'No predictions yet', noEventsYet:'No events yet',
+    pickMore:'Pick {n} more to save', selectAll11:'Select all 11 players to save',
+    correct:'Correct', wrong:'Wrong', yourPick:'Your pick',
+    open:'Open', done:'Done', locked:'Locked',
+  },
+  tr: {
+    predictions:'Tahminler', leaderboard:'Lider Tablosu', builder:'Kadro Kur', rules:'Kurallar',
+    locksIn:'Kilitlenmesine', roundLocksIn:'Tur kilitlenmesine', allLocked:'Tüm tahminler kilitlendi',
+    roundLocked:'Tur kilitlendi', predictionsLocked:'Tahminler kilitlendi',
+    signIn:'Giriş yap', register:'Kayıt ol', login:'Giriş', logout:'Çıkış yap',
+    email:'E-posta', password:'Şifre', username:'Kullanıcı adı', forgotPassword:'Şifremi unuttum',
+    save:'Kaydet', selected:'Seçildi', noPredictionMade:'Tahmin yapılmadı.', loading:'Yükleniyor…',
+    saveRanking:'Sıralamayı Kaydet', saveStartingXI:'İlk 11\u0027i Kaydet', overall:'Genel',
+    rank:'#', player:'Oyuncu', points:'Puan', prize:'Ödül', you:'SİZ',
+    noCompetitionsYet:'Henüz yarışma yok', noRoundsYet:'Henüz tur yok', checkBackSoon:'Daha sonra tekrar kontrol edin.',
+    noPredictionsYet:'Henüz tahmin yok', noEventsYet:'Henüz maç yok',
+    pickMore:'Kaydetmek için {n} kişi daha seçin', selectAll11:'Kaydetmek için 11 oyuncu seçin',
+    correct:'Doğru', wrong:'Yanlış', yourPick:'Tahmininiz',
+    open:'Açık', done:'Tamamlandı', locked:'Kilitli',
+  },
+};
+function t(key, vars){
+  let s = (I18N[LANG]&&I18N[LANG][key]) || I18N.en[key] || key;
+  if(vars) Object.entries(vars).forEach(([k,v])=>{ s = s.replace('{'+k+'}', v); });
+  return s;
+}
+function applyTranslations(){
+  const set=(id,text)=>{ const el=document.getElementById(id); if(el) el.textContent=text; };
+  set('tab-login', t('signIn'));
+  set('tab-register', t('register'));
+  set('lbl-login-email', t('email'));
+  set('lbl-login-password', t('password'));
+  set('lnk-forgot-password', t('forgotPassword'));
+  set('btn-do-login', t('signIn')+' →');
+  set('lbl-reg-username', t('username'));
+  set('lbl-reg-email', t('email'));
+  set('lbl-reg-password', t('password'));
+  if(!currentPlayer) set('hdr-username', t('signIn'));
+}
 // Lineup data comes from Data Manager either as an old flat array of 11 player
 // IDs, or the newer {slotKey: playerId} shape (GK, DEF1-4, CM1-2, AM, LW, RW,
 // FWD) used for formation analysis. Scoring only cares "was this player in the
@@ -378,14 +433,18 @@ async function buildCompsFromRealData(){
       {data:evRows},
       {data:compsRows},
       {data:roundsRows},
-      {data:tournamentRows}
+      {data:tournamentRows},
+      {data:opRow},
     ] = await Promise.all([
       supa.from('gw_dm_teams').select('*'),
       supa.from('gw_dm_events').select('*'),
       supa.from('gw_competitions').select('*').eq('client_key',CLIENT_PARAM),
       supa.from('gw_rounds').select('*').eq('client_key',CLIENT_PARAM).order('sort_order'),
       supa.from('gw_dm_tournaments').select('id,seasons'),
+      (async()=>{ try{ return await supa.from('gw_operators').select('language').eq('client_key',CLIENT_PARAM).maybeSingle(); }catch(e){ return {data:null}; } })(),
     ]);
+    LANG = (opRow && I18N[opRow.language]) ? opRow.language : 'en';
+    applyTranslations();
 
     // Gameweek labels for lineup mode come straight from Data Manager's own
     // round structure (e.g. a round the admin named "Gameweek 4"), not from
@@ -799,7 +858,7 @@ function updateHeaderUser(){
     document.getElementById('hdr-username').textContent=currentPlayer.username;
   } else {
     document.getElementById('hdr-avatar').textContent='?';
-    document.getElementById('hdr-username').textContent='Sign in';
+    document.getElementById('hdr-username').textContent=t('signIn');
   }
 }
 
@@ -949,7 +1008,7 @@ function controlBandOpen(comp, roundOptionsHtml, tabsHtml, tabsMobileHtml, selec
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
       <div style="display:flex;align-items:center;gap:8px;">
         <select class="round-select control-band-select" onchange="${selectOnchange||'changeRound(this.value)'}">${roundOptionsHtml}</select>
-        <button class="ps-tab" onclick="showRules('${comp.mode}')" style="border:1px solid var(--border);flex-shrink:0;">Rules</button>
+        <button class="ps-tab" onclick="showRules('${comp.mode}')" style="border:1px solid var(--border);flex-shrink:0;">${t('rules')}</button>
       </div>
       <div class="predict-subtabs">${tabsHtml}</div>
       <div class="predict-subtabs-mobile">${tabsMobileHtml}</div>
@@ -1275,7 +1334,7 @@ function renderLineupPredictor(comp){
       : ''}
   </div>`;
 
-  const countdownInner = (isOpen && lineupLockAt) ? controlBandCountdown('⏱','Round locks in','<span id="countdown-text">Calculating...</span>', '') : '';
+  const countdownInner = (isOpen && lineupLockAt) ? controlBandCountdown('⏱',t('roundLocksIn'),'<span id="countdown-text">Calculating...</span>', '') : '';
   if(isOpen && lineupLockAt) setTimeout(()=>startCountdown(lineupLockAt,()=>renderPredict()),50);
 
   // Only the current gameweek and past ones are selectable — a gameweek only
@@ -1288,11 +1347,11 @@ function renderLineupPredictor(comp){
   return `
     <div style="padding:0 0 30px;">
       ${controlBandOpen(comp, roundSelect,
-        `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Builder</button>
-         <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`,
+        `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">${t('builder')}</button>
+         <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">${t('leaderboard')}</button>`,
         `<select onchange="switchPredictSubTab(this.value)">
-           <option value="predictions"${predictSubTab==='predictions'?' selected':''}>Builder</option>
-           <option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option>
+           <option value="predictions"${predictSubTab==='predictions'?' selected':''}>${t('builder')}</option>
+           <option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>${t('leaderboard')}</option>
          </select>`)}
         ${countdownInner}
       </div>
@@ -1351,13 +1410,13 @@ function renderLineupLeaderboardShell(comp){
   const sel = lbSelection[currentCompIdx];
   const round = sel==='overall' ? null : (comp.rounds[sel]||comp.rounds[maxIdx]);
   const roundOptions = comp.rounds.slice(0, maxIdx+1).map((r,i)=>`<option value="${i}"${sel===i?' selected':''}>${r.label}</option>`).join('');
-  const roundSelect = `<option value="overall"${sel==='overall'?' selected':''}>Overall</option>${roundOptions}`;
+  const roundSelect = `<option value="overall"${sel==='overall'?' selected':''}>${t('overall')}</option>${roundOptions}`;
   let html=controlBandOpen(comp, roundSelect,
-    `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Builder</button>
-     <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`,
+    `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">${t('builder')}</button>
+     <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">${t('leaderboard')}</button>`,
     `<select onchange="switchPredictSubTab(this.value)">
-       <option value="predictions"${predictSubTab==='predictions'?' selected':''}>Builder</option>
-       <option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option>
+       <option value="predictions"${predictSubTab==='predictions'?' selected':''}>${t('builder')}</option>
+       <option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>${t('leaderboard')}</option>
      </select>`,
     'changeLineupLbSelection(this.value)');
   html+='</div>';
@@ -1667,13 +1726,13 @@ function renderPredictionsPane(comp){
     <select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select>
     
     <div class="predict-subtabs">
-      <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button>
-      <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
+      <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">${t('predictions')}</button>
+      <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">${t('leaderboard')}</button>
     </div>
     <div class="predict-subtabs-mobile">
       <select onchange="switchPredictSubTab(this.value)">
-        <option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option>
-        <option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option>
+        <option value="predictions"${predictSubTab==='predictions'?' selected':''}>${t('predictions')}</option>
+        <option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>${t('leaderboard')}</option>
       </select>
     </div>
   </div>`;
@@ -1692,7 +1751,7 @@ function renderPredictionsPane(comp){
       if(p!==actual)userAlive=false;
     });
     const statusHtml=events.some(ev=>ev.res)?(userAlive?'<span style="color:var(--green);font-weight:700;"> · ✓ You survived!</span>':'<span style="color:var(--red);font-weight:700;"> · ✗ You failed!</span>'):'';
-    html+=`<div class="deadline-banner" style="background:var(--bg);color:var(--text-2);">🔒 Predictions locked${statusHtml}</div>`;
+    html+=`<div class="deadline-banner" style="background:var(--bg);color:var(--text-2);">🔒 ${t('predictionsLocked')}${statusHtml}</div>`;
   }
   if(!isOpen&&comp.mode==='lms'){
     let userStatus='';
@@ -1707,7 +1766,7 @@ function renderPredictionsPane(comp){
       }
       userStatus=alive?'<span style="color:var(--green);font-weight:700;"> · ✓ You survived!</span>':'<span style="color:var(--red);font-weight:700;"> · ✗ You failed!</span>';
     }
-    html+=`<div class="deadline-banner" style="background:var(--bg);color:var(--text-2);">🔒 Predictions locked${userStatus}</div>`;
+    html+=`<div class="deadline-banner" style="background:var(--bg);color:var(--text-2);">🔒 ${t('predictionsLocked')}${userStatus}</div>`;
   }
 
   // ── FANTASY MODE ──────────────────────────────────────────────────────────
@@ -1857,7 +1916,7 @@ function renderPredictionsPane(comp){
       setTimeout(()=>initDragSort(),50);
       html+=`<button class="submit-preds-btn" onclick="toast('✓ Ranking saved')">Save Ranking</button>`;
     } else {
-      html+=`<div style="padding:8px 8px 12px;font-size:12px;color:var(--text-3);font-weight:600;">🔒 Predictions locked</div>`;
+      html+=`<div style="padding:8px 8px 12px;font-size:12px;color:var(--text-3);font-weight:600;">🔒 ${t('predictionsLocked')}</div>`;
       userOrder.forEach((tid,i)=>{
         const t=teamMap[tid];
         html+=`<div style="display:flex;align-items:center;gap:6px;padding:8px;margin-bottom:4px;background:var(--bg);border-radius:8px;border:1px solid var(--border);opacity:0.7;">
@@ -2105,7 +2164,7 @@ function startCountdown(deadline,onExpire){
     if(diff<=0){
       clearInterval(countdownInterval);
       if(typeof onExpire==='function'){onExpire();return;}
-      el.textContent='Predictions locked';
+      el.textContent=t('predictionsLocked');
       return;
     }
     const d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
@@ -2773,11 +2832,11 @@ function renderPredictionsPane(comp){
 
   let html=controlBandOpen(comp,
     comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join(''),
-    `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button>
-     <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`,
+    `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">${t('predictions')}</button>
+     <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">${t('leaderboard')}</button>`,
     `<select onchange="switchPredictSubTab(this.value)">
-       <option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option>
-       <option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option>
+       <option value="predictions"${predictSubTab==='predictions'?' selected':''}>${t('predictions')}</option>
+       <option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>${t('leaderboard')}</option>
      </select>`);
 
   if(comp.mode==='lms'&&eliminatedAtIdx>=0){
@@ -2785,30 +2844,30 @@ function renderPredictionsPane(comp){
     // and shows immediately rather than waiting for the whole round to finish.
     html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 You've been eliminated <span style="color:var(--red);font-weight:700;"> · ✗ You failed!</span></div>`;
   } else if(comp.mode==='lms'&&isOpen&&nextLmsLock){
-    html+=controlBandCountdown('⏱','Locks in','<span id="countdown-text">Calculating...</span>','');
+    html+=controlBandCountdown('⏱',t('locksIn'),'<span id="countdown-text">Calculating...</span>','');
     setTimeout(()=>startCountdown(nextLmsLock._lmsLockAt,()=>renderPredict()),50);
   } else if(comp.mode==='lms'&&isOpen&&lmsAllLocked){
-    html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 All predictions locked</div>`;
+    html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 ${t('allLocked')}</div>`;
   } else if(comp.mode==='score'){
     if(isOpen&&nextScoreLock){
-      html+=controlBandCountdown('⏱','Locks in','<span id="countdown-text">Calculating...</span>', events.length?`${predCount} / ${events.length} set`:'');
+      html+=controlBandCountdown('⏱',t('locksIn'),'<span id="countdown-text">Calculating...</span>', events.length?`${predCount} / ${events.length} set`:'');
       setTimeout(()=>startCountdown(nextScoreLock._scoreLockAt,()=>renderPredict()),50);
     } else if(isOpen&&events.length&&events.every(ev=>ev.res||(ev._scoreLockAt!=null&&ev._scoreLockAt<=Date.now()))){
-      html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 All predictions locked</div>`;
+      html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 ${t('allLocked')}</div>`;
     }
   } else if(comp.mode==='betting'){
     if(isOpen&&nextBettingLock){
-      html+=controlBandCountdown('⏱','Locks in','<span id="countdown-text">Calculating...</span>', events.length?`${bettingSetCount} / ${events.length} set`:'');
+      html+=controlBandCountdown('⏱',t('locksIn'),'<span id="countdown-text">Calculating...</span>', events.length?`${bettingSetCount} / ${events.length} set`:'');
       setTimeout(()=>startCountdown(nextBettingLock._bettingLockAt,()=>renderPredict()),50);
     } else if(isOpen&&events.length&&events.every(ev=>ev.res||(ev._bettingLockAt!=null&&ev._bettingLockAt<=Date.now()))){
-      html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 All predictions locked</div>`;
+      html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 ${t('allLocked')}</div>`;
     }
   } else if(isOpen&&lockedByTime){
-    html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 Round locked</div>`;
+    html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 ${t('roundLocked')}</div>`;
   } else if(isOpen&&timeLockAt){
     // "Round locks in" (not "Locks in") since this is a single whole-round
     // deadline covering every team in the ranking, not one specific match.
-    html+=controlBandCountdown('⏱','Round locks in','<span id="countdown-text">Calculating...</span>', '');
+    html+=controlBandCountdown('⏱',t('roundLocksIn'),'<span id="countdown-text">Calculating...</span>', '');
     setTimeout(()=>startCountdown(timeLockAt,'lock'),50);
   } else if(!isOpen&&comp.mode==='lms'){
     let userAlive=true;
@@ -2821,7 +2880,7 @@ function renderPredictionsPane(comp){
       if(p!==actual)userAlive=false;
     });
     const statusHtml=resultedEvs.length?(userAlive?'<span style="color:var(--green);font-weight:700;"> · ✓ You survived!</span>':'<span style="color:var(--red);font-weight:700;"> · ✗ You failed!</span>'):'';
-    html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 Predictions locked${statusHtml}</div>`;
+    html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 ${t('predictionsLocked')}${statusHtml}</div>`;
   }
   html+='</div>';
 
@@ -2893,7 +2952,7 @@ function renderPredictionsPane(comp){
       html+=`<button class="submit-preds-btn" onclick="submitRanking('${round.id}')">Save Ranking</button>`;
       setTimeout(()=>initDragSort(),50);
     } else {
-      html+=`<div style="padding:8px 8px 12px;font-size:12px;color:var(--text-3);font-weight:600;">${isCompleted?'You didn\u2019t submit a prediction for this round':'Predictions locked'}</div>`;
+      html+=`<div style="padding:8px 8px 12px;font-size:12px;color:var(--text-3);font-weight:600;">${isCompleted?'You didn\u2019t submit a prediction for this round':t('predictionsLocked')}</div>`;
       userOrder.forEach((tid,i)=>{
         const t=teamMap[tid];
         html+=rankRowHTML(t, i, {});
@@ -3076,13 +3135,13 @@ function renderLeaderboardShell(comp){
   const round=isOverall?null:comp.rounds[sel];
   if(!isOverall && !round) return '<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">No rounds yet</div></div>';
   const roundOptions=comp.rounds.map((r,i)=>`<option value="${i}"${(!isOverall&&sel===i)?' selected':''}>${r.label}</option>`).join('');
-  const roundSelect=`<option value="overall"${isOverall?' selected':''}>Overall</option>${roundOptions}`;
+  const roundSelect=`<option value="overall"${isOverall?' selected':''}>${t('overall')}</option>${roundOptions}`;
   let html=controlBandOpen(comp, roundSelect,
-    `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button>
-     <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`,
+    `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">${t('predictions')}</button>
+     <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">${t('leaderboard')}</button>`,
     `<select onchange="switchPredictSubTab(this.value)">
-       <option value="predictions">Predictions</option>
-       <option value="leaderboard" selected>Leaderboard</option>
+       <option value="predictions">${t('predictions')}</option>
+       <option value="leaderboard" selected>${t('leaderboard')}</option>
      </select>`,
     'changeLBSelection(this.value)');
   html+='</div>';
@@ -3354,7 +3413,7 @@ function buildLBTable(title,sub,rows,cellFn,colHeader,prizes,extraCellFn,extraCo
   const medalColor={1:'#e8b53a',2:'#b9c0cc',3:'#cd8a52'};
   const prizeIcon={1:'🏆',2:'🥈',3:'🥉'};
   const prizeBg={1:'#fbf1cf',2:'#eef0f4',3:'#f4e3d3'};
-  let html=`<div class="lb-wrap"><table class="lb-table" style="table-layout:fixed;"><thead><tr><th style="width:32px;text-align:center">#</th><th style="width:auto;">Player</th>${colHeader}${hasExtra?extraColHeaderMobile:''}${hasPrizes?'<th style="width:56px;text-align:center;">Prize</th>':''}</tr></thead><tbody>`;
+  let html=`<div class="lb-wrap"><table class="lb-table" style="table-layout:fixed;"><thead><tr><th style="width:32px;text-align:center">${t('rank')}</th><th style="width:auto;">${t('player')}</th>${colHeader}${hasExtra?extraColHeaderMobile:''}${hasPrizes?`<th style="width:56px;text-align:center;">${t('prize')}</th>`:''}</tr></thead><tbody>`;
   rows.forEach(row=>{
     const isMe=row.u===me;
     const rankColor=row.rank<=3?medalColor[row.rank]:'var(--text-3)';
@@ -3372,7 +3431,8 @@ function buildLBTable(title,sub,rows,cellFn,colHeader,prizes,extraCellFn,extraCo
       }
     }
     const extraCell = hasExtra ? extraCellFn(row).replace('<td ','<td class="lb-col-extra" ') : '';
-    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank" style="color:${rankColor};">${row.rank}</td><td><div style="display:flex;align-items:center;gap:8px;min-width:0;"><div style="width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:${isMe?'#fff':'var(--text-2)'};background:${avatarBg};">${lbInitials(row.u)}</div><span class="lb-uname ${isMe?'me':''}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row.u}</span>${isMe?'<span style="flex-shrink:0;margin-left:2px;font-size:9px;font-weight:800;color:var(--accent);background:var(--accent-light);padding:2px 6px;border-radius:5px;letter-spacing:0.3px;">YOU</span>':''}</div></td>${cellFn(row)}${extraCell}${prizeCell}</tr>`;
+    const youTag = isMe?`<span style="flex-shrink:0;margin-left:2px;font-size:9px;font-weight:800;color:var(--accent);background:var(--accent-light);padding:2px 6px;border-radius:5px;letter-spacing:0.3px;">${t('you')}</span>`:'';
+    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank" style="color:${rankColor};">${row.rank}</td><td><div style="display:flex;align-items:center;gap:8px;min-width:0;"><div style="width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:${isMe?'#fff':'var(--text-2)'};background:${avatarBg};">${lbInitials(row.u)}</div><span class="lb-uname ${isMe?'me':''}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row.u}</span>${youTag}</div></td>${cellFn(row)}${extraCell}${prizeCell}</tr>`;
   });
   html+=`</tbody></table></div>`; return html;
 }
