@@ -1036,7 +1036,7 @@ function getModeExplainer(comp){
   }
   if(comp.mode==='betting'){
     const parts=(comp.markets||[]).map(m=>`<strong style="color:var(--accent);">${m.points} pts</strong> for ${m.label}`);
-    return parts.length ? `Earn ${parts.join(', ')}.` : 'Predict multiple markets per match — points awarded per correct pick.';
+    return parts.length ? `Earn ${parts.join(', ')}. A wrong pick earns <strong style="color:var(--accent);">0 pts</strong> for that market.` : 'Predict multiple markets per match — points awarded per correct pick, 0 for a wrong one.';
   }
   if(comp.mode==='ranking'){
     const per=comp.rankingConfig?.pointsPerCorrect||2, bonus=comp.rankingConfig?.perfectBonus||5;
@@ -2257,7 +2257,15 @@ function pickScore(id,side,val){
 function pickMarket(evId,market,val){
   predsDirty=true;
   if(!preds[evId]||typeof preds[evId]!=='object')preds[evId]={};
-  preds[evId][market]=val;renderPredict();
+  if(preds[evId][market]===val){
+    // Clicking the already-selected option deselects it, so this market can
+    // be left unpicked (or changed) rather than being permanently locked in
+    // once tapped once.
+    delete preds[evId][market];
+  } else {
+    preds[evId][market]=val;
+  }
+  renderPredict();
 }
 function changeRound(idx){selectedRound[currentCompIdx]=parseInt(idx);renderPredict();}
 function moveRank(roundId,teamId,dir){
@@ -3547,7 +3555,7 @@ function showRules(mode){
 • Over/Under 2.5 Goals — Will there be 3+ goals?<br>
 • Both Teams to Score — Will both teams find the net?
 </div>
-<div><strong style="color:var(--text);">Points:</strong> Each market has its own points value, set by the competition operator.</div>
+<div><strong style="color:var(--text);">Points:</strong> Each market has its own points value, set by the competition operator. A wrong pick on a market earns <strong>0 pts</strong> for that market — the others aren't affected.</div>
 </div>`,
     lineup:`<h3 style="margin-bottom:12px;">Lineup Predictor Rules</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
