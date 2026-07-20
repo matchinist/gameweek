@@ -285,6 +285,7 @@ table.lb-table{width:100%;border-collapse:collapse;}
         <button class="auth-tab active" id="tab-login" onclick="switchAuth('login')">Sign in</button>
         <button class="auth-tab" id="tab-register" onclick="switchAuth('register')">Register</button>
       </div>
+      <div id="auth-error" style="display:none;background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;font-size:12.5px;font-weight:600;line-height:1.5;padding:9px 12px;border-radius:8px;margin-bottom:12px;"></div>
       <div id="form-login">
         <div class="form-group"><label class="form-label" id="lbl-login-email">Email</label><input class="form-input" id="login-username" placeholder="your@email.com" autocomplete="username" /></div>
         <div class="form-group"><label class="form-label" id="lbl-login-password">Password</label><input class="form-input" type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" /></div>
@@ -295,7 +296,7 @@ table.lb-table{width:100%;border-collapse:collapse;}
         <div class="form-group"><label class="form-label" id="lbl-reg-username">Username</label><input class="form-input" id="reg-username" placeholder="choose a username" autocomplete="username" /></div>
         <div class="form-group"><label class="form-label" id="lbl-reg-email">Email</label><input class="form-input" type="email" id="reg-email" placeholder="your@email.com" autocomplete="email" /></div>
         <div class="form-group"><label class="form-label" id="lbl-reg-password">Password</label><input class="form-input" type="password" id="reg-password" placeholder="min 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()" /></div>
-        <button class="auth-btn" onclick="doRegister()">Create account →</button>
+        <button class="auth-btn" id="btn-do-register" onclick="doRegister()">Create account →</button>
                 <div class="auth-terms">Free to play. No deposit required.</div>
       </div>
       <div id="form-forgot" style="display:none;">
@@ -366,10 +367,19 @@ const I18N = {
     saveRanking:'Save Ranking', saveStartingXI:'Save starting XI', overall:'Overall',
     rank:'#', player:'Player', points:'Points', prize:'Prize', you:'YOU',
     noCompetitionsYet:'No competitions yet', noRoundsYet:'No rounds yet', checkBackSoon:'Check back soon.',
-    noPredictionsYet:'No predictions yet', noEventsYet:'No events yet',
-    pickMore:'Pick {n} more to save', selectAll11:'Select all 11 players to save',
+    noPredictionsYet:'No predictions yet', noEventsYet:'No events yet', beFirst:'Be the first to predict this round.',
+    pickMore:'Pick {n} more to save', selectAllToSave:'Select all 11 players to save',
     correct:'Correct', wrong:'Wrong', yourPick:'Your pick',
     open:'Open', done:'Done', locked:'Locked',
+    predictionSaved:'Prediction saved', couldNotSave:'Could not save — check your connection and try again',
+    lineupSaved:'Lineup Saved', rankingSaved:'Ranking saved',
+    errFillAllFields:'Please fill in all fields', errUsernameChars:'Username can only contain letters, numbers, and underscores',
+    errUsernameShort:'Username must be at least 3 characters', errUsernameTaken:'That username is already taken',
+    errInvalidEmail:'Please enter a valid email address', errWeakPassword:'Password must be at least 6 characters',
+    errAccountExists:'An account with this email already exists — try signing in instead',
+    errWrongCredentials:'Incorrect email or password', errRateLimit:'Too many attempts — please wait a moment and try again',
+    errNotRegisteredHere:"That account exists, but isn't registered on this site yet — try Register instead",
+    errGeneric:'Something went wrong — please try again', creatingAccount:'Creating account…', signingIn:'Signing in…',
   },
   tr: {
     predictions:'Tahminler', leaderboard:'Lider Tablosu', builder:'Kadro Kur', rules:'Kurallar',
@@ -381,10 +391,19 @@ const I18N = {
     saveRanking:'Sıralamayı Kaydet', saveStartingXI:'İlk 11\u0027i Kaydet', overall:'Genel',
     rank:'#', player:'Oyuncu', points:'Puan', prize:'Ödül', you:'SİZ',
     noCompetitionsYet:'Henüz yarışma yok', noRoundsYet:'Henüz tur yok', checkBackSoon:'Daha sonra tekrar kontrol edin.',
-    noPredictionsYet:'Henüz tahmin yok', noEventsYet:'Henüz maç yok',
-    pickMore:'Kaydetmek için {n} kişi daha seçin', selectAll11:'Kaydetmek için 11 oyuncu seçin',
+    noPredictionsYet:'Henüz tahmin yok', noEventsYet:'Henüz maç yok', beFirst:'Bu turu tahmin eden ilk kişi olun.',
+    pickMore:'Kaydetmek için {n} kişi daha seçin', selectAllToSave:'Kaydetmek için 11 oyuncu seçin',
     correct:'Doğru', wrong:'Yanlış', yourPick:'Tahmininiz',
     open:'Açık', done:'Tamamlandı', locked:'Kilitli',
+    predictionSaved:'Tahmin kaydedildi', couldNotSave:'Kaydedilemedi — bağlantınızı kontrol edip tekrar deneyin',
+    lineupSaved:'Kadro Kaydedildi', rankingSaved:'Sıralama kaydedildi',
+    errFillAllFields:'Lütfen tüm alanları doldurun', errUsernameChars:'Kullanıcı adı yalnızca harf, rakam ve alt çizgi içerebilir',
+    errUsernameShort:'Kullanıcı adı en az 3 karakter olmalı', errUsernameTaken:'Bu kullanıcı adı zaten alınmış',
+    errInvalidEmail:'Lütfen geçerli bir e-posta adresi girin', errWeakPassword:'Şifre en az 6 karakter olmalı',
+    errAccountExists:'Bu e-posta ile zaten bir hesap var — giriş yapmayı deneyin',
+    errWrongCredentials:'E-posta veya şifre hatalı', errRateLimit:'Çok fazla deneme yapıldı — lütfen biraz bekleyip tekrar deneyin',
+    errNotRegisteredHere:'Bu hesap var, ancak bu sitede henüz kayıtlı değil — Kayıt Ol\u0027u deneyin',
+    errGeneric:'Bir şeyler ters gitti — lütfen tekrar deneyin', creatingAccount:'Hesap oluşturuluyor…', signingIn:'Giriş yapılıyor…',
   },
 };
 function t(key, vars){
@@ -637,6 +656,26 @@ async function sendPasswordReset(){
   }
 }
 
+function showAuthError(msg){
+  const el=document.getElementById('auth-error');
+  if(el){ el.textContent=msg; el.style.display='block'; }
+  shakeAuth();
+}
+function clearAuthError(){
+  const el=document.getElementById('auth-error');
+  if(el) el.style.display='none';
+}
+// Supabase returns its own English error text for auth failures — map the
+// common ones to something clearer (and translatable) rather than showing
+// the raw API message or just silently shaking the form.
+function friendlyAuthError(rawMsg){
+  const m=(rawMsg||'').toLowerCase();
+  if(m.includes('already registered')||m.includes('already exists')||m.includes('user already')) return t('errAccountExists');
+  if(m.includes('password')&&(m.includes('least')||m.includes('short')||m.includes('weak'))) return t('errWeakPassword');
+  if(m.includes('invalid') && m.includes('email')) return t('errInvalidEmail');
+  if(m.includes('rate limit')) return t('errRateLimit');
+  return t('errGeneric');
+}
 function shakeAuth(){
   const m=document.querySelector('.auth-modal');
   if(m){m.classList.remove('shake');void m.offsetWidth;m.classList.add('shake');}
@@ -645,54 +684,64 @@ function setBtnLoading(btn,text){btn.disabled=true;btn.dataset.label=btn.textCon
 function resetBtn(btn){btn.disabled=false;btn.textContent=btn.dataset.label||'Submit';}
 
 async function doRegister(){
+  clearAuthError();
   const username = document.getElementById('reg-username').value.trim();
   const email    = document.getElementById('reg-email').value.trim().toLowerCase();
   const password = document.getElementById('reg-password').value;
   const btn      = document.querySelector('#form-register .auth-btn');
-  if(!username||!email||!password){ shakeAuth(); return; }
-  if(username.length<3){ shakeAuth(); return; }
-  if(password.length<6){ shakeAuth(); return; }
-  setBtnLoading(btn,'Creating account…');
+  if(!username||!email||!password){ showAuthError(t('errFillAllFields')); return; }
+  if(!/^[a-zA-Z0-9_]+$/.test(username)){ showAuthError(t('errUsernameChars')); return; }
+  if(username.length<3){ showAuthError(t('errUsernameShort')); return; }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showAuthError(t('errInvalidEmail')); return; }
+  if(password.length<6){ showAuthError(t('errWeakPassword')); return; }
+  setBtnLoading(btn,t('creatingAccount'));
 
   // Check username not taken in this embed
   const {data:existing} = await supa.from('gw_players')
     .select('id').eq('client_key',CLIENT_PARAM).eq('username',username).single();
-  if(existing){ resetBtn(btn); shakeAuth(); return; }
+  if(existing){ resetBtn(btn); showAuthError(t('errUsernameTaken')); return; }
 
   // Create Supabase Auth user
   const {data:authData, error:authErr} = await supa.auth.signUp({email, password});
-  if(authErr){ resetBtn(btn); shakeAuth(); return; }
+  if(authErr){ resetBtn(btn); showAuthError(friendlyAuthError(authErr.message)); return; }
 
   // Create player profile
   const {data:player, error:playerErr} = await supa.from('gw_players')
     .insert({auth_id:authData.user.id, client_key:CLIENT_PARAM, username, email})
     .select().single();
-  if(playerErr){ resetBtn(btn); shakeAuth(); return; }
+  if(playerErr){
+    resetBtn(btn);
+    // Most likely cause: this email already has a player profile on this
+    // specific site (accounts are per-embed, not shared across every client).
+    showAuthError(playerErr.message&&playerErr.message.toLowerCase().includes('duplicate') ? t('errAccountExists') : t('errGeneric'));
+    return;
+  }
 
   await loginPlayer(player);
 }
 
 async function doLogin(){
+  clearAuthError();
   const email    = document.getElementById('login-username').value.trim().toLowerCase();
   const password = document.getElementById('login-password').value;
   const btn      = document.querySelector('#form-login .auth-btn');
-  if(!email||!password){ shakeAuth(); return; }
-  setBtnLoading(btn,'Signing in…');
+  if(!email||!password){ showAuthError(t('errFillAllFields')); return; }
+  setBtnLoading(btn,t('signingIn'));
 
   const {data:authData, error:authErr} = await supa.auth.signInWithPassword({email,password});
-  if(authErr){ resetBtn(btn); shakeAuth(); return; }
+  if(authErr){ resetBtn(btn); showAuthError(t('errWrongCredentials')); return; }
 
   // Fetch player profile
   const {data:player, error:playerErr} = await supa.from('gw_players')
     .select('*').eq('auth_id',authData.user.id).eq('client_key',CLIENT_PARAM).single();
   if(playerErr||!player){
-    resetBtn(btn); shakeAuth();
+    resetBtn(btn);
     // The email/password were correct — this account just doesn't have a
     // player profile registered on THIS particular site yet (profiles are
     // per-site, not shared across every gameweek embed). Previously this
     // showed the exact same silent shake as a wrong password, which made it
     // look like the reset had failed when it hadn't.
-    toast("That account exists, but isn't registered on this site yet — try Register instead");
+    showAuthError(t('errNotRegisteredHere'));
     return;
   }
 
@@ -1027,7 +1076,7 @@ function controlBandCountdown(iconOrEmoji, label, valueHtml, rightHtml){
 
 function renderPredict(){
   if(!COMPS.length){
-    document.getElementById('predict-content').innerHTML='<div class="empty" style="padding-top:60px;"><div class="empty-icon">🏆</div><div class="empty-title">No competitions yet</div><div class="empty-sub">Check back soon.</div></div>';
+    document.getElementById('predict-content').innerHTML=`<div class="empty" style="padding-top:60px;"><div class="empty-icon">🏆</div><div class="empty-title">${t('noCompetitionsYet')}</div><div class="empty-sub">${t('checkBackSoon')}</div></div>`;
     return;
   }
   if(selectedRound[currentCompIdx]===undefined) selectedRound[currentCompIdx]=getDefaultRoundIdx(COMPS[currentCompIdx]);
@@ -1377,19 +1426,19 @@ function renderLineupPredictor(comp){
         </div>
         </div>
         ${scored!==null ? `<div style="display:flex;justify-content:center;gap:16px;padding:8px 0 2px;font-size:10.5px;color:oklch(0.5 0.01 260);">
-          <span><span style="color:#22c55e;font-weight:800;">✓</span> Correct · +10 pts</span>
+          <span><span style="color:#22c55e;font-weight:800;">✓</span> ${t('correct')} · +10 pts</span>
           <span><span style="color:#dc2626;font-weight:800;">✕</span> Not in the XI</span>
         </div>` : ''}
         <div style="padding:0 12px 14px;">
           ${isOpen && pickCount===11 ? (lineupSaved[round.id] ? `
           <button disabled style="width:100%;border:none;border-radius:9px;padding:11px;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;background:#fff;color:oklch(0.5 0.01 260);cursor:default;border:1px solid oklch(0.9 0.004 260);">
-            ✓ Lineup Saved
+            ✓ ${t('lineupSaved')}
           </button>` : `
           <button onclick="saveLineup('${round.id}')" style="width:100%;border:none;border-radius:9px;padding:11px;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;cursor:pointer;background:var(--comp-color);color:#fff;box-shadow:0 3px 10px rgba(20,20,40,0.15);">
-            Save starting XI
+            ${t('saveStartingXI')}
           </button>`) : isOpen ? `
           <button disabled style="width:100%;border:none;border-radius:9px;padding:11px;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;background:oklch(0.95 0.004 260);color:oklch(0.65 0.01 260);cursor:not-allowed;">
-            Pick ${11-pickCount} more to save
+            ${t('pickMore',{n:11-pickCount})}
           </button>` : ''}
           ${isOpen ? `<div style="display:flex;align-items:center;gap:8px;margin-top:9px;">
             <div style="flex:1;height:5px;border-radius:3px;background:oklch(0.93 0.004 260);overflow:hidden;">
@@ -1562,7 +1611,7 @@ async function loadAndRenderLineupLeaderboardOverall(comp, target){
     }));
 
     if(!rows.length){
-      target.innerHTML = '<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">No predictions yet</div></div>';
+      target.innerHTML = `<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">${t('noPredictionsYet')}</div></div>`;
       return;
     }
 
@@ -1642,7 +1691,7 @@ function lineupPickerRow(pl, roundId, slotIdx, picks){
   return `<div onclick="${alreadyUsed?'':` pickLineupPlayer('${roundId}',${slotIdx},'${pl.id}');closeLineupPicker();renderPredict();`}" style="display:flex;align-items:center;gap:12px;padding:10px 20px;cursor:${alreadyUsed?'default':'pointer'};opacity:${alreadyUsed?'0.35':'1'};">
       <div style="width:28px;text-align:center;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:oklch(0.45 0.01 260);flex-shrink:0;">${pl.no!=null&&pl.no!==''?pl.no:'-'}</div>
       <div style="font-size:14px;font-weight:600;color:oklch(0.2 0.01 260);">${pl.name}</div>
-      ${alreadyUsed?`<span style="margin-left:auto;font-size:11px;color:oklch(0.6 0.01 260);">Selected</span>`:''}
+      ${alreadyUsed?`<span style="margin-left:auto;font-size:11px;color:oklch(0.6 0.01 260);">${t('selected')}</span>`:''}
     </div>`;
 }
 
@@ -1914,7 +1963,7 @@ function renderPredictionsPane(comp){
       });
       html+='</div>';
       setTimeout(()=>initDragSort(),50);
-      html+=`<button class="submit-preds-btn" onclick="toast('✓ Ranking saved')">Save Ranking</button>`;
+      html+=`<button class="submit-preds-btn" onclick="toast('✓ '+t('rankingSaved'))">${t('saveRanking')}</button>`;
     } else {
       html+=`<div style="padding:8px 8px 12px;font-size:12px;color:var(--text-3);font-weight:600;">🔒 ${t('predictionsLocked')}</div>`;
       userOrder.forEach((tid,i)=>{
@@ -1955,7 +2004,7 @@ function renderPredictionsPane(comp){
 
   html+='<div class="events-list">';
   if(!events.length){
-    html+='<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">No events yet</div></div>';
+    html+= `<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">${t('noEventsYet')}</div></div>`;
   } else {
     let lmsBlocked=false;
     events.forEach((ev,i)=>{
@@ -2110,10 +2159,10 @@ function renderEventCard(ev,comp,isRoundOpen){
     }
 
     if(hasRes&&(comp.mode==='score'||comp.mode==='betting')&&earnedPts!=null){
-      html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div><span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'✗ 0 pts'}</span></div>`;
+      html+=`<div class="pred-result-row"><div class="pred-made">${t('yourPick')}: <strong>${pl}</strong></div><span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'✗ 0 pts'}</span></div>`;
       if(pointsBreakdown)html+=`<div style="font-size:12px;color:${earnedPts>0?'var(--green)':'var(--text-3)'};margin-top:4px;font-weight:600;">${pointsBreakdown}</div>`;
     } else if(hasRes&&correct!=null){
-      html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div><span class="pred-correct ${correct?'yes':'no'}">${correct?'\u2713 Correct':'\u2717 Wrong'}</span></div>`;
+      html+=`<div class="pred-result-row"><div class="pred-made">${t('yourPick')}: <strong>${pl}</strong></div><span class="pred-correct ${correct?'yes':'no'}">${correct?'\u2713 '+t('correct'):'\u2717 '+t('wrong')}</span></div>`;
       if(comp.mode==='lms'&&ev._survivorCount!==undefined){
         html+=`<div style="text-align:left;font-family:var(--sans);font-size:11px;font-weight:700;color:var(--text-2);margin-top:6px;">${ev._survivorCount} survived</div>`;
       }
@@ -2142,11 +2191,11 @@ function renderEventCard(ev,comp,isRoundOpen){
         html+='<div style="font-size:11px;color:oklch(0.58 0.01 260);margin-top:4px;">⏳ Awaiting result</div>';
         html+='</div>';
       } else {
-        html+=`<div><div class="pred-made">Your pick: <strong>${pl}</strong></div><div style="margin-top:4px;"><span style="font-size:11px;color:var(--amber);font-weight:600;">⏳ Awaiting result</span></div></div>`;
+        html+=`<div><div class="pred-made">${t('yourPick')}: <strong>${pl}</strong></div><div style="margin-top:4px;"><span style="font-size:11px;color:var(--amber);font-weight:600;">⏳ Awaiting result</span></div></div>`;
       }
     }
   } else {
-    html+='<div style="font-size:12px;color:var(--text-3);">No prediction made.</div>';
+    html+=`<div style="font-size:12px;color:var(--text-3);">${t('noPredictionMade')}</div>`;
     if(comp.mode==='lms'&&hasRes&&ev._survivorCount!==undefined){
       html+=`<div style="text-align:left;font-family:var(--sans);font-size:11px;font-weight:700;color:var(--text-2);margin-top:6px;">${ev._survivorCount} survived</div>`;
     }
@@ -2726,24 +2775,24 @@ async function submitRanking(roundId){
   const order=preds[rk];
   if(!order||!order.length){ toast('Reorder the teams first'); return; }
   const btn=document.querySelector('.submit-preds-btn');
-  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  if(btn){btn.disabled=true;btn.textContent=t('loading');}
   const ok = await savePred(rk, order);
   if(!ok){
-    if(btn){btn.disabled=false;btn.textContent='Save Ranking';}
+    if(btn){btn.disabled=false;btn.textContent=t('saveRanking');}
     toast('⚠ Could not save — check your connection and try again');
     return;
   }
   rankingSubmitted[rk]=true;
   predsDirty=false;
   if(btn){btn.classList.add('disabled');btn.textContent='\u2713 Saved';}
-  toast('\u2713 Ranking saved');
+  toast('\u2713 '+t('rankingSaved'));
 }
 
 // ── LEADERBOARD ───────────────────────────────────────────────────────────
 function renderPredictionsPane(comp){
   if(comp.mode==='lineup') return renderLineupPredictor(comp);
   const ri=selectedRound[currentCompIdx];
-  if(!comp.rounds.length) return '<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No rounds yet</div></div>';
+  if(!comp.rounds.length) return `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">${t('noRoundsYet')}</div></div>`;
   const round=comp.rounds[ri]; if(!round) return '';
   let events=(round.eventIds||[]).map(id=>({id,...EVENTS[id],tournament:(round.tournamentNames||[])[0]||''})).filter(e=>e.home);
   // Score/Betting/Ranking rounds don't have a manual lock step — open/completed
@@ -2949,7 +2998,7 @@ function renderPredictionsPane(comp){
         html+=rankRowHTML(t, i, {draggable:true});
       });
       html+='</div>';
-      html+=`<button class="submit-preds-btn" onclick="submitRanking('${round.id}')">Save Ranking</button>`;
+      html+=`<button class="submit-preds-btn" onclick="submitRanking('${round.id}')">${t('saveRanking')}</button>`;
       setTimeout(()=>initDragSort(),50);
     } else {
       html+=`<div style="padding:8px 8px 12px;font-size:12px;color:var(--text-3);font-weight:600;">${isCompleted?'You didn\u2019t submit a prediction for this round':t('predictionsLocked')}</div>`;
@@ -2967,7 +3016,7 @@ function renderPredictionsPane(comp){
 
   html+='<div class="events-list">';
   if(!events.length){
-    html+='<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">No events yet</div></div>';
+    html+= `<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">${t('noEventsYet')}</div></div>`;
   } else {
     let lmsBlocked=false;
     events.forEach((ev,i)=>{
@@ -3084,10 +3133,10 @@ function renderEventCard(ev,comp,isOpen){
     else if(comp.mode==='betting'&&typeof pred==='object')pl=Object.entries(pred).map(([k,v])=>k.toUpperCase()+': '+v).join(' \u00b7 ');
 
     if(hasRes&&(comp.mode==='score'||comp.mode==='betting')&&earnedPts!=null){
-      html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div><span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'\u2717 0 pts'}</span></div>`;
+      html+=`<div class="pred-result-row"><div class="pred-made">${t('yourPick')}: <strong>${pl}</strong></div><span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'\u2717 0 pts'}</span></div>`;
       if(pointsBreakdown)html+=`<div style="font-size:12px;color:${earnedPts>0?'var(--green)':'var(--text-3)'};margin-top:4px;font-weight:600;">${pointsBreakdown}</div>`;
     } else if(hasRes&&correct!=null){
-      html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div><span class="pred-correct ${correct?'yes':'no'}">${correct?'\u2713 Correct':'\u2717 Wrong'}</span></div>`;
+      html+=`<div class="pred-result-row"><div class="pred-made">${t('yourPick')}: <strong>${pl}</strong></div><span class="pred-correct ${correct?'yes':'no'}">${correct?'\u2713 '+t('correct'):'\u2717 '+t('wrong')}</span></div>`;
       if(comp.mode==='lms'&&ev._survivorCount!==undefined){
         html+=`<div style="text-align:left;font-family:var(--sans);font-size:11px;font-weight:700;color:var(--text-2);margin-top:6px;">${ev._survivorCount} survived</div>`;
       }
@@ -3116,11 +3165,11 @@ function renderEventCard(ev,comp,isOpen){
         html+='<div style="font-size:11px;color:oklch(0.58 0.01 260);margin-top:4px;">⏳ Awaiting result</div>';
         html+='</div>';
       } else {
-        html+=`<div><div class="pred-made">Your pick: <strong>${pl}</strong></div><div style="margin-top:4px;"><span style="font-size:11px;color:var(--amber);font-weight:600;">⏳ Awaiting result</span></div></div>`;
+        html+=`<div><div class="pred-made">${t('yourPick')}: <strong>${pl}</strong></div><div style="margin-top:4px;"><span style="font-size:11px;color:var(--amber);font-weight:600;">⏳ Awaiting result</span></div></div>`;
       }
     }
   } else {
-    html+='<div style="font-size:12px;color:var(--text-3);">No prediction made.</div>';
+    html+=`<div style="font-size:12px;color:var(--text-3);">${t('noPredictionMade')}</div>`;
     if(comp.mode==='lms'&&hasRes&&ev._survivorCount!==undefined){
       html+=`<div style="text-align:left;font-family:var(--sans);font-size:11px;font-weight:700;color:var(--text-2);margin-top:6px;">${ev._survivorCount} survived</div>`;
     }
@@ -3133,7 +3182,7 @@ function renderLeaderboardShell(comp){
   const sel=lbSelection[currentCompIdx];
   const isOverall=sel==='overall';
   const round=isOverall?null:comp.rounds[sel];
-  if(!isOverall && !round) return '<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">No rounds yet</div></div>';
+  if(!isOverall && !round) return `<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">${t('noRoundsYet')}</div></div>`;
   const roundOptions=comp.rounds.map((r,i)=>`<option value="${i}"${(!isOverall&&sel===i)?' selected':''}>${r.label}</option>`).join('');
   const roundSelect=`<option value="overall"${isOverall?' selected':''}>${t('overall')}</option>${roundOptions}`;
   let html=controlBandOpen(comp, roundSelect,
@@ -3177,7 +3226,7 @@ async function loadAndRenderLeaderboard(comp){
     if(error) throw error;
 
     if(!allPreds || !allPreds.length){
-      target.innerHTML='<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">No predictions yet</div><div class="empty-sub">Be the first to predict this round.</div></div>';
+      target.innerHTML=`<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">${t('noPredictionsYet')}</div><div class="empty-sub">${t('beFirst')}</div></div>`;
       return;
     }
 
@@ -3303,7 +3352,7 @@ async function loadAndRenderLeaderboardOverall(comp, target){
   try{
     const rounds = comp.rounds||[];
     if(!rounds.length){
-      target.innerHTML='<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">No rounds yet</div></div>';
+      target.innerHTML=`<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">${t('noRoundsYet')}</div></div>`;
       return;
     }
     const {data:allPreds,error}=await supa.from('gw_predictions')
@@ -3313,7 +3362,7 @@ async function loadAndRenderLeaderboardOverall(comp, target){
       .in('round_id', rounds.map(r=>r.id));
     if(error) throw error;
     if(!allPreds || !allPreds.length){
-      target.innerHTML='<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">No predictions yet</div></div>';
+      target.innerHTML=`<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">${t('noPredictionsYet')}</div></div>`;
       return;
     }
 
@@ -3377,7 +3426,7 @@ async function loadAndRenderLeaderboardOverall(comp, target){
 
     const rows=Object.entries(totals).map(([u,t])=>({u,pts:t.pts,correct:t.correct,total:t.total}));
     if(!rows.length){
-      target.innerHTML='<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">No predictions yet</div></div>';
+      target.innerHTML=`<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">${t('noPredictionsYet')}</div></div>`;
       return;
     }
     rows.sort((a,b)=>b.pts-a.pts);
