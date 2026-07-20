@@ -437,7 +437,7 @@ const COMP_FILTER = (new URLSearchParams(location.search).get('comp')||'').split
 let COMP_FILTER_INVALID = false; // set true if a comp filter was given but matched nothing real
 
 // ── DATA LOAD ─────────────────────────────────────────────────────────────────
-let COMPS=[], EVENTS={}, EVENTS_RAW={}, EVENT_GAMEWEEK={};
+let COMPS=[], EVENTS={}, EVENTS_RAW={}, EVENT_GAMEWEEK={}, EVENT_TOURNAMENT={};
 
 function fmtKickoff(dt){
   if(!dt) return 'TBD';
@@ -445,7 +445,7 @@ function fmtKickoff(dt){
 }
 
 async function buildCompsFromRealData(){
-  COMPS=[]; EVENTS={}; EVENTS_RAW={}; EVENT_GAMEWEEK={};
+  COMPS=[]; EVENTS={}; EVENTS_RAW={}; EVENT_GAMEWEEK={}; EVENT_TOURNAMENT={};
   try{
     const [
       {data:teams},
@@ -477,6 +477,7 @@ async function buildCompsFromRealData(){
         (season.rounds||[]).forEach(r=>{
           (r.eventIds||[]).forEach(eid=>{
             EVENT_GAMEWEEK[eid]=r.label;
+            EVENT_TOURNAMENT[eid]=t.name;
             eventSeasonKey[eid]=seasonKey;
           });
         });
@@ -2235,7 +2236,7 @@ function pick(id,val){
 function updateSubmitBtnText(){
   const comp=COMPS[currentCompIdx]; if(!comp) return;
   const round=comp.rounds[selectedRound[currentCompIdx]]; if(!round) return;
-  const events=(round.eventIds||[]).map(id=>({id,...EVENTS[id],tournament:(round.tournamentNames||[])[0]||''})).filter(e=>e.home);
+  const events=(round.eventIds||[]).map(id=>({id,...EVENTS[id],tournament:EVENT_TOURNAMENT[id]||(round.tournamentNames||[])[0]||''})).filter(e=>e.home);
   const openEvents=events.filter(ev=>!ev.res);
   if(!openEvents.length) return;
   const predCount=openEvents.filter(ev=>{const p=preds[ev.id];if(!p)return false;if(comp.mode==='score')return p.h!==undefined&&p.a!==undefined;if(comp.mode==='betting')return typeof p==='object'&&Object.keys(p).length>0;return!!p;}).length;
@@ -2794,7 +2795,7 @@ function renderPredictionsPane(comp){
   const ri=selectedRound[currentCompIdx];
   if(!comp.rounds.length) return `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">${t('noRoundsYet')}</div></div>`;
   const round=comp.rounds[ri]; if(!round) return '';
-  let events=(round.eventIds||[]).map(id=>({id,...EVENTS[id],tournament:(round.tournamentNames||[])[0]||''})).filter(e=>e.home);
+  let events=(round.eventIds||[]).map(id=>({id,...EVENTS[id],tournament:EVENT_TOURNAMENT[id]||(round.tournamentNames||[])[0]||''})).filter(e=>e.home);
   // Score/Betting/Ranking rounds don't have a manual lock step — open/completed
   // is purely a function of whether every one of the round's events has a
   // result yet, so it can never get stuck out of sync with the actual events.
