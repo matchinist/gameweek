@@ -459,7 +459,7 @@ async function buildCompsFromRealData(){
       supa.from('gw_dm_events').select('*'),
       supa.from('gw_competitions').select('*').eq('client_key',CLIENT_PARAM),
       supa.from('gw_rounds').select('*').eq('client_key',CLIENT_PARAM).order('sort_order'),
-      supa.from('gw_dm_tournaments').select('id,seasons'),
+      supa.from('gw_dm_tournaments').select('id,name,seasons'),
       (async()=>{ try{ return await supa.from('gw_operators').select('language').eq('client_key',CLIENT_PARAM).maybeSingle(); }catch(e){ return {data:null}; } })(),
     ]);
     LANG = (opRow && I18N[opRow.language]) ? opRow.language : 'en';
