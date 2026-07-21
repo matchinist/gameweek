@@ -3624,6 +3624,7 @@ function openPredHistory(uEnc){
   let body='';
   let lastRound=null;
   hist.forEach(h=>{
+    if(!h.res) return; // only show resulted matches
     if(h.roundLabel && h.roundLabel!==lastRound){
       lastRound=h.roundLabel;
       body+=`<div style="font-size:11px;font-weight:800;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin:14px 0 8px;">${h.roundLabel}</div>`;
