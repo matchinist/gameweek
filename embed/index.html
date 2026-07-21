@@ -2256,13 +2256,13 @@ function renderEventCard(ev,comp,isRoundOpen){
     if(hasRes&&comp.mode==='betting'&&bettingMarketDetails){
       html+='<div style="display:flex;flex-direction:column;gap:8px;">';
       bettingMarketDetails.forEach(({mkt,pick,pts,isRight})=>{
-        html+=`<div><div style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);display:flex;justify-content:space-between;align-items:center;"><span>${marketLabel(mkt)}</span><span style="font-family:var(--mono);font-size:12px;font-weight:700;color:${isRight?'var(--green)':'var(--text-3)'};">+${pts} pts</span></div>`;
+        html+=`<div><div style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);display:flex;justify-content:space-between;align-items:center;"><span>${marketLabel(mkt)}</span><span style="font-family:var(--mono);font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;background:${isRight?'var(--green-light)':'var(--red-light)'};color:${isRight?'var(--green)':'var(--red)'};">+${pts} pts</span></div>`;
         if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${pick==='H'?' selected home':''}" disabled>${t('homeWin')}</button><button class="btn-1x2${pick==='D'?' selected draw':''}" disabled>X</button><button class="btn-1x2${pick==='A'?' selected away':''}" disabled>${t('away')}</button></div>`;
         else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='O'?' selected':''}" disabled>${t('over')}</button><button class="btn-ou under${pick==='U'?' selected':''}" disabled>${t('under')}</button></div>`;
         else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='Y'?' selected':''}" disabled>${t('yes')}</button><button class="btn-ou under${pick==='N'?' selected':''}" disabled>${t('no')}</button></div>`;
         html+='</div>';
       });
-      html+=`<div style="text-align:right;font-family:var(--mono);font-size:14px;font-weight:700;color:${earnedPts>0?'var(--green)':'var(--text-3)'};padding-top:8px;border-top:1px solid var(--border);">${t('total')}: ${earnedPts>0?'+':''}${earnedPts} pts</div>`;
+      html+=`<div style="display:flex;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--border);"><span style="font-family:var(--mono);font-size:13px;font-weight:700;padding:4px 12px;border-radius:999px;background:${earnedPts>0?'var(--green-light)':'var(--red-light)'};color:${earnedPts>0?'var(--green)':'var(--red)'};">${t('total')}: ${earnedPts>0?'+':''}${earnedPts} pts</span></div>`;
       html+='</div>';
     } else if(hasRes&&comp.mode==='score'&&earnedPts!=null){
       html+=`<div class="pred-result-row"><div class="pred-made">${t('yourPick')}: <strong>${pl}</strong></div><span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'✗ 0 pts'}</span></div>`;
@@ -3253,13 +3253,13 @@ function renderEventCard(ev,comp,isOpen){
     if(hasRes&&comp.mode==='betting'&&bettingMarketDetails){
       html+='<div style="display:flex;flex-direction:column;gap:8px;">';
       bettingMarketDetails.forEach(({mkt,pick,pts,isRight})=>{
-        html+=`<div><div style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);display:flex;justify-content:space-between;align-items:center;"><span>${marketLabel(mkt)}</span><span style="font-family:var(--mono);font-size:12px;font-weight:700;color:${isRight?'var(--green)':'var(--text-3)'};">+${pts} pts</span></div>`;
+        html+=`<div><div style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);display:flex;justify-content:space-between;align-items:center;"><span>${marketLabel(mkt)}</span><span style="font-family:var(--mono);font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;background:${isRight?'var(--green-light)':'var(--red-light)'};color:${isRight?'var(--green)':'var(--red)'};">+${pts} pts</span></div>`;
         if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${pick==='H'?' selected home':''}" disabled>${t('homeWin')}</button><button class="btn-1x2${pick==='D'?' selected draw':''}" disabled>X</button><button class="btn-1x2${pick==='A'?' selected away':''}" disabled>${t('away')}</button></div>`;
         else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='O'?' selected':''}" disabled>${t('over')}</button><button class="btn-ou under${pick==='U'?' selected':''}" disabled>${t('under')}</button></div>`;
         else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='Y'?' selected':''}" disabled>${t('yes')}</button><button class="btn-ou under${pick==='N'?' selected':''}" disabled>${t('no')}</button></div>`;
         html+='</div>';
       });
-      html+=`<div style="text-align:right;font-family:var(--mono);font-size:14px;font-weight:700;color:${earnedPts>0?'var(--green)':'var(--text-3)'};padding-top:8px;border-top:1px solid var(--border);">${t('total')}: ${earnedPts>0?'+':''}${earnedPts} pts</div>`;
+      html+=`<div style="display:flex;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--border);"><span style="font-family:var(--mono);font-size:13px;font-weight:700;padding:4px 12px;border-radius:999px;background:${earnedPts>0?'var(--green-light)':'var(--red-light)'};color:${earnedPts>0?'var(--green)':'var(--red)'};">${t('total')}: ${earnedPts>0?'+':''}${earnedPts} pts</span></div>`;
       html+='</div>';
     } else if(hasRes&&comp.mode==='score'&&earnedPts!=null){
       html+=`<div class="pred-result-row"><div class="pred-made">${t('yourPick')}: <strong>${pl}</strong></div><span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'\u2717 0 pts'}</span></div>`;
