@@ -1256,7 +1256,7 @@ const LIV_SQUAD = {
 
 const NATIONALITY_CODES = {
   'Afghanistan':'af','Albania':'al','Algeria':'dz','Argentina':'ar','Armenia':'am',
-  'Australia':'au','Austria':'at','Azerbaijan':'az','Belgium':'be','Bolivia':'bo',
+  'Australia':'au','Austria':'at','Azerbaijan':'az','Belgium':'be','Benin':'bj','Bolivia':'bo',
   'Bosnia and Herzegovina':'ba','Brazil':'br','Bulgaria':'bg','Cameroon':'cm','Canada':'ca',
   'Chile':'cl','China':'cn','Colombia':'co','Costa Rica':'cr','Croatia':'hr',
   'Cuba':'cu','Czech Republic':'cz','Denmark':'dk','Ecuador':'ec','Egypt':'eg',
@@ -1276,7 +1276,13 @@ const NATIONALITY_CODES = {
   'United States':'us','Uruguay':'uy','Uzbekistan':'uz','Venezuela':'ve','Vietnam':'vn',
   'Wales':'gb-wls','Zambia':'zm',
 };
+// A couple of nationalities use a specific provided flag image instead of
+// the standard flagcdn URL pattern below.
+const FLAG_URL_OVERRIDES = {
+  'Benin': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Flag_of_Benin.svg/330px-Flag_of_Benin.svg.png',
+};
 function flagImgUrl(nationality){
+  if(FLAG_URL_OVERRIDES[nationality]) return FLAG_URL_OVERRIDES[nationality];
   const code = NATIONALITY_CODES[nationality];
   return code ? `https://flagcdn.com/w80/${code}.png` : '';
 }
