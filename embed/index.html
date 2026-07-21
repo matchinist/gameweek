@@ -615,11 +615,14 @@ async function buildCompsFromRealData(){
             // showing — the moment the admin saves the actual starting XI,
             // not only once the final score has also been entered.
             const hasLineup = ev.lineup && ((flattenLineupSlots(ev.lineup.home)||[]).length || (flattenLineupSlots(ev.lineup.away)||[]).length);
-            // Gameweek label comes from Data Manager's own round structure
-            // when the event belongs to one there; otherwise fall back to a
-            // sequential number based on chronological order so the dropdown
-            // always shows something reasonable rather than an event name.
-            const label = EVENT_GAMEWEEK[ev.id] || `Gameweek ${idx+1}`;
+            // Lineup tracks one team's fixtures, which can span multiple
+            // tournaments (league, cup, etc.) — its own "Gameweek N" numbering
+            // is this competition's own sequential count of fixtures added to
+            // it, not whatever round label the source tournament happens to
+            // use internally (e.g. a team's first-ever tracked fixture here
+            // should read "Gameweek 1" even if it's Europa League's own
+            // "Gameweek 2" in Data Manager's structure).
+            const label = `Gameweek ${idx+1}`;
             return {
               id: ev.id,
               label,
