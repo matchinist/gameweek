@@ -2964,8 +2964,12 @@ function renderPredictionsPane(comp){
   const predCount = events.filter(ev=>{const p=preds[ev.id];return p&&p.h!==undefined&&p.a!==undefined;}).length;
   const bettingSetCount = events.filter(ev=>{const p=preds[ev.id];return p&&typeof p==='object'&&Object.keys(p).length>0;}).length;
 
+  // Don't reveal a future round in the dropdown until the current one is
+  // over — same 4-hours-after-last-kickoff rule used everywhere else to
+  // decide what "current" means, so this can't drift out of sync with it.
+  const maxRoundIdx = (()=>{ const c = computeCurrentRoundIdx(comp); return c!=null ? c : comp.rounds.length-1; })();
   let html=controlBandOpen(comp,
-    comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join(''),
+    comp.rounds.slice(0, maxRoundIdx+1).map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join(''),
     `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">${t('predictions')}</button>
      <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">${t('leaderboard')}</button>`,
     `<select onchange="switchPredictSubTab(this.value)">
@@ -3268,7 +3272,10 @@ function renderLeaderboardShell(comp){
   const isOverall=sel==='overall';
   const round=isOverall?null:comp.rounds[sel];
   if(!isOverall && !round) return `<div class="empty" style="padding:40px 20px;"><div class="empty-icon">🏆</div><div class="empty-title">${t('noRoundsYet')}</div></div>`;
-  const roundOptions=comp.rounds.map((r,i)=>`<option value="${i}"${(!isOverall&&sel===i)?' selected':''}>${r.label}</option>`).join('');
+  // Same rule as the predictions tab — a future round stays hidden from this
+  // dropdown too until the current one is over.
+  const maxRoundIdx = (()=>{ const c = computeCurrentRoundIdx(comp); return c!=null ? c : comp.rounds.length-1; })();
+  const roundOptions=comp.rounds.slice(0, maxRoundIdx+1).map((r,i)=>`<option value="${i}"${(!isOverall&&sel===i)?' selected':''}>${r.label}</option>`).join('');
   const roundSelect=`<option value="overall"${isOverall?' selected':''}>${t('overall')}</option>${roundOptions}`;
   let html=controlBandOpen(comp, roundSelect,
     `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">${t('predictions')}</button>
