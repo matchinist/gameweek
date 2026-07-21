@@ -3132,7 +3132,7 @@ function renderPredictionsPane(comp){
       if(comp.mode==='lms'&&isEliminated) lmsBlocked=true;
       const effectiveOpen=comp.mode==='score'?(isOpen&&(ev._scoreLockAt==null||Date.now()<ev._scoreLockAt))
         :comp.mode==='lms'?(isOpen&&!lmsBlocked&&(ev._lmsLockAt==null||Date.now()<ev._lmsLockAt))
-        :isOpen&&!lockedByTime;
+        :comp.mode==='betting'?(isOpen&&(ev._bettingLockAt==null||Date.now()<ev._bettingLockAt)):isOpen&&!lockedByTime;
       html+=`<div style="opacity:${isEliminated?'0.4':'1'};">${renderEventCard(ev,comp,effectiveOpen)}</div>`;
     });
   }
