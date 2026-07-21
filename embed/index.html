@@ -56,7 +56,8 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 @keyframes authshake{10%,90%{transform:translateX(-1px);}20%,80%{transform:translateX(2px);}30%,50%,70%{transform:translateX(-4px);}40%,60%{transform:translateX(4px);}}
 .auth-modal.shake{animation:authshake 0.4s;}
 .auth-terms{font-size:11px;color:var(--text-3);text-align:center;margin-top:14px;line-height:1.5;}
-.comp-tabs{display:flex;gap:0;overflow-x:auto;border-bottom:1px solid oklch(0.92 0.004 260);padding:0 16px;-webkit-overflow-scrolling:touch;align-items:center;}
+#comp-tabs-wrap{border-bottom:1px solid oklch(0.92 0.004 260);}
+.comp-tabs{display:flex;gap:0;overflow-x:auto;padding:0 16px;-webkit-overflow-scrolling:touch;align-items:center;}
 .comp-tabs::-webkit-scrollbar{display:none;}
 .comp-tabs::-webkit-scrollbar{display:none;}
 .comp-tabs{-ms-overflow-style:none;scrollbar-width:none;}
@@ -330,7 +331,7 @@ table.lb-table{width:100%;border-collapse:collapse;}
       </div>
       <div id="comp-tabs-wrap">
         <div class="comp-tabs" id="comp-tabs"></div>
-        <div id="comp-scope-text" style="display:none;font-size:12.5px;color:var(--text-3);padding:6px 4px 0;"></div>
+        <div id="comp-scope-text" style="display:none;font-size:13px;font-weight:500;color:var(--text-3);padding:0 22px 12px;margin-top:-3px;"></div>
       </div>
     </div>
 
@@ -1017,7 +1018,7 @@ function renderCompTabs(){
   const scopeEl=document.getElementById('comp-scope-text');
   if(scopeEl){
     const scopeText=COMPS[currentCompIdx].scopeText;
-    if(scopeText){ scopeEl.textContent=scopeText; scopeEl.style.display='block'; }
+    if(scopeText){ scopeEl.textContent=scopeText.replace(/\s*\|\s*/g,' · '); scopeEl.style.display='block'; }
     else { scopeEl.style.display='none'; }
   }
 }
