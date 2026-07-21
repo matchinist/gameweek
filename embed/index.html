@@ -375,7 +375,7 @@ const I18N = {
     noCompetitionsYet:'No competitions yet', noRoundsYet:'No rounds yet', checkBackSoon:'Check back soon.',
     noPredictionsYet:'No predictions yet', noEventsYet:'No events yet', beFirst:'Be the first to predict this round.',
     pickMore:'Pick {n} more to save', selectAllToSave:'Select all 11 players to save',
-    correct:'Correct', wrong:'Wrong', yourPick:'Your pick',
+    correct:'Correct', wrong:'Wrong', yourPick:'Your pick', total:'Total',
     open:'Open', done:'Done', locked:'Locked',
     predictionSaved:'Prediction saved', couldNotSave:'Could not save — check your connection and try again',
     lineupSaved:'Lineup Saved', rankingSaved:'Ranking saved',
@@ -418,7 +418,7 @@ const I18N = {
     noCompetitionsYet:'Henüz yarışma yok', noRoundsYet:'Henüz tur yok', checkBackSoon:'Daha sonra tekrar kontrol edin.',
     noPredictionsYet:'Henüz tahmin yok', noEventsYet:'Henüz maç yok', beFirst:'Bu turu tahmin eden ilk kişi olun.',
     pickMore:'Kaydetmek için {n} kişi daha seçin', selectAllToSave:'Kaydetmek için 11 oyuncu seçin',
-    correct:'Doğru', wrong:'Yanlış', yourPick:'Tahmininiz',
+    correct:'Doğru', wrong:'Yanlış', yourPick:'Tahmininiz', total:'Toplam',
     open:'Açık', done:'Tamamlandı', locked:'Kilitli',
     predictionSaved:'Tahmin kaydedildi', couldNotSave:'Kaydedilemedi — bağlantınızı kontrol edip tekrar deneyin',
     lineupSaved:'Kadro Kaydedildi', rankingSaved:'Sıralama kaydedildi',
@@ -2168,25 +2168,25 @@ function renderEventCard(ev,comp,isRoundOpen){
   const canPredict=isRoundOpen&&!hasRes&&!isLocked;
   const hasPred=comp.mode==='score'?(pred&&pred.h!==undefined&&pred.a!==undefined):comp.mode==='betting'?(pred&&typeof pred==='object'&&Object.keys(pred).length>0):(pred!==null&&pred!==undefined);
 
-  let correct=null,earnedPts=null,pointsBreakdown='';
+  let correct=null,earnedPts=null,pointsBreakdown='',bettingMarketDetails=null;
   if(hasRes&&hasPred){
     if(comp.mode==='lms'){const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';correct=pred===actual;}
     else if(comp.mode==='score'){[earnedPts,pointsBreakdown]=scorePoints(pred,ev.res,comp.scoring);correct=earnedPts>0;}
     else if(comp.mode==='betting'&&typeof pred==='object'){
       earnedPts=0;
-      const marketResults=[];
+      bettingMarketDetails=[];
       (comp.markets||[]).forEach(mkt=>{
-        const pick=pred[mkt.type]; if(!pick) return;
+        const pick=pred[mkt.type]||null;
         let actualM=null;
         if(mkt.type==='1x2') actualM = ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
         else if(mkt.type==='ou25') actualM = (ev.res.h+ev.res.a)>2.5?'O':'U';
         else if(mkt.type==='btts') actualM = (ev.res.h>0&&ev.res.a>0)?'Y':'N';
-        const isRight = pick===actualM;
-        if(isRight) earnedPts+=(mkt.points||0);
-        marketResults.push(marketLabel(mkt)+(isRight?' \u2713':' \u2717'));
+        const isRight = !!pick && pick===actualM;
+        const pts = isRight ? (mkt.points||0) : 0;
+        if(isRight) earnedPts+=pts;
+        bettingMarketDetails.push({mkt,pick,pts,isRight});
       });
       correct=earnedPts>0;
-      pointsBreakdown=marketResults.join(' \u00b7 ');
     }
   }
 
@@ -2253,7 +2253,18 @@ function renderEventCard(ev,comp,isRoundOpen){
       pl=Object.entries(pred).map(([k,v])=>k.toUpperCase()+': '+v).join(' · ');
     }
 
-    if(hasRes&&(comp.mode==='score'||comp.mode==='betting')&&earnedPts!=null){
+    if(hasRes&&comp.mode==='betting'&&bettingMarketDetails){
+      html+='<div style="display:flex;flex-direction:column;gap:8px;">';
+      bettingMarketDetails.forEach(({mkt,pick,pts,isRight})=>{
+        html+=`<div><div style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);display:flex;justify-content:space-between;align-items:center;"><span>${marketLabel(mkt)}</span><span style="font-family:var(--mono);font-size:12px;font-weight:700;color:${isRight?'var(--green)':'var(--text-3)'};">+${pts} pts</span></div>`;
+        if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${pick==='H'?' selected home':''}" disabled>${t('homeWin')}</button><button class="btn-1x2${pick==='D'?' selected draw':''}" disabled>X</button><button class="btn-1x2${pick==='A'?' selected away':''}" disabled>${t('away')}</button></div>`;
+        else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='O'?' selected':''}" disabled>${t('over')}</button><button class="btn-ou under${pick==='U'?' selected':''}" disabled>${t('under')}</button></div>`;
+        else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='Y'?' selected':''}" disabled>${t('yes')}</button><button class="btn-ou under${pick==='N'?' selected':''}" disabled>${t('no')}</button></div>`;
+        html+='</div>';
+      });
+      html+=`<div style="text-align:right;font-family:var(--mono);font-size:14px;font-weight:700;color:${earnedPts>0?'var(--green)':'var(--text-3)'};padding-top:8px;border-top:1px solid var(--border);">${t('total')}: ${earnedPts>0?'+':''}${earnedPts} pts</div>`;
+      html+='</div>';
+    } else if(hasRes&&comp.mode==='score'&&earnedPts!=null){
       html+=`<div class="pred-result-row"><div class="pred-made">${t('yourPick')}: <strong>${pl}</strong></div><span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'✗ 0 pts'}</span></div>`;
       if(pointsBreakdown)html+=`<div style="font-size:12px;color:${earnedPts>0?'var(--green)':'var(--text-3)'};margin-top:4px;font-weight:600;">${pointsBreakdown}</div>`;
     } else if(hasRes&&correct!=null){
@@ -3132,7 +3143,7 @@ function renderPredictionsPane(comp){
       if(comp.mode==='lms'&&isEliminated) lmsBlocked=true;
       const effectiveOpen=comp.mode==='score'?(isOpen&&(ev._scoreLockAt==null||Date.now()<ev._scoreLockAt))
         :comp.mode==='lms'?(isOpen&&!lmsBlocked&&(ev._lmsLockAt==null||Date.now()<ev._lmsLockAt))
-        :comp.mode==='betting'?(isOpen&&(ev._bettingLockAt==null||Date.now()<ev._bettingLockAt)):isOpen&&!lockedByTime;
+        :isOpen&&!lockedByTime;
       html+=`<div style="opacity:${isEliminated?'0.4':'1'};">${renderEventCard(ev,comp,effectiveOpen)}</div>`;
     });
   }
@@ -3169,25 +3180,25 @@ function renderEventCard(ev,comp,isOpen){
   const canPredict=isOpen&&!hasRes&&!isLocked;
   const hasPred=comp.mode==='score'?(pred&&pred.h!==undefined&&pred.a!==undefined):comp.mode==='betting'?(pred&&typeof pred==='object'&&Object.keys(pred).length>0):(pred!==null&&pred!==undefined);
 
-  let correct=null,earnedPts=null,pointsBreakdown='';
+  let correct=null,earnedPts=null,pointsBreakdown='',bettingMarketDetails=null;
   if(hasRes&&hasPred){
     if(comp.mode==='lms'){const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';correct=pred===actual;}
     else if(comp.mode==='score'){[earnedPts,pointsBreakdown]=scorePoints(pred,ev.res,comp.scoring);correct=earnedPts>0;}
     else if(comp.mode==='betting'&&typeof pred==='object'){
       earnedPts=0;
-      const marketResults=[];
+      bettingMarketDetails=[];
       (comp.markets||[]).forEach(mkt=>{
-        const pick=pred[mkt.type]; if(!pick) return;
+        const pick=pred[mkt.type]||null;
         let actualM=null;
         if(mkt.type==='1x2') actualM = ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
         else if(mkt.type==='ou25') actualM = (ev.res.h+ev.res.a)>2.5?'O':'U';
         else if(mkt.type==='btts') actualM = (ev.res.h>0&&ev.res.a>0)?'Y':'N';
-        const isRight = pick===actualM;
-        if(isRight) earnedPts+=(mkt.points||0);
-        marketResults.push(marketLabel(mkt)+(isRight?' \u2713':' \u2717'));
+        const isRight = !!pick && pick===actualM;
+        const pts = isRight ? (mkt.points||0) : 0;
+        if(isRight) earnedPts+=pts;
+        bettingMarketDetails.push({mkt,pick,pts,isRight});
       });
       correct=earnedPts>0;
-      pointsBreakdown=marketResults.join(' \u00b7 ');
     }
   }
 
@@ -3239,7 +3250,18 @@ function renderEventCard(ev,comp,isOpen){
     else if(comp.mode==='score')pl=(pred.h??'-')+' \u2013 '+(pred.a??'-');
     else if(comp.mode==='betting'&&typeof pred==='object')pl=Object.entries(pred).map(([k,v])=>k.toUpperCase()+': '+v).join(' \u00b7 ');
 
-    if(hasRes&&(comp.mode==='score'||comp.mode==='betting')&&earnedPts!=null){
+    if(hasRes&&comp.mode==='betting'&&bettingMarketDetails){
+      html+='<div style="display:flex;flex-direction:column;gap:8px;">';
+      bettingMarketDetails.forEach(({mkt,pick,pts,isRight})=>{
+        html+=`<div><div style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);display:flex;justify-content:space-between;align-items:center;"><span>${marketLabel(mkt)}</span><span style="font-family:var(--mono);font-size:12px;font-weight:700;color:${isRight?'var(--green)':'var(--text-3)'};">+${pts} pts</span></div>`;
+        if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${pick==='H'?' selected home':''}" disabled>${t('homeWin')}</button><button class="btn-1x2${pick==='D'?' selected draw':''}" disabled>X</button><button class="btn-1x2${pick==='A'?' selected away':''}" disabled>${t('away')}</button></div>`;
+        else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='O'?' selected':''}" disabled>${t('over')}</button><button class="btn-ou under${pick==='U'?' selected':''}" disabled>${t('under')}</button></div>`;
+        else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='Y'?' selected':''}" disabled>${t('yes')}</button><button class="btn-ou under${pick==='N'?' selected':''}" disabled>${t('no')}</button></div>`;
+        html+='</div>';
+      });
+      html+=`<div style="text-align:right;font-family:var(--mono);font-size:14px;font-weight:700;color:${earnedPts>0?'var(--green)':'var(--text-3)'};padding-top:8px;border-top:1px solid var(--border);">${t('total')}: ${earnedPts>0?'+':''}${earnedPts} pts</div>`;
+      html+='</div>';
+    } else if(hasRes&&comp.mode==='score'&&earnedPts!=null){
       html+=`<div class="pred-result-row"><div class="pred-made">${t('yourPick')}: <strong>${pl}</strong></div><span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'\u2717 0 pts'}</span></div>`;
       if(pointsBreakdown)html+=`<div style="font-size:12px;color:${earnedPts>0?'var(--green)':'var(--text-3)'};margin-top:4px;font-weight:600;">${pointsBreakdown}</div>`;
     } else if(hasRes&&correct!=null){
