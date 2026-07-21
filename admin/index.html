@@ -804,6 +804,12 @@ tbody tr:hover td{background:var(--bg);}
         </div>
       </div>
 
+      <div class="form-group">
+        <label class="form-label">Scope description (optional)</label>
+        <input class="form-input" id="new-comp-scope" placeholder="e.g. Premier League · Full season 2025/26 · 6 big clubs" maxlength="120" />
+        <div style="font-size:11px;color:var(--text-3);margin-top:6px;">Shown to players under the competition name — a quick summary of what it covers. You can add or change this later from Settings too.</div>
+      </div>
+
       <!-- Score Predictor points config -->
       <div id="score-points-config" style="display:none;">
         <div class="divider"></div>
@@ -1198,6 +1204,7 @@ async function saveAdminState(){
         roulette_config:c.rouletteConfig||null,
         overall_prizes:c.overallPrizes||null,
         comp_aliases:c.aliases||[],
+        scope_text:c.scopeText||null,
         users:c.users||0, predictions:c.predictions||0
       }));
       const {error:e1} = await supa.from('gw_competitions').upsert(compRows,{onConflict:'id'});
@@ -1518,6 +1525,12 @@ function renderCompDetail(){
         <div class="card-header"><span class="card-title">Competition Settings</span></div>
         <div class="card-body">
           <div class="form-group">
+            <label class="form-label">Scope description</label>
+            <input class="form-input" id="edit-comp-scope" placeholder="e.g. Premier League · Full season 2025/26 · 6 big clubs" value="${(c.scopeText||'').replace(/"/g,'&quot;')}" maxlength="120" />
+            <div style="font-size:11px;color:var(--text-3);margin-top:6px;">Shown to players under the competition name — a quick summary of what it covers. Optional.</div>
+          </div>
+          <div class="divider"></div>
+          <div class="form-group">
             <label class="form-label">Game Mode</label>
             <select class="form-select" id="edit-comp-mode" disabled style="opacity:0.6;cursor:not-allowed;">
               <option value="lms" ${c.mode==='lms'?'selected':''}>Last Man Standing</option>
@@ -1724,7 +1737,7 @@ async function createComp(){
   }
   const c = {
     id: 'c'+uid(), name, mode, scoring, markets, rankingConfig, lineupConfig, rouletteConfig,
-    longTerm: false,
+    longTerm: false, scopeText: document.getElementById('new-comp-scope')?.value.trim()||'',
     status: 'draft', color: mode==='lineup'?'#0EA5E9':'#8B5CF6', users: 0, predictions: 0, rounds: []
   };
   state.competitions.push(c);
@@ -2465,6 +2478,8 @@ async function updateCompColor(id,val){
 
 async function saveCompSettings(){
   const c = getComp(state.currentComp);
+  const scopeInput = document.getElementById('edit-comp-scope');
+  if(scopeInput) c.scopeText = scopeInput.value.trim();
   // Score mode — check if points changed and warn
   if(c.mode==='score'){
     const newScoring = {
@@ -2967,6 +2982,7 @@ function initOperatorChrome(){
     rouletteConfig:c.roulette_config||null,
     overallPrizes:c.overall_prizes||null,
     aliases:c.comp_aliases||[],
+    scopeText:c.scope_text||'',
     users:c.users, predictions:c.predictions,
     rounds: (rounds||[]).filter(r=>r.competition_id===c.id).map(r=>({
       id:r.id, label:r.label, status:r.status, deadline:r.deadline||'',

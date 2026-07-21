@@ -330,6 +330,7 @@ table.lb-table{width:100%;border-collapse:collapse;}
       </div>
       <div id="comp-tabs-wrap">
         <div class="comp-tabs" id="comp-tabs"></div>
+        <div id="comp-scope-text" style="display:none;font-size:12.5px;color:var(--text-3);padding:6px 4px 0;"></div>
       </div>
     </div>
 
@@ -648,6 +649,7 @@ async function buildCompsFromRealData(){
         lineupConfig:c.lineup_config||null,
         overallPrizes:c.overall_prizes||null,
         aliases:c.comp_aliases||[],
+        scopeText:c.scope_text||'',
         rounds:cRounds,
         tournamentNames:[...new Set(cRounds.flatMap(r=>r.tournamentNames||[]).filter(Boolean))]
       });
@@ -1012,6 +1014,12 @@ function renderCompTabs(){
   if(wrap) wrap.style.display = compTabsHidden ? 'none' : 'block';
   el.innerHTML=COMPS.map((c,i)=>`<button class="comp-tab${i===currentCompIdx?' active':''}" onclick="switchComp(${i})"><span style="display:inline-block;padding:7px 14px;border-radius:8px;background:${i===currentCompIdx?'oklch(0.94 0.05 275 / 0.7)':'transparent'};">${c.name}</span></button>`).join('');
   document.documentElement.style.setProperty('--comp-color',COMPS[currentCompIdx].color);
+  const scopeEl=document.getElementById('comp-scope-text');
+  if(scopeEl){
+    const scopeText=COMPS[currentCompIdx].scopeText;
+    if(scopeText){ scopeEl.textContent=scopeText; scopeEl.style.display='block'; }
+    else { scopeEl.style.display='none'; }
+  }
 }
 function switchComp(idx){
   currentCompIdx=idx; predictSubTab='predictions';
