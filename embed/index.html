@@ -68,14 +68,14 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 
 
 .round-bar{display:flex;align-items:center;gap:8px;padding:10px 0;background:var(--white);border-bottom:1px solid var(--border);flex-wrap:wrap;}
-.round-select{font-family:var(--mono);font-size:11px;border:1px solid var(--border);background:var(--white);padding:5px 8px;border-radius:5px;cursor:pointer;outline:none;color:var(--text);}
+.round-select{height:32px;font-family:var(--mono);font-size:11px;border:1px solid var(--border);background:var(--white);padding:0 8px;border-radius:5px;cursor:pointer;outline:none;color:var(--text);}
 .round-select:focus{border-color:var(--accent);}
 .round-status{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap;}
 .round-status.open{background:var(--green-light);color:var(--green);}
 .round-status.completed{background:var(--bg);color:var(--text-3);}
 .round-bar-right{margin-left:auto;display:flex;align-items:center;gap:4px;}
-.predict-subtabs{display:flex;gap:2px;flex-shrink:0;background:var(--bg);border-radius:999px;padding:3px;}
-.rules-btn{padding:7px 16px;font-size:13px;font-weight:600;color:var(--text-3);background:var(--white);border:1px solid var(--border);border-radius:999px;cursor:pointer;flex-shrink:0;transition:color .13s;}
+.predict-subtabs{display:flex;gap:2px;flex-shrink:0;background:var(--accent-light);border-radius:999px;padding:3px;}
+.rules-btn{height:32px;padding:0 16px;display:inline-flex;align-items:center;font-size:13px;font-weight:600;color:var(--text-3);background:var(--white);border:1px solid var(--border);border-radius:999px;cursor:pointer;flex-shrink:0;transition:color .13s;}
 .rules-btn:hover{color:var(--text);}
 .predict-subtabs-mobile{display:none;}
 .predict-subtabs-mobile select{font-family:var(--mono);font-size:10px;font-weight:700;border:1px solid var(--border);background:var(--white);padding:4px 8px;border-radius:4px;cursor:pointer;outline:none;color:var(--text);text-transform:uppercase;}
@@ -84,7 +84,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .ps-tab.active{background:var(--comp-color);color:white;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,0.15);}
 @media(max-width:480px){
   .predict-subtabs{display:none !important;}
-  .predict-subtabs-mobile{display:flex !important;width:100%;box-sizing:border-box;padding:3px;background:var(--bg);border-radius:11px;margin-top:10px;}
+  .predict-subtabs-mobile{display:flex !important;width:100%;box-sizing:border-box;padding:3px;background:var(--accent-light);border-radius:11px;margin-top:10px;}
   .predict-subtabs-mobile .ps-tab{flex:1;height:34px;padding:0 4px;border-radius:8px;font-size:13px;}
   .predict-subtabs-mobile .ps-tab.active{background:var(--white);color:var(--text);box-shadow:0 1px 3px rgba(18,24,40,0.12);font-weight:700;}
   .control-band-select{height:40px;border-radius:10px;background:var(--white);font-size:13.5px;max-width:none;flex:1;min-width:0;}
@@ -197,9 +197,9 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .lb-pts-btn:active{transform:scale(0.96);}
 .ph-overlay{position:fixed;inset:0;background:rgba(15,17,23,0.5);z-index:1200;display:flex;align-items:center;justify-content:center;padding:16px;}
 .ph-modal{background:var(--white);border-radius:16px;max-width:460px;width:100%;max-height:82vh;overflow-y:auto;padding:20px;box-shadow:0 20px 50px rgba(15,17,23,0.25);}
-.ph-pill{font-family:var(--mono);font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;}
-.ph-pill.win{background:var(--green-light);color:var(--green);}
-.ph-pill.lose{background:var(--red-light);color:var(--red);}
+.ph-pill{font-family:Inter,sans-serif;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap;}
+.ph-pill.win{background:oklch(0.9 0.09 155 / 0.35);color:oklch(0.38 0.13 155);}
+.ph-pill.lose{background:oklch(0.92 0.08 25 / 0.35);color:oklch(0.45 0.18 25);}
 .ph-pill.wait{background:var(--bg);color:var(--text-3);}
 .lb-table th{font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:7px 14px;text-align:left;border-bottom:1px solid var(--border);}
 .lb-table th.r{text-align:right;}
@@ -2204,7 +2204,7 @@ function renderEventCard(ev,comp,isRoundOpen){
   }
 
   let cls='event-card';
-  if(canPredict&&hasPred&&comp.mode!=='lms'&&comp.mode!=='betting')cls+=' predicted';
+  if(canPredict&&hasPred&&comp.mode!=='lms'&&comp.mode!=='betting'&&comp.mode!=='score')cls+=' predicted';
   if(!canPredict)cls+=' locked-pred';
 
   const hv=(pred&&pred.h!==undefined)?pred.h:'';
@@ -2271,13 +2271,13 @@ function renderEventCard(ev,comp,isRoundOpen){
     if(hasRes&&comp.mode==='betting'&&bettingMarketDetails){
       html+='<div style="display:flex;flex-direction:column;gap:8px;">';
       bettingMarketDetails.forEach(({mkt,pick,pts,isRight})=>{
-        html+=`<div><div style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);display:flex;justify-content:space-between;align-items:center;"><span>${marketLabel(mkt)}</span><span style="font-family:var(--mono);font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;background:${isRight?'var(--green-light)':'var(--red-light)'};color:${isRight?'var(--green)':'var(--red)'};">+${pts} pts</span></div>`;
+        html+=`<div><div style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);display:flex;justify-content:space-between;align-items:center;"><span>${marketLabel(mkt)}</span><span class="pred-correct ${isRight?'yes':'no'}">+${pts} pts</span></div>`;
         if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${pick==='H'?' selected home':''}" disabled>${t('homeWin')}</button><button class="btn-1x2${pick==='D'?' selected draw':''}" disabled>X</button><button class="btn-1x2${pick==='A'?' selected away':''}" disabled>${t('away')}</button></div>`;
         else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='O'?' selected':''}" disabled>${t('over')}</button><button class="btn-ou under${pick==='U'?' selected':''}" disabled>${t('under')}</button></div>`;
         else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='Y'?' selected':''}" disabled>${t('yes')}</button><button class="btn-ou under${pick==='N'?' selected':''}" disabled>${t('no')}</button></div>`;
         html+='</div>';
       });
-      html+=`<div style="display:flex;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--border);"><span style="font-family:var(--mono);font-size:13px;font-weight:700;padding:4px 12px;border-radius:999px;background:${earnedPts>0?'var(--green-light)':'var(--red-light)'};color:${earnedPts>0?'var(--green)':'var(--red)'};">${t('total')}: ${earnedPts>0?'+':''}${earnedPts} pts</span></div>`;
+      html+=`<div style="display:flex;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--border);"><span class="pred-correct ${earnedPts>0?'yes':'no'}">${t('total')}: ${earnedPts>0?'+':''}${earnedPts} pts</span></div>`;
       html+='</div>';
     } else if(hasRes&&comp.mode==='score'&&earnedPts!=null){
       html+=`<div class="pred-result-row"><div class="pred-made">${t('yourPick')}: <strong>${pl}</strong></div><span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'✗ 0 pts'}</span></div>`;
@@ -3218,7 +3218,7 @@ function renderEventCard(ev,comp,isOpen){
   }
 
   let cls='event-card';
-  if(canPredict&&hasPred&&comp.mode!=='lms'&&comp.mode!=='betting')cls+=' predicted';
+  if(canPredict&&hasPred&&comp.mode!=='lms'&&comp.mode!=='betting'&&comp.mode!=='score')cls+=' predicted';
   if(!canPredict)cls+=' locked-pred';
 
   const hv=(pred&&pred.h!==undefined)?pred.h:'';
@@ -3270,13 +3270,13 @@ function renderEventCard(ev,comp,isOpen){
     if(hasRes&&comp.mode==='betting'&&bettingMarketDetails){
       html+='<div style="display:flex;flex-direction:column;gap:8px;">';
       bettingMarketDetails.forEach(({mkt,pick,pts,isRight})=>{
-        html+=`<div><div style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);display:flex;justify-content:space-between;align-items:center;"><span>${marketLabel(mkt)}</span><span style="font-family:var(--mono);font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;background:${isRight?'var(--green-light)':'var(--red-light)'};color:${isRight?'var(--green)':'var(--red)'};">+${pts} pts</span></div>`;
+        html+=`<div><div style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);display:flex;justify-content:space-between;align-items:center;"><span>${marketLabel(mkt)}</span><span class="pred-correct ${isRight?'yes':'no'}">+${pts} pts</span></div>`;
         if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${pick==='H'?' selected home':''}" disabled>${t('homeWin')}</button><button class="btn-1x2${pick==='D'?' selected draw':''}" disabled>X</button><button class="btn-1x2${pick==='A'?' selected away':''}" disabled>${t('away')}</button></div>`;
         else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='O'?' selected':''}" disabled>${t('over')}</button><button class="btn-ou under${pick==='U'?' selected':''}" disabled>${t('under')}</button></div>`;
         else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='Y'?' selected':''}" disabled>${t('yes')}</button><button class="btn-ou under${pick==='N'?' selected':''}" disabled>${t('no')}</button></div>`;
         html+='</div>';
       });
-      html+=`<div style="display:flex;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--border);"><span style="font-family:var(--mono);font-size:13px;font-weight:700;padding:4px 12px;border-radius:999px;background:${earnedPts>0?'var(--green-light)':'var(--red-light)'};color:${earnedPts>0?'var(--green)':'var(--red)'};">${t('total')}: ${earnedPts>0?'+':''}${earnedPts} pts</span></div>`;
+      html+=`<div style="display:flex;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--border);"><span class="pred-correct ${earnedPts>0?'yes':'no'}">${t('total')}: ${earnedPts>0?'+':''}${earnedPts} pts</span></div>`;
       html+='</div>';
     } else if(hasRes&&comp.mode==='score'&&earnedPts!=null){
       html+=`<div class="pred-result-row"><div class="pred-made">${t('yourPick')}: <strong>${pl}</strong></div><span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'\u2717 0 pts'}</span></div>`;
@@ -3403,8 +3403,8 @@ async function loadAndRenderLeaderboard(comp){
       rows.sort((a,b)=>b.pts-a.pts||b.correct-a.correct);
       rows.forEach((r,i)=>r.rank=i+1);
       target.innerHTML=buildLBTable('Leaderboard',round.label,rows,
-        row=>`<td style="text-align:right;font-family:var(--mono);font-weight:800;color:var(--text);">${row.pts} pts</td><td style="text-align:right;font-size:11px;color:var(--text-3);">${row.correct}/${row.total}</td>`,
-        '<th style="width:80px;text-align:right;">Points</th><th style="width:80px;text-align:right;">Correct</th>',
+        row=>`<td style="text-align:center;font-family:var(--mono);font-weight:800;color:var(--text);">${row.pts} pts</td><td style="text-align:right;font-size:11px;color:var(--text-3);">${row.correct}/${row.total}</td>`,
+        '<th style="width:80px;text-align:center;">Points</th><th style="width:80px;text-align:right;">Correct</th>',
         round.prizes);
     } else if(comp.mode==='lms'){
       const events=(round.eventIds||[]).map(id=>({id,...EVENTS[id]})).filter(e=>e.home)
@@ -3444,8 +3444,8 @@ async function loadAndRenderLeaderboard(comp){
       rows.forEach((r,i)=>r.rank=i+1);
       lbPredHistoryCache={sub:round.label, byUser:histByUser};
       target.innerHTML=buildLBTable('Leaderboard',round.label,rows,
-        row=>`<td style="text-align:right;"><button class="lb-pts-btn" onclick="openPredHistory('${encodeURIComponent(row.u)}')">${row.pts} pts</button></td>`,
-        '<th style="width:96px;text-align:right;">Points</th>',
+        row=>`<td style="text-align:center;"><button class="lb-pts-btn" onclick="openPredHistory('${encodeURIComponent(row.u)}')">${row.pts} pts</button></td>`,
+        '<th style="width:96px;text-align:center;">Points</th>',
         round.prizes);
     } else if(comp.mode==='ranking'&&round.rankingTeams){
       // round.rankingTeams from the DB never has actualXG set directly —
@@ -3479,8 +3479,8 @@ async function loadAndRenderLeaderboard(comp){
       rows.sort((a,b)=>b.pts-a.pts);
       rows.forEach((r,i)=>r.rank=i+1);
       target.innerHTML=buildLBTable('Leaderboard',round.label,rows,
-        row=>`<td style="text-align:right;font-family:var(--mono);font-weight:800;color:var(--text);">${row.pts} pts</td><td style="text-align:right;font-size:11px;color:var(--text-3);">${row.correct}/${row.total}</td>`,
-        '<th style="width:80px;text-align:right;">Points</th><th style="width:80px;text-align:right;">Correct</th>',
+        row=>`<td style="text-align:center;font-family:var(--mono);font-weight:800;color:var(--text);">${row.pts} pts</td><td style="text-align:right;font-size:11px;color:var(--text-3);">${row.correct}/${row.total}</td>`,
+        '<th style="width:80px;text-align:center;">Points</th><th style="width:80px;text-align:right;">Correct</th>',
         round.prizes);
     } else {
       const rows2=Object.keys(byUser).map((u,i)=>({u,rank:i+1}));
@@ -3581,12 +3581,12 @@ async function loadAndRenderLeaderboardOverall(comp, target){
     if(comp.mode==='betting'){
       lbPredHistoryCache={sub:`Overall · ${rounds.length} round${rounds.length===1?'':'s'}`, byUser:overallHist||{}};
       target.innerHTML=buildLBTable('Leaderboard',`Overall · ${rounds.length} round${rounds.length===1?'':'s'}`,rows,
-        row=>`<td style="text-align:right;"><button class="lb-pts-btn" onclick="openPredHistory('${encodeURIComponent(row.u)}')">${row.pts} pts</button></td>`,
-        '<th style="width:96px;text-align:right;">Points</th>', prizes);
+        row=>`<td style="text-align:center;"><button class="lb-pts-btn" onclick="openPredHistory('${encodeURIComponent(row.u)}')">${row.pts} pts</button></td>`,
+        '<th style="width:96px;text-align:center;">Points</th>', prizes);
     } else {
       target.innerHTML=buildLBTable('Leaderboard',`Overall · ${rounds.length} round${rounds.length===1?'':'s'}`,rows,
-        row=>`<td style="text-align:right;font-family:var(--mono);font-weight:800;color:var(--text);">${row.pts} pts</td><td style="text-align:right;font-size:11px;color:var(--text-3);">${row.correct}/${row.total}</td>`,
-        '<th style="width:80px;text-align:right;">Points</th><th style="width:80px;text-align:right;">Correct</th>', prizes);
+        row=>`<td style="text-align:center;font-family:var(--mono);font-weight:800;color:var(--text);">${row.pts} pts</td><td style="text-align:right;font-size:11px;color:var(--text-3);">${row.correct}/${row.total}</td>`,
+        '<th style="width:80px;text-align:center;">Points</th><th style="width:80px;text-align:right;">Correct</th>', prizes);
     }
   }catch(e){
     console.error('loadAndRenderLeaderboardOverall:',e);

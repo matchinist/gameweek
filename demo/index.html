@@ -69,13 +69,15 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 
 
 .round-bar{display:flex;align-items:center;gap:8px;padding:10px 0;background:var(--white);border-bottom:1px solid var(--border);flex-wrap:wrap;}
-.round-select{font-family:var(--mono);font-size:11px;border:1px solid var(--border);background:var(--white);padding:5px 8px;border-radius:5px;cursor:pointer;outline:none;color:var(--text);}
+.round-select{height:32px;font-family:var(--mono);font-size:11px;border:1px solid var(--border);background:var(--white);padding:0 8px;border-radius:5px;cursor:pointer;outline:none;color:var(--text);}
 .round-select:focus{border-color:var(--accent);}
 .round-status{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap;}
 .round-status.open{background:var(--green-light);color:var(--green);}
 .round-status.completed{background:var(--bg);color:var(--text-3);}
 .round-bar-right{margin-left:auto;display:flex;align-items:center;gap:4px;}
-.predict-subtabs{display:flex;gap:2px;flex-shrink:0;background:var(--bg);border-radius:999px;padding:3px;}
+.predict-subtabs{display:flex;gap:2px;flex-shrink:0;background:var(--accent-light);border-radius:999px;padding:3px;}
+.rules-btn{height:32px;padding:0 16px;display:inline-flex;align-items:center;font-size:13px;font-weight:600;color:var(--text-3);background:var(--white);border:1px solid var(--border);border-radius:999px;cursor:pointer;flex-shrink:0;transition:color .13s;}
+.rules-btn:hover{color:var(--text);}
 .predict-subtabs-mobile{display:none;}
 .predict-subtabs-mobile select{font-family:var(--mono);font-size:10px;font-weight:700;border:1px solid var(--border);background:var(--white);padding:4px 8px;border-radius:4px;cursor:pointer;outline:none;color:var(--text);text-transform:uppercase;}
 .ps-tab{padding:7px 16px;font-size:13px;font-weight:600;color:var(--text-3);background:transparent;border:none;border-radius:999px;cursor:pointer;transition:all 0.13s;white-space:nowrap;text-align:center;}
@@ -83,7 +85,11 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .ps-tab.active{background:var(--comp-color);color:white;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,0.15);}
 @media(max-width:480px){
   .predict-subtabs{display:none !important;}
-  .predict-subtabs-mobile{display:block !important;}
+  .predict-subtabs-mobile{display:flex !important;width:100%;box-sizing:border-box;padding:3px;background:var(--accent-light);border-radius:11px;margin-top:10px;}
+  .predict-subtabs-mobile .ps-tab{flex:1;height:34px;padding:0 4px;border-radius:8px;font-size:13px;}
+  .predict-subtabs-mobile .ps-tab.active{background:var(--white);color:var(--text);box-shadow:0 1px 3px rgba(18,24,40,0.12);font-weight:700;}
+  .control-band-select{height:40px;border-radius:10px;background:var(--white);font-size:13.5px;max-width:none;flex:1;min-width:0;}
+  .rules-btn{height:40px;padding:0 16px;border-radius:10px;font-size:13.5px;}
   .events-list{grid-template-columns:1fr;padding:10px 0;}
   .event-card-top{padding:0;}
   .pred-area{padding:9px 10px;}
@@ -120,7 +126,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .control-band-select{height:32px;padding:0 10px;border:1px solid var(--border);background:var(--bg);border-radius:8px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--text);cursor:pointer;max-width:170px;}
 .control-band-countdown{display:flex;align-items:center;gap:11px;margin-top:12px;background:linear-gradient(90deg,var(--accent-light),oklch(0.97 0.01 275));border:1px solid oklch(0.9 0.04 275);border-radius:10px;padding:10px 13px;}
 .control-band-countdown-icon{width:30px;height:30px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
-@media(max-width:480px){.control-band-select{max-width:120px;}}
+
 .deadline-banner strong{font-family:var(--mono);font-size:10px;}
 .survival-tracker{padding:12px 16px;background:var(--bg);border-bottom:1px solid var(--border);}
 .st-label{font-size:10px;font-weight:600;color:var(--text-3);margin-bottom:8px;letter-spacing:0.3px;}
@@ -188,7 +194,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .prize-tooltip-arrow{position:absolute;top:100%;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid #26283b;}
 table.lb-table{width:100%;border-collapse:collapse;}
 .lb-table th{font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;padding:7px 14px;text-align:left;border-bottom:1px solid var(--border);}
-.lb-table th.r{text-align:right;}
+.lb-table th.r{text-align:center;}
 .lb-table td{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;}
 .lb-table tbody tr:last-child td{border-bottom:none;}
 .lb-table tbody tr:hover td{background:var(--bg);}
@@ -197,8 +203,8 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .lb-rank{font-family:var(--mono);font-size:12px;color:var(--text-3);text-align:center;width:32px;font-weight:700;}
 .lb-uname{font-weight:500;font-size:12px;}
 .lb-uname.me{color:var(--accent);font-weight:700;}
-.lb-pts{font-family:var(--mono);font-size:12px;font-weight:700;text-align:right;}
-.lb-num{font-family:var(--mono);font-size:11px;color:var(--text-2);text-align:right;}
+.lb-pts{font-family:var(--mono);font-size:12px;font-weight:700;text-align:center;}
+.lb-num{font-family:var(--mono);font-size:11px;color:var(--text-2);text-align:center;}
 .alive-tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;}
 .alive-tag.alive{background:var(--green-light);color:var(--green);}
 .alive-tag.out{background:var(--red-light);color:var(--red);}
@@ -449,7 +455,7 @@ const LB_DATA={
 const currentUser='demo_user';
 const MODE_DESCRIPTIONS={score:'Predict the exact score for each match. Points awarded for correct scores, correct team goals, or correct total.',betting:'Predict multiple markets per match: result, over/under, both teams to score. Points per correct market.',ranking:'Rank teams from highest to lowest expected goals (xG) for the gameweek. Points for each correct position.',roulette:'Spend 100 coins across a score matrix. Straight, split, and corner bets pay out purely on probability — no odds.',lineup:'Pick the starting XI for the next fixture. Earn 10 pts for each correct player, plus a 30 pt bonus if all 11 are correct. Locks 2 hours before kickoff.'};
 function roundBarRules(mode){
-  return `<button class="ps-tab" onclick="showRules('${mode}')" style="border:1px solid var(--border);flex-shrink:0;">Rules</button><div class="round-bar-spacer"></div>`;
+  return `<button class="rules-btn" onclick="showRules('${mode}')">Rules</button><div class="round-bar-spacer"></div>`;
 }
 const MODE_TITLES={score:'Predict the exact score',betting:'Predict the markets',ranking:'Rank the teams by xG',lineup:'Pick the starting XI',roulette:'Spin the score matrix'};
 function getModeExplainer(comp){
@@ -480,11 +486,11 @@ function controlBandOpen(comp, roundOptionsHtml, tabsHtml, tabsMobileHtml, selec
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
       <div style="display:flex;align-items:center;gap:8px;">
         <select class="round-select control-band-select" onchange="${selectOnchange||'changeRound(this.value)'}">${roundOptionsHtml}</select>
-        <button class="ps-tab" onclick="showRules('${comp.mode}')" style="border:1px solid var(--border);flex-shrink:0;">Rules</button>
+        <button class="rules-btn" onclick="showRules('${comp.mode}')">Rules</button>
       </div>
       <div class="predict-subtabs">${tabsHtml}</div>
-      <div class="predict-subtabs-mobile">${tabsMobileHtml}</div>
-    </div>`;
+    </div>
+    <div class="predict-subtabs-mobile">${tabsHtml}</div>`;
 }
 function controlBandCountdown(iconOrEmoji, label, valueHtml, rightHtml){
   return `<div class="control-band-countdown">
@@ -807,10 +813,7 @@ function renderLineupPredictor(comp){
       ${controlBandOpen(comp, roundSelect,
         `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Builder</button>
          <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`,
-        `<select onchange="switchPredictSubTab(this.value)">
-           <option value="predictions"${predictSubTab==='predictions'?' selected':''}>Builder</option>
-           <option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option>
-         </select>`)}
+        `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`)}
         ${countdownInner}
       </div>
 
@@ -1000,10 +1003,7 @@ function renderPredictionsPane(comp){
     comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join(''),
     `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button>
      <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`,
-    `<select onchange="switchPredictSubTab(this.value)">
-       <option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option>
-       <option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option>
-     </select>`);
+    `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`);
 
   if(comp.mode==='lms'&&eliminatedAtIdx>=0){
     // Eliminated — shows immediately rather than waiting for the whole round
@@ -1225,6 +1225,7 @@ function renderPredictionsPane(comp){
       if(comp.mode==='lms'&&isEliminated) lmsBlocked=true;
       const effectiveOpen=comp.mode==='lms'?(isOpen&&!lmsBlocked)
         :comp.mode==='score'?(isOpen&&(ev._scoreLockAt==null||Date.now()<ev._scoreLockAt))
+	:comp.mode==='betting'?(isOpen&&(ev._bettingLockAt==null||Date.now()<ev._bettingLockAt))
         :isOpen;
       html+=`<div style="opacity:${isEliminated?'0.4':'1'};">${renderEventCard(ev,comp,effectiveOpen)}</div>`;
     });
@@ -1310,7 +1311,7 @@ function renderEventCard(ev,comp,isRoundOpen){
   }
 
   let cls='event-card';
-  if(canPredict&&hasPred&&comp.mode!=='lms')cls+=' predicted';
+  if(canPredict&&hasPred&&comp.mode!=='lms'&&comp.mode!=='score'&&comp.mode!=='betting')cls+=' predicted';
   if(!canPredict)cls+=' locked-pred';
 
   const hv=(pred&&pred.h!==undefined)?pred.h:'';
@@ -1365,14 +1366,14 @@ function renderEventCard(ev,comp,isRoundOpen){
       bettingMarketDetails.forEach(({mkt,pick,pts,isRight})=>{
         html+=`<div><div style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);display:flex;justify-content:space-between;align-items:center;">
           <span>${mkt.label}</span>
-          <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:800;color:${isRight?'var(--green)':'var(--text-3)'};">+${pts} pts</span>
+          <span class="pred-correct ${isRight?'yes':'no'}">+${pts} pts</span>
         </div>`;
         if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${pick==='H'?' selected home':''}" disabled>Home Win</button><button class="btn-1x2${pick==='D'?' selected draw':''}" disabled>X</button><button class="btn-1x2${pick==='A'?' selected away':''}" disabled>Away</button></div>`;
         else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='O'?' selected':''}" disabled>Over</button><button class="btn-ou under${pick==='U'?' selected':''}" disabled>Under</button></div>`;
         else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='Y'?' selected':''}" disabled>Yes</button><button class="btn-ou under${pick==='N'?' selected':''}" disabled>No</button></div>`;
         html+='</div>';
       });
-      html+=`<div style="text-align:right;font-family:'DM Mono',monospace;font-size:15px;font-weight:800;color:${earnedPts>0?'var(--green)':'var(--text-3)'};padding-top:6px;border-top:1px solid oklch(0.92 0.004 260);">Total: ${earnedPts>0?'+':''}${earnedPts} pts</div>`;
+      html+=`<div style="display:flex;justify-content:flex-end;padding-top:8px;border-top:1px solid oklch(0.92 0.004 260);"><span class="pred-correct ${earnedPts>0?'yes':'no'}">Total: ${earnedPts>0?'+':''}${earnedPts} pts</span></div>`;
       html+='</div>';
     } else if(hasRes&&correct!=null){
       html+=`<div class="pred-result-row"><div class="pred-made">Your pick: <strong>${pl}</strong></div><span class="pred-correct ${correct?'yes':'no'}">${correct?'\u2713 Correct':'\u2717 Wrong'}</span></div>`;
@@ -1759,10 +1760,7 @@ function renderRouletteLeaderboardShell(comp){
       <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
     </div>
     <div class="predict-subtabs-mobile">
-      <select onchange="switchPredictSubTab(this.value)">
-        <option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option>
-        <option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option>
-      </select>
+      <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
     </div>
   </div>
   <div style="padding:16px;">`;
@@ -1800,10 +1798,7 @@ function renderRouletteHTML(){
         <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
       </div>
       <div class="predict-subtabs-mobile">
-        <select onchange="switchPredictSubTab(this.value)">
-          <option value="predictions"${predictSubTab==='predictions'?' selected':''}>Predictions</option>
-          <option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option>
-        </select>
+        <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
       </div>
     </div>
     <div class="deadline-banner" id="countdown-banner">⏱ &nbsp;Bets lock in <span id="countdown-text">Calculating...</span></div>
@@ -2103,10 +2098,7 @@ function renderLineupLeaderboardShell(comp){
   let html=controlBandOpen(comp, roundSelect,
     `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Builder</button>
      <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`,
-    `<select onchange="switchPredictSubTab(this.value)">
-       <option value="predictions"${predictSubTab==='predictions'?' selected':''}>Builder</option>
-       <option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>Leaderboard</option>
-     </select>`,
+    `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`,
     'changeLBSelection(this.value)');
   html+='</div>';
   const rows=LINEUP_LB.map(row=>({u:row.u, points:isOverall?row.pts+row.pts:row.pts, correct:row.correct}));
@@ -2135,10 +2127,7 @@ function renderLeaderboardPane(comp){
     `${comp.rounds.map((r,i)=>`<option value="${i}" ${(!isOverall&&sel===i)?'selected':''}>${r.label}${r.status==='open'?' (Current)':''}</option>`).join('')}<option value="overall" ${isOverall?'selected':''}>Overall</option>`,
     `<button class="ps-tab" onclick="switchPredictSubTab('predictions')">Predictions</button>
      <button class="ps-tab active" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`,
-    `<select onchange="switchPredictSubTab(this.value)">
-       <option value="predictions">Predictions</option>
-       <option value="leaderboard" selected>Leaderboard</option>
-     </select>`,
+    `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`,
     'changeLBSelection(this.value)');
   html+='</div>';
 
