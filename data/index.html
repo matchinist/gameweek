@@ -402,10 +402,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
       </div>
       <div class="form-group">
         <label class="form-label">Sport</label>
-        <select class="form-select" id="ct-sport">
-          <option value="football">Football</option>
-          <option value="cs2">CS2</option>
-        </select>
+        <select class="form-select" id="ct-sport"></select>
       </div>
       <div class="form-group">
         <label class="form-label">Badge Colour</label>
@@ -441,10 +438,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
       </div>
       <div class="form-group">
         <label class="form-label">Sport</label>
-        <select class="form-select" id="ct-sport">
-          <option value="football">Football</option>
-          <option value="cs2">CS2</option>
-        </select>
+        <select class="form-select" id="et-sport"></select>
       </div>
       <div class="form-group">
         <label class="form-label">Badge Colour</label>
@@ -1127,6 +1121,7 @@ function editTeam(id){
   document.getElementById('et-color').value=t.color;
   document.getElementById('et-color-hex').value=t.color;
   document.getElementById('et-logo').value=t.logo||'';
+  document.getElementById('et-sport').innerHTML=sportOptions(t.sport);
   const prev=document.getElementById('et-logo-preview');
   if(t.logo) prev.innerHTML=`<img src="${t.logo}" style="width:100%;height:100%;object-fit:contain;">`;
   else prev.textContent='IMG';
@@ -1139,6 +1134,7 @@ function saveTeamEdit(){
   t.short=(document.getElementById('et-short').value.trim()||t.short).toUpperCase();
   t.color=document.getElementById('et-color').value;
   t.logo=document.getElementById('et-logo').value.trim();
+  t.sport=document.getElementById('et-sport').value||t.sport||'football';
   closeModal('modal-edit-team');renderTeams();
   if(S.activePage==='tournament')renderTournamentView();
   save();toast('Team updated');
@@ -1994,6 +1990,8 @@ async function loadDMData(){
 
   renderTournamentNav();
   renderTeams();
+  const ctSport=document.getElementById('ct-sport');
+  if(ctSport) ctSport.innerHTML=sportOptions('football');
 }
 
 // Start
