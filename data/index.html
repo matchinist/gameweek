@@ -242,7 +242,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
         <div class="sidebar-section">
           <div style="display:flex;align-items:center;justify-content:space-between;padding:0 8px;margin-bottom:6px;">
             <div class="sidebar-section-label" style="margin-bottom:0;">Tournaments</div>
-            <button class="btn btn-primary btn-xs" onclick="openModal('modal-create-tournament')">+</button>
+            <button class="btn btn-primary btn-xs" onclick="document.getElementById('nt-sport').innerHTML=sportOptions('football');openModal('modal-create-tournament')">+</button>
           </div>
           <div id="tournament-nav"></div>
         </div>
@@ -615,6 +615,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
         <div><label class="form-label">Country / Region</label><input class="form-input" id="nt-country" placeholder="e.g. England" /></div>
         <div><label class="form-label">Type</label><select class="form-select" id="nt-type"><option value="league">League</option><option value="cup">Cup</option><option value="international">International</option></select></div>
       </div>
+      <div class="form-group"><label class="form-label">Sport</label><select class="form-select" id="nt-sport"></select></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-create-tournament')">Cancel</button>
@@ -680,6 +681,17 @@ async function saveEventFields(eid, fields){
   }catch(e){ console.error('event field save failed:',e.message); toast('Save failed: '+e.message); return false; }
 }
 
+const SPORTS = [
+  ['football','Football (Soccer)'],['basketball','Basketball'],['american_football','American Football'],
+  ['baseball','Baseball'],['ice_hockey','Ice Hockey'],['tennis','Tennis'],['cricket','Cricket'],
+  ['rugby_union','Rugby Union'],['rugby_league','Rugby League'],['volleyball','Volleyball'],
+  ['handball','Handball'],['golf','Golf'],['boxing','Boxing'],['mma','MMA'],
+  ['motorsport','Motorsport / F1'],['cycling','Cycling'],['esports','Esports'],
+  ['table_tennis','Table Tennis'],['badminton','Badminton'],['snooker','Snooker'],['darts','Darts']
+];
+function sportLabel(v){ const s=SPORTS.find(x=>x[0]===v); return s?s[1]:'Football (Soccer)'; }
+function sportOptions(sel){ return SPORTS.map(([v,l])=>`<option value="${v}"${v===(sel||'football')?' selected':''}>${l}</option>`).join(''); }
+
 async function save(){
   try{
     if(S.teams.length){
@@ -689,7 +701,7 @@ async function save(){
     }
     if(S.tournaments.length){
       const {error:e2} = await supa.from('gw_dm_tournaments')
-        .upsert(S.tournaments.map(t=>({id:t.id,name:t.name,country:t.country||'',type:t.type||'league',color:t.color||'#4F46E5',seasons:t.seasons||{}})),{onConflict:'id'});
+        .upsert(S.tournaments.map(t=>({id:t.id,name:t.name,country:t.country||'',type:t.type||'league',sport:t.sport||'football',color:t.color||'#4F46E5',seasons:t.seasons||{}})),{onConflict:'id'});
       if(e2){ toast('Save failed: '+e2.message); console.error('tournaments save:',e2); return false; }
     }
     const evArr = Object.entries(S.events).map(([id,ev])=>({
@@ -1150,9 +1162,10 @@ function renderTournamentView(){
   document.getElementById('main-header').innerHTML=`
     <div class="mh-left">
       <div class="tni-badge" style="background:${t.color};width:28px;height:28px;border-radius:6px;font-size:8px;">${abbr(t.name)}</div>
-      <div><div class="mh-title">${t.name}</div><div class="mh-sub">${t.country} · ${t.type}</div></div>
+      <div><div class="mh-title">${t.name}</div><div class="mh-sub">${t.country} · ${t.type} · ${sportLabel(t.sport)}</div></div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
+      <select class="form-select" style="width:auto;font-size:12px;padding:6px 8px;" onchange="setTournamentSport('${t.id}',this.value)">${sportOptions(t.sport)}</select>
       <button class="btn btn-danger btn-sm" onclick="deleteTournament('${t.id}')">Delete</button>
     </div>`;
 
@@ -1792,10 +1805,16 @@ function removeEventFromRound(eid){
 function createTournament(){
   const name=document.getElementById('nt-name').value.trim();
   if(!name){toast('Enter tournament name');return;}
-  const t={id:'t'+uid(),name,country:document.getElementById('nt-country').value.trim()||'—',type:document.getElementById('nt-type').value,color:'#4F46E5',seasons:{'2026/27':{teamIds:[],rounds:[]}}};
+  const t={id:'t'+uid(),name,country:document.getElementById('nt-country').value.trim()||'—',type:document.getElementById('nt-type').value,sport:document.getElementById('nt-sport').value||'football',color:'#4F46E5',seasons:{'2026/27':{teamIds:[],rounds:[]}}};
   S.tournaments.push(t);closeModal('modal-create-tournament');
   document.getElementById('nt-name').value='';document.getElementById('nt-country').value='';
   save();renderTournamentNav();navTo('tournament',t.id);toast(name+' created');
+}
+
+function setTournamentSport(id, sport){
+  const t=getTournament(id); if(!t) return;
+  t.sport=sport;
+  save(); renderTournamentView(); toast(t.name+' → '+sportLabel(sport));
 }
 
 function deleteTournament(id){
@@ -1966,7 +1985,7 @@ async function loadDMData(){
 
   S.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||''}))
     .sort((a,b)=>a.name.localeCompare(b.name));
-  S.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,color:t.color,seasons:t.seasons||{}}));
+  S.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,sport:t.sport||'football',color:t.color,seasons:t.seasons||{}}));
   const evMap={};
   (events||[]).forEach(e=>{
     evMap[e.id]={homeId:e.home_id,awayId:e.away_id,kickoff:e.kickoff,result:e.result,status:e.status,line:e.line||2.5,lineup:e.lineup||null,scorers:e.scorers||null};
