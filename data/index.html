@@ -1375,9 +1375,18 @@ function deleteRound(id){
 function addEventToRound(roundId){
   const homeId=document.getElementById('eq-home-'+roundId).value;
   const awayId=document.getElementById('eq-away-'+roundId).value;
-  const kickoff=document.getElementById('eq-ko-'+roundId).value;
+  const kickoffRaw=document.getElementById('eq-ko-'+roundId).value;
   if(!homeId||!awayId){toast('Select both teams');return;}
   if(homeId===awayId){toast('Home and away must differ');return;}
+  // The <input type="datetime-local"> value has no timezone info — new Date()
+  // parses it as the admin's own browser-local time, which is what we want
+  // (kickoff is always entered in the admin's local clock), then we freeze it
+  // as a real UTC instant so every visitor's device converts it correctly.
+  let kickoff='';
+  if(kickoffRaw){
+    const parsed=new Date(kickoffRaw);
+    if(!isNaN(parsed.getTime())) kickoff=parsed.toISOString();
+  }
   const eid='ev'+uid();
   S.events[eid]={homeId,awayId,kickoff,result:null,status:'upcoming',line:2.5};
   const season=getSeasonData(S.activeTournamentId,S.activeSeason);
