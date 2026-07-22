@@ -735,7 +735,7 @@ function changeLineupFormation(roundId, fmt){
   });
   lineupPicks[roundId]=np;
   lineupFormationByRound[roundId]=fmt;
-  lineupSaved[roundId]=false;
+  if(typeof lineupSaved!=='undefined') lineupSaved[roundId]=false;
   
   renderPredict();
 }
