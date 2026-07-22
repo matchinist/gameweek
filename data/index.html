@@ -531,6 +531,16 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
               style="text-align:center;font-family:var(--mono);font-size:16px;font-weight:600;padding:6px;">
           </div>
         </div>
+      <div style="display:flex;gap:12px;">
+          <div class="form-group" style="flex:1;min-width:0;">
+            <label class="form-label" style="text-align:center;">Home MVP</label>
+            <select class="form-select" id="score-modal-hmvp" style="width:100%;"></select>
+          </div>
+          <div class="form-group" style="flex:1;min-width:0;">
+            <label class="form-label" style="text-align:center;">Away MVP</label>
+            <select class="form-select" id="score-modal-amvp" style="width:100%;"></select>
+          </div>
+        </div>
       </div>
 
       <!-- LINEUPS TAB -->
@@ -1445,6 +1455,13 @@ function openScoreModal(eid){
   scoreLineup={home:normalizeLineupToSlots(ev.lineup?.home),away:normalizeLineupToSlots(ev.lineup?.away)};
   scoreScorers=(ev.scorers||[]).slice();
 
+  // MVP selects: each team's full squad, current value from result if saved
+  const mvpOpts=(tid,sel)=>['<option value="">— None —</option>',
+    ...players.filter(p=>p.team_id===tid).sort((a,b)=>(a.full_name||'').localeCompare(b.full_name||''))
+      .map(p=>`<option value="${p.id}"${p.id===sel?' selected':''}>${p.full_name}${p.jersey_number?' #'+p.jersey_number:''}</option>`)].join('');
+  document.getElementById('score-modal-hmvp').innerHTML=mvpOpts(ev.homeId, ev.result?.mvp_home||'');
+  document.getElementById('score-modal-amvp').innerHTML=mvpOpts(ev.awayId, ev.result?.mvp_away||'');
+
   switchScoreTab('result');
   document.getElementById('modal-score-entry').classList.add('open');
   setTimeout(()=>document.getElementById('score-modal-h').focus(),80);
@@ -1679,12 +1696,16 @@ async function saveResultTab(){
     const parsed=new Date(kickoff);
     if(!isNaN(parsed.getTime())) ev.kickoff=parsed.toISOString();
   }
+  const hmvp=document.getElementById('score-modal-hmvp')?.value||'';
+  const amvp=document.getElementById('score-modal-amvp')?.value||'';
   if(h!==''&&a!==''){
     ev.result={h:parseInt(h),a:parseInt(a)};
     if(hxg!=='')ev.result.home_xg=parseFloat(hxg);
     if(axg!=='')ev.result.away_xg=parseFloat(axg);
     if(hshots!=='')ev.result.home_shots=parseInt(hshots);
     if(ashots!=='')ev.result.away_shots=parseInt(ashots);
+    if(hmvp)ev.result.mvp_home=hmvp;
+    if(amvp)ev.result.mvp_away=amvp;
   } else {
     ev.result=null;
   }
