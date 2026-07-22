@@ -269,6 +269,14 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .pitch-box-b{position:absolute;left:50%;bottom:7px;width:52%;height:14%;margin-left:-26%;border:2px solid rgba(255,255,255,0.3);border-bottom:none;pointer-events:none;}
 .pitch-box-b-six{position:absolute;left:50%;bottom:7px;width:26%;height:6.5%;margin-left:-13%;border:2px solid rgba(255,255,255,0.3);border-bottom:none;pointer-events:none;}
 .lineup-pitch-container{position:relative;margin:12px;border-radius:10px;overflow:hidden;aspect-ratio:5/6;background:repeating-linear-gradient(#3aa35a 0 34px,#359152 34px 68px);box-shadow:inset 0 0 0 2px rgba(255,255,255,0.25);}
+.bonus-box{flex:1;min-width:0;border-radius:10px;padding:9px 6px;text-align:center;}
+.bonus-box.empty{border:1.5px dashed oklch(0.85 0.006 260);background:oklch(0.98 0.004 260);cursor:pointer;}
+.bonus-box.empty:active{background:oklch(0.95 0.004 260);}
+.bonus-box.filled{background:var(--accent-light);border:1px solid #C7D2FE;cursor:pointer;}
+.bonus-box.locked{cursor:default;}
+.bonus-box .bb-label{font-size:9.5px;font-weight:700;color:oklch(0.5 0.01 260);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bonus-box .bb-value{font-size:12px;font-weight:800;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bonus-box .bb-plus{font-size:16px;font-weight:400;color:oklch(0.65 0.01 260);line-height:1;}
 .bottom-nav{background:var(--white);border-top:1px solid var(--border);display:flex;flex-shrink:0;}
 .bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px;cursor:pointer;border:none;background:none;transition:all 0.13s;gap:3px;}
 .bnav-icon{font-size:18px;line-height:1;}
@@ -410,7 +418,11 @@ const I18N = {
     explainerBetting:'Earn {parts}. A wrong pick earns <strong style="color:var(--accent);">0 pts</strong> for that market.',
     explainerBettingNoMarkets:'Predict multiple markets per match — points awarded per correct pick, 0 for a wrong one.',
     explainerRanking:'Earn {per} for each team ranked in the correct position, plus a {bonus} bonus for a perfect ranking.',
-    explainerLineup:'Pick the starting XI for {team}. Earn <strong style="color:var(--accent);">10 pts</strong> for each correct player, plus a <strong style="color:var(--accent);">30 pt</strong> bonus if all 11 are correct.',
+    explainerLineup:'Pick the starting XI for {team}. Earn <strong style="color:var(--accent);">10 pts</strong> for each correct player, plus a <strong style="color:var(--accent);">30 pt</strong> bonus if all 11 are correct — and answer 3 bonus questions for <strong style="color:var(--accent);">30 pts</strong> each.',
+    form:'Form', bonusFirstGoal:'First Goal', bonusBestPlayer:'Best Player', bonusFirstSubOut:'First Sub-Off',
+    bonusPickPrompt:'Select player', bonusRequiredToast:'Answer all 3 bonus questions before saving',
+    bonusQFirstGoal:'First Goal Scorer', bonusQBestPlayer:'Best Player (MVP)', bonusQFirstSubOut:'First Player Substituted Off',
+    answerBonusQuestions:'Answer the bonus questions above',
     theTeam:'the team',
     freeToPlay:'Free to play. No deposit required.',
     forgotIntro:"Enter the email on your account and we'll send you a link to reset your password.",
@@ -453,7 +465,11 @@ const I18N = {
     explainerBetting:'{parts} kazanın. Bir markette yanlış tahmin o market için <strong style="color:var(--accent);">0 pts</strong> kazandırır.',
     explainerBettingNoMarkets:'Her maç için birden fazla marketi tahmin edin — her doğru tahmin puan kazandırır, yanlış tahmin 0 puan kazandırır.',
     explainerRanking:'Doğru sıradaki her takım için {per}, artı mükemmel sıralama için {bonus} bonus kazanın.',
-    explainerLineup:'{team} için ilk 11\u0027i seçin. Her doğru oyuncu için <strong style="color:var(--accent);">10 pts</strong>, 11 oyuncunun tamamı doğruysa <strong style="color:var(--accent);">30 pt</strong> bonus kazanın.',
+    explainerLineup:'{team} için ilk 11\u0027i seçin. Her doğru oyuncu için <strong style="color:var(--accent);">10 pts</strong>, 11 oyuncunun tamamı doğruysa <strong style="color:var(--accent);">30 pt</strong> bonus kazanın — ayrıca 3 bonus sorusuna doğru cevap başına <strong style="color:var(--accent);">30 pts</strong> kazanın.',
+    form:'Diziliş', bonusFirstGoal:'İlk Gol', bonusBestPlayer:'En İyi Oyuncu', bonusFirstSubOut:'İlk Değişen',
+    bonusPickPrompt:'Oyuncu seçin', bonusRequiredToast:'Kaydetmeden önce 3 bonus sorusunu da cevaplayın',
+    bonusQFirstGoal:'İlk Golü Atan Oyuncu', bonusQBestPlayer:'En İyi Oyuncu (MVP)', bonusQFirstSubOut:'İlk Değişen Oyuncu',
+    answerBonusQuestions:'Yukarıdaki bonus sorularını cevaplayın',
     theTeam:'takım',
     freeToPlay:'Ücretsiz oynanır. Yatırım gerekmez.',
     forgotIntro:'Hesabınızdaki e-postayı girin, şifrenizi sıfırlamanız için bir bağlantı gönderelim.',
@@ -576,7 +592,7 @@ async function buildCompsFromRealData(){
         homeLogo: home?.logo||'', awayLogo: away?.logo||'',
         homeId: ev.home_id, awayId: ev.away_id,
         kickoff: fmtKickoff(ev.kickoff), kickoffRaw: ev.kickoff||null, res: hasResult?ev.result:null,
-        lineup: ev.lineup||null
+        lineup: ev.lineup||null, scorers: ev.scorers||null
       };
       EVENTS_RAW[ev.id] = hasResult?ev.result:null;
     });
@@ -883,9 +899,11 @@ async function loginPlayer(player){
   if(lineupRoundIdToSave){
     const picks = lineupPicks[lineupRoundIdToSave]||{};
     const pickedIds = Object.values(picks);
-    if(pickedIds.length){
+    const lgBonus = lineupBonusPicks[lineupRoundIdToSave]||{};
+    const lgBonusComplete = !!(lgBonus.firstGoal && lgBonus.mvp && lgBonus.firstSubOut);
+    if(pickedIds.length===11 && lgBonusComplete){
       try{
-        await savePred(lineupRoundIdToSave, {players:pickedIds, formation:getLineupFmt(lineupRoundIdToSave)});
+        await savePred(lineupRoundIdToSave, {players:pickedIds, formation:getLineupFmt(lineupRoundIdToSave), bonus:lgBonus});
         clearLineupDraft(lineupRoundIdToSave);
         lineupSaved[lineupRoundIdToSave] = true;
         savedLineupThisLogin = true;
@@ -932,7 +950,7 @@ async function loadPlayerPreds(){
     if(owningComp && lineupArr){
       const teamId = owningComp.lineupConfig?.teamId;
       if(teamId) await loadTeamSquad(teamId);
-      reconstructLineupPicks(p.event_id, lineupArr, owningComp, Array.isArray(val)?null:val.formation);
+      reconstructLineupPicks(p.event_id, lineupArr, owningComp, Array.isArray(val)?null:val.formation, Array.isArray(val)?null:val.bonus);
     } else {
       preds[p.event_id] = val;
       if(p.event_id.endsWith('_ranking')) rankingSubmitted[p.event_id]=true;
@@ -949,9 +967,10 @@ function findLineupPlayerPos(pid, comp){
   return null;
 }
 
-function reconstructLineupPicks(roundId, pickedIds, comp, formation){
+function reconstructLineupPicks(roundId, pickedIds, comp, formation, bonus){
   if(!pickedIds || !pickedIds.length) return;
   if(formation && FORMATION_LAYOUTS[formation]) lineupFormationByRound[roundId]=formation;
+  if(bonus) lineupBonusPicks[roundId]=bonus;
   // The saved array is already in slot order — Object.values(picks) in saveLineup()
   // iterates numeric object keys ascending (0,1,2...), so index === slotIdx. Restore
   // it directly rather than re-deriving each player's "natural" position, which would
@@ -1378,6 +1397,33 @@ function changeLineupFormation(roundId, fmt){
 
 let lineupPicks = {}; // roundId -> {slotIdx -> playerId}
 let lineupSaved = {}; // roundId -> true once saved and unchanged since
+let lineupBonusPicks = {}; // roundId -> {firstGoal, mvp, firstSubOut} -> playerId
+
+// ── LINEUP BONUS QUESTIONS ────────────────────────────────────────────────
+// Resolved from the Data Manager's match events (goals + substitutions) and
+// the Result tab's per-team MVP fields — no separate config needed.
+function firstGoalScorerId(scorers){
+  if(!scorers || !scorers.length) return null;
+  const goals = scorers.filter(s=>!s.type||s.type==='goal').slice().sort((a,b)=>(a.minute||0)-(b.minute||0));
+  return goals.length ? goals[0].playerId : null;
+}
+function firstSubOutPlayerId(scorers){
+  if(!scorers || !scorers.length) return null;
+  const subs = scorers.filter(s=>s.type==='sub').slice().sort((a,b)=>(a.minute||0)-(b.minute||0));
+  return subs.length ? subs[0].outId : null;
+}
+function lineupBonusAnswers(ev, teamId){
+  if(!ev) return {firstGoal:null, mvp:null, firstSubOut:null};
+  const mvp = teamId
+    ? (ev.homeId===teamId ? (ev.res?.mvp_home||null) : ev.awayId===teamId ? (ev.res?.mvp_away||null) : null)
+    : null;
+  return { firstGoal: firstGoalScorerId(ev.scorers), firstSubOut: firstSubOutPlayerId(ev.scorers), mvp };
+}
+function findSquadPlayerById(comp, pid){
+  if(!pid) return null;
+  const squad = squadFor(comp);
+  return [...squad.GK,...squad.DEF,...squad.MID,...squad.FWD].find(p=>p.id===pid) || null;
+}
 
 
 function getLineupSlots(formation){
@@ -1455,6 +1501,10 @@ function renderLineupPredictor(comp){
   const slots = getLineupSlots(fmt);
   const pickCount = Object.keys(picks).length;
 
+  // Bonus picks for this round, and (once resolvable) the correct answers
+  const bonus = lineupBonusPicks[round.id]||{};
+  const bonusComplete = !!(bonus.firstGoal && bonus.mvp && bonus.firstSubOut);
+
   // Score if completed
   let scored = null;
   const teamId = comp.lineupConfig?.teamId;
@@ -1463,15 +1513,21 @@ function renderLineupPredictor(comp){
     if(ev.homeId===teamId) actual = flattenLineupSlots(ev.lineup.home);
     else if(ev.awayId===teamId) actual = flattenLineupSlots(ev.lineup.away);
   }
-  if(!isOpen && actual && pickCount===11){
-    const pickedIds = Object.values(picks);
-    let pts = 0;
-    let correctCount = 0;
-    pickedIds.forEach(pid=>{
-      if(actual.includes(pid)){ pts+=10; correctCount++; }
-    });
-    if(correctCount===11) pts+=30;
-    scored = {pts, correctCount};
+  const bonusAnswers = lineupBonusAnswers(ev, teamId);
+  const bonusCorrect = {
+    firstGoal: !!(bonusAnswers.firstGoal && bonus.firstGoal===bonusAnswers.firstGoal),
+    mvp: !!(bonusAnswers.mvp && bonus.mvp===bonusAnswers.mvp),
+    firstSubOut: !!(bonusAnswers.firstSubOut && bonus.firstSubOut===bonusAnswers.firstSubOut),
+  };
+  if(!isOpen && ev.res){
+    let xiPts = 0, correctCount = 0;
+    if(actual && pickCount===11){
+      const pickedIds = Object.values(picks);
+      pickedIds.forEach(pid=>{ if(actual.includes(pid)){ xiPts+=10; correctCount++; } });
+      if(correctCount===11) xiPts+=30;
+    }
+    const bonusPts = (bonusCorrect.firstGoal?30:0)+(bonusCorrect.mvp?30:0)+(bonusCorrect.firstSubOut?30:0);
+    scored = {pts: xiPts+bonusPts, correctCount, bonusPts};
   }
   if(scored!==null && round?.id){ const _pts=scored.pts; setTimeout(()=>loadLineupRank(round.id, teamId, _pts),60); }
 
@@ -1488,10 +1544,15 @@ function renderLineupPredictor(comp){
       const fallback = player.no!=null && player.no!=='' ? player.no : '';
       const dim = (isResulted && !isCorrect) ? 'opacity:0.55;' : '';
       const resultBadge = isResulted ? `<div style="position:absolute;bottom:-2px;right:-2px;width:15px;height:15px;border-radius:50%;background:${isCorrect?'#22c55e':'#dc2626'};display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:800;border:1.5px solid #fff;">${isCorrect?'✓':'✕'}</div>` : '';
+      let bonusBadge = '';
+      if(bonus.firstGoal && player.id===bonus.firstGoal) bonusBadge = `<div title="${t('bonusFirstGoal')}" style="position:absolute;top:-2px;right:-2px;width:15px;height:15px;border-radius:50%;background:#111827;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;font-weight:800;border:1.5px solid #fff;">G</div>`;
+      else if(bonus.mvp && player.id===bonus.mvp) bonusBadge = `<div title="${t('bonusBestPlayer')}" style="position:absolute;top:-2px;right:-2px;width:15px;height:15px;border-radius:50%;background:#F59E0B;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;font-weight:800;border:1.5px solid #fff;">\u2605</div>`;
+      else if(bonus.firstSubOut && player.id===bonus.firstSubOut) bonusBadge = `<div title="${t('bonusFirstSubOut')}" style="position:absolute;top:-2px;right:-2px;width:15px;height:15px;border-radius:50%;background:#DC2626;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:800;border:1.5px solid #fff;">\u2193</div>`;
       return `<div onclick="${click}" style="position:absolute;left:${xPct}%;top:${yPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:${isOpen?'pointer':'default'};z-index:3;width:64px;${dim}">
         <div style="position:relative;width:44px;height:44px;">
           <div style="width:44px;height:44px;border-radius:50%;background:#fff;border:2px solid ${ringColor};display:flex;align-items:center;justify-content:center;overflow:hidden;color:#000;font-weight:800;font-size:13px;box-shadow:0 2px 6px rgba(0,0,0,0.25);">${flagUrl?`<img src="${flagUrl}" alt="${player.nationality||''}" style="width:100%;height:100%;object-fit:cover;filter:brightness(0.9);" onerror="this.parentElement.textContent='${fallback}';">`:fallback}</div>
           ${resultBadge}
+          ${bonusBadge}
         </div>
         <span style="font-size:8.5px;font-weight:800;letter-spacing:0.3px;color:#fff;background:rgba(20,20,40,0.55);padding:1.5px 6px;border-radius:4px;white-space:nowrap;max-width:74px;overflow:hidden;text-overflow:ellipsis;">${player.name}</span>
       </div>`;
@@ -1531,9 +1592,40 @@ function renderLineupPredictor(comp){
   // pitch, folding it into the card itself. Nothing shown here before scoring;
   // the pick progress lives in the progress bar near the save button.
   const formationCtl = isOpen
-    ? `<select onchange="changeLineupFormation('${round.id}',this.value)" style="font-size:11px;font-weight:800;color:#fff;background:rgba(20,20,40,0.55);border:none;border-radius:7px;padding:5px 7px;cursor:pointer;outline:none;font-family:inherit;">${Object.keys(FORMATION_LAYOUTS).map(f=>`<option value="${f}"${f===fmt?' selected':''} style="color:#111;">${f}</option>`).join('')}</select>`
-    : `<span style="font-size:11px;font-weight:800;color:#fff;background:rgba(20,20,40,0.55);border-radius:7px;padding:5px 9px;">${fmt}</span>`;
-  const formRow = scored!==null ? `<div style="display:flex;align-items:center;justify-content:flex-end;padding:9px 16px;background:oklch(0.98 0.004 260);border-top:1px solid oklch(0.94 0.004 260);border-bottom:1px solid oklch(0.94 0.004 260);"><span style="font-size:12px;font-weight:800;color:var(--comp-color);">${scored.pts} pts <span style="font-weight:600;color:oklch(0.5 0.01 260);">· ${scored.correctCount}/11${scored.correctCount===11?' 🎯':''}</span> <span id="lineup-rank-pill" style="font-weight:700;color:oklch(0.55 0.01 260);">·&nbsp;—</span></span></div>` : '';
+    ? `<select onchange="changeLineupFormation('${round.id}',this.value)" style="font-size:11px;font-weight:800;color:oklch(0.25 0.01 260);background:oklch(0.94 0.006 275);border:none;border-radius:7px;padding:5px 7px;cursor:pointer;outline:none;font-family:inherit;">${Object.keys(FORMATION_LAYOUTS).map(f=>`<option value="${f}"${f===fmt?' selected':''}>${f}</option>`).join('')}</select>`
+    : `<span style="font-size:11px;font-weight:800;color:oklch(0.25 0.01 260);background:oklch(0.94 0.006 275);border-radius:7px;padding:5px 9px;">${fmt}</span>`;
+  const totalPts = scored ? scored.pts : 0;
+  const xiFraction = scored ? ` <span style="font-weight:600;color:oklch(0.5 0.01 260);">\u00b7 ${scored.correctCount}/11${scored.correctCount===11?' \ud83c\udfaf':''}</span> <span id="lineup-rank-pill" style="font-weight:700;color:oklch(0.55 0.01 260);">\u00b7&nbsp;\u2014</span>` : '';
+
+  function bonusBoxHTML(key, label, playerId){
+    const pl = findSquadPlayerById(comp, playerId);
+    const clickable = isOpen;
+    const clickAttr = clickable ? ` onclick="openBonusPicker('${round.id}','${key}')"` : '';
+    const cls = pl ? 'filled' : 'empty';
+    const stateCls = clickable ? cls : cls+' locked';
+    if(pl){
+      let mark = '';
+      if(scored){
+        const ok = bonusCorrect[key];
+        mark = ok ? ' <span style="color:#16a34a;">\u2713</span>' : ' <span style="color:#dc2626;">\u2717</span>';
+      }
+      return `<div class="bonus-box ${stateCls}"${clickAttr}><div class="bb-label">${label}</div><div class="bb-value">${pl.name}${mark}</div></div>`;
+    }
+    return `<div class="bonus-box ${stateCls}"${clickAttr}><div class="bb-label">${label}</div><div class="bb-plus">+</div></div>`;
+  }
+
+  const bonusRow = `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:oklch(0.98 0.004 260);border-top:1px solid oklch(0.94 0.004 260);border-bottom:1px solid oklch(0.94 0.004 260);">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:10px;font-weight:700;color:oklch(0.55 0.01 260);text-transform:uppercase;letter-spacing:0.5px;">${t('form')}</span>
+        ${formationCtl}
+      </div>
+      <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:800;color:var(--comp-color);">${totalPts} pts${xiFraction}</span>
+    </div>
+    <div style="display:flex;gap:8px;padding:10px 16px 4px;">
+      ${bonusBoxHTML('firstGoal', t('bonusFirstGoal'), bonus.firstGoal)}
+      ${bonusBoxHTML('mvp', t('bonusBestPlayer'), bonus.mvp)}
+      ${bonusBoxHTML('firstSubOut', t('bonusFirstSubOut'), bonus.firstSubOut)}
+    </div>`;
 
   const countdownInner = (isOpen && lineupLockAt) ? controlBandCountdown('⏱',t('roundLocksIn'),'<span id="countdown-text">Calculating...</span>', '') : '';
   if(isOpen && lineupLockAt) setTimeout(()=>startCountdown(lineupLockAt,()=>renderPredict()),50);
@@ -1560,10 +1652,9 @@ function renderLineupPredictor(comp){
       <div style="display:flex;justify-content:center;">
       <div style="width:100%;max-width:420px;background:#fff;border:1px solid oklch(0.92 0.004 260);border-radius:16px;box-shadow:0 2px 8px rgba(20,20,40,0.05);overflow:hidden;">
         <div style="padding:12px 16px 0;">${fixtureHeader}</div>
-        ${formRow}
+        ${bonusRow}
         <div class="pitch-wrap" style="max-width:none;margin:0;">
         <div class="lineup-pitch-container">
-          <div style="position:absolute;left:8px;top:8px;z-index:5;">${formationCtl}</div>
           <!-- Pitch markings -->
           <div style="position:absolute;inset:7px;border:2px solid rgba(255,255,255,0.35);border-radius:5px;pointer-events:none;"></div>
           <div class="pitch-midline"></div>
@@ -1578,18 +1669,22 @@ function renderLineupPredictor(comp){
           </div>
         </div>
         </div>
-        ${scored!==null ? `<div style="display:flex;justify-content:center;gap:16px;padding:8px 0 2px;font-size:10.5px;color:oklch(0.5 0.01 260);">
+        ${scored!==null ? `<div style="display:flex;justify-content:center;gap:14px;flex-wrap:wrap;padding:8px 0 2px;font-size:10px;color:oklch(0.5 0.01 260);">
           <span><span style="color:#22c55e;font-weight:800;">✓</span> ${t('correct')} · +10 pts</span>
           <span><span style="color:#dc2626;font-weight:800;">✕</span> Not in the XI</span>
+          <span>Bonus correct · +30 pts</span>
         </div>` : ''}
         <div style="padding:0 12px 14px;">
-          ${isOpen && pickCount===11 ? (lineupSaved[round.id] ? `
+          ${isOpen && pickCount===11 && bonusComplete ? (lineupSaved[round.id] ? `
           <button disabled style="width:100%;border:none;border-radius:9px;padding:11px;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;background:#fff;color:oklch(0.5 0.01 260);cursor:default;border:1px solid oklch(0.9 0.004 260);">
             ✓ ${t('lineupSaved')}
           </button>` : `
           <button onclick="saveLineup('${round.id}')" style="width:100%;border:none;border-radius:9px;padding:11px;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;cursor:pointer;background:var(--comp-color);color:#fff;box-shadow:0 3px 10px rgba(20,20,40,0.15);">
             ${t('saveStartingXI')}
-          </button>`) : isOpen ? `
+          </button>`) : isOpen && pickCount===11 ? `
+          <button disabled style="width:100%;border:none;border-radius:9px;padding:11px;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;background:oklch(0.95 0.004 260);color:oklch(0.65 0.01 260);cursor:not-allowed;">
+            ${t('answerBonusQuestions')}
+          </button>` : isOpen ? `
           <button disabled style="width:100%;border:none;border-radius:9px;padding:11px;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;background:oklch(0.95 0.004 260);color:oklch(0.65 0.01 260);cursor:not-allowed;">
             ${t('pickMore',{n:11-pickCount})}
           </button>` : ''}
@@ -1852,7 +1947,8 @@ function lineupDraftKey(roundId){ return 'gw_lineup_draft_'+CLIENT_PARAM+'_'+rou
 function saveLineupDraft(roundId){
   try{
     const picks = lineupPicks[roundId]||{};
-    if(Object.keys(picks).length) localStorage.setItem(lineupDraftKey(roundId), JSON.stringify({p:picks, f:getLineupFmt(roundId)}));
+    const bonus = lineupBonusPicks[roundId]||{};
+    if(Object.keys(picks).length) localStorage.setItem(lineupDraftKey(roundId), JSON.stringify({p:picks, f:getLineupFmt(roundId), b:bonus}));
     else localStorage.removeItem(lineupDraftKey(roundId));
   }catch(e){}
 }
@@ -1861,8 +1957,9 @@ function loadLineupDraft(roundId){
     const raw = localStorage.getItem(lineupDraftKey(roundId));
     if(!raw) return null;
     const parsed = JSON.parse(raw);
-    if(parsed && parsed.p){ // new shape {p:picks, f:formation}
+    if(parsed && parsed.p){ // new shape {p:picks, f:formation, b:bonus}
       if(parsed.f && FORMATION_LAYOUTS[parsed.f]) lineupFormationByRound[roundId]=parsed.f;
+      if(parsed.b) lineupBonusPicks[roundId]=parsed.b;
       return parsed.p;
     }
     return parsed; // legacy: plain picks object
@@ -1885,6 +1982,71 @@ function closeLineupPicker(){
   if(overlay)overlay.remove();
   document.body.style.overflow='';
 }
+
+// ── LINEUP BONUS QUESTIONS: player picker (whole squad, no position filter) ──
+function openBonusPicker(roundId, key){
+  const comp = COMPS[currentCompIdx];
+  const squad = squadFor(comp);
+  const current = (lineupBonusPicks[roundId]||{})[key];
+  const titleMap = {firstGoal:t('bonusQFirstGoal'), mvp:t('bonusQBestPlayer'), firstSubOut:t('bonusQFirstSubOut')};
+  const groups = [['FWD','Forward'],['MID','Midfielder'],['DEF','Defender'],['GK','Goalkeeper']];
+
+  const overlay = document.createElement('div');
+  overlay.className = 'lineup-picker-overlay';
+  overlay.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;';
+  overlay.onclick=(e)=>{if(e.target===overlay)closeLineupPicker();};
+  document.body.style.overflow='hidden';
+
+  let html = `<div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:420px;max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:20px 0 32px;">
+    <div style="padding:0 20px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid oklch(0.92 0.004 260);">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:oklch(0.58 0.01 260);text-transform:uppercase;letter-spacing:0.5px;">${t('bonusPickPrompt')}</div>
+        <div style="font-size:16px;font-weight:800;color:oklch(0.2 0.01 260);margin-top:2px;">${titleMap[key]}</div>
+      </div>
+      <button onclick="closeLineupPicker()" style="background:oklch(0.93 0.006 260);border:none;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;color:oklch(0.4 0.01 260);">×</button>
+    </div>`;
+
+  if(current){
+    html+=`<div style="padding:12px 20px;"><button onclick="removeBonusPick('${roundId}','${key}')" style="width:100%;padding:10px;background:#FEE2E2;color:#DC2626;border:1px solid #FCA5A5;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Remove selection</button></div>`;
+  }
+
+  const alpha = (a,b)=>a.name.localeCompare(b.name);
+  let any=false;
+  groups.forEach(([pos,label])=>{
+    const list=(squad[pos]||[]).slice().sort(alpha);
+    if(!list.length) return;
+    any=true;
+    html+=`<div style="padding:10px 20px 4px;font-size:10.5px;font-weight:700;color:oklch(0.58 0.01 260);text-transform:uppercase;letter-spacing:0.5px;">${label}</div>`;
+    list.forEach(pl=>{ html+=bonusPickerRow(pl,roundId,key,current); });
+  });
+  if(!any) html+=`<div style="padding:20px;text-align:center;font-size:13px;color:oklch(0.6 0.01 260);">Squad not loaded yet.</div>`;
+
+  html+='</div>';
+  overlay.innerHTML=html;
+  document.body.appendChild(overlay);
+}
+function bonusPickerRow(pl, roundId, key, current){
+  const isSel = current===pl.id;
+  return `<div onclick="pickBonusPlayer('${roundId}','${key}','${pl.id}');closeLineupPicker();renderPredict();" style="display:flex;align-items:center;gap:12px;padding:10px 20px;cursor:pointer;">
+      <div style="width:28px;text-align:center;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:oklch(0.45 0.01 260);flex-shrink:0;">${pl.no!=null&&pl.no!==''?pl.no:'-'}</div>
+      <div style="font-size:14px;font-weight:600;color:oklch(0.2 0.01 260);">${pl.name}</div>
+      ${isSel?`<span style="margin-left:auto;font-size:11px;color:var(--comp-color);font-weight:700;">✓ ${t('selected')}</span>`:''}
+    </div>`;
+}
+function pickBonusPlayer(roundId, key, pid){
+  if(!lineupBonusPicks[roundId]) lineupBonusPicks[roundId]={};
+  lineupBonusPicks[roundId][key]=pid;
+  lineupSaved[roundId]=false;
+  saveLineupDraft(roundId);
+  renderPredict();
+}
+function removeBonusPick(roundId, key){
+  if(lineupBonusPicks[roundId]) delete lineupBonusPicks[roundId][key];
+  lineupSaved[roundId]=false;
+  saveLineupDraft(roundId);
+  closeLineupPicker();
+  renderPredict();
+}
 function removeLineupPick(roundId, slotIdx){
   if(lineupPicks[roundId]) delete lineupPicks[roundId][slotIdx];
   lineupSaved[roundId]=false;
@@ -1894,15 +2056,18 @@ function removeLineupPick(roundId, slotIdx){
 }
 
 function saveLineup(roundId){
+  const picks = lineupPicks[roundId]||{};
+  const pickedIds = Object.values(picks);
+  if(!pickedIds.length){ toast('Pick some players first'); return; }
+  if(pickedIds.length<11){ toast(t('pickMore',{n:11-pickedIds.length})); return; }
+  const bonus = lineupBonusPicks[roundId]||{};
+  if(!bonus.firstGoal || !bonus.mvp || !bonus.firstSubOut){ toast(t('bonusRequiredToast')); return; }
   if(!currentPlayer){
     pendingSaveAction={type:'lineup',roundId};
     openAuthModal('Sign in to save your lineup');
     return;
   }
-  const picks = lineupPicks[roundId]||{};
-  const pickedIds = Object.values(picks);
-  if(!pickedIds.length){ toast('Pick some players first'); return; }
-  savePred(roundId, {players:pickedIds, formation:getLineupFmt(roundId)});
+  savePred(roundId, {players:pickedIds, formation:getLineupFmt(roundId), bonus});
   lineupSaved[roundId]=true;
   clearLineupDraft(roundId);
   toast('✓ Lineup saved!');
@@ -3827,7 +3992,7 @@ const RULES_HTML = {
 </div>`,
     lineup:`<h3 style="margin-bottom:12px;">Lineup Predictor Rules</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
-<div><strong style="color:var(--text);">How to play:</strong> Pick the starting XI (11 players) for the team's next fixture. Choose a formation (4-2-3-1, 4-3-3, 4-4-2 or 3-4-2-1). Locks 2 hours before kickoff.</div>
+<div><strong style="color:var(--text);">How to play:</strong> Pick the starting XI (11 players) for the team's next fixture. Choose a formation (4-2-3-1, 4-3-3, 4-4-2 or 3-4-2-1). Also answer 3 bonus questions — First Goal Scorer, Best Player (MVP), and First Sub-Off — each worth <strong style="color:var(--text);">30 points</strong> if correct. All 3 must be answered before you can save your lineup. Locks 2 hours before kickoff.</div>
 <div><strong style="color:var(--text);">Points:</strong></div>
 <div style="padding-left:12px;">
 • Each correct player in your lineup — <strong style="color:var(--green);">+10 pts</strong><br>
