@@ -830,36 +830,13 @@ tbody tr:hover td{background:var(--bg);}
       <div id="betting-markets-config" style="display:none;">
         <div class="divider"></div>
         <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;">Betting Markets</div>
-        <div style="font-size:11px;color:var(--text-3);margin-bottom:12px;">Select which markets users will predict for each event, and set points for a correct prediction.</div>
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          <label style="display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:10px;padding:10px;background:var(--bg);border-radius:7px;">
-            <input type="checkbox" id="mkt-1x2" checked style="accent-color:var(--accent);width:16px;height:16px;">
-            <div>
-              <div style="font-size:12px;font-weight:600;color:var(--text);">1X2 — Match Result</div>
-              <div style="font-size:11px;color:var(--text-3);">Home win, Draw, or Away win</div>
-            </div>
-            <span style="font-size:11px;color:var(--text-3);">pts</span>
-            <input class="form-input" type="number" id="pts-1x2" value="3" min="0" max="99" style="width:56px;text-align:center;font-family:var(--mono);font-weight:700;">
-          </label>
-          <label style="display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:10px;padding:10px;background:var(--bg);border-radius:7px;">
-            <input type="checkbox" id="mkt-ou25" style="accent-color:var(--accent);width:16px;height:16px;">
-            <div>
-              <div style="font-size:12px;font-weight:600;color:var(--text);">Over / Under 2.5 Goals</div>
-              <div style="font-size:11px;color:var(--text-3);">Total match goals above or below 2.5</div>
-            </div>
-            <span style="font-size:11px;color:var(--text-3);">pts</span>
-            <input class="form-input" type="number" id="pts-ou25" value="2" min="0" max="99" style="width:56px;text-align:center;font-family:var(--mono);font-weight:700;">
-          </label>
-          <label style="display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:10px;padding:10px;background:var(--bg);border-radius:7px;">
-            <input type="checkbox" id="mkt-btts" style="accent-color:var(--accent);width:16px;height:16px;">
-            <div>
-              <div style="font-size:12px;font-weight:600;color:var(--text);">Both Teams to Score</div>
-              <div style="font-size:11px;color:var(--text-3);">Will both teams score at least one goal?</div>
-            </div>
-            <span style="font-size:11px;color:var(--text-3);">pts</span>
-            <input class="form-input" type="number" id="pts-btts" value="2" min="0" max="99" style="width:56px;text-align:center;font-family:var(--mono);font-weight:700;">
-          </label>
+        <div class="form-group" style="margin-top:10px;">
+          <label class="form-label">Sport</label>
+          <select class="form-select" id="betting-sport" onchange="renderBettingMarketsList(this.value)"></select>
+          <div style="font-size:11px;color:var(--text-3);margin-top:6px;">Only sports covered by your assigned tournaments are listed. Markets below depend on the sport chosen.</div>
         </div>
+        <div style="font-size:11px;color:var(--text-3);margin:14px 0 10px;">Select which markets users will predict for each event, and set points for a correct prediction.</div>
+        <div id="betting-markets-list" style="display:flex;flex-direction:column;gap:10px;"></div>
       </div>
 
       <!-- Ranking config -->
@@ -1196,7 +1173,7 @@ async function saveAdminState(){
     // Upsert competitions
     if(state.competitions.length){
       const compRows = state.competitions.map(c=>({
-        id:c.id, client_key:CLIENT_KEY, name:c.name, mode:c.mode,
+        id:c.id, client_key:CLIENT_KEY, name:c.name, mode:c.mode, sport:c.sport||null,
         color:c.color, status:c.status, long_term:c.longTerm||false,
         scoring:c.scoring||null, markets:c.markets||null,
         ranking_config:c.rankingConfig||null,
@@ -1668,6 +1645,66 @@ const MODE_DESCRIPTIONS = {
   lineup:   { title:'Lineup Predictor',    text:'Users predict the starting 11 for a chosen team before each match. 10 pts for each correct player, +30 bonus if all 11 are correct. No rounds needed — the competition automatically picks up the next fixture for the selected team.' },
   roulette: { title:'Soccer Roulette',      text:'Users spend 100 coins across a score matrix — straight bets on exact scores, splits between two adjacent scores, or corner bets across four scores. Higher risk = higher payout. Add rounds by picking events from your Data Manager.' }
 };
+// ── SPORT-SPECIFIC BETTING MARKETS ──────────────────────────────────────────
+// Same label set as the Data Manager's tournament sport picker, kept in sync
+// manually since these are separate static files.
+const SPORT_LABELS = {
+  football:'Football (Soccer)', basketball:'Basketball', american_football:'American Football',
+  baseball:'Baseball', ice_hockey:'Ice Hockey', tennis:'Tennis', cricket:'Cricket',
+  rugby_union:'Rugby Union', rugby_league:'Rugby League', volleyball:'Volleyball',
+  handball:'Handball', golf:'Golf', boxing:'Boxing', mma:'MMA',
+  motorsport:'Motorsport / F1', cycling:'Cycling', esports:'Esports',
+  table_tennis:'Table Tennis', badminton:'Badminton', snooker:'Snooker', darts:'Darts'
+};
+function sportLabel(v){ return SPORT_LABELS[v] || 'Football (Soccer)'; }
+
+// Markets available per sport for the Betting Markets game mode. Each market
+// is either binary/3-way ('options' omitted, scored via the existing
+// pick===actual logic per type) or a labeled range ('options' present — the
+// scoring engine treats these the same way, matching the pick key to
+// whichever bucket the final result falls into).
+const SPORT_MARKETS = {
+  football: [
+    {type:'1x2',  label:'1X2 — Match Result',    sub:'Home win, Draw, or Away win',                    points:3},
+    {type:'ou25', label:'Over / Under 2.5 Goals', sub:'Total match goals above or below 2.5',           points:2},
+    {type:'btts', label:'Both Teams to Score',    sub:'Will both teams score at least one goal?',       points:2},
+  ],
+  handball: [
+    {type:'1x2',     label:'1X2 — Match Result',   sub:'Home win, Draw, or Away win',                                     points:3},
+    {type:'ptrange', label:'Total Points Range',   sub:'Combined final score of both teams: 0–50, 51–65, or 66+', points:3,
+      options:[{key:'r1',label:'0–50'},{key:'r2',label:'51–65'},{key:'r3',label:'66+'}]},
+  ],
+};
+function marketsForSport(sport){ return SPORT_MARKETS[sport] || SPORT_MARKETS.football; }
+
+function populateBettingSports(){
+  const sel = document.getElementById('betting-sport');
+  if(!sel) return;
+  const covered = getDMTournaments().map(t=>t.sport||'football');
+  const distinct = [...new Set(covered.length ? covered : ['football'])]
+    .filter(s => SPORT_MARKETS[s]) // only sports we actually have a market set for
+    .sort((a,b)=>sportLabel(a).localeCompare(sportLabel(b)));
+  const list = distinct.length ? distinct : ['football'];
+  sel.innerHTML = list.map(s=>`<option value="${s}">${sportLabel(s)}</option>`).join('');
+  renderBettingMarketsList(sel.value);
+}
+
+function renderBettingMarketsList(sport){
+  const el = document.getElementById('betting-markets-list');
+  if(!el) return;
+  const markets = marketsForSport(sport);
+  el.innerHTML = markets.map((m,i) => `
+    <label style="display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:10px;padding:10px;background:var(--bg);border-radius:7px;">
+      <input type="checkbox" id="mkt-${m.type}" ${i===0?'checked':''} style="accent-color:var(--accent);width:16px;height:16px;">
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--text);">${m.label}</div>
+        <div style="font-size:11px;color:var(--text-3);">${m.sub}${m.options?' — '+m.options.map(o=>o.label).join(' / '):''}</div>
+      </div>
+      <span style="font-size:11px;color:var(--text-3);">pts</span>
+      <input class="form-input" type="number" id="pts-${m.type}" value="${m.points}" min="0" max="99" style="width:56px;text-align:center;font-family:var(--mono);font-weight:700;">
+    </label>`).join('');
+}
+
 function updateModeDescription(){
   const mode = document.getElementById('new-comp-mode')?.value;
   const d = MODE_DESCRIPTIONS[mode];
@@ -1675,6 +1712,7 @@ function updateModeDescription(){
   if(el && d) el.innerHTML = `<div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;">${d.title}</div><div style="font-size:12px;color:var(--text-2);line-height:1.6;">${d.text}</div>`;
   document.getElementById('score-points-config').style.display   = mode==='score'   ? 'block' : 'none';
   document.getElementById('betting-markets-config').style.display = mode==='betting' ? 'block' : 'none';
+  if(mode==='betting') populateBettingSports();
   document.getElementById('ranking-config').style.display         = mode==='ranking' ? 'block' : 'none';
   document.getElementById('lineup-config').style.display          = mode==='lineup'  ? 'block' : 'none';
   if(mode==='lineup') populateLineupTeams();
@@ -1704,11 +1742,15 @@ async function createComp(){
       totalGoals: parseInt(document.getElementById('pts-total').value)||1,
     };
   }
+  let bettingSport = null;
   if(mode==='betting'){
-    markets = [];
-    if(document.getElementById('mkt-1x2').checked)  markets.push({type:'1x2',  label:'1X2 Result',          points: parseInt(document.getElementById('pts-1x2').value)||3});
-    if(document.getElementById('mkt-ou25').checked) markets.push({type:'ou25', label:'Over/Under 2.5',      points: parseInt(document.getElementById('pts-ou25').value)||2});
-    if(document.getElementById('mkt-btts').checked) markets.push({type:'btts', label:'Both Teams to Score', points: parseInt(document.getElementById('pts-btts').value)||2});
+    bettingSport = document.getElementById('betting-sport')?.value || 'football';
+    const defs = marketsForSport(bettingSport);
+    markets = defs.filter(m => document.getElementById('mkt-'+m.type)?.checked).map(m => {
+      const entry = { type:m.type, label:m.label, points: parseInt(document.getElementById('pts-'+m.type)?.value)||m.points };
+      if(m.options) entry.options = m.options; // pass range buckets through for the scoring engine / UI
+      return entry;
+    });
     if(!markets.length){ toast('Select at least one market'); return; }
   }
   let rankingConfig = null;
@@ -1736,7 +1778,7 @@ async function createComp(){
     lineupConfig = { teamId, teamName: team?.name||'' };
   }
   const c = {
-    id: 'c'+uid(), name, mode, scoring, markets, rankingConfig, lineupConfig, rouletteConfig,
+    id: 'c'+uid(), name, mode, sport: bettingSport, scoring, markets, rankingConfig, lineupConfig, rouletteConfig,
     longTerm: false, scopeText: document.getElementById('new-comp-scope')?.value.trim()||'',
     status: 'draft', color: mode==='lineup'?'#0EA5E9':'#8B5CF6', users: 0, predictions: 0, rounds: []
   };
@@ -2975,7 +3017,7 @@ function initOperatorChrome(){
     supa.from('gw_rounds').select('*').eq('client_key',CLIENT_KEY).order('sort_order'),
   ]);
   state.competitions = (comps||[]).map(c=>({
-    id:c.id, name:c.name, mode:c.mode, color:c.color, status:c.status,
+    id:c.id, name:c.name, mode:c.mode, sport:c.sport||null, color:c.color, status:c.status,
     longTerm:c.long_term, scoring:c.scoring, markets:c.markets,
     rankingConfig:c.ranking_config||null,
     lineupConfig:c.lineup_config||null,
