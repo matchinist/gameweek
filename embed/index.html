@@ -75,6 +75,8 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .round-status.completed{background:var(--bg);color:var(--text-3);}
 .round-bar-right{margin-left:auto;display:flex;align-items:center;gap:4px;}
 .predict-subtabs{display:flex;gap:2px;flex-shrink:0;background:var(--bg);border-radius:999px;padding:3px;}
+.rules-btn{padding:7px 16px;font-size:13px;font-weight:600;color:var(--text-3);background:var(--white);border:1px solid var(--border);border-radius:999px;cursor:pointer;flex-shrink:0;transition:color .13s;}
+.rules-btn:hover{color:var(--text);}
 .predict-subtabs-mobile{display:none;}
 .predict-subtabs-mobile select{font-family:var(--mono);font-size:10px;font-weight:700;border:1px solid var(--border);background:var(--white);padding:4px 8px;border-radius:4px;cursor:pointer;outline:none;color:var(--text);text-transform:uppercase;}
 .ps-tab{padding:7px 16px;font-size:13px;font-weight:600;color:var(--text-3);background:transparent;border:none;border-radius:999px;cursor:pointer;transition:all 0.13s;white-space:nowrap;text-align:center;}
@@ -82,7 +84,11 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .ps-tab.active{background:var(--comp-color);color:white;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,0.15);}
 @media(max-width:480px){
   .predict-subtabs{display:none !important;}
-  .predict-subtabs-mobile{display:block !important;}
+  .predict-subtabs-mobile{display:flex !important;width:100%;box-sizing:border-box;padding:3px;background:var(--bg);border-radius:11px;margin-top:10px;}
+  .predict-subtabs-mobile .ps-tab{flex:1;height:34px;padding:0 4px;border-radius:8px;font-size:13px;}
+  .predict-subtabs-mobile .ps-tab.active{background:var(--white);color:var(--text);box-shadow:0 1px 3px rgba(18,24,40,0.12);font-weight:700;}
+  .control-band-select{height:40px;border-radius:10px;background:var(--white);font-size:13.5px;max-width:none;flex:1;min-width:0;}
+  .rules-btn{height:40px;padding:0 16px;border-radius:10px;font-size:13.5px;}
   .events-list{grid-template-columns:1fr;padding:10px 0;}
   .event-card-top{padding:0;}
   .pred-area{padding:9px 10px;}
@@ -119,7 +125,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .control-band-select{height:32px;padding:0 10px;border:1px solid var(--border);background:var(--bg);border-radius:8px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--text);cursor:pointer;max-width:170px;}
 .control-band-countdown{display:flex;align-items:center;gap:11px;margin-top:12px;background:linear-gradient(90deg,var(--accent-light),oklch(0.97 0.01 275));border:1px solid oklch(0.9 0.04 275);border-radius:10px;padding:10px 13px;}
 .control-band-countdown-icon{width:30px;height:30px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
-@media(max-width:480px){.control-band-select{max-width:120px;}}
+
 .deadline-banner strong{font-family:var(--mono);font-size:10px;}
 .survival-tracker{padding:12px 16px;background:var(--bg);border-bottom:1px solid var(--border);}
 .st-label{font-size:10px;font-weight:600;color:var(--text-3);margin-bottom:8px;letter-spacing:0.3px;}
@@ -1152,13 +1158,13 @@ function controlBandOpen(comp, roundOptionsHtml, tabsHtml, tabsMobileHtml, selec
       <p style="margin:0;font-size:12px;line-height:1.45;color:var(--text-2);">${getModeExplainer(comp)}</p>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-      <div style="display:flex;align-items:center;gap:8px;">
+      <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
         <select class="round-select control-band-select" onchange="${selectOnchange||'changeRound(this.value)'}">${roundOptionsHtml}</select>
-        <button class="ps-tab" onclick="showRules('${comp.mode}')" style="border:1px solid var(--border);flex-shrink:0;">${t('rules')}</button>
+        <button class="rules-btn" onclick="showRules('${comp.mode}')">${t('rules')}</button>
       </div>
       <div class="predict-subtabs">${tabsHtml}</div>
-      <div class="predict-subtabs-mobile">${tabsMobileHtml}</div>
-    </div>`;
+    </div>
+    <div class="predict-subtabs-mobile">${tabsHtml}</div>`;
 }
 function controlBandCountdown(iconOrEmoji, label, valueHtml, rightHtml){
   return `<div class="control-band-countdown">
@@ -1883,10 +1889,8 @@ function renderPredictionsPane(comp){
       <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">${t('leaderboard')}</button>
     </div>
     <div class="predict-subtabs-mobile">
-      <select onchange="switchPredictSubTab(this.value)">
-        <option value="predictions"${predictSubTab==='predictions'?' selected':''}>${t('predictions')}</option>
-        <option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>${t('leaderboard')}</option>
-      </select>
+      <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">${t('predictions')}</button>
+      <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">${t('leaderboard')}</button>
     </div>
   </div>`;
 
@@ -2200,7 +2204,7 @@ function renderEventCard(ev,comp,isRoundOpen){
   }
 
   let cls='event-card';
-  if(canPredict&&hasPred&&comp.mode!=='lms')cls+=' predicted';
+  if(canPredict&&hasPred&&comp.mode!=='lms'&&comp.mode!=='betting')cls+=' predicted';
   if(!canPredict)cls+=' locked-pred';
 
   const hv=(pred&&pred.h!==undefined)?pred.h:'';
@@ -2211,7 +2215,9 @@ function renderEventCard(ev,comp,isRoundOpen){
   if(comp.mode==='score'&&canPredict){
     midSection=`<div class="score-inline-mid"><input class="score-num-inline${hv!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${hv}" id="sh-${ev.id}" oninput="pickScore('${ev.id}','h',this.value)"><span class="score-inline-dash">\u2013</span><input class="score-num-inline${av!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${av}" id="sa-${ev.id}" oninput="pickScore('${ev.id}','a',this.value)"></div>`;
   } else if(hasRes){
-    midSection=`<div class="ev-score">${ev.res.h}\u2013${ev.res.a}</div>`;
+    midSection = comp.mode==='betting'
+      ? `<div class="ev-score">${ev.res.h}<span style="font-size:11px;font-weight:400;color:var(--text-3);">-</span>${ev.res.a}</div>`
+      : `<div class="ev-score">${ev.res.h}\u2013${ev.res.a}</div>`;
   } else if(comp.mode==='score'&&hasPred&&!hasRes){
     midSection=`<div class="ev-score">${pred.h??'-'}\u2013${pred.a??'-'}</div>`;
   } else {
@@ -3212,7 +3218,7 @@ function renderEventCard(ev,comp,isOpen){
   }
 
   let cls='event-card';
-  if(canPredict&&hasPred&&comp.mode!=='lms')cls+=' predicted';
+  if(canPredict&&hasPred&&comp.mode!=='lms'&&comp.mode!=='betting')cls+=' predicted';
   if(!canPredict)cls+=' locked-pred';
 
   const hv=(pred&&pred.h!==undefined)?pred.h:'';
@@ -3223,7 +3229,9 @@ function renderEventCard(ev,comp,isOpen){
   if(comp.mode==='score'&&canPredict){
     midSection=`<div class="score-inline-mid"><input class="score-num-inline${hv!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${hv}" id="sh-${ev.id}" oninput="pickScore('${ev.id}','h',this.value)"><span class="score-inline-dash">\u2013</span><input class="score-num-inline${av!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${av}" id="sa-${ev.id}" oninput="pickScore('${ev.id}','a',this.value)"></div>`;
   } else if(hasRes){
-    midSection=`<div class="ev-score">${ev.res.h}\u2013${ev.res.a}</div>`;
+    midSection = comp.mode==='betting'
+      ? `<div class="ev-score">${ev.res.h}<span style="font-size:11px;font-weight:400;color:var(--text-3);">-</span>${ev.res.a}</div>`
+      : `<div class="ev-score">${ev.res.h}\u2013${ev.res.a}</div>`;
   } else if(comp.mode==='score'&&hasPred&&!hasRes){
     midSection=`<div class="ev-score">${pred.h??'-'}\u2013${pred.a??'-'}</div>`;
   } else {
@@ -3335,7 +3343,7 @@ function renderLeaderboardShell(comp){
      </select>`,
     'changeLBSelection(this.value)');
   html+='</div>';
-  html+='<div id="lb-content" style="padding:12px 16px 30px;"><div class="empty" style="padding:40px 20px;"><div class="empty-icon">⏳</div><div class="empty-title">Loading leaderboard…</div></div></div>';
+  html+='<div id="lb-content" style="padding:0 0 30px;"><div class="empty" style="padding:40px 20px;"><div class="empty-icon">⏳</div><div class="empty-title">Loading leaderboard…</div></div></div>';
   return html;
 }
 
@@ -3629,7 +3637,7 @@ function openPredHistory(uEnc){
       lastRound=h.roundLabel;
       body+=`<div style="font-size:11px;font-weight:800;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin:14px 0 8px;">${h.roundLabel}</div>`;
     }
-    const resStr=h.res?`${h.res.h}\u2013${h.res.a}`:'vs';
+    const resStr=h.res?`${h.res.h} - ${h.res.a}`:'vs';
     const totalPill=h.res?`<span class="ph-pill ${h.evPts>0?'win':'lose'}">${h.evPts>0?'+':''}${h.evPts} pts</span>`:`<span class="ph-pill wait">\u23F3</span>`;
     body+=`<div style="border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;">
