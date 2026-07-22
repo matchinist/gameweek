@@ -672,10 +672,73 @@ function flagImgUrl(nationality){
   return code ? `https://flagcdn.com/w80/${code}.png` : '';
 }
 
-// Only 4-2-3-1 is supported — kept as a map for compatibility with getLineupSlots().
+// Selectable formations. 4-2-3-1 stays the default; slot order for it is
+// unchanged so previously saved lineups keep their exact slot meaning.
 const FORMATIONS = {
-  '4-2-3-1': {GK:1,DEF:4,MID:5,FWD:1}, // 2 CDM + 3 AM = 5 midfielders, 11 total
+  '4-2-3-1': {GK:1,DEF:4,MID:5,FWD:1},
+  '4-3-3':   {GK:1,DEF:4,MID:3,FWD:3},
+  '4-4-2':   {GK:1,DEF:4,MID:4,FWD:2},
+  '3-4-2-1': {GK:1,DEF:3,MID:6,FWD:1},
 };
+const FORMATION_LAYOUTS = {
+  '4-2-3-1': [
+    {pos:'GK', x:50,y:90},
+    {pos:'DEF',x:14,y:66},{pos:'DEF',x:34,y:72},{pos:'DEF',x:66,y:72},{pos:'DEF',x:86,y:66},
+    {pos:'MID',x:37,y:48},{pos:'MID',x:63,y:48},{pos:'MID',x:50,y:30},{pos:'MID',x:21,y:30},{pos:'MID',x:79,y:30},
+    {pos:'FWD',x:50,y:12},
+  ],
+  '4-3-3': [
+    {pos:'GK', x:50,y:90},
+    {pos:'DEF',x:14,y:66},{pos:'DEF',x:34,y:72},{pos:'DEF',x:66,y:72},{pos:'DEF',x:86,y:66},
+    {pos:'MID',x:24,y:46},{pos:'MID',x:50,y:50},{pos:'MID',x:76,y:46},
+    {pos:'FWD',x:20,y:16},{pos:'FWD',x:50,y:12},{pos:'FWD',x:80,y:16},
+  ],
+  '4-4-2': [
+    {pos:'GK', x:50,y:90},
+    {pos:'DEF',x:14,y:66},{pos:'DEF',x:34,y:72},{pos:'DEF',x:66,y:72},{pos:'DEF',x:86,y:66},
+    {pos:'MID',x:13,y:44},{pos:'MID',x:37,y:49},{pos:'MID',x:63,y:49},{pos:'MID',x:87,y:44},
+    {pos:'FWD',x:36,y:14},{pos:'FWD',x:64,y:14},
+  ],
+  '3-4-2-1': [
+    {pos:'GK', x:50,y:90},
+    {pos:'DEF',x:24,y:70},{pos:'DEF',x:50,y:73},{pos:'DEF',x:76,y:70},
+    {pos:'MID',x:13,y:48},{pos:'MID',x:37,y:52},{pos:'MID',x:63,y:52},{pos:'MID',x:87,y:48},
+    {pos:'MID',x:32,y:28},{pos:'MID',x:68,y:28},
+    {pos:'FWD',x:50,y:11},
+  ],
+};
+
+let lineupFormationByRound = {}; // roundId -> formation
+function getLineupFmt(roundId){
+  const f=lineupFormationByRound[roundId];
+  return FORMATION_LAYOUTS[f] ? f : '4-2-3-1';
+}
+
+function changeLineupFormation(roundId, fmt){
+  if(!FORMATION_LAYOUTS[fmt]) return;
+  const oldFmt=getLineupFmt(roundId);
+  if(fmt===oldFmt) return;
+  // Re-bucket current picks by slot position and pour them into the new shape.
+  // Same-position slots fill first; MID<->FWD leftovers cross-fill (wingers /
+  // strikers blur between shapes); anything still left over is dropped.
+  const oldSlots=getLineupSlots(oldFmt);
+  const picks=lineupPicks[roundId]||{};
+  const buckets={GK:[],DEF:[],MID:[],FWD:[]};
+  oldSlots.forEach((s,i)=>{ if(picks[i]!=null) buckets[s.pos].push(picks[i]); });
+  const newSlots=getLineupSlots(fmt);
+  const np={};
+  newSlots.forEach((s,i)=>{ if(buckets[s.pos].length) np[i]=buckets[s.pos].shift(); });
+  newSlots.forEach((s,i)=>{
+    if(np[i]!=null) return;
+    if(s.pos==='FWD'&&buckets.MID.length) np[i]=buckets.MID.shift();
+    else if(s.pos==='MID'&&buckets.FWD.length) np[i]=buckets.FWD.shift();
+  });
+  lineupPicks[roundId]=np;
+  lineupFormationByRound[roundId]=fmt;
+  lineupSaved[roundId]=false;
+  
+  renderPredict();
+}
 
 // Actual result for scoring
 const LIV_ACTUAL_XI = {
@@ -683,15 +746,11 @@ const LIV_ACTUAL_XI = {
 };
 
 let lineupPicks = {}; // roundId -> {slotIdx -> playerId}
-let lineupFormation = '4-2-3-1';
+
 
 function getLineupSlots(formation){
-  const f = FORMATIONS[formation] || FORMATIONS['4-3-3'];
-  const slots = [];
-  ['GK','DEF','MID','FWD'].forEach(pos => {
-    for(let i=0;i<f[pos];i++) slots.push({pos, idx:i});
-  });
-  return slots;
+  const layout = FORMATION_LAYOUTS[formation] || FORMATION_LAYOUTS['4-2-3-1'];
+  return layout.map((s,i)=>({pos:s.pos, idx:i}));
 }
 
 function lineupPlayerInRound(roundId, pid){
@@ -710,7 +769,8 @@ function renderLineupPredictor(comp){
   const timeLocked = lineupLockAt!=null && Date.now() >= lineupLockAt;
   const isOpen = round.status==='open' && !timeLocked;
   const picks = lineupPicks[round.id]||{};
-  const slots = getLineupSlots(lineupFormation);
+  const fmt = getLineupFmt(round.id);
+  const slots = getLineupSlots(fmt);
   const pickCount = Object.keys(picks).length;
 
   // Score if completed
@@ -754,22 +814,7 @@ function renderLineupPredictor(comp){
     }
   }
 
-  // Fixed 4-2-3-1 shape (fullbacks pushed wider/higher than centre-backs,
-  // DM+CM pair centrally, AM flanked by wingers, lone striker up top) —
-  // always vertical now, so only the one layout is needed.
-  const LAYOUT_V = [
-    {pos:'GK',  x:50, y:90}, // GK
-    {pos:'DEF', x:14, y:66}, // LB
-    {pos:'DEF', x:34, y:72}, // CB
-    {pos:'DEF', x:66, y:72}, // CB
-    {pos:'DEF', x:86, y:66}, // RB
-    {pos:'MID', x:37, y:48}, // DM
-    {pos:'MID', x:63, y:48}, // CM
-    {pos:'MID', x:50, y:30}, // AM
-    {pos:'MID', x:21, y:30}, // LW
-    {pos:'MID', x:79, y:30}, // RW
-    {pos:'FWD', x:50, y:12}, // CF
-  ];
+  const LAYOUT_V = FORMATION_LAYOUTS[fmt];
 
   const positions = LAYOUT_V.map((s,i)=>({si:i, pos:s.pos, x:s.x, y:s.y}));
   const pitchSlots = positions.map(({si, pos, x, y}) => {
@@ -799,7 +844,7 @@ function renderLineupPredictor(comp){
   const formRow = `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 16px;background:oklch(0.98 0.004 260);border-top:1px solid oklch(0.94 0.004 260);border-bottom:1px solid oklch(0.94 0.004 260);">
     <div style="display:flex;align-items:center;gap:7px;">
       <span style="font-size:10.5px;font-weight:700;color:oklch(0.58 0.01 260);text-transform:uppercase;letter-spacing:0.4px;">Form</span>
-      <span style="font-size:11.5px;font-weight:800;color:oklch(0.25 0.01 260);background:oklch(0.94 0.006 275);border-radius:6px;padding:4px 9px;">4-2-3-1</span>
+      ${isOpen?`<select onchange="changeLineupFormation('${round.id}',this.value)" style="font-size:11.5px;font-weight:800;color:oklch(0.25 0.01 260);background:oklch(0.94 0.006 275);border:none;border-radius:6px;padding:4px 6px;cursor:pointer;outline:none;font-family:inherit;">${Object.keys(FORMATION_LAYOUTS).map(f=>`<option value="${f}"${f===fmt?' selected':''}>${f}</option>`).join('')}</select>`:`<span style="font-size:11.5px;font-weight:800;color:oklch(0.25 0.01 260);background:oklch(0.94 0.006 275);border-radius:6px;padding:4px 9px;">${fmt}</span>`}
     </div>
     ${scored!==null
       ? `<span style="font-size:12px;font-weight:800;color:var(--comp-color);">${scored.pts} pts <span style="font-weight:600;color:oklch(0.5 0.01 260);">· ${scored.correctCount}/11${scored.correctCount===11?' 🎯':''}</span></span>`
@@ -2426,7 +2471,7 @@ function showRules(mode){
 </div>`,
     lineup:`<h3 style="margin-bottom:12px;">Lineup Predictor Rules</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
-<div><strong style="color:var(--text);">How to play:</strong> Pick the starting XI (11 players) for the team's next fixture. Formation is fixed at 4-2-3-1. Locks 2 hours before kickoff.</div>
+<div><strong style="color:var(--text);">How to play:</strong> Pick the starting XI (11 players) for the team's next fixture. Choose a formation (4-2-3-1, 4-3-3, 4-4-2 or 3-4-2-1). Locks 2 hours before kickoff.</div>
 <div><strong style="color:var(--text);">Points:</strong></div>
 <div style="padding-left:12px;">
 • Each correct player in your lineup — <strong style="color:var(--green);">+10 pts</strong><br>
