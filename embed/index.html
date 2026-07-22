@@ -3390,21 +3390,27 @@ async function loadAndRenderLeaderboard(comp){
 
     const rows=[];
     if(comp.mode==='score'){
+      const histByUser={};
       Object.entries(byUser).forEach(([uname,userPreds])=>{
-        let pts=0, correct=0;
+        let pts=0, correct=0; const hist=[];
         userPreds.forEach(p=>{
-          const ev=EVENTS[p.event_id]; if(!ev||!ev.res) return;
+          const ev=EVENTS[p.event_id]; if(!ev) return;
           const val=unwrap(p.prediction);
-          const [earned]=scorePoints(val,ev.res,comp.scoring);
-          pts+=earned; if(earned>0)correct++;
+          if(ev.res){
+            const [earned,text]=scorePoints(val,ev.res,comp.scoring);
+            pts+=earned; if(earned>0)correct++;
+            hist.push({home:ev.home,away:ev.away,res:ev.res,pick:val,pts:earned,evPts:earned,text});
+          }
         });
         rows.push({u:uname,pts,correct,total:userPreds.length});
+        histByUser[uname]=hist;
       });
       rows.sort((a,b)=>b.pts-a.pts||b.correct-a.correct);
       rows.forEach((r,i)=>r.rank=i+1);
+      lbPredHistoryCache={sub:round.label, byUser:histByUser};
       target.innerHTML=buildLBTable('Leaderboard',round.label,rows,
-        row=>`<td style="text-align:center;font-family:var(--mono);font-weight:800;color:var(--text);">${row.pts} pts</td><td style="text-align:right;font-size:11px;color:var(--text-3);">${row.correct}/${row.total}</td>`,
-        '<th style="width:80px;text-align:center;">Points</th><th style="width:80px;text-align:right;">Correct</th>',
+        row=>`<td style="text-align:center;"><button class="lb-pts-btn" onclick="openPredHistory('${encodeURIComponent(row.u)}')">${row.pts} pts</button></td><td style="text-align:right;font-size:11px;color:var(--text-3);">${row.correct}/${row.total}</td>`,
+        '<th style="width:96px;text-align:center;">Points</th><th style="width:80px;text-align:right;">Correct</th>',
         round.prizes);
     } else if(comp.mode==='lms'){
       const events=(round.eventIds||[]).map(id=>({id,...EVENTS[id]})).filter(e=>e.home)
@@ -3518,13 +3524,16 @@ async function loadAndRenderLeaderboardOverall(comp, target){
     const totals={}; // username -> {pts, correct, total}
 
     if(comp.mode==='score'){
+      overallHist={};
       allPreds.forEach(p=>{
         const uname=p.username||p.player_id;
         if(!totals[uname]) totals[uname]={pts:0,correct:0,total:0};
+        if(!overallHist[uname]) overallHist[uname]=[];
         const ev=EVENTS[p.event_id]; if(!ev||!ev.res) return; // still registered above even if not yet resulted
         const val=unwrap(p.prediction);
-        const [earned]=scorePoints(val,ev.res,comp.scoring);
+        const [earned,text]=scorePoints(val,ev.res,comp.scoring);
         totals[uname].pts+=earned; if(earned>0)totals[uname].correct++; totals[uname].total++;
+        overallHist[uname].push({home:ev.home,away:ev.away,res:ev.res,pick:val,pts:earned,evPts:earned,text,roundLabel:(roundById[p.round_id]||{}).label||''});
       });
     } else if(comp.mode==='betting'){
       overallHist={};
@@ -3583,6 +3592,11 @@ async function loadAndRenderLeaderboardOverall(comp, target){
       target.innerHTML=buildLBTable('Leaderboard',`Overall · ${rounds.length} round${rounds.length===1?'':'s'}`,rows,
         row=>`<td style="text-align:center;"><button class="lb-pts-btn" onclick="openPredHistory('${encodeURIComponent(row.u)}')">${row.pts} pts</button></td>`,
         '<th style="width:96px;text-align:center;">Points</th>', prizes);
+    } else if(comp.mode==='score'){
+      lbPredHistoryCache={sub:`Overall · ${rounds.length} round${rounds.length===1?'':'s'}`, byUser:overallHist||{}};
+      target.innerHTML=buildLBTable('Leaderboard',`Overall · ${rounds.length} round${rounds.length===1?'':'s'}`,rows,
+        row=>`<td style="text-align:center;"><button class="lb-pts-btn" onclick="openPredHistory('${encodeURIComponent(row.u)}')">${row.pts} pts</button></td><td style="text-align:right;font-size:11px;color:var(--text-3);">${row.correct}/${row.total}</td>`,
+        '<th style="width:96px;text-align:center;">Points</th><th style="width:80px;text-align:right;">Correct</th>', prizes);
     } else {
       target.innerHTML=buildLBTable('Leaderboard',`Overall · ${rounds.length} round${rounds.length===1?'':'s'}`,rows,
         row=>`<td style="text-align:center;font-family:var(--mono);font-weight:800;color:var(--text);">${row.pts} pts</td><td style="text-align:right;font-size:11px;color:var(--text-3);">${row.correct}/${row.total}</td>`,
@@ -3644,6 +3658,13 @@ function openPredHistory(uEnc){
         <div style="font-size:13px;font-weight:700;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.home} <span style="font-family:var(--mono);color:var(--text-2);">${resStr}</span> ${h.away}</div>
         ${totalPill}
       </div>`;
+    if(h.pick&&!h.markets){
+      body+=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;font-size:12.5px;">
+        <span style="color:var(--text-2);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.text||''}</span>
+        <span style="font-family:var(--mono);font-weight:700;color:var(--text);flex-shrink:0;">${h.pick.h} - ${h.pick.a}</span>
+      </div></div>`;
+      return;
+    }
     h.markets.forEach(m=>{
       const mPill = m.hasRes
         ? `<span class="ph-pill ${m.isRight?'win':'lose'}">+${m.pts}</span>`

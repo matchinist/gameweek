@@ -204,6 +204,14 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .lb-uname{font-weight:500;font-size:12px;}
 .lb-uname.me{color:var(--accent);font-weight:700;}
 .lb-pts{font-family:var(--mono);font-size:12px;font-weight:700;text-align:center;}
+.lb-pts-btn{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--accent);background:var(--accent-light);border:1px solid #C7D2FE;border-radius:999px;padding:4px 11px;cursor:pointer;white-space:nowrap;transition:background .15s,transform .1s;}
+.lb-pts-btn:hover{background:#E0E7FF;}
+.lb-pts-btn:active{transform:scale(0.96);}
+.ph-overlay{position:fixed;inset:0;background:rgba(15,17,23,0.5);z-index:1200;display:flex;align-items:center;justify-content:center;padding:16px;}
+.ph-modal{background:var(--white);border-radius:16px;max-width:460px;width:100%;max-height:82vh;overflow-y:auto;padding:20px;box-shadow:0 20px 50px rgba(15,17,23,0.25);}
+.ph-pill{font-family:Inter,sans-serif;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap;}
+.ph-pill.win{background:oklch(0.9 0.09 155 / 0.35);color:oklch(0.38 0.13 155);}
+.ph-pill.lose{background:oklch(0.92 0.08 25 / 0.35);color:oklch(0.45 0.18 25);}
 .lb-num{font-family:var(--mono);font-size:11px;color:var(--text-2);text-align:center;}
 .alive-tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;}
 .alive-tag.alive{background:var(--green-light);color:var(--green);}
@@ -2138,9 +2146,33 @@ function renderLeaderboardPane(comp){
   const activePrizes = isOverall ? comp.overallPrizes : round?.prizes;
   let rank=1;
   if(comp.mode==='score'||comp.mode==='betting'){
+    const gen = comp.mode==='score'?demoScoreBreakdown:demoBettingBreakdown;
+    const byUser={};
+    if(isOverall){
+      const userSet={};
+      comp.rounds.forEach(r=>{(cData?.[r.id]||[]).forEach(row=>{userSet[row.u]=1;});});
+      rows=Object.keys(userSet).map(u=>{
+        let pts=0; const hist=[];
+        comp.rounds.forEach(r=>{
+          const srow=(cData?.[r.id]||[]).find(x=>x.u===u);
+          const res=gen(comp,r,u,srow?srow.points:0);
+          res.events.forEach(e=>{e.roundLabel=r.label;hist.push(e);});
+          pts+=res.pts;
+        });
+        byUser[u]=hist;
+        return {u,points:pts};
+      });
+    } else {
+      rows=(cData?.[round.id]||[]).map(srow=>{
+        const res=gen(comp,round,srow.u,srow.points);
+        byUser[srow.u]=res.events;
+        return {u:srow.u,points:res.pts};
+      });
+    }
+    lbPredHistoryCache={sub:isOverall?'Overall':round.label,mode:comp.mode,byUser};
     rows.sort((a,b)=>b.points-a.points);
     rows.forEach((r,i)=>{if(i>0&&rows[i].points<rows[i-1].points)rank=i+1;r.rank=rank;});
-    html+=buildLBTable(comp.name,isOverall?'Overall':round.label,rows,r=>`<td class="lb-num">${r.points} pts</td>`,'<th class="r" style="width:80px;">Points</th>',activePrizes);
+    html+=buildLBTable(comp.name,isOverall?'Overall':round.label,rows,r=>`<td style="text-align:center;"><button class="lb-pts-btn" onclick="openPredHistory('${encodeURIComponent(r.u)}')">${r.points} pts</button></td>`,'<th class="r" style="width:96px;">Points</th>',activePrizes);
   } else if(comp.mode==='ranking'){
     rows.sort((a,b)=>b.points-a.points);
     rows.forEach((r,i)=>{if(i>0&&rows[i].points<rows[i-1].points)rank=i+1;r.rank=rank;});
@@ -2153,6 +2185,142 @@ function renderLeaderboardPane(comp){
   return html;
 }
 function changeLBSelection(val){lbSelection[currentCompIdx]=val==='overall'?'overall':parseInt(val);renderPredict();}
+// ── LEADERBOARD POINTS BREAKDOWN POPUP (demo) ────────────────────────────────
+// Demo leaderboard data is static, so per-user predictions are generated
+// deterministically (seeded by username+round) to decompose each user's
+// points into a plausible event-by-event breakdown.
+let lbPredHistoryCache=null; // {sub, mode, byUser:{uname:[entry]}}
+
+function demoHash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function demoRng(seed){let s=seed||1;return function(){s=Math.imul(s^s>>>15,2246822519);s=Math.imul(s^s>>>13,3266489917);return ((s^=s>>>16)>>>0)/4294967296;};}
+
+function demoScoreBreakdown(comp,round,uname,target){
+  const rng=demoRng(demoHash(uname+'|'+round.id));
+  const evs=(round.eventIds||[]).map(id=>({id,...EVENTS[id]})).filter(e=>e&&e.res);
+  const order=[...evs].sort(()=>rng()-0.5);
+  const s=comp.scoring||{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1};
+  let remaining=target;
+  const out=[];
+  order.forEach(ev=>{
+    let outcome='zero';
+    if(remaining>=s.exactScore) outcome='exact';
+    else if(remaining>=Math.min(s.homeGoals,s.awayGoals)) outcome=rng()<0.5?'home':'away';
+    else if(remaining>=s.totalGoals&&(ev.res.h+ev.res.a)>0) outcome='total';
+    let pick,pts=0,text='No points scored';
+    if(outcome==='exact'){pick={h:ev.res.h,a:ev.res.a};pts=s.exactScore;text='Exact score correct';}
+    else if(outcome==='home'){pick={h:ev.res.h,a:ev.res.a+1+Math.floor(rng()*2)};pts=s.homeGoals;text='Home team goals correct';}
+    else if(outcome==='away'){pick={h:ev.res.h+1+Math.floor(rng()*2),a:ev.res.a};pts=s.awayGoals;text='Away team goals correct';}
+    else if(outcome==='total'){
+      if(ev.res.h!==ev.res.a){pick={h:ev.res.a,a:ev.res.h};}
+      else{pick={h:ev.res.h+1,a:Math.max(0,ev.res.a-1)};}
+      pts=s.totalGoals;text='Total goals correct';
+    } else {pick={h:ev.res.h+1,a:ev.res.a+2};}
+    remaining-=pts;
+    out.push({home:ev.home,away:ev.away,res:ev.res,pick,pts,text,evPts:pts});
+  });
+  return {pts:out.reduce((t,e)=>t+e.pts,0),events:out};
+}
+
+function demoBettingBreakdown(comp,round,uname,target){
+  const rng=demoRng(demoHash(uname+'|'+round.id));
+  const evs=(round.eventIds||[]).map(id=>({id,...EVENTS[id]})).filter(e=>e&&e.res);
+  const order=[...evs].sort(()=>rng()-0.5);
+  const mkts=comp.markets||[];
+  const p3=(mkts.find(m=>m.type==='1x2')||{}).points||3;
+  const p2=(mkts.find(m=>m.type==='ou25')||{}).points||2;
+  const E=order.length;
+  // Decompose target into n3 * p3 + n2 * p2 within capacity (1x p3 and 2x p2 per event)
+  let n3=target%2===1?1:0, n2=Math.floor((target-p3*n3)/p2);
+  while(n2>2*E&&n3+2<=E){n3+=2;n2=Math.floor((target-p3*n3)/p2);}
+  if(n2<0){n3=0;n2=0;}
+  n3=Math.min(n3,E);n2=Math.min(n2,2*E);
+  const out=[];
+  order.forEach(ev=>{
+    const markets=[];let evPts=0;
+    mkts.forEach(mkt=>{
+      let actual=null;
+      if(mkt.type==='1x2') actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
+      else if(mkt.type==='ou25') actual=(ev.res.h+ev.res.a)>2.5?'O':'U';
+      else if(mkt.type==='btts') actual=(ev.res.h>0&&ev.res.a>0)?'Y':'N';
+      let take=false;
+      if(mkt.type==='1x2'&&n3>0){take=true;n3--;}
+      else if(mkt.type!=='1x2'&&n2>0){take=true;n2--;}
+      let pick;
+      if(take){pick=actual;evPts+=(mkt.points||0);}
+      else if(mkt.type==='1x2'){const others=['H','D','A'].filter(x=>x!==actual);pick=others[Math.floor(rng()*others.length)];}
+      else if(mkt.type==='ou25'){pick=actual==='O'?'U':'O';}
+      else{pick=actual==='Y'?'N':'Y';}
+      markets.push({mkt,pick,isRight:take,pts:take?(mkt.points||0):0});
+    });
+    out.push({home:ev.home,away:ev.away,res:ev.res,markets,evPts});
+  });
+  return {pts:out.reduce((t,e)=>t+e.evPts,0),events:out};
+}
+
+function demoPickLabel(mkt,pick){
+  if(pick==null)return '\u2014';
+  if(mkt.type==='1x2')return pick==='H'?'Home Win':pick==='D'?'X':'Away';
+  if(mkt.type==='ou25')return pick==='O'?'Over':'Under';
+  if(mkt.type==='btts')return pick==='Y'?'Yes':'No';
+  return pick;
+}
+
+function openPredHistory(uEnc){
+  const u=decodeURIComponent(uEnc);
+  if(!lbPredHistoryCache)return;
+  const hist=lbPredHistoryCache.byUser[u]||[];
+  const safeU=u.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  let body='',lastRound=null;
+  hist.forEach(h=>{
+    if(!h.res)return;
+    if(h.roundLabel&&h.roundLabel!==lastRound){
+      lastRound=h.roundLabel;
+      body+=`<div style="font-size:11px;font-weight:800;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin:14px 0 8px;">${h.roundLabel}</div>`;
+    }
+    const totalPill=`<span class="ph-pill ${h.evPts>0?'win':'lose'}">${h.evPts>0?'+':''}${h.evPts} pts</span>`;
+    body+=`<div style="border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;">
+        <div style="font-size:13px;font-weight:700;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.home} <span style="font-family:var(--mono);color:var(--text-2);">${h.res.h} - ${h.res.a}</span> ${h.away}</div>
+        ${totalPill}
+      </div>`;
+    if(h.markets){
+      h.markets.forEach(m=>{
+        body+=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;font-size:12.5px;">
+          <span style="color:var(--text-2);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.mkt.label}</span>
+          <span style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+            <span style="font-weight:600;color:var(--text);">${demoPickLabel(m.mkt,m.pick)}</span>
+            <span class="ph-pill ${m.isRight?'win':'lose'}">+${m.pts}</span>
+          </span></div>`;
+      });
+    } else if(h.pick){
+      body+=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;font-size:12.5px;">
+        <span style="color:var(--text-2);">${h.text||''}</span>
+        <span style="font-family:var(--mono);font-weight:700;color:var(--text);flex-shrink:0;">${h.pick.h} - ${h.pick.a}</span>
+      </div>`;
+    }
+    body+='</div>';
+  });
+  if(!body)body='<div class="empty" style="padding:30px 10px;"><div class="empty-icon">\uD83D\uDD2E</div><div class="empty-title">No predictions yet</div></div>';
+  let wrap=document.getElementById('pred-history-modal');
+  if(!wrap){wrap=document.createElement('div');wrap.id='pred-history-modal';document.body.appendChild(wrap);}
+  wrap.innerHTML=`<div class="ph-overlay" onclick="if(event.target===this)closePredHistory()">
+    <div class="ph-modal">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div style="min-width:0;">
+          <div style="font-weight:800;font-size:15px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${safeU}</div>
+          <div style="font-size:12px;color:var(--text-3);">${lbPredHistoryCache.sub||''}</div>
+        </div>
+        <button onclick="closePredHistory()" style="border:none;background:var(--bg);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:13px;color:var(--text-2);flex-shrink:0;">\u2715</button>
+      </div>
+      ${body}
+    </div>
+  </div>`;
+}
+function closePredHistory(){
+  const wrap=document.getElementById('pred-history-modal');
+  if(wrap)wrap.innerHTML='';
+}
+
 function lbInitials(name){
   const parts=(name||'').replace(/[^a-z0-9_ ]/gi,'').split(/[_ ]/).filter(Boolean);
   return ((parts[0]?.[0]||'')+(parts[1]?.[0]||parts[0]?.[1]||'')).toUpperCase();
