@@ -898,7 +898,7 @@ function renderLineupPredictor(comp){
         const ok = bonusCorrect[key];
         mark = ok ? ' <span style="color:#16a34a;">\u2713</span>' : ' <span style="color:#dc2626;">\u2717</span>';
       }
-      return `<div class="bonus-box ${stateCls}"${clickAttr}><div class="bb-label">${label}</div><div class="bb-value">${pl.name}${mark}</div></div>`;
+      return `<div class="bonus-box ${stateCls}"${clickAttr}><div class="bb-label">${label}</div><div class="bb-value">${shortPitchName(pl.name)}${mark}</div></div>`;
     }
     return `<div class="bonus-box ${stateCls}"${clickAttr}><div class="bb-label">${label}</div><div class="bb-plus">+</div></div>`;
   }
