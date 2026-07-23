@@ -1551,8 +1551,12 @@ function renderLineupLists(){
 
 function toggleLineupPlayer(side,playerId){
   const set=new Set(scoreLineup[side]||[]);
-  if(set.has(playerId)) set.delete(playerId);
-  else set.add(playerId);
+  if(set.has(playerId)){
+    set.delete(playerId);
+  } else {
+    if(set.size>=11){ toast('Starting XI is limited to 11 players — remove one first'); return; }
+    set.add(playerId);
+  }
   scoreLineup[side]=[...set];
   renderLineupLists();
 }
