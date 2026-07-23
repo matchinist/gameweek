@@ -3575,7 +3575,24 @@ function renderEventCard(ev,comp,isOpen){
       }
     }
   } else {
-    html+=`<div style="font-size:12px;color:var(--text-3);">${t('noPredictionMade')}</div>`;
+    if(comp.mode==='betting'){
+      // Locked with no prediction made: still show the markets (disabled,
+      // so the player can see what they missed) instead of hiding them
+      // behind a bare text message, with the warning at the bottom.
+      const markets=comp.markets||[];
+      html+='<div style="display:flex;flex-direction:column;gap:8px;">';
+      markets.forEach(mkt=>{
+        html+=`<div><div class="pred-label" style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);">${marketLabel(mkt)}</div>`;
+        if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2" disabled style="opacity:0.55;">${t('homeWin')}</button><button class="btn-1x2" disabled style="opacity:0.55;">X</button><button class="btn-1x2" disabled style="opacity:0.55;">${t('away')}</button></div>`;
+        else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou" disabled style="opacity:0.55;">${t('over')}</button><button class="btn-ou" disabled style="opacity:0.55;">${t('under')}</button></div>`;
+        else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou" disabled style="opacity:0.55;">${t('yes')}</button><button class="btn-ou" disabled style="opacity:0.55;">${t('no')}</button></div>`;
+        html+='</div>';
+      });
+      html+=`<div style="text-align:left;font-size:12px;color:var(--red);font-weight:600;">\u26a0\ufe0f ${t('noPredictionMade')}</div>`;
+      html+='</div>';
+    } else {
+      html+=`<div style="font-size:12px;color:var(--text-3);">${t('noPredictionMade')}</div>`;
+    }
     if(comp.mode==='lms'&&hasRes&&ev._survivorCount!==undefined){
       html+=`<div style="text-align:left;font-family:var(--sans);font-size:11px;font-weight:700;color:var(--text-2);margin-top:6px;">${ev._survivorCount} survived</div>`;
     }
