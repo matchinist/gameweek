@@ -592,7 +592,7 @@ async function buildCompsFromRealData(){
         homeLogo: home?.logo||'', awayLogo: away?.logo||'',
         homeId: ev.home_id, awayId: ev.away_id,
         kickoff: fmtKickoff(ev.kickoff), kickoffRaw: ev.kickoff||null, res: hasResult?ev.result:null,
-        lineup: ev.lineup||null, scorers: ev.scorers||null
+        lineup: ev.lineup||null, scorers: ev.scorers||null, status: ev.status||'upcoming'
       };
       EVENTS_RAW[ev.id] = hasResult?ev.result:null;
     });
@@ -1513,7 +1513,12 @@ function renderLineupPredictor(comp){
     if(ev.homeId===teamId) actual = flattenLineupSlots(ev.lineup.home);
     else if(ev.awayId===teamId) actual = flattenLineupSlots(ev.lineup.away);
   }
-  const bonusAnswers = lineupBonusAnswers(ev, teamId);
+  // Bonus questions can't be answered honestly mid-match — a "first goal"
+  // pick could still be overtaken, a sub could still happen — so they only
+  // resolve once the event is explicitly marked Finished in the Data
+  // Manager, regardless of whether scorers/MVP data already exists.
+  const bonusResolved = ev.status === 'completed';
+  const bonusAnswers = bonusResolved ? lineupBonusAnswers(ev, teamId) : {firstGoal:null, mvp:null, firstSubOut:null};
   const bonusCorrect = {
     firstGoal: !!(bonusAnswers.firstGoal && bonus.firstGoal===bonusAnswers.firstGoal),
     mvp: !!(bonusAnswers.mvp && bonus.mvp===bonusAnswers.mvp),
@@ -1521,10 +1526,9 @@ function renderLineupPredictor(comp){
   };
   // Points show as soon as *any* piece is resolvable, independent of whether
   // the others are — e.g. the starting XI is often entered before the final
-  // score, and each bonus question resolves from its own data (goals/subs
-  // don't require a final score; MVP does). Whatever isn't known yet simply
-  // contributes 0 rather than blocking the whole total.
-  if(!isOpen && (actual || ev.res || (ev.scorers && ev.scorers.length))){
+  // score, and the XI portion doesn't need the match to be finished. Bonus
+  // points only ever contribute once bonusResolved is true (see above).
+  if(!isOpen && (actual || bonusResolved)){
     let xiPts = 0, correctCount = 0;
     if(actual && pickCount===11){
       const pickedIds = Object.values(picks);
@@ -1610,9 +1614,11 @@ function renderLineupPredictor(comp){
     const stateCls = clickable ? cls : cls+' locked';
     if(pl){
       let mark = '';
-      if(scored){
+      if(bonusResolved){
         const ok = bonusCorrect[key];
         mark = ok ? ' <span style="color:#16a34a;">\u2713</span>' : ' <span style="color:#dc2626;">\u2717</span>';
+      } else if(!isOpen){
+        mark = ' <span style="color:oklch(0.65 0.01 260);" title="Resolves once the match is marked Finished">\u23f3</span>';
       }
       return `<div class="bonus-box ${stateCls}"${clickAttr}><div class="bb-label">${label}</div><div class="bb-value">${pl.name}${mark}</div></div>`;
     }

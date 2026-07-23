@@ -556,7 +556,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
       <!-- EVENTS TAB -->
       <div id="score-step-3" style="display:none;max-width:460px;margin:0 auto;">
         <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;">Match Events</div>
-        <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;">Pick the event type first, then fill in the details. Goals use starting XI players (Lineups tab); substitutions bring squad players on for XI players.</div>
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;">Pick the event type first, then fill in the details. Any squad player from either team can be selected — not just the starting XI — so you can record or correct events in any order.</div>
         <div style="display:flex;gap:8px;margin-bottom:10px;">
           <select class="form-select" id="mevent-type" style="flex:0 0 150px;" onchange="renderMatchEventInputs()">
             <option value="goal">⚽ Goal</option>
@@ -1557,44 +1557,34 @@ function toggleLineupPlayer(side,playerId){
   renderLineupLists();
 }
 
-function lineupPlayersFor(ev){
-  const home=getTeam(ev.homeId),away=getTeam(ev.awayId);
+function wholeSquadFor(ev){
+  const home=getTeam(ev.homeId), away=getTeam(ev.awayId);
   return [
-    ...Object.values(scoreLineup.home).filter(Boolean).map(pid=>({id:pid,team:home?.name||'Home',teamId:ev.homeId,...players.find(p=>p.id===pid)})),
-    ...Object.values(scoreLineup.away).filter(Boolean).map(pid=>({id:pid,team:away?.name||'Away',teamId:ev.awayId,...players.find(p=>p.id===pid)})),
+    ...players.filter(p=>p.team_id===ev.homeId).map(p=>({...p, team:home?.name||'Home', teamId:ev.homeId})),
+    ...players.filter(p=>p.team_id===ev.awayId).map(p=>({...p, team:away?.name||'Away', teamId:ev.awayId})),
   ].filter(p=>p.full_name);
 }
-function subbedInSoFar(){ return scoreScorers.filter(s=>s.type==='sub').map(s=>s.inId); }
-function subbedOutSoFar(){ return scoreScorers.filter(s=>s.type==='sub').map(s=>s.outId); }
 
 function renderScorerControls(){
   const eid=document.getElementById('score-modal-eid').value;
   const ev=S.events[eid];if(!ev)return;
-  const lineupPlayers=lineupPlayersFor(ev);
+  // Full squads for both teams — not restricted to the starting XI or
+  // whoever's currently "on the pitch" per prior sub entries, so the admin
+  // can freely correct or backfill events in any order.
+  const squad=wholeSquadFor(ev);
+  const alpha=(a,b)=>(a.team||'').localeCompare(b.team||'')||a.full_name.localeCompare(b.full_name);
+  const sorted=squad.slice().sort(alpha);
 
-  // Goal: starting XI plus anyone already subbed on
-  const home=getTeam(ev.homeId),away=getTeam(ev.awayId);
-  const teamNameOf=tid=>tid===ev.homeId?(home?.name||'Home'):(away?.name||'Away');
-  const subbedInPlayers=subbedInSoFar().map(pid=>{
-    const p=players.find(x=>x.id===pid);
-    return p?{id:p.id,team:teamNameOf(p.team_id),teamId:p.team_id,...p}:null;
-  }).filter(Boolean);
-  const goalPool=[...lineupPlayers,...subbedInPlayers];
   const select=document.getElementById('scorer-player');
-  if(!goalPool.length){
-    select.innerHTML='<option value="">Select lineup in the Lineups tab first</option>';
-  } else {
-    select.innerHTML=goalPool.map(p=>`<option value="${p.id}" data-team="${p.team}" data-name="${p.full_name}">${p.full_name} (${p.team})</option>`).join('');
-  }
+  select.innerHTML = sorted.length
+    ? sorted.map(p=>`<option value="${p.id}" data-team="${p.team}" data-name="${p.full_name}">${p.full_name} (${p.team})</option>`).join('')
+    : '<option value="">No players added for these teams yet</option>';
 
-  // Substitution "Out": on-pitch players = XI + subbed-in, minus already subbed-out
-  const outDone=new Set(subbedOutSoFar());
-  const onPitch=goalPool.filter(p=>!outDone.has(p.id));
   const outSel=document.getElementById('sub-out-player');
   if(outSel){
-    outSel.innerHTML=onPitch.length
-      ? onPitch.map(p=>`<option value="${p.id}" data-team="${p.team}" data-teamid="${p.teamId||p.team_id||''}" data-name="${p.full_name}">${p.full_name} (${p.team})</option>`).join('')
-      : '<option value="">Select lineup in the Lineups tab first</option>';
+    outSel.innerHTML = sorted.length
+      ? sorted.map(p=>`<option value="${p.id}" data-team="${p.team}" data-teamid="${p.teamId}" data-name="${p.full_name}">${p.full_name} (${p.team})</option>`).join('')
+      : '<option value="">No players added for these teams yet</option>';
     renderSubInOptions();
   }
 
@@ -1619,16 +1609,12 @@ function renderSubInOptions(){
   const opt=outSel.options[outSel.selectedIndex];
   const teamId=opt?.dataset?.teamid;
   if(!teamId){ inSel.innerHTML='<option value="">—</option>'; return; }
-  const onPitchIds=new Set([
-    ...Object.values(scoreLineup.home).filter(Boolean),
-    ...Object.values(scoreLineup.away).filter(Boolean),
-    ...subbedInSoFar(),
-  ]);
-  const usedUp=new Set(subbedOutSoFar()); // already off the pitch
-  const bench=players.filter(p=>p.team_id===teamId&&!onPitchIds.has(p.id)&&!usedUp.has(p.id));
-  inSel.innerHTML=bench.length
-    ? bench.map(p=>`<option value="${p.id}" data-name="${p.full_name}">${p.full_name}${p.jersey_number?' #'+p.jersey_number:''}</option>`).join('')
-    : '<option value="">No bench players for this team</option>';
+  // Whole squad of the same team as the "Out" pick — no bench-only
+  // restriction, so any squad player can be recorded as coming on.
+  const teamSquad=players.filter(p=>p.team_id===teamId).slice().sort((a,b)=>a.full_name.localeCompare(b.full_name));
+  inSel.innerHTML = teamSquad.length
+    ? teamSquad.map(p=>`<option value="${p.id}" data-name="${p.full_name}">${p.full_name}${p.jersey_number?' #'+p.jersey_number:''}</option>`).join('')
+    : '<option value="">No players for this team</option>';
 }
 
 function addMatchEvent(){
