@@ -2363,14 +2363,17 @@ function openEditRound(roundId){
   if(saveBtn){ saveBtn.disabled = true; saveBtn.style.opacity = '0.5'; saveBtn.style.cursor = 'default'; }
   document.getElementById('edit-round-id').value = roundId;
   document.getElementById('edit-round-name').value = r.label;
-  document.getElementById('edit-round-modal-title').textContent = comp.mode==='ranking' ? 'Edit Teams' : 'Edit Events';
+  document.getElementById('edit-round-modal-title').textContent = comp.mode==='ranking' ? 'Edit Events & Teams' : 'Edit Events';
 
   const isRanking = comp.mode === 'ranking';
   
-  // Show/hide sections based on mode
-  document.getElementById('edit-round-tournament-select').closest('.form-group').style.display = isRanking ? 'none' : 'block';
+  // Show/hide sections based on mode. Ranking rounds derive their team list
+  // from events (same as New Round), so the tournament/event picker stays
+  // visible here too — otherwise there'd be no way to add events to a
+  // ranking round once it already exists, only to edit the team checkboxes.
+  document.getElementById('edit-round-tournament-select').closest('.form-group').style.display = 'block';
   document.getElementById('edit-round-available-wrap').style.display = 'none';
-  document.getElementById('edit-round-added-wrap').style.display = isRanking ? 'none' : 'block';
+  document.getElementById('edit-round-added-wrap').style.display = 'none'; // renderAddedEvents() below shows it once populated
   document.getElementById('edit-round-ranking-teams').style.display = isRanking ? 'block' : 'none';
   
   if(isRanking){
