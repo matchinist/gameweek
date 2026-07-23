@@ -1472,7 +1472,7 @@ function scorePoints(pred,res,scoring){
 function renderEventCard(ev,comp,isRoundOpen){
   const pred=preds[ev.id]??null;
   const hasRes=!!ev.res;
-  const isLocked=ev.locked||false;
+  const isLocked=(()=>{const ko=parseKickoffMs(ev.kickoffRaw||ev.kickoff);return ko!=null?(Date.now()>=ko-30*60*1000):(ev.locked||false);})();
   // Event is "open for input" only if: round is open AND event has no result AND not locked
   const canPredict=isRoundOpen&&!hasRes&&!isLocked;
   const hasPred=comp.mode==='score'?(pred&&pred.h!==undefined&&pred.a!==undefined):comp.mode==='betting'?(pred&&typeof pred==='object'&&Object.keys(pred).length>0):(pred!==null&&pred!==undefined);
@@ -1531,7 +1531,7 @@ function renderEventCard(ev,comp,isRoundOpen){
       html+='<div style="display:flex;flex-direction:column;gap:8px;">';
       markets.forEach(mkt=>{
         html+=`<div><div class="pred-label" style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);">${mkt.label}</div>`;
-        const isLocked=ev.locked||false;
+        const isLocked=(()=>{const ko=parseKickoffMs(ev.kickoffRaw||ev.kickoff);return ko!=null?(Date.now()>=ko-30*60*1000):(ev.locked||false);})();
         const dis=isLocked?'disabled style="pointer-events:none;opacity:0.7;"':'';
         if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${mpred['1x2']==='H'?' selected home':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','H')"`}>Home Win</button><button class="btn-1x2${mpred['1x2']==='D'?' selected draw':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','D')"`}>X</button><button class="btn-1x2${mpred['1x2']==='A'?' selected away':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','A')"`}>Away</button></div>`;
         else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['ou25']==='O'?' selected':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','ou25','O')"`}>Over</button><button class="btn-ou under${mpred['ou25']==='U'?' selected':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','ou25','U')"`}>Under</button></div>`;
