@@ -607,6 +607,12 @@ function getDefaultRoundIdx(comp){
   return Math.max(0, comp.rounds.length-1);
 }
 
+function shortPitchName(name){
+  if(!name) return '';
+  const parts = name.trim().split(/\s+/);
+  if(parts.length<2) return name;
+  return parts[0].charAt(0) + '. ' + parts.slice(1).join(' ');
+}
 function renderPredict(){
   if(selectedRound[currentCompIdx]===undefined)selectedRound[currentCompIdx]=getDefaultRoundIdx(COMPS[currentCompIdx]);
   const comp=COMPS[currentCompIdx];
@@ -838,7 +844,7 @@ function renderLineupPredictor(comp){
           ${resultBadge}
           ${bonusBadge}
         </div>
-        <span style="font-size:8.5px;font-weight:800;letter-spacing:0.3px;color:#fff;background:rgba(20,20,40,0.55);padding:1.5px 6px;border-radius:4px;white-space:nowrap;max-width:74px;overflow:hidden;text-overflow:ellipsis;">${player.name}</span>
+        <span style="font-size:8.5px;font-weight:800;letter-spacing:0.3px;color:#fff;background:rgba(20,20,40,0.55);padding:1.5px 6px;border-radius:4px;white-space:nowrap;max-width:74px;overflow:hidden;text-overflow:ellipsis;">${shortPitchName(player.name)}</span>
       </div>`;
     } else {
       return `<div onclick="${click}" style="position:absolute;left:${xPct}%;top:${yPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:${isOpen?'pointer':'default'};z-index:3;width:50px;">
@@ -879,7 +885,6 @@ function renderLineupPredictor(comp){
     ? `<select onchange="changeLineupFormation('${round.id}',this.value)" style="font-size:11px;font-weight:800;color:oklch(0.25 0.01 260);background:oklch(0.94 0.006 275);border:none;border-radius:7px;padding:5px 7px;cursor:pointer;outline:none;font-family:inherit;">${Object.keys(FORMATION_LAYOUTS).map(f=>`<option value="${f}"${f===fmt?' selected':''}>${f}</option>`).join('')}</select>`
     : `<span style="font-size:11px;font-weight:800;color:oklch(0.25 0.01 260);background:oklch(0.94 0.006 275);border-radius:7px;padding:5px 9px;">${fmt}</span>`;
   const totalPts = scored ? scored.pts : 0;
-  const xiFraction = scored ? ` <span style="font-weight:600;color:oklch(0.5 0.01 260);">\u00b7 ${scored.correctCount}/11${scored.correctCount===11?' \ud83c\udfaf':''}</span>` : '';
 
   function bonusBoxHTML(key, label, playerId){
     const pl = findSquadPlayerById(playerId);
@@ -903,7 +908,7 @@ function renderLineupPredictor(comp){
         <span style="font-size:10px;font-weight:700;color:oklch(0.55 0.01 260);text-transform:uppercase;letter-spacing:0.5px;">Form</span>
         ${formationCtl}
       </div>
-      <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:800;color:var(--comp-color);">${totalPts} pts${xiFraction}</span>
+      <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:800;padding:4px 11px;border-radius:999px;background:${totalPts>0?'var(--green-light)':'oklch(0.95 0.004 260)'};color:${totalPts>0?'var(--green)':'oklch(0.5 0.01 260)'};">${totalPts>0?'+':''}${totalPts} pts</span>
     </div>
     <div style="display:flex;gap:8px;padding:10px 16px 4px;">
       ${bonusBoxHTML('firstGoal', 'First Goal', bonus.firstGoal)}
@@ -2593,11 +2598,17 @@ function showRules(mode){
 </div>`,
     lineup:`<h3 style="margin-bottom:12px;">Lineup Predictor Rules</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
-<div><strong style="color:var(--text);">How to play:</strong> Pick the starting XI (11 players) for the team's next fixture. Choose a formation (4-2-3-1, 4-3-3, 4-4-2 or 3-4-2-1). Also answer 3 bonus questions — First Goal Scorer, Best Player (MVP), and First Sub-Off — each worth <strong style="color:var(--text);">30 points</strong> if correct. All 3 must be answered before you can save your lineup. Locks 2 hours before kickoff.</div>
+<div><strong style="color:var(--text);">How to play:</strong> Pick the starting XI (11 players) for the team's next fixture, in any formation (4-2-3-1, 4-3-3, 4-4-2 or 3-4-2-1). Locks 2 hours before kickoff.</div>
 <div><strong style="color:var(--text);">Points:</strong></div>
 <div style="padding-left:12px;">
 • Each correct player in your lineup — <strong style="color:var(--green);">+10 pts</strong><br>
 • All 11 players correct — <strong style="color:var(--green);">+30 bonus pts</strong>
+</div>
+<div><strong style="color:var(--text);">Bonus questions:</strong> Answer all 3 before you can save your lineup. Each is worth <strong style="color:var(--green);">+30 pts</strong> if correct, and only resolves once the match is marked finished.</div>
+<div style="padding-left:12px;">
+• First Goal Scorer — who scores first in the match<br>
+• Best Player — Man of the Match, decided by the official Sofascore match rating<br>
+• First Sub-Off — who's the first player substituted out
 </div>
 <div><strong style="color:var(--text);">Leaderboard:</strong> Players are ranked by total points across all correctly predicted lineups.</div>
 </div>`,
