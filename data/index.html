@@ -540,15 +540,15 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
       <!-- LINEUPS TAB -->
       <div id="score-step-2" style="display:none;">
         <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;">Starting Lineups</div>
-        <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;">Tap a position on the pitch to assign a player to that exact tactical slot — this is what powers formation analysis (e.g. which back-four combinations a team used), not just who started.</div>
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;">Tick which players started for each team, grouped by position. Order doesn't matter — this is what the prediction game checks against, not exact formation slots.</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
           <div>
             <div id="lineup-home-title" style="font-family:var(--mono);font-size:12px;font-weight:700;text-align:center;margin-bottom:8px;color:var(--accent);">Home</div>
-            <div id="lineup-home-pitch" class="dm-lineup-pitch"></div>
+            <div id="lineup-home-list" style="border:1px solid var(--border);border-radius:10px;padding:10px;max-height:420px;overflow-y:auto;"></div>
           </div>
           <div>
             <div id="lineup-away-title" style="font-family:var(--mono);font-size:12px;font-weight:700;text-align:center;margin-bottom:8px;color:var(--coral,#EA580C);">Away</div>
-            <div id="lineup-away-pitch" class="dm-lineup-pitch"></div>
+            <div id="lineup-away-list" style="border:1px solid var(--border);border-radius:10px;padding:10px;max-height:420px;overflow-y:auto;"></div>
           </div>
         </div>
       </div>
@@ -1428,15 +1428,18 @@ const LINEUP_SLOTS = [
   {key:'RW',   label:'RW',  x:79, y:30},
   {key:'FWD',  label:'FWD', x:50, y:12},
 ];
-let scoreLineup={home:{},away:{}}; // {slotKey: playerId}
+let scoreLineup={home:[],away:[]}; // {side: [playerId, ...]} — flat membership list, no slot/position tracking
 let scoreScorers=[]; // typed match events: {type:'goal',playerId,playerName,team,minute} | {type:'sub',outId,outName,inId,inName,team,minute}; legacy entries without type are goals
 
-function normalizeLineupToSlots(lineupSide){
-  // Older saved lineups were a flat array of 11 player IDs with no slot info —
-  // there's no way to know which slot each was in, so those start empty here
-  // rather than guessing. New saves are always the {slotKey: playerId} shape.
-  if(!lineupSide || Array.isArray(lineupSide)) return {};
-  return {...lineupSide};
+function normalizeLineupToArray(lineupSide){
+  // Accepts either shape: a flat array (current format) or an older
+  // {slotKey: playerId} object from before the tactical-slot picker was
+  // replaced with a plain checklist — either way, flatten to a de-duped
+  // membership list, since scoring only ever checks "was this player in
+  // the XI", not which slot they occupied.
+  if(!lineupSide) return [];
+  if(Array.isArray(lineupSide)) return [...new Set(lineupSide.filter(Boolean))];
+  return [...new Set(Object.values(lineupSide).filter(Boolean))];
 }
 
 function toDatetimeLocalValue(raw){
@@ -1470,7 +1473,7 @@ function openScoreModal(eid){
   document.getElementById('score-modal-status').value=ev.status||'upcoming';
   document.getElementById('score-modal-kickoff').value=toDatetimeLocalValue(ev.kickoff);
 
-  scoreLineup={home:normalizeLineupToSlots(ev.lineup?.home),away:normalizeLineupToSlots(ev.lineup?.away)};
+  scoreLineup={home:normalizeLineupToArray(ev.lineup?.home),away:normalizeLineupToArray(ev.lineup?.away)};
   scoreScorers=(ev.scorers||[]).slice();
 
   // MVP selects: each team's full squad, current value from result if saved
@@ -1500,73 +1503,58 @@ function switchScoreTab(tab){
     btn.style.color=active?'var(--text)':'var(--text-3)';
     btn.style.fontWeight=active?'700':'600';
   });
-  if(tab==='lineups')renderLineupPitches();
+  if(tab==='lineups')renderLineupLists();
   if(tab==='scorers')renderScorerControls();
 }
 
-function renderLineupPitches(){
+function renderLineupLists(){
   const eid=document.getElementById('score-modal-eid').value;
   const ev=S.events[eid];if(!ev)return;
+
+  const posGroups=[['GK','Goalkeeper'],['DEF','Defender'],['MID','Midfielder'],['FWD','Forward']];
+  const alpha=(a,b)=>a.full_name.localeCompare(b.full_name);
 
   ['home','away'].forEach(side=>{
     const teamId=side==='home'?ev.homeId:ev.awayId;
     const teamPlayers=players.filter(p=>p.team_id===teamId);
-    const pitchEl=document.getElementById('lineup-'+side+'-pitch');
+    const listEl=document.getElementById('lineup-'+side+'-list');
+    if(!listEl) return;
     if(!teamPlayers.length){
-      pitchEl.innerHTML='<div style="text-align:center;font-size:11px;color:var(--text-3);padding:20px 8px;">No players added for this team yet.<br>Add players in the Players section.</div>';
+      listEl.innerHTML='<div style="text-align:center;font-size:11px;color:var(--text-3);padding:20px 8px;">No players added for this team yet.<br>Add players in the Players section.</div>';
       return;
     }
-    const filled=Object.values(scoreLineup[side]).filter(Boolean).length;
-    let html=`<div style="position:absolute;top:6px;left:0;right:0;text-align:center;font-size:10px;font-weight:800;color:#fff;background:rgba(20,20,40,0.4);width:fit-content;margin:0 auto;padding:2px 9px;border-radius:999px;z-index:3;">${filled}/11</div>`;
-    LINEUP_SLOTS.forEach(slot=>{
-      const pid=scoreLineup[side][slot.key];
-      const player=pid?teamPlayers.find(p=>p.id===pid):null;
-      html+=`<div class="dm-lineup-slot" style="left:${slot.x}%;top:${slot.y}%;" onclick="openLineupSlotPicker('${side}','${slot.key}')">`;
-      if(player){
-        html+=`<div class="dm-lineup-slot-filled">${player.jersey_number??'-'}</div><div class="dm-lineup-slot-label">${player.full_name}</div>`;
-      } else {
-        html+=`<div class="dm-lineup-slot-empty">+</div><div class="dm-lineup-slot-label">${slot.label}</div>`;
-      }
-      html+='</div>';
+    const selected=new Set(scoreLineup[side]||[]);
+    const count=selected.size;
+    let html=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;padding:0 2px;">
+      <span style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.4px;">Starting XI</span>
+      <span style="font-family:var(--mono);font-size:11px;font-weight:800;color:${count===11?'var(--green)':'var(--text-3)'};">${count}/11</span>
+    </div>`;
+    let any=false;
+    posGroups.forEach(([pos,label])=>{
+      const group=teamPlayers.filter(p=>(p.position||'MID')===pos).sort(alpha);
+      if(!group.length) return;
+      any=true;
+      html+=`<div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.4px;margin:10px 0 4px;padding:0 2px;">${label}</div>`;
+      group.forEach(p=>{
+        const isSel=selected.has(p.id);
+        html+=`<div onclick="toggleLineupPlayer('${side}','${p.id}')" style="display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:6px;cursor:pointer;background:${isSel?'var(--accent-light)':'transparent'};">
+          <div style="width:16px;height:16px;border-radius:4px;border:1.5px solid ${isSel?'var(--accent)':'var(--border)'};background:${isSel?'var(--accent)':'#fff'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${isSel?'<span style="color:#fff;font-size:11px;font-weight:800;line-height:1;">✓</span>':''}</div>
+          <span style="width:22px;text-align:center;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text-3);flex-shrink:0;">${p.jersey_number??'-'}</span>
+          <span style="font-size:12.5px;font-weight:600;color:var(--text);">${p.full_name}</span>
+        </div>`;
+      });
     });
-    pitchEl.innerHTML=html;
+    if(!any) html+='<div style="text-align:center;font-size:11px;color:var(--text-3);padding:20px 8px;">No players in the squad yet.</div>';
+    listEl.innerHTML=html;
   });
 }
 
-function openLineupSlotPicker(side,slotKey){
-  const eid=document.getElementById('score-modal-eid').value;
-  const ev=S.events[eid];if(!ev)return;
-  const teamId=side==='home'?ev.homeId:ev.awayId;
-  const teamPlayers=players.filter(p=>p.team_id===teamId).sort((a,b)=>a.full_name.localeCompare(b.full_name));
-  const slot=LINEUP_SLOTS.find(s=>s.key===slotKey);
-  const usedElsewhere=new Set(Object.entries(scoreLineup[side]).filter(([k])=>k!==slotKey).map(([,v])=>v).filter(Boolean));
-  const overlay=document.createElement('div');
-  overlay.className='lineup-picker-overlay';
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:flex-end;justify-content:center;';
-  overlay.onclick=(e)=>{ if(e.target===overlay) overlay.remove(); };
-  const currentPid=scoreLineup[side][slotKey];
-  overlay.innerHTML=`<div style="background:#fff;border-radius:14px 14px 0 0;width:100%;max-width:420px;max-height:70vh;overflow-y:auto;padding-bottom:12px;">
-    <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center;">
-      <span>Select ${slot.label}</span>
-      <span style="cursor:pointer;color:var(--text-3);" onclick="this.closest('.lineup-picker-overlay').remove()">✕</span>
-    </div>
-    ${currentPid?`<div onclick="setLineupSlot('${side}','${slotKey}',null);this.closest('.lineup-picker-overlay').remove();" style="padding:10px 16px;cursor:pointer;color:var(--red);font-size:13px;font-weight:600;border-bottom:1px solid var(--border);">Clear this slot</div>`:''}
-    ${teamPlayers.map(p=>{
-      const disabled=usedElsewhere.has(p.id);
-      return `<div onclick="${disabled?'':`setLineupSlot('${side}','${slotKey}','${p.id}');this.closest('.lineup-picker-overlay').remove();`}" style="display:flex;align-items:center;gap:12px;padding:10px 16px;cursor:${disabled?'default':'pointer'};opacity:${disabled?'0.35':'1'};${p.id===currentPid?'background:var(--bg);':''}">
-        <span style="width:26px;text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text-3);">${p.jersey_number??'-'}</span>
-        <span style="font-size:13px;font-weight:600;">${p.full_name}</span>
-        <span style="margin-left:auto;font-size:10px;color:var(--text-3);">${p.position||''}</span>
-      </div>`;
-    }).join('')}
-  </div>`;
-  document.body.appendChild(overlay);
-}
-
-function setLineupSlot(side,slotKey,playerId){
-  if(playerId) scoreLineup[side][slotKey]=playerId;
-  else delete scoreLineup[side][slotKey];
-  renderLineupPitches();
+function toggleLineupPlayer(side,playerId){
+  const set=new Set(scoreLineup[side]||[]);
+  if(set.has(playerId)) set.delete(playerId);
+  else set.add(playerId);
+  scoreLineup[side]=[...set];
+  renderLineupLists();
 }
 
 function lineupPlayersFor(ev){

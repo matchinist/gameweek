@@ -1519,7 +1519,12 @@ function renderLineupPredictor(comp){
     mvp: !!(bonusAnswers.mvp && bonus.mvp===bonusAnswers.mvp),
     firstSubOut: !!(bonusAnswers.firstSubOut && bonus.firstSubOut===bonusAnswers.firstSubOut),
   };
-  if(!isOpen && ev.res){
+  // Points show as soon as *any* piece is resolvable, independent of whether
+  // the others are — e.g. the starting XI is often entered before the final
+  // score, and each bonus question resolves from its own data (goals/subs
+  // don't require a final score; MVP does). Whatever isn't known yet simply
+  // contributes 0 rather than blocking the whole total.
+  if(!isOpen && (actual || ev.res || (ev.scorers && ev.scorers.length))){
     let xiPts = 0, correctCount = 0;
     if(actual && pickCount===11){
       const pickedIds = Object.values(picks);
