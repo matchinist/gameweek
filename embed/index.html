@@ -1407,28 +1407,45 @@ let lineupBonusPicks = {}; // roundId -> {firstGoal, mvp, firstSubOut} -> player
 
 // ── LINEUP BONUS QUESTIONS ────────────────────────────────────────────────
 // Resolved from the Data Manager's match events (goals + substitutions) and
-// the Result tab's per-team MVP fields — no separate config needed.
-function firstGoalScorerId(scorers){
-  if(!scorers || !scorers.length) return null;
-  const goals = scorers.filter(s=>!s.type||s.type==='goal').slice().sort((a,b)=>(a.minute||0)-(b.minute||0));
-  return goals.length ? goals[0].playerId : null;
-}
-function firstSubOutPlayerId(scorers){
-  if(!scorers || !scorers.length) return null;
-  const subs = scorers.filter(s=>s.type==='sub').slice().sort((a,b)=>(a.minute||0)-(b.minute||0));
-  return subs.length ? subs[0].outId : null;
-}
-function lineupBonusAnswers(ev, teamId){
-  if(!ev) return {firstGoal:null, mvp:null, firstSubOut:null};
-  const mvp = teamId
-    ? (ev.homeId===teamId ? (ev.res?.mvp_home||null) : ev.awayId===teamId ? (ev.res?.mvp_away||null) : null)
-    : null;
-  return { firstGoal: firstGoalScorerId(ev.scorers), firstSubOut: firstSubOutPlayerId(ev.scorers), mvp };
-}
+// the Result tab's per-team MVP fields. Each question resolves entirely
+// independently of the others, of the match status, and of the lineup —
+// the instant its own underlying data is entered for the tracked team, it's
+// live. All three are scoped to the tracked team's own squad specifically
+// (e.g. only Beşiktaş goals/subs count, not the opponent's).
 function findSquadPlayerById(comp, pid){
   if(!pid) return null;
   const squad = squadFor(comp);
   return [...squad.GK,...squad.DEF,...squad.MID,...squad.FWD].find(p=>p.id===pid) || null;
+}
+function firstGoalScorerId(scorers, comp){
+  if(!scorers || !scorers.length) return null;
+  const goals = scorers
+    .filter(s=>(!s.type||s.type==='goal') && findSquadPlayerById(comp, s.playerId))
+    .slice().sort((a,b)=>(a.minute||0)-(b.minute||0));
+  return goals.length ? goals[0].playerId : null;
+}
+function firstSubOutPlayerIds(scorers, comp){
+  // Returns an array — if multiple subs for the tracked team land in the
+  // same minute, every one of them is a winning answer, not just whichever
+  // happened to be entered/sorted first.
+  if(!scorers || !scorers.length) return [];
+  const subs = scorers
+    .filter(s=>s.type==='sub' && findSquadPlayerById(comp, s.outId))
+    .slice().sort((a,b)=>(a.minute||0)-(b.minute||0));
+  if(!subs.length) return [];
+  const earliest = subs[0].minute||0;
+  return subs.filter(s=>(s.minute||0)===earliest).map(s=>s.outId);
+}
+function lineupBonusAnswers(ev, teamId, comp){
+  if(!ev) return {firstGoal:null, mvp:null, firstSubOut:[]};
+  const mvp = teamId
+    ? (ev.homeId===teamId ? (ev.res?.mvp_home||null) : ev.awayId===teamId ? (ev.res?.mvp_away||null) : null)
+    : null;
+  return {
+    firstGoal: firstGoalScorerId(ev.scorers, comp),
+    firstSubOut: firstSubOutPlayerIds(ev.scorers, comp),
+    mvp,
+  };
 }
 
 
@@ -1519,22 +1536,27 @@ function renderLineupPredictor(comp){
     if(ev.homeId===teamId) actual = flattenLineupSlots(ev.lineup.home);
     else if(ev.awayId===teamId) actual = flattenLineupSlots(ev.lineup.away);
   }
-  // Bonus questions can't be answered honestly mid-match — a "first goal"
-  // pick could still be overtaken, a sub could still happen — so they only
-  // resolve once the event is explicitly marked Finished in the Data
-  // Manager, regardless of whether scorers/MVP data already exists.
-  const bonusResolved = ev.status === 'completed';
-  const bonusAnswers = bonusResolved ? lineupBonusAnswers(ev, teamId) : {firstGoal:null, mvp:null, firstSubOut:null};
+  // Each bonus question resolves entirely on its own, the instant its own
+  // data exists for the tracked team — independent of the other questions,
+  // of the lineup, and of overall match status. What's still gated on
+  // !isOpen below is only *revealing* the answer to the user once their
+  // round has locked (so no one can see it and still edit their pick).
+  const bonusAnswers = lineupBonusAnswers(ev, teamId, comp);
+  const bonusResolvedMap = {
+    firstGoal: !!bonusAnswers.firstGoal,
+    mvp: !!bonusAnswers.mvp,
+    firstSubOut: bonusAnswers.firstSubOut.length>0,
+  };
   const bonusCorrect = {
     firstGoal: !!(bonusAnswers.firstGoal && bonus.firstGoal===bonusAnswers.firstGoal),
     mvp: !!(bonusAnswers.mvp && bonus.mvp===bonusAnswers.mvp),
-    firstSubOut: !!(bonusAnswers.firstSubOut && bonus.firstSubOut===bonusAnswers.firstSubOut),
+    firstSubOut: !!(bonus.firstSubOut && bonusAnswers.firstSubOut.includes(bonus.firstSubOut)),
   };
+  const anyBonusResolved = bonusResolvedMap.firstGoal || bonusResolvedMap.mvp || bonusResolvedMap.firstSubOut;
   // Points show as soon as *any* piece is resolvable, independent of whether
-  // the others are — e.g. the starting XI is often entered before the final
-  // score, and the XI portion doesn't need the match to be finished. Bonus
-  // points only ever contribute once bonusResolved is true (see above).
-  if(!isOpen && (actual || bonusResolved)){
+  // the others are — e.g. the starting XI is often entered before any bonus
+  // data, and vice versa.
+  if(!isOpen && (actual || anyBonusResolved)){
     let xiPts = 0, correctCount = 0;
     if(actual && pickCount===11){
       const pickedIds = Object.values(picks);
@@ -1620,11 +1642,11 @@ function renderLineupPredictor(comp){
     const stateCls = clickable ? cls : cls+' locked';
     if(pl){
       let mark = '';
-      if(bonusResolved){
+      if(bonusResolvedMap[key]){
         const ok = bonusCorrect[key];
         mark = ok ? ' <span style="color:#16a34a;">\u2713</span>' : ' <span style="color:#dc2626;">\u2717</span>';
       } else if(!isOpen){
-        mark = ' <span style="color:oklch(0.65 0.01 260);" title="Resolves once the match is marked Finished">\u23f3</span>';
+        mark = ' <span style="color:oklch(0.65 0.01 260);" title="Resolves once entered in the Data Manager">\u23f3</span>';
       }
       return `<div class="bonus-box ${stateCls}"${clickAttr}><div class="bb-label">${label}</div><div class="bb-value">${shortPitchName(pl.name)}${mark}</div></div>`;
     }
