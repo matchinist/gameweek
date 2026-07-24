@@ -601,24 +601,46 @@ tbody tr:hover td{background:var(--bg);}
         <div class="card">
           <div class="card-header"><span class="card-title">Widget Theme</span></div>
           <div class="card-body">
-            <div class="form-group">
-              <label class="form-label">Accent Colour</label>
-              <div class="color-row">
-                <input type="color" class="color-input" id="brand-accent" value="#4F46E5" onchange="saveBrandingAccent(this.value)">
-                <span id="brand-accent-hex" style="font-family:var(--mono);font-size:12px;color:var(--text-2);">#4F46E5</span>
+            <div style="display:flex;gap:8px;margin-bottom:16px;">
+              <button class="btn btn-ghost btn-sm" onclick="applyBrandingPreset('light')">☀️ Light preset</button>
+              <button class="btn btn-ghost btn-sm" onclick="applyBrandingPreset('dark')">🌙 Dark preset</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+              <div class="form-group">
+                <label class="form-label">Accent Colour</label>
+                <div class="color-row">
+                  <input type="color" class="color-input" id="brand-accent" value="#4F46E5" onchange="saveBrandingColor('accent_color',this.value)">
+                  <span id="brand-accent-hex" style="font-family:var(--mono);font-size:12px;color:var(--text-2);">#4F46E5</span>
+                </div>
+                <div style="font-size:11px;color:var(--text-3);margin-top:6px;">Buttons, active states, progress bars.</div>
               </div>
-              <div style="font-size:11px;color:var(--text-3);margin-top:6px;">Used for buttons, active states, and progress bars in the widget.</div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Background</label>
-              <div class="color-row">
-                <input type="color" class="color-input" id="brand-bg" value="#F7F8FA" onchange="saveBrandingBg(this.value)">
-                <span id="brand-bg-hex" style="font-family:var(--mono);font-size:12px;color:var(--text-2);">#F7F8FA</span>
+              <div class="form-group">
+                <label class="form-label">Page Background</label>
+                <div class="color-row">
+                  <input type="color" class="color-input" id="brand-bg" value="#F7F8FA" onchange="saveBrandingColor('bg_color',this.value)">
+                  <span id="brand-bg-hex" style="font-family:var(--mono);font-size:12px;color:var(--text-2);">#F7F8FA</span>
+                </div>
+                <div style="font-size:11px;color:var(--text-3);margin-top:6px;">Fills the space behind the cards.</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Card Background</label>
+                <div class="color-row">
+                  <input type="color" class="color-input" id="brand-surface" value="#FFFFFF" onchange="saveBrandingColor('surface_color',this.value)">
+                  <span id="brand-surface-hex" style="font-family:var(--mono);font-size:12px;color:var(--text-2);">#FFFFFF</span>
+                </div>
+                <div style="font-size:11px;color:var(--text-3);margin-top:6px;">Match cards should sit on. Use dark for a dark-mode site.</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Text Colour</label>
+                <div class="color-row">
+                  <input type="color" class="color-input" id="brand-text" value="#0F1117" onchange="saveBrandingColor('text_color',this.value)">
+                  <span id="brand-text-hex" style="font-family:var(--mono);font-size:12px;color:var(--text-2);">#0F1117</span>
+                </div>
+                <div style="font-size:11px;color:var(--text-3);margin-top:6px;">Use light text on a dark card background.</div>
               </div>
             </div>
-            <div style="font-size:11px;color:var(--amber);background:var(--amber-light);padding:8px 10px;border-radius:5px;">
-              Widget theme colours are applied live in the embed. Full custom CSS injection coming soon.
-            </div>
+            <div style="font-size:11px;color:var(--text-3);margin:6px 0 8px;">Secondary text, borders, and highlight tints are generated automatically from these four colours — no need to set every shade individually.</div>
+            <div id="brand-preview" style="border-radius:12px;padding:16px;margin-top:4px;"></div>
           </div>
         </div>
 
@@ -1821,16 +1843,68 @@ function renderBranding(){
 }
 
 function renderBrandingColors(){
-  const accent = currentOperator?.accent_color || '#4F46E5';
-  const bg = currentOperator?.bg_color || '#F7F8FA';
-  const accentInput = document.getElementById('brand-accent');
-  const bgInput = document.getElementById('brand-bg');
-  if(accentInput) accentInput.value = accent;
-  if(bgInput) bgInput.value = bg;
-  const accentHex = document.getElementById('brand-accent-hex');
-  const bgHex = document.getElementById('brand-bg-hex');
-  if(accentHex) accentHex.textContent = accent;
-  if(bgHex) bgHex.textContent = bg;
+  const vals = {
+    accent: currentOperator?.accent_color || '#4F46E5',
+    bg: currentOperator?.bg_color || '#F7F8FA',
+    surface: currentOperator?.surface_color || '#FFFFFF',
+    text: currentOperator?.text_color || '#0F1117',
+  };
+  Object.entries(vals).forEach(([key,val])=>{
+    const input = document.getElementById('brand-'+key);
+    const hex = document.getElementById('brand-'+key+'-hex');
+    if(input) input.value = val;
+    if(hex) hex.textContent = val;
+  });
+  renderBrandingPreview(vals);
+}
+
+function renderBrandingPreview(vals){
+  const el = document.getElementById('brand-preview');
+  if(!el) return;
+  const v = vals || {
+    accent: document.getElementById('brand-accent')?.value || '#4F46E5',
+    bg: document.getElementById('brand-bg')?.value || '#F7F8FA',
+    surface: document.getElementById('brand-surface')?.value || '#FFFFFF',
+    text: document.getElementById('brand-text')?.value || '#0F1117',
+  };
+  const text2 = v.text+'B3', border = v.text+'26';
+  el.style.background = v.bg;
+  el.innerHTML = `
+    <div style="background:${v.surface};border:1px solid ${border};border-radius:10px;padding:14px 16px;font-family:Inter,sans-serif;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:${text2};margin-bottom:8px;">Preview · Premier League</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <span style="font-size:14px;font-weight:700;color:${v.text};">Arsenal vs Coventry City</span>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button style="flex:1;padding:9px;border-radius:7px;border:none;background:${v.accent};color:#fff;font-size:12px;font-weight:700;cursor:default;">1</button>
+        <button style="flex:1;padding:9px;border-radius:7px;border:1px solid ${border};background:transparent;color:${v.text};font-size:12px;font-weight:600;cursor:default;">X</button>
+        <button style="flex:1;padding:9px;border-radius:7px;border:1px solid ${border};background:transparent;color:${v.text};font-size:12px;font-weight:600;cursor:default;">2</button>
+      </div>
+    </div>`;
+}
+
+async function saveBrandingColor(column, val){
+  const key = {accent_color:'accent', bg_color:'bg', surface_color:'surface', text_color:'text'}[column];
+  const hexEl = document.getElementById('brand-'+key+'-hex');
+  if(hexEl) hexEl.textContent = val;
+  renderBrandingPreview();
+  if(!currentOperator?.auth_id){ toast('Save your account details first'); return; }
+  const {error} = await supa.from('gw_operators').update({[column]:val}).eq('auth_id',currentOperator.auth_id);
+  if(error){ toast('Save failed: '+error.message); console.error('branding colour save:',error); return; }
+  currentOperator[column] = val;
+  toast('Colour saved');
+}
+
+function applyBrandingPreset(which){
+  const presets = {
+    light: {accent_color:'#4F46E5', bg_color:'#F7F8FA', surface_color:'#FFFFFF', text_color:'#0F1117'},
+    dark:  {accent_color:'#22C55E', bg_color:'#0B0B0B', surface_color:'#1A1A1A', text_color:'#FFFFFF'},
+  };
+  const preset = presets[which];
+  if(!preset) return;
+  Object.entries(preset).forEach(([column,val])=>{ saveBrandingColor(column,val); });
+  currentOperator = {...currentOperator, ...preset};
+  renderBrandingColors();
 }
 
 function renderLogoPreview(){
@@ -1873,23 +1947,6 @@ async function removeOperatorLogo(){
   currentOperator.logo_url = null;
   renderLogoPreview();
   toast('Logo removed — back to default');
-}
-
-async function saveBrandingAccent(val){
-  document.getElementById('brand-accent-hex').textContent=val;
-  if(!currentOperator?.auth_id){ toast('Save your account details first'); return; }
-  const {error} = await supa.from('gw_operators').update({accent_color:val}).eq('auth_id',currentOperator.auth_id);
-  if(error){ toast('Save failed: '+error.message); console.error('accent colour save:',error); return; }
-  currentOperator.accent_color = val;
-  toast('Accent colour saved');
-}
-async function saveBrandingBg(val){
-  document.getElementById('brand-bg-hex').textContent=val;
-  if(!currentOperator?.auth_id){ toast('Save your account details first'); return; }
-  const {error} = await supa.from('gw_operators').update({bg_color:val}).eq('auth_id',currentOperator.auth_id);
-  if(error){ toast('Save failed: '+error.message); console.error('bg colour save:',error); return; }
-  currentOperator.bg_color = val;
-  toast('Background colour saved');
 }
 
 // ── ROUND MODALS ──────────────────────────────────────────────────────────

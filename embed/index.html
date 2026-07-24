@@ -4420,7 +4420,7 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
 
     if(CLIENT_PARAM&&CLIENT_PARAM!=='demo'){
       try{
-        const {data:op} = await supa.from('gw_operators').select('company_name,logo_url,accent_color,bg_color').eq('client_key',CLIENT_PARAM).single();
+        const {data:op} = await supa.from('gw_operators').select('company_name,logo_url,accent_color,bg_color,surface_color,text_color').eq('client_key',CLIENT_PARAM).single();
         if(op){
           document.getElementById('hdr-operator-badge').textContent='· '+op.company_name;
           if(op.logo_url){
@@ -4428,14 +4428,26 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
             if(logoEl) logoEl.innerHTML = `<img src="${op.logo_url}" alt="${op.company_name||'Logo'}" style="height:28px;max-width:160px;object-fit:contain;vertical-align:middle;">`;
           }
           // Operator-level widget theme, set in the admin's Branding page.
-          // Falls back to the built-in defaults already in :root when unset.
+          // Only 4 colours are configured directly (accent, page bg, card
+          // surface, text) — everything else (secondary/tertiary text,
+          // borders, the accent tint) is derived from those via alpha
+          // blending, so the whole component library stays coherent
+          // without needing 8+ individual pickers. Falls back to the
+          // built-in :root defaults for anything unset.
           const root = document.documentElement.style;
           if(op.accent_color){
             root.setProperty('--accent', op.accent_color);
             root.setProperty('--accent-2', op.accent_color);
-            root.setProperty('--accent-light', op.accent_color+'1A'); // ~10% alpha tint for light backgrounds
+            root.setProperty('--accent-light', op.accent_color+'1A'); // ~10% alpha
           }
           if(op.bg_color) root.setProperty('--bg', op.bg_color);
+          if(op.surface_color) root.setProperty('--white', op.surface_color);
+          if(op.text_color){
+            root.setProperty('--text', op.text_color);
+            root.setProperty('--text-2', op.text_color+'B3'); // ~70% alpha
+            root.setProperty('--text-3', op.text_color+'80'); // ~50% alpha
+            root.setProperty('--border', op.text_color+'26'); // ~15% alpha
+          }
         }
       }catch(e){}
     }
