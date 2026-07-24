@@ -609,7 +609,7 @@ tbody tr:hover td{background:var(--bg);}
               <div class="form-group">
                 <label class="form-label">Accent Colour</label>
                 <div class="color-row">
-                  <input type="color" class="color-input" id="brand-accent" value="#4F46E5" onchange="saveBrandingColor('accent_color',this.value)">
+                  <input type="color" class="color-input" id="brand-accent" value="#4F46E5" oninput="stageBrandingColor('accent_color',this.value)">
                   <span id="brand-accent-hex" style="font-family:var(--mono);font-size:12px;color:var(--text-2);">#4F46E5</span>
                 </div>
                 <div style="font-size:11px;color:var(--text-3);margin-top:6px;">Buttons, active states, progress bars.</div>
@@ -617,7 +617,7 @@ tbody tr:hover td{background:var(--bg);}
               <div class="form-group">
                 <label class="form-label">Page Background</label>
                 <div class="color-row">
-                  <input type="color" class="color-input" id="brand-bg" value="#F7F8FA" onchange="saveBrandingColor('bg_color',this.value)">
+                  <input type="color" class="color-input" id="brand-bg" value="#F7F8FA" oninput="stageBrandingColor('bg_color',this.value)">
                   <span id="brand-bg-hex" style="font-family:var(--mono);font-size:12px;color:var(--text-2);">#F7F8FA</span>
                 </div>
                 <div style="font-size:11px;color:var(--text-3);margin-top:6px;">Fills the space behind the cards.</div>
@@ -625,7 +625,7 @@ tbody tr:hover td{background:var(--bg);}
               <div class="form-group">
                 <label class="form-label">Card Background</label>
                 <div class="color-row">
-                  <input type="color" class="color-input" id="brand-surface" value="#FFFFFF" onchange="saveBrandingColor('surface_color',this.value)">
+                  <input type="color" class="color-input" id="brand-surface" value="#FFFFFF" oninput="stageBrandingColor('surface_color',this.value)">
                   <span id="brand-surface-hex" style="font-family:var(--mono);font-size:12px;color:var(--text-2);">#FFFFFF</span>
                 </div>
                 <div style="font-size:11px;color:var(--text-3);margin-top:6px;">Match cards should sit on. Use dark for a dark-mode site.</div>
@@ -633,7 +633,7 @@ tbody tr:hover td{background:var(--bg);}
               <div class="form-group">
                 <label class="form-label">Text Colour</label>
                 <div class="color-row">
-                  <input type="color" class="color-input" id="brand-text" value="#0F1117" onchange="saveBrandingColor('text_color',this.value)">
+                  <input type="color" class="color-input" id="brand-text" value="#0F1117" oninput="stageBrandingColor('text_color',this.value)">
                   <span id="brand-text-hex" style="font-family:var(--mono);font-size:12px;color:var(--text-2);">#0F1117</span>
                 </div>
                 <div style="font-size:11px;color:var(--text-3);margin-top:6px;">Use light text on a dark card background.</div>
@@ -641,6 +641,10 @@ tbody tr:hover td{background:var(--bg);}
             </div>
             <div style="font-size:11px;color:var(--text-3);margin:6px 0 8px;">Secondary text, borders, and highlight tints are generated automatically from these four colours — no need to set every shade individually.</div>
             <div id="brand-preview" style="border-radius:12px;padding:16px;margin-top:4px;"></div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:16px;">
+              <button class="btn btn-primary" id="brand-save-btn" onclick="saveBrandingTheme()">Save Theme</button>
+              <span id="brand-dirty-hint" style="display:none;font-size:11.5px;color:var(--amber);">Unsaved changes</span>
+            </div>
           </div>
         </div>
 
@@ -1883,16 +1887,23 @@ function renderBrandingPreview(vals){
     </div>`;
 }
 
-async function saveBrandingColor(column, val){
+// Colour edits only update the on-screen preview + pickers as the person
+// works — nothing hits the database until they explicitly click Save, so
+// tweaking a colour doesn't instantly change what live players see.
+let brandingDirty = false;
+
+function stageBrandingColor(column, val){
   const key = {accent_color:'accent', bg_color:'bg', surface_color:'surface', text_color:'text'}[column];
   const hexEl = document.getElementById('brand-'+key+'-hex');
   if(hexEl) hexEl.textContent = val;
   renderBrandingPreview();
-  if(!currentOperator?.auth_id){ toast('Save your account details first'); return; }
-  const {error} = await supa.from('gw_operators').update({[column]:val}).eq('auth_id',currentOperator.auth_id);
-  if(error){ toast('Save failed: '+error.message); console.error('branding colour save:',error); return; }
-  currentOperator[column] = val;
-  toast('Colour saved');
+  markBrandingDirty();
+}
+
+function markBrandingDirty(){
+  brandingDirty = true;
+  const hint = document.getElementById('brand-dirty-hint');
+  if(hint) hint.style.display = 'inline';
 }
 
 function applyBrandingPreset(which){
@@ -1902,9 +1913,38 @@ function applyBrandingPreset(which){
   };
   const preset = presets[which];
   if(!preset) return;
-  Object.entries(preset).forEach(([column,val])=>{ saveBrandingColor(column,val); });
-  currentOperator = {...currentOperator, ...preset};
-  renderBrandingColors();
+  const staged = {
+    accent: preset.accent_color, bg: preset.bg_color,
+    surface: preset.surface_color, text: preset.text_color,
+  };
+  Object.entries(staged).forEach(([key,val])=>{
+    const input = document.getElementById('brand-'+key);
+    const hex = document.getElementById('brand-'+key+'-hex');
+    if(input) input.value = val;
+    if(hex) hex.textContent = val;
+  });
+  renderBrandingPreview(staged);
+  markBrandingDirty();
+}
+
+async function saveBrandingTheme(){
+  if(!currentOperator?.auth_id){ toast('Save your account details first'); return; }
+  const payload = {
+    accent_color: document.getElementById('brand-accent')?.value,
+    bg_color: document.getElementById('brand-bg')?.value,
+    surface_color: document.getElementById('brand-surface')?.value,
+    text_color: document.getElementById('brand-text')?.value,
+  };
+  const btn = document.getElementById('brand-save-btn');
+  if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
+  const {error} = await supa.from('gw_operators').update(payload).eq('auth_id',currentOperator.auth_id);
+  if(btn){ btn.disabled = false; btn.textContent = 'Save Theme'; }
+  if(error){ toast('Save failed: '+error.message); console.error('branding theme save:',error); return; }
+  currentOperator = {...currentOperator, ...payload};
+  brandingDirty = false;
+  const hint = document.getElementById('brand-dirty-hint');
+  if(hint) hint.style.display = 'none';
+  toast('Theme saved');
 }
 
 function renderLogoPreview(){
