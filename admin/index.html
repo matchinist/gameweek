@@ -1817,6 +1817,20 @@ function renderBranding(){
       <span style="font-family:var(--mono);font-size:11px;color:var(--text-3);">${c.color}</span>
     </div>`).join('');
   renderLogoPreview();
+  renderBrandingColors();
+}
+
+function renderBrandingColors(){
+  const accent = currentOperator?.accent_color || '#4F46E5';
+  const bg = currentOperator?.bg_color || '#F7F8FA';
+  const accentInput = document.getElementById('brand-accent');
+  const bgInput = document.getElementById('brand-bg');
+  if(accentInput) accentInput.value = accent;
+  if(bgInput) bgInput.value = bg;
+  const accentHex = document.getElementById('brand-accent-hex');
+  const bgHex = document.getElementById('brand-bg-hex');
+  if(accentHex) accentHex.textContent = accent;
+  if(bgHex) bgHex.textContent = bg;
 }
 
 function renderLogoPreview(){
@@ -1861,12 +1875,20 @@ async function removeOperatorLogo(){
   toast('Logo removed — back to default');
 }
 
-function saveBrandingAccent(val){
+async function saveBrandingAccent(val){
   document.getElementById('brand-accent-hex').textContent=val;
-  toast('Theme colour saved (applied in next embed update)');
+  if(!currentOperator?.auth_id){ toast('Save your account details first'); return; }
+  const {error} = await supa.from('gw_operators').update({accent_color:val}).eq('auth_id',currentOperator.auth_id);
+  if(error){ toast('Save failed: '+error.message); console.error('accent colour save:',error); return; }
+  currentOperator.accent_color = val;
+  toast('Accent colour saved');
 }
-function saveBrandingBg(val){
+async function saveBrandingBg(val){
   document.getElementById('brand-bg-hex').textContent=val;
+  if(!currentOperator?.auth_id){ toast('Save your account details first'); return; }
+  const {error} = await supa.from('gw_operators').update({bg_color:val}).eq('auth_id',currentOperator.auth_id);
+  if(error){ toast('Save failed: '+error.message); console.error('bg colour save:',error); return; }
+  currentOperator.bg_color = val;
   toast('Background colour saved');
 }
 
