@@ -3352,7 +3352,7 @@ function renderPredictionsPane(comp){
     events.forEach(ev=>{
       const raw=ev.kickoffRaw||ev.kickoff;
       const ko=parseKickoffMs(raw);
-      ev._bettingLockAt = ko!=null ? ko-3600000 : null;
+      ev._bettingLockAt = ko!=null ? ko-30*60*1000 : null; // matches the real 30-min-before-kickoff gate in renderEventCard
     });
     const upcoming=events.filter(ev=>!ev.res&&ev._bettingLockAt!=null&&ev._bettingLockAt>nowTs).sort((a,b)=>a._bettingLockAt-b._bettingLockAt);
     if(upcoming.length) nextBettingLock=upcoming[0];
@@ -3440,8 +3440,7 @@ function renderPredictionsPane(comp){
     }
   } else if(comp.mode==='betting'){
     if(isOpen&&nextBettingLock){
-      html+=controlBandCountdown('⏱',t('locksIn'),'<span id="countdown-text">Calculating...</span>', events.length?`${bettingSetCount} / ${events.length} set`:'');
-      setTimeout(()=>startCountdown(nextBettingLock._bettingLockAt,()=>renderPredict()),50);
+      html+=controlBandCountdown('⏱','Events lock','30 min before kick-off time', events.length?`${bettingSetCount} / ${events.length} set`:'');
     } else if(isOpen&&events.length&&events.every(ev=>ev.res||(ev._bettingLockAt!=null&&ev._bettingLockAt<=Date.now()))){
       html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 ${t('allLocked')}</div>`;
     }
