@@ -199,7 +199,7 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .lb-table tbody tr:last-child td{border-bottom:none;}
 .lb-table tbody tr:hover td{background:var(--bg);}
 .lb-table tbody tr.me td{background:var(--accent-light);}
-@media(max-width:480px){.lb-col-extra{display:none;}}
+@media(max-width:480px){.lb-col-extra{display:none;}.lb-col-extra2{display:none;}}
 .lb-rank{font-family:var(--mono);font-size:12px;color:var(--text-3);text-align:center;width:32px;font-weight:700;}
 .lb-uname{font-weight:500;font-size:12px;}
 .lb-uname.me{color:var(--accent);font-weight:700;}
@@ -1129,13 +1129,19 @@ function saveLineup(roundId){
 }
 
 // Fake leaderboard for lineup
-const LINEUP_LB = [
-  {u:'footy_oracle',pts:28,correct:9},{u:'demo_user',pts:24,correct:8},
-  {u:'xavi_8',pts:21,correct:7},{u:'stadyum76',pts:18,correct:6},
-  {u:'matchday_man',pts:15,correct:5},{u:'arsenal_fan',pts:12,correct:4},
-  {u:'bvb_predictor',pts:9,correct:3},{u:'golazo99',pts:6,correct:2},
-  {u:'tipster_pro',pts:3,correct:1},{u:'bet_master',pts:0,correct:0},
+// correct/bonusCorrect are the source of truth; pts is always derived from
+// them via the real scoring formula (10/correct player, +30 for a perfect
+// XI, +30 per correct bonus question) so the demo leaderboard and its
+// points-history popup can never show numbers that don't add up.
+const LINEUP_LB_SRC = [
+  {u:'footy_oracle',correct:11,bonusCorrect:3},{u:'demo_user',correct:9,bonusCorrect:2},
+  {u:'xavi_8',correct:8,bonusCorrect:2},{u:'stadyum76',correct:7,bonusCorrect:1},
+  {u:'matchday_man',correct:6,bonusCorrect:1},{u:'arsenal_fan',correct:5,bonusCorrect:1},
+  {u:'bvb_predictor',correct:4,bonusCorrect:0},{u:'golazo99',correct:3,bonusCorrect:0},
+  {u:'tipster_pro',correct:2,bonusCorrect:0},{u:'bet_master',correct:0,bonusCorrect:0},
 ];
+function lineupPtsFor(correct,bonusCorrect){ return correct*10 + (correct===11?30:0) + bonusCorrect*30; }
+const LINEUP_LB = LINEUP_LB_SRC.map(r=>({u:r.u, correct:r.correct, bonusCorrect:r.bonusCorrect, pts:lineupPtsFor(r.correct,r.bonusCorrect)}));
 
 function renderPredictionsPane(comp){
   if(comp.mode==='lineup') return renderLineupPredictor(comp);
@@ -2292,7 +2298,7 @@ function submitPreds(){
 function renderLineupLeaderboardShell(comp){
   const currentIdx = computeCurrentRoundIdx(comp);
   const maxIdx = currentIdx!=null ? currentIdx : comp.rounds.length-1;
-  if(lbSelection[currentCompIdx]===undefined) lbSelection[currentCompIdx]=maxIdx; // default: current gameweek, not Overall
+  if(lbSelection[currentCompIdx]===undefined) lbSelection[currentCompIdx]='overall'; // default: Overall
   const sel = lbSelection[currentCompIdx];
   const isOverall = sel==='overall';
   const round = isOverall ? null : (comp.rounds[sel]||comp.rounds[maxIdx]);
@@ -2304,23 +2310,150 @@ function renderLineupLeaderboardShell(comp){
     `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`,
     'changeLBSelection(this.value)');
   html+='</div>';
-  const rows=LINEUP_LB.map(row=>({u:row.u, points:isOverall?row.pts+row.pts:row.pts, correct:row.correct}));
+  // Demo has one meaningfully "resolved" gameweek (rl1) worth of data — both
+  // the weekly and Overall views show that same total, same as the real
+  // product would once only one gameweek has been played.
+  const rows=LINEUP_LB.map(row=>({u:row.u, points:row.pts, correct:row.correct, bonusCorrect:row.bonusCorrect}));
   rows.sort((a,b)=>b.points-a.points);
   let rank=1;
   rows.forEach((r,i)=>{if(i>0&&rows[i].points<rows[i-1].points)rank=i+1;r.rank=rank;});
   const activePrizes=isOverall?comp.overallPrizes:round?.prizes;
-  html+=buildLBTable(comp.name, isOverall?'Overall':(round?.label||''), rows,
-    r=>`<td class="lb-num">${r.points} pts</td>`, '<th class="r" style="width:80px;">Points</th>',
-    activePrizes,
-    r=>`<td class="lb-num">${r.correct||0}/11</td>`, '<th class="r" style="width:70px;">Accuracy</th>');
+  lineupLbCache={compName:comp.name};
+  if(isOverall){
+    html+=buildLBTable(comp.name, 'Overall', rows,
+      r=>`<td style="text-align:center;"><button class="lb-pts-btn" onclick="openLineupPredHistory('${encodeURIComponent(r.u)}')">${r.points} pts</button></td>`,
+      '<th style="width:96px;text-align:center;">Points</th>',
+      activePrizes);
+  } else {
+    html+=buildLBTable(comp.name, round?.label||'', rows,
+      r=>`<td style="text-align:center;"><button class="lb-pts-btn" onclick="openLineupPredHistory('${encodeURIComponent(r.u)}')">${r.points} pts</button></td>`,
+      '<th style="width:96px;text-align:center;">Points</th>',
+      activePrizes,
+      r=>`<td class="lb-num" style="text-align:center;">${r.correct||0}/11</td>`, '<th class="r" style="width:92px;text-align:center;">XI Accuracy</th>',
+      r=>`<td class="lb-num" style="text-align:center;">${r.bonusCorrect||0}/3</td>`, '<th class="r" style="width:64px;text-align:center;">Bonus</th>');
+  }
   return html;
 }
+
+// ── LINEUP LEADERBOARD: points-history popup (demo) ─────────────────────────
+// Same idea as demoScoreBreakdown/demoBettingBreakdown: reverse-engineer a
+// plausible set of picks from the target correct/bonusCorrect counts,
+// deterministically seeded per user so it's stable across renders.
+let lineupLbCache=null;
+function demoLineupBreakdown(round, correctTarget, bonusCorrectTarget, seed){
+  const rng = demoRng(seed);
+  const actual = LIV_ACTUAL_XI[round.id] || [];
+  const allSquad = [...LIV_SQUAD.GK,...LIV_SQUAD.DEF,...LIV_SQUAD.MID,...LIV_SQUAD.FWD];
+  const allIds = allSquad.map(p=>p.id);
+  const notActual = allIds.filter(id=>!actual.includes(id));
+  const shuffledActual = [...actual].sort(()=>rng()-0.5);
+  const shuffledOther = [...notActual].sort(()=>rng()-0.5);
+  const picks = [...shuffledActual.slice(0, Math.min(correctTarget, actual.length)), ...shuffledOther].slice(0,11);
+
+  const bonusAns = LIV_BONUS_ANSWERS[round.id] || {firstGoal:null, mvp:null, firstSubOut:null};
+  const bonusKeys = ['firstGoal','mvp','firstSubOut'];
+  const shuffledKeys = [...bonusKeys].sort(()=>rng()-0.5);
+  const bonus = {};
+  shuffledKeys.forEach((k,i)=>{
+    if(i<bonusCorrectTarget && bonusAns[k]){ bonus[k]=bonusAns[k]; return; }
+    const wrongPool = allIds.filter(id=>id!==bonusAns[k]);
+    bonus[k]=wrongPool[Math.floor(rng()*wrongPool.length)];
+  });
+  return {picks, bonus};
+}
+
+function openLineupPredHistory(uEnc){
+  const uname = decodeURIComponent(uEnc);
+  const comp = COMPS[currentCompIdx];
+  const safeU = uname.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const src = LINEUP_LB_SRC.find(r=>r.u===uname);
+
+  let body='';
+  [...comp.rounds].reverse().forEach(round=>{
+    const actual = LIV_ACTUAL_XI[round.id];
+    const bonusAns = LIV_BONUS_ANSWERS[round.id];
+    if(!actual && !bonusAns) return; // this gameweek isn't resolved yet — nothing to show
+    if(!src) return;
+
+    const {picks, bonus} = demoLineupBreakdown(round, src.correct, src.bonusCorrect, demoHash(uname+'|'+round.id));
+    const correctCount = actual ? picks.filter(pid=>actual.includes(pid)).length : 0;
+    const xiPts = actual ? correctCount*10 + (correctCount===11?30:0) : 0;
+    const bonusKeys=['firstGoal','mvp','firstSubOut'];
+    let bonusCorrectCount=0;
+    const bonusCorrectMap={};
+    bonusKeys.forEach(k=>{ const ok = bonusAns && bonusAns[k] && bonus[k]===bonusAns[k]; bonusCorrectMap[k]=ok; if(ok)bonusCorrectCount++; });
+    const totalPts = xiPts + bonusCorrectCount*30;
+
+    const ev = EVENTS[round.eventId];
+    const fixtureLabel = ev ? `${ev.home} <span style="color:var(--text-3);font-family:var(--mono);">${ev.res?ev.res.h+' - '+ev.res.a:'vs'}</span> ${ev.away}` : round.label;
+    const rid = 'lh_'+round.id;
+
+    body += `<div style="border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;">
+      <div onclick="toggleLineupHistoryRow('${rid}')" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;">
+        <div style="min-width:0;">
+          <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.4px;">${round.label}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fixtureLabel}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          <span class="ph-pill ${totalPts>0?'win':'lose'}">${totalPts>0?'+':''}${totalPts} pts</span>
+          <span id="${rid}_arrow" style="display:inline-block;color:var(--text-3);font-size:11px;transition:transform .15s;">▸</span>
+        </div>
+      </div>
+      <div id="${rid}" style="display:none;padding:0 14px 14px;border-top:1px solid var(--border);">
+        <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.4px;margin:12px 0 6px;">Starting XI · ${correctCount}/11 correct</div>`;
+    picks.forEach(pid=>{
+      const pl = findSquadPlayerById(pid);
+      const name = pl ? pl.name : pid;
+      const inXI = actual ? actual.includes(pid) : false;
+      body += `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12.5px;">
+        <span style="color:var(--text-2);">${shortPitchName(name)}</span>${inXI?'<span class="ph-pill win">✓</span>':'<span class="ph-pill lose">✕</span>'}
+      </div>`;
+    });
+    body += `<div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.4px;margin:14px 0 6px;">Bonus Questions · ${bonusCorrectCount}/3</div>`;
+    const labelMap={firstGoal:'First Goal',mvp:'Best Player',firstSubOut:'First Sub-Off'};
+    bonusKeys.forEach(k=>{
+      const pid=bonus[k]; if(!pid) return;
+      const pl=findSquadPlayerById(pid); const name=pl?pl.name:pid;
+      const ok=bonusCorrectMap[k];
+      body += `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12.5px;">
+        <span style="color:var(--text-2);">${labelMap[k]}: <strong style="color:var(--text);">${shortPitchName(name)}</strong></span>${ok?'<span class="ph-pill win">+30</span>':'<span class="ph-pill lose">+0</span>'}
+      </div>`;
+    });
+    body += `</div></div>`;
+  });
+
+  if(!body) body = `<div class="empty" style="padding:30px 10px;"><div class="empty-icon">🔮</div><div class="empty-title">No predictions yet</div></div>`;
+
+  let wrap=document.getElementById('pred-history-modal');
+  if(!wrap){ wrap=document.createElement('div'); wrap.id='pred-history-modal'; document.body.appendChild(wrap); }
+  wrap.innerHTML = `<div class="ph-overlay" onclick="if(event.target===this)closePredHistory()">
+    <div class="ph-modal">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div style="min-width:0;">
+          <div style="font-weight:800;font-size:15px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${safeU}</div>
+          <div style="font-size:12px;color:var(--text-3);">${comp.name}</div>
+        </div>
+        <button onclick="closePredHistory()" style="border:none;background:var(--bg);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:13px;color:var(--text-2);flex-shrink:0;">✕</button>
+      </div>
+      ${body}
+    </div>
+  </div>`;
+}
+function toggleLineupHistoryRow(rid){
+  const el=document.getElementById(rid);
+  const arrow=document.getElementById(rid+'_arrow');
+  if(!el) return;
+  const opening = el.style.display!=='block';
+  el.style.display = opening?'block':'none';
+  if(arrow) arrow.style.transform = opening?'rotate(90deg)':'rotate(0deg)';
+}
+
 function renderLeaderboardPane(comp){
   if(comp.mode==='lineup') return renderLineupPredictor(comp);
   if(comp.mode==='roulette'){
     return renderRouletteLeaderboardShell(comp);
   }
-  if(lbSelection[currentCompIdx]===undefined)lbSelection[currentCompIdx]=getDefaultRoundIdx(comp);
+  if(lbSelection[currentCompIdx]===undefined)lbSelection[currentCompIdx]='overall'; // default: Overall
   const sel=lbSelection[currentCompIdx],isOverall=sel==='overall';
   const round=isOverall?null:comp.rounds[sel];
   const ri=selectedRound[currentCompIdx]??0;
@@ -2524,17 +2657,19 @@ function ordinal(n){
   const s=['th','st','nd','rd'], v=n%100;
   return n+(s[(v-20)%10]||s[v]||s[0]);
 }
-function buildLBTable(title,sub,rows,cellFn,colHeader,prizes,extraCellFn,extraColHeader){
+function buildLBTable(title,sub,rows,cellFn,colHeader,prizes,extraCellFn,extraColHeader,extra2CellFn,extra2ColHeader){
   const me=currentUser;
   const prizeMap={};
   (prizes||[]).forEach(p=>{prizeMap[p.pos]=p.text;});
   const hasPrizes=Object.keys(prizeMap).length>0;
   const hasExtra=!!extraCellFn;
   const extraColHeaderMobile = extraColHeader ? extraColHeader.replace('<th ','<th class="lb-col-extra" ') : extraColHeader;
+  const hasExtra2=!!extra2CellFn;
+  const extra2ColHeaderMobile = extra2ColHeader ? extra2ColHeader.replace('<th ','<th class="lb-col-extra2" ') : extra2ColHeader;
   const medalColor={1:'#e8b53a',2:'#b9c0cc',3:'#cd8a52'};
   const prizeIcon={1:'🏆',2:'🥈',3:'🥉'};
   const prizeBg={1:'#fbf1cf',2:'#eef0f4',3:'#f4e3d3'};
-  let html=`<div class="lb-wrap"><table class="lb-table" style="table-layout:fixed;"><thead><tr><th style="width:32px;text-align:center">#</th><th style="width:auto;">Player</th>${colHeader}${hasExtra?extraColHeaderMobile:''}${hasPrizes?'<th style="width:56px;text-align:center;">Prize</th>':''}</tr></thead><tbody>`;
+  let html=`<div class="lb-wrap"><table class="lb-table" style="table-layout:fixed;"><thead><tr><th style="width:32px;text-align:center">#</th><th style="width:auto;">Player</th>${colHeader}${hasExtra?extraColHeaderMobile:''}${hasExtra2?extra2ColHeaderMobile:''}${hasPrizes?'<th style="width:56px;text-align:center;">Prize</th>':''}</tr></thead><tbody>`;
   rows.forEach(row=>{
     const isMe=row.u===me;
     const rankColor=row.rank<=3?medalColor[row.rank]:'var(--text-3)';
@@ -2552,7 +2687,8 @@ function buildLBTable(title,sub,rows,cellFn,colHeader,prizes,extraCellFn,extraCo
       }
     }
     const extraCell = hasExtra ? extraCellFn(row).replace('<td ','<td class="lb-col-extra" ') : '';
-    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank" style="color:${rankColor};">${row.rank}</td><td><div style="display:flex;align-items:center;gap:8px;min-width:0;"><div style="width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:${isMe?'#fff':'var(--text-2)'};background:${avatarBg};">${lbInitials(row.u)}</div><span class="lb-uname ${isMe?'me':''}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row.u}</span>${isMe?'<span style="flex-shrink:0;margin-left:2px;font-size:9px;font-weight:800;color:var(--accent);background:var(--accent-light);padding:2px 6px;border-radius:5px;letter-spacing:0.3px;">YOU</span>':''}</div></td>${cellFn(row)}${extraCell}${prizeCell}</tr>`;
+    const extra2Cell = hasExtra2 ? extra2CellFn(row).replace('<td ','<td class="lb-col-extra2" ') : '';
+    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank" style="color:${rankColor};">${row.rank}</td><td><div style="display:flex;align-items:center;gap:8px;min-width:0;"><div style="width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:${isMe?'#fff':'var(--text-2)'};background:${avatarBg};">${lbInitials(row.u)}</div><span class="lb-uname ${isMe?'me':''}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row.u}</span>${isMe?'<span style="flex-shrink:0;margin-left:2px;font-size:9px;font-weight:800;color:var(--accent);background:var(--accent-light);padding:2px 6px;border-radius:5px;letter-spacing:0.3px;">YOU</span>':''}</div></td>${cellFn(row)}${extraCell}${extra2Cell}${prizeCell}</tr>`;
   });
   html+='</tbody></table></div>';return html;
 }
