@@ -1174,14 +1174,14 @@ function renderPredictionsPane(comp){
     events.forEach(ev=>{
       const raw=ev.kickoffRaw||ev.kickoff;
       const ko=parseKickoffMs(raw);
-      ev._scoreLockAt = ko!=null ? ko-3600000 : null;
+      ev._scoreLockAt = ko!=null ? ko-30*60*1000 : null; // matches the real 30-min-before-kickoff gate in renderEventCard
     });
     const upcoming=events.filter(ev=>!ev.res&&ev._scoreLockAt!=null&&ev._scoreLockAt>nowTs).sort((a,b)=>a._scoreLockAt-b._scoreLockAt);
     if(upcoming.length) nextScoreLock=upcoming[0];
   }
   let nextBettingLock=null;
   if(comp.mode==='betting'){
-    // Each event locks 1 hour before its own kickoff, same rule as Score
+    // Each event locks 30 min before its own kickoff, same rule as Score
     // Predictor — not every event in a betting round locks at once, so this
     // always reflects whichever upcoming event locks soonest.
     const nowTs=Date.now();
@@ -1224,8 +1224,7 @@ function renderPredictionsPane(comp){
     html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 You've been eliminated <span style="color:var(--red);font-weight:700;"> · ✗ You failed!</span></div>`;
   } else if(comp.mode==='score'){
     if(isOpen&&nextScoreLock){
-      html+=controlBandCountdown('⏱','Locks in','<span id="countdown-text">Calculating...</span>', events.length?`${predCount} / ${events.length} set`:'');
-      setTimeout(()=>startCountdown(nextScoreLock._scoreLockAt,()=>renderPredict()),50);
+      html+=controlBandCountdown('⏱','Events lock','30 min before kick-off time', events.length?`${predCount} / ${events.length} set`:'');
     } else if(isOpen&&events.length&&events.every(ev=>ev.res||(ev._scoreLockAt!=null&&ev._scoreLockAt<=Date.now()))){
       html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 All predictions locked</div>`;
     }
