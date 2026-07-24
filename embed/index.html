@@ -22,9 +22,9 @@
 }
 html{height:100%;overflow:hidden;}
 body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;}
-.app{display:flex;flex-direction:column;position:fixed;top:0;left:0;right:0;bottom:0;max-width:860px;margin:0 auto;width:100%;background:var(--white);overflow:hidden;border-left:1px solid oklch(0.92 0.004 260);border-right:1px solid oklch(0.92 0.004 260);}
+.app{display:flex;flex-direction:column;position:fixed;top:0;left:0;right:0;bottom:0;max-width:860px;margin:0 auto;width:100%;background:var(--white);overflow:hidden;border-left:1px solid var(--border);border-right:1px solid var(--border);}
 .scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:var(--bg);}
-.app-header{background:var(--white);border-bottom:1px solid oklch(0.92 0.004 260);flex-shrink:0;z-index:50;}
+.app-header{background:var(--white);border-bottom:1px solid var(--border);flex-shrink:0;z-index:50;}
 .header-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 20px;}
 .header-logo{font-family:Inter,sans-serif;font-size:19px;font-weight:800;letter-spacing:-0.02em;color:var(--text);}
 .header-logo span{color:oklch(0.55 0.19 275);}
@@ -56,7 +56,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 @keyframes authshake{10%,90%{transform:translateX(-1px);}20%,80%{transform:translateX(2px);}30%,50%,70%{transform:translateX(-4px);}40%,60%{transform:translateX(4px);}}
 .auth-modal.shake{animation:authshake 0.4s;}
 .auth-terms{font-size:11px;color:var(--text-3);text-align:center;margin-top:14px;line-height:1.5;}
-#comp-tabs-wrap{border-bottom:1px solid oklch(0.92 0.004 260);}
+#comp-tabs-wrap{border-bottom:1px solid var(--border);}
 .comp-tabs{display:flex;gap:0;overflow-x:auto;padding:0 16px;-webkit-overflow-scrolling:touch;align-items:center;}
 .comp-tabs::-webkit-scrollbar{display:none;}
 .comp-tabs::-webkit-scrollbar{display:none;}
@@ -95,7 +95,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
   .round-bar{padding:8px 0;}
 }
 /* ── INLINE SCORE INPUTS ── */
-.score-num-inline{width:32px;height:31px;border:1.5px solid oklch(0.88 0.006 260);border-radius:8px;text-align:center;font-family:"DM Mono",monospace;font-size:13px;font-weight:700;color:var(--text);background:oklch(0.98 0.002 260);outline:none;-moz-appearance:textfield;transition:border-color 0.13s;flex-shrink:0;}
+.score-num-inline{width:32px;height:31px;border:1.5px solid var(--border);border-radius:8px;text-align:center;font-family:"DM Mono",monospace;font-size:13px;font-weight:700;color:var(--text);background:var(--white);outline:none;-moz-appearance:textfield;transition:border-color 0.13s;flex-shrink:0;}
 .score-num-inline::-webkit-inner-spin-button,.score-num-inline::-webkit-outer-spin-button{-webkit-appearance:none;}
 .score-num-inline:focus{border-color:var(--comp-color);}
 .score-num-inline.has{border-color:var(--comp-color);background:var(--accent-light);color:var(--comp-color);}
@@ -120,10 +120,10 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .lb-week-select{width:100%;font-family:var(--mono);font-size:11px;border:1px solid var(--border);background:var(--white);padding:8px 10px;border-radius:6px;outline:none;color:var(--text);}
 .lb-week-select:focus{border-color:var(--comp-color);}
 .lb-pane{padding:14px 16px;}
-.deadline-banner{display:flex;align-items:center;gap:8px;background:oklch(0.94 0.03 275 / 0.6);border:1px solid oklch(0.88 0.05 275 / 0.6);border-radius:10px;padding:11px 16px;margin-bottom:24px;font-size:13.5px;font-weight:600;color:oklch(0.42 0.12 275);}
+.deadline-banner{display:flex;align-items:center;gap:8px;background:var(--accent-light);border:1px solid var(--border);border-radius:10px;padding:11px 16px;margin-bottom:24px;font-size:13.5px;font-weight:600;color:var(--accent);}
 .control-band{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(20,20,40,0.03);margin:0 0 18px;}
 .control-band-select{height:32px;padding:0 10px;border:1px solid var(--border);background:var(--bg);border-radius:8px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--text);cursor:pointer;max-width:170px;}
-.control-band-countdown{display:flex;align-items:center;gap:11px;margin-top:12px;background:linear-gradient(90deg,var(--accent-light),oklch(0.97 0.01 275));border:1px solid oklch(0.9 0.04 275);border-radius:10px;padding:10px 13px;}
+.control-band-countdown{display:flex;align-items:center;gap:11px;margin-top:12px;background:var(--accent-light);border:1px solid var(--border);border-radius:10px;padding:10px 13px;}
 .control-band-countdown-icon{width:30px;height:30px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
 
 .deadline-banner strong{font-family:var(--mono);font-size:10px;}
@@ -139,7 +139,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .st-bar-count{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);min-width:36px;text-align:right;}
 .events-list{display:grid;grid-template-columns:1fr;gap:14px;padding:0;}
 @media(min-width:600px){.events-list{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}.event-card{height:100%;min-width:0;}}
-.event-card{background:var(--white);border:1px solid oklch(0.92 0.004 260);border-radius:16px;box-shadow:0 1px 2px oklch(0.2 0.02 260 / 0.04),0 6px 20px oklch(0.2 0.02 260 / 0.03);overflow:hidden;}
+.event-card{background:var(--white);border:1px solid var(--border);border-radius:16px;box-shadow:0 1px 2px oklch(0.2 0.02 260 / 0.04),0 6px 20px oklch(0.2 0.02 260 / 0.03);overflow:hidden;}
 .event-card.predicted{border-color:var(--comp-color);}
 .event-card.locked-pred{border-color:var(--border);opacity:0.85;}
 .event-card-top{padding:0;}
@@ -154,7 +154,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .ev-name{font-family:Inter,sans-serif;font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1;}
 .ev-vs{font-family:Inter,sans-serif;font-size:11px;color:var(--text-3);text-align:center;min-width:28px;}
 .ev-score{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--text);text-align:center;display:flex;align-items:center;justify-content:center;gap:4px;}
-.pred-area{border-top:1px solid oklch(0.95 0.004 260);padding:13px 20px;background:oklch(0.985 0.003 260);}
+.pred-area{border-top:1px solid var(--border);padding:13px 20px;background:var(--white);}
 .pred-label{font-size:11px;color:var(--text-2);font-weight:500;margin-bottom:8px;}
 .btns-1x2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
 .btn-1x2{flex:1;padding:11px 4px;border:1px solid var(--border);border-radius:7px;background:var(--white);font-family:Inter,sans-serif;font-size:11px;font-weight:600;color:var(--text);cursor:pointer;transition:all 0.13s;text-align:center;line-height:1.2;}.btn-1x2:disabled{cursor:default;}.btn-ou:disabled{cursor:default;}
@@ -270,8 +270,8 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .pitch-box-b-six{position:absolute;left:50%;bottom:7px;width:26%;height:6.5%;margin-left:-13%;border:2px solid rgba(255,255,255,0.3);border-bottom:none;pointer-events:none;}
 .lineup-pitch-container{position:relative;margin:12px;border-radius:10px;overflow:hidden;aspect-ratio:5/6;background:repeating-linear-gradient(#3aa35a 0 34px,#359152 34px 68px);box-shadow:inset 0 0 0 2px rgba(255,255,255,0.25);}
 .bonus-box{flex:1;min-width:0;border-radius:10px;padding:9px 6px;text-align:center;}
-.bonus-box.empty{border:1.5px dashed oklch(0.85 0.006 260);background:oklch(0.98 0.004 260);cursor:pointer;}
-.bonus-box.empty:active{background:oklch(0.95 0.004 260);}
+.bonus-box.empty{border:1.5px dashed var(--border);background:var(--white);cursor:pointer;}
+.bonus-box.empty:active{background:var(--bg);}
 .bonus-box.filled{background:var(--accent-light);border:1px solid #C7D2FE;cursor:pointer;}
 .bonus-box.locked{cursor:default;}
 .bonus-box .bb-label{font-size:9.5px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -1055,7 +1055,7 @@ function renderCompTabs(){
   // embed is meant to show just that competition on its own — no switcher.
   compTabsHidden = COMP_FILTER.length>0 && COMPS.length===1;
   if(wrap) wrap.style.display = compTabsHidden ? 'none' : 'block';
-  el.innerHTML=COMPS.map((c,i)=>`<button class="comp-tab${i===currentCompIdx?' active':''}" onclick="switchComp(${i})"><span style="display:inline-block;padding:7px 14px;border-radius:8px;background:${i===currentCompIdx?'oklch(0.94 0.05 275 / 0.7)':'transparent'};">${c.name}</span></button>`).join('');
+  el.innerHTML=COMPS.map((c,i)=>`<button class="comp-tab${i===currentCompIdx?' active':''}" onclick="switchComp(${i})"><span style="display:inline-block;padding:7px 14px;border-radius:8px;background:${i===currentCompIdx?'var(--accent-light)':'transparent'};">${c.name}</span></button>`).join('');
   document.documentElement.style.setProperty('--comp-color',COMPS[currentCompIdx].color);
   const scopeEl=document.getElementById('comp-scope-text');
   if(scopeEl){
@@ -1670,8 +1670,8 @@ function renderLineupPredictor(comp){
   // pitch, folding it into the card itself. Nothing shown here before scoring;
   // the pick progress lives in the progress bar near the save button.
   const formationCtl = isOpen
-    ? `<select onchange="changeLineupFormation('${round.id}',this.value)" style="font-size:11px;font-weight:800;color:var(--text);background:oklch(0.94 0.006 275);border:none;border-radius:7px;padding:5px 7px;cursor:pointer;outline:none;font-family:inherit;">${Object.keys(FORMATION_LAYOUTS).map(f=>`<option value="${f}"${f===fmt?' selected':''}>${f}</option>`).join('')}</select>`
-    : `<span style="font-size:11px;font-weight:800;color:var(--text);background:oklch(0.94 0.006 275);border-radius:7px;padding:5px 9px;">${fmt}</span>`;
+    ? `<select onchange="changeLineupFormation('${round.id}',this.value)" style="font-size:11px;font-weight:800;color:var(--text);background:var(--bg);border:none;border-radius:7px;padding:5px 7px;cursor:pointer;outline:none;font-family:inherit;">${Object.keys(FORMATION_LAYOUTS).map(f=>`<option value="${f}"${f===fmt?' selected':''}>${f}</option>`).join('')}</select>`
+    : `<span style="font-size:11px;font-weight:800;color:var(--text);background:var(--bg);border-radius:7px;padding:5px 9px;">${fmt}</span>`;
   const totalPts = scored ? scored.pts : 0;
 
   function bonusBoxHTML(key, label, playerId){
@@ -1694,12 +1694,12 @@ function renderLineupPredictor(comp){
     return `<div class="bonus-box ${stateCls}"${clickAttr}><div class="bb-label">${label}</div><div class="bb-plus">+</div></div>`;
   }
 
-  const bonusRow = `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:oklch(0.98 0.004 260);border-top:1px solid oklch(0.94 0.004 260);border-bottom:1px solid oklch(0.94 0.004 260);">
+  const bonusRow = `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--white);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;">${t('form')}</span>
         ${formationCtl}
       </div>
-      <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:800;padding:4px 11px;border-radius:999px;background:${totalPts>0?'var(--green-light)':'oklch(0.95 0.004 260)'};color:${totalPts>0?'var(--green)':'oklch(0.5 0.01 260)'};">${totalPts>0?'+':''}${totalPts} pts</span>
+      <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:800;padding:4px 11px;border-radius:999px;background:${totalPts>0?'var(--green-light)':'var(--bg)'};color:${totalPts>0?'var(--green)':'var(--text-3)'};">${totalPts>0?'+':''}${totalPts} pts</span>
     </div>
     <div style="display:flex;gap:8px;padding:10px 16px 4px;">
       ${bonusBoxHTML('firstGoal', t('bonusFirstGoal'), bonus.firstGoal)}
@@ -1730,7 +1730,7 @@ function renderLineupPredictor(comp){
       </div>
 
       <div style="display:flex;justify-content:center;">
-      <div style="width:100%;max-width:420px;background:var(--white);border:1px solid oklch(0.92 0.004 260);border-radius:16px;box-shadow:0 2px 8px rgba(20,20,40,0.05);overflow:hidden;">
+      <div style="width:100%;max-width:420px;background:var(--white);border:1px solid var(--border);border-radius:16px;box-shadow:0 2px 8px rgba(20,20,40,0.05);overflow:hidden;">
         <div style="padding:12px 16px 0;">${fixtureHeader}</div>
         ${bonusRow}
         <div class="pitch-wrap" style="max-width:none;margin:0;">
@@ -1756,20 +1756,20 @@ function renderLineupPredictor(comp){
         </div>` : ''}
         <div style="padding:0 12px 14px;">
           ${isOpen && pickCount===11 && bonusComplete ? (lineupSaved[round.id] ? `
-          <button disabled style="width:100%;border:none;border-radius:9px;padding:11px;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;background:var(--white);color:var(--text-3);cursor:default;border:1px solid oklch(0.9 0.004 260);">
+          <button disabled style="width:100%;border:none;border-radius:9px;padding:11px;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;background:var(--white);color:var(--text-3);cursor:default;border:1px solid var(--border);">
             ✓ ${t('lineupSaved')}
           </button>` : `
           <button onclick="saveLineup('${round.id}')" style="width:100%;border:none;border-radius:9px;padding:11px;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;cursor:pointer;background:var(--comp-color);color:#fff;box-shadow:0 3px 10px rgba(20,20,40,0.15);">
             ${t('saveStartingXI')}
           </button>`) : isOpen && pickCount===11 ? `
-          <button disabled style="width:100%;border:none;border-radius:9px;padding:11px;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;background:oklch(0.95 0.004 260);color:var(--text-3);cursor:not-allowed;">
+          <button disabled style="width:100%;border:none;border-radius:9px;padding:11px;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;background:var(--bg);color:var(--text-3);cursor:not-allowed;">
             ${t('answerBonusQuestions')}
           </button>` : isOpen ? `
-          <button disabled style="width:100%;border:none;border-radius:9px;padding:11px;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;background:oklch(0.95 0.004 260);color:var(--text-3);cursor:not-allowed;">
+          <button disabled style="width:100%;border:none;border-radius:9px;padding:11px;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;background:var(--bg);color:var(--text-3);cursor:not-allowed;">
             ${t('pickMore',{n:11-pickCount})}
           </button>` : ''}
           ${isOpen ? `<div style="display:flex;align-items:center;gap:8px;margin-top:9px;">
-            <div style="flex:1;height:5px;border-radius:3px;background:oklch(0.93 0.004 260);overflow:hidden;">
+            <div style="flex:1;height:5px;border-radius:3px;background:var(--bg);overflow:hidden;">
               <div style="width:${(pickCount/11*100)}%;height:100%;background:var(--comp-color);border-radius:3px;transition:width .2s;"></div>
             </div>
             <span style="font-size:11px;font-weight:700;color:var(--text-3);">${pickCount}/11</span>
@@ -2075,12 +2075,12 @@ function openLineupPicker(roundId, slotIdx, pos){
   const byPos = {GK:squad.GK,DEF:squad.DEF,MID:squad.MID,FWD:squad.FWD};
 
   let html = `<div style="background:var(--white);border-radius:20px 20px 0 0;width:100%;max-width:420px;max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:20px 0 32px;">
-    <div style="padding:0 20px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid oklch(0.92 0.004 260);">
+    <div style="padding:0 20px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
       <div>
         <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;">Select player</div>
         <div style="font-size:16px;font-weight:800;color:var(--text);margin-top:2px;">Position: <span style="color:${posColor[pos]};">${pos}</span></div>
       </div>
-      <button onclick="closeLineupPicker()" style="background:oklch(0.93 0.006 260);border:none;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;color:var(--text-2);">×</button>
+      <button onclick="closeLineupPicker()" style="background:var(--bg);border:none;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;color:var(--text-2);">×</button>
     </div>`;
 
   // Remove button if already picked
@@ -2184,12 +2184,12 @@ function openBonusPicker(roundId, key){
   document.body.style.overflow='hidden';
 
   let html = `<div style="background:var(--white);border-radius:20px 20px 0 0;width:100%;max-width:420px;max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:20px 0 32px;">
-    <div style="padding:0 20px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid oklch(0.92 0.004 260);">
+    <div style="padding:0 20px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
       <div>
         <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;">${t('bonusPickPrompt')}</div>
         <div style="font-size:16px;font-weight:800;color:var(--text);margin-top:2px;">${titleMap[key]}</div>
       </div>
-      <button onclick="closeLineupPicker()" style="background:oklch(0.93 0.006 260);border:none;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;color:var(--text-2);">×</button>
+      <button onclick="closeLineupPicker()" style="background:var(--bg);border:none;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;color:var(--text-2);">×</button>
     </div>
     <div style="padding:12px 20px 4px;font-size:12.5px;line-height:1.5;color:var(--text-2);">${descMap[key]}</div>`;
 
