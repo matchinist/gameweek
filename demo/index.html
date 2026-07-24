@@ -377,6 +377,7 @@ const COMPS=[
     ]},
   {id:'c7',name:'Lineup Predictor',mode:'lineup',color:'#0EA5E9',
     rounds:[{id:'rl1',label:'Gameweek 1',status:'open',eventId:'erl_lu1'},{id:'rl2',label:'Gameweek 2',status:'upcoming',eventId:'erl_lu2'}]},
+  {id:'c8',name:'Squad Analytics',mode:'analytics',color:'#6d4be0'},
 ];
 
 const EVENTS={
@@ -614,8 +615,12 @@ function shortPitchName(name){
   return parts[0].charAt(0) + '. ' + parts.slice(1).join(' ');
 }
 function renderPredict(){
-  if(selectedRound[currentCompIdx]===undefined)selectedRound[currentCompIdx]=getDefaultRoundIdx(COMPS[currentCompIdx]);
   const comp=COMPS[currentCompIdx];
+  if(comp.mode==='analytics'){
+    document.getElementById('predict-content').innerHTML=renderSquadAnalytics();
+    return;
+  }
+  if(selectedRound[currentCompIdx]===undefined)selectedRound[currentCompIdx]=getDefaultRoundIdx(comp);
   let html=predictSubTab==='predictions'?renderPredictionsPane(comp):(comp.mode==='lineup'?renderLineupLeaderboardShell(comp):renderLeaderboardPane(comp));
   document.getElementById('predict-content').innerHTML=html;
 }
@@ -2446,6 +2451,294 @@ function toggleLineupHistoryRow(rid){
   const opening = el.style.display!=='block';
   el.style.display = opening?'block':'none';
   if(arrow) arrow.style.transform = opening?'rotate(90deg)':'rotate(0deg)';
+}
+
+// ── SQUAD ANALYTICS: 20-club league comparison ─────────────────────────────
+// Ported design/logic — a per-metric leaderboard across all 20 PL clubs
+// (heat-mapped value cells, Liverpool highlighted), click a value to open a
+// per-club player breakdown. Fully self-contained illustrative dataset.
+let sqaState = { gw:12, level:'consistency', metricKey:'started', minPct:50, detail:null };
+
+const SQA_NAMES = ['Rivera','Silva','Okafor','Bennett','Novak','Haaland','Costa','Mbappe','Kane','Foden','Rice','Saka','Martz','Nunes','Palmer','Odegaard','Wan','Alvarez','Gakpo','Diaz','Jota','Konate','Bradley','Elliott'];
+const SQA_NATIONS = ['England','Spain','France','Brazil','Portugal','Netherlands','Argentina','Germany','Belgium','Uruguay','Denmark','Japan','Senegal','Colombia','Croatia','Italy'];
+const SQA_ZODIAC = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+
+const SQA_DEFS = [
+  { group:'consistency', key:'started',   short:'Started',       label:'Started players',    type:'scalar', unit:'players', lowerBetter:true,  caption:'Distinct players given a start this season. Fewer means a more settled first XI.' },
+  { group:'consistency', key:'minutes',   short:'Participation', label:'Participated players', type:'dist',                 lowerBetter:true,  caption:'Players covering at least the chosen share of the club\u2019s total minutes. Fewer means a smaller ever-present core.' },
+  { group:'consistency', key:'lineups',   short:'Lineups',       label:'Different lineups',   type:'scalar', unit:'used',    lowerBetter:true,  caption:'Distinct starting XIs fielded. Fewer means the manager keeps naming the same team.' },
+  { group:'consistency', key:'avgChange', short:'Avg change',    label:'Avg change / game',   type:'scalar', unit:'players', lowerBetter:true,  caption:'Average number of starters swapped between consecutive matches. Lower means more continuity.' },
+  { group:'demographics', key:'nations',  short:'Nationalities', label:'Nationalities used',  type:'scalar', unit:'nations', lowerBetter:false, caption:'Distinct nationalities that featured for the club. Higher means a more international squad.' },
+  { group:'demographics', key:'topNat',   short:'Top nation',    label:'Top nationality',     type:'cat',    lowerBetter:false, caption:'The single most-represented nationality among players used, with its headcount.' },
+  { group:'demographics', key:'avgAge',   short:'Avg age',       label:'Average age of XI',   type:'scalar', unit:'yrs',     lowerBetter:false, caption:'Mean age of the players fielded. Higher skews experienced, lower skews youthful.' },
+  { group:'demographics', key:'zodiac',   short:'Zodiac',        label:'Most popular zodiac', type:'cat',    lowerBetter:false, caption:'The most common star sign in the squad, with how many players share it.' },
+];
+
+const SQA_CLUBS_RAW = [
+  ['Arsenal', '#c8102e', 18, 9, 82], ['Aston Villa', '#7a003c', 21, 12, 68],
+  ['Bournemouth', '#d31b2b', 23, 13, 60], ['Brentford', '#d20000', 20, 10, 74],
+  ['Brighton', '#0057b8', 24, 14, 55], ['Chelsea', '#034694', 25, 15, 48],
+  ['Crystal Palace', '#1b458f', 19, 10, 76], ['Everton', '#274488', 20, 11, 70],
+  ['Fulham', '#000000', 18, 9, 80], ['Ipswich Town', '#3a64a3', 22, 12, 63],
+  ['Leeds United', '#f5c518', 23, 13, 58], ['Liverpool', '#c8102e', 19, 11, 72],
+  ['Man City', '#6cabdd', 24, 14, 52], ['Man United', '#da291c', 25, 16, 46],
+  ['Newcastle', '#241f20', 17, 8, 84], ['Nott\u2019m Forest', '#c8102e', 20, 10, 73],
+  ['Sunderland', '#eb172b', 22, 13, 61], ['Tottenham', '#132257', 23, 13, 57],
+  ['West Ham', '#7a263a', 24, 14, 50], ['Wolves', '#fdb913', 21, 12, 66],
+];
+
+function sqaMode(arr){ const m={}; let best=arr[0], bc=0; arr.forEach(v=>{ m[v]=(m[v]||0)+1; if(m[v]>bc){bc=m[v];best=v;} }); return {value:best,count:bc}; }
+
+let _sqaClubs = null;
+function sqaClubs(){
+  if(_sqaClubs) return _sqaClubs;
+  _sqaClubs = SQA_CLUBS_RAW.map((a,idx)=>{
+    const [name,color,started,lineups,seed] = a;
+    const conc = seed/100, shape=[];
+    for(let i=0;i<10;i++){
+      const fringe = Math.exp(-Math.pow(i-0.5,2)/3) * (1-conc+0.3);
+      const core = Math.exp(-Math.pow(i-9,2)/(2+(1-conc)*8)) * (conc+0.4);
+      shape.push(fringe+core);
+    }
+    const sum = shape.reduce((x,y)=>x+y,0);
+    const dist=[]; let assigned=0;
+    for(let i=0;i<10;i++){ const v=Math.round(shape[i]/sum*25); dist.push(v); assigned+=v; }
+    dist[9] += (25-assigned); if(dist[9]<0) dist[9]=0;
+
+    const roster=[];
+    dist.forEach((cnt,bi)=>{
+      for(let k=0;k<cnt;k++){
+        const j = roster.length;
+        const step = 10/(cnt+1);
+        roster.push({
+          name: SQA_NAMES[j % SQA_NAMES.length],
+          pct: Math.min(100, Math.round(bi*10 + 10 - step*(k+1))),
+          nat: SQA_NATIONS[(idx*3 + j*5) % SQA_NATIONS.length],
+          age: 21 + ((idx*2 + j*3) % 9),
+          zodiac: SQA_ZODIAC[(idx + j*5) % 12],
+        });
+      }
+    });
+    roster.sort((x,y)=>y.pct-x.pct);
+
+    const nations = new Set(roster.map(r=>r.nat)).size;
+    const topNat = sqaMode(roster.map(r=>r.nat));
+    const zodiac = sqaMode(roster.map(r=>r.zodiac));
+    const avgAge = roster.reduce((s,r)=>s+r.age,0)/roster.length;
+    const avgChange = Math.min(6, Math.max(1.4, 1.4 + (lineups-8)*0.34));
+
+    return {name,color,started,lineups,dist,roster,nations,topNat,zodiac,avgAge,avgChange};
+  });
+  return _sqaClubs;
+}
+
+function sqaThBand(){ return Math.min(9, Math.round(sqaState.minPct/10)); }
+
+function sqaMetricVal(c, def){
+  switch(def.key){
+    case 'started': return {value:c.started, sort:c.started};
+    case 'lineups': return {value:c.lineups, sort:c.lineups};
+    case 'avgChange': return {value:c.avgChange.toFixed(1), sort:c.avgChange};
+    case 'nations': return {value:c.nations, sort:c.nations};
+    case 'avgAge': return {value:c.avgAge.toFixed(1), sort:c.avgAge};
+    case 'topNat': return {value:c.topNat.value+' · '+c.topNat.count, sort:c.topNat.count};
+    case 'zodiac': return {value:c.zodiac.value+' · '+c.zodiac.count, sort:c.zodiac.count};
+    case 'minutes': {
+      const th = sqaThBand();
+      const n = c.dist.reduce((s,v,i)=> s + (i>=th?v:0), 0);
+      return {value:n, sort:n};
+    }
+  }
+}
+
+function sqaTag(text,tone){
+  const c = {p:{c:'#6d4be0',bg:'#efeaff'}, g:{c:'#1f9d57',bg:'#e6f5ec'}, n:{c:'#8a8b98',bg:'#f0f0f5'}}[tone];
+  return `style="display:inline-block;font-size:10.5px;font-weight:800;color:${c.c};background:${c.bg};padding:3px 9px;border-radius:7px;white-space:nowrap;flex-shrink:0;">${text}`;
+}
+
+function sqaHeatCell(v,min,max,highIntense){
+  const t0 = max===min ? 0.5 : (v-min)/(max-min);
+  const t = highIntense ? t0 : 1-t0;
+  const alpha = 0.10 + t*0.80;
+  const color = t>0.55 ? '#fff' : '#4a3aa0';
+  return `min-width:46px;text-align:center;padding:6px 12px;border-radius:8px;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;border:none;white-space:nowrap;background:rgba(109,75,224,${alpha.toFixed(2)});color:${color};`;
+}
+
+function sqaBuildDetail(){
+  const name = sqaState.detail;
+  if(!name) return null;
+  const club = sqaClubs().find(c=>c.name===name);
+  const def = SQA_DEFS.find(m=>m.key===sqaState.metricKey);
+  let items=[], sub='';
+
+  if(def.key==='minutes'){
+    const th = sqaState.minPct;
+    const list = club.roster.filter(p=>p.pct >= (th===100?96:th));
+    sub = list.length+' player'+(list.length===1?'':'s')+' \u2265 '+th+'% of minutes';
+    items = list.map((p,i)=>({idx:i+1, primary:p.name, secondary:'Appeared in ~'+Math.round(p.pct/100*12)+' of 12 matchdays', tag:sqaTag(p.pct+'%', p.pct>=90?'g':'p')}));
+  } else if(def.key==='started'){
+    sub = club.started+' distinct players started';
+    items = club.roster.slice(0,club.started).map((p,i)=>{ const starts=Math.max(1,Math.round(p.pct/100*12)); return {idx:i+1, primary:p.name, secondary:p.nat+' · age '+p.age, tag:sqaTag(starts+' starts', starts>=8?'g':'n')}; });
+  } else if(def.key==='lineups'){
+    sub = club.lineups+' distinct starting XIs';
+    items = Array.from({length:club.lineups},(_,i)=>{ const uses=i===0?Math.max(1,12-(club.lineups-1)):1; return {idx:i+1, primary:'Lineup '+String.fromCharCode(65+i), secondary:'First used GW '+Math.min(12,i+1), tag:sqaTag(uses+'\u00d7', i===0?'g':'n')}; });
+  } else if(def.key==='avgChange'){
+    sub = 'Avg '+club.avgChange.toFixed(1)+' starters changed between games';
+    items = Array.from({length:11},(_,i)=>{ const ch=Math.max(0,Math.round(club.avgChange+Math.sin(i*1.7)*1.6)); return {idx:i+1, primary:'GW '+(i+1)+' \u2192 '+(i+2), secondary:ch+' starter'+(ch===1?'':'s')+' swapped', tag:sqaTag(ch+' changes', ch<=club.avgChange?'g':'n')}; });
+  } else if(def.key==='nations' || def.key==='topNat'){
+    const counts={}; club.roster.forEach(p=>counts[p.nat]=(counts[p.nat]||0)+1);
+    const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+    sub = def.key==='topNat' ? (club.topNat.value+' leads with '+club.topNat.count+' players') : (club.nations+' nationalities represented');
+    items = sorted.map(([nat,cnt],i)=>({idx:i+1, primary:nat, secondary:club.roster.filter(p=>p.nat===nat).slice(0,3).map(p=>p.name).join(', '), tag:sqaTag(cnt+' player'+(cnt===1?'':'s'), i===0?'p':'n')}));
+  } else if(def.key==='avgAge'){
+    sub = 'Average age '+club.avgAge.toFixed(1)+' years';
+    const byAge = [...club.roster].sort((a,b)=>b.age-a.age);
+    items = byAge.map((p,i)=>({idx:i+1, primary:p.name, secondary:p.nat, tag:sqaTag(p.age+' yrs', p.age>=30?'n':(p.age<=22?'g':'p'))}));
+  } else if(def.key==='zodiac'){
+    const counts={}; club.roster.forEach(p=>counts[p.zodiac]=(counts[p.zodiac]||0)+1);
+    const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+    sub = club.zodiac.value+' is most common ('+club.zodiac.count+' players)';
+    items = sorted.map(([sign,cnt],i)=>({idx:i+1, primary:sign, secondary:club.roster.filter(p=>p.zodiac===sign).slice(0,3).map(p=>p.name).join(', '), tag:sqaTag(cnt+' player'+(cnt===1?'':'s'), i===0?'p':'n')}));
+  }
+
+  return { club, def, sub, items };
+}
+
+function renderSquadAnalytics(){
+  const defs = SQA_DEFS;
+  const active = defs.find(d=>d.key===sqaState.metricKey) || defs[0];
+  const isDist = active.key==='minutes';
+  const list = sqaClubs();
+  const highIntense = !active.lowerBetter;
+
+  const vals = list.map(c=>sqaMetricVal(c,active).sort);
+  const minV = Math.min(...vals), maxV = Math.max(...vals);
+  const sorted = [...list].sort((a,b)=>{
+    const sa = sqaMetricVal(a,active).sort, sb = sqaMetricVal(b,active).sort;
+    return active.lowerBetter ? sa-sb : sb-sa;
+  });
+
+  const rowsHtml = sorted.map((c,i)=>{
+    const mv = sqaMetricVal(c,active);
+    const you = c.name==='Liverpool';
+    const rankColor = i<3 ? '#6d4be0' : '#a3a4b0';
+    return `<div style="display:flex;align-items:center;padding:10px 18px;border-bottom:1px solid #f4f4f8;background:${you?'#f6f4fd':'#fff'};">
+      <span style="width:26px;font-size:12.5px;font-weight:800;color:${rankColor};">${i+1}</span>
+      <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
+        <div style="width:24px;height:24px;border-radius:6px;background:${c.color};flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.06);"></div>
+        <span style="font-size:13.5px;font-weight:${you?800:600};color:${you?'#6d4be0':'#1c1d26'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.name}</span>
+      </div>
+      <div style="width:190px;display:flex;justify-content:flex-end;">
+        <button onclick="sqaOpenDetail('${c.name.replace(/'/g,"\\'")}')" style="${sqaHeatCell(mv.sort,minV,maxV,highIntense)}">${mv.value}</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  const levelsHtml = [
+    {key:'consistency', label:'Consistency'},
+    {key:'demographics', label:'Demographics'},
+  ].map(l=>{
+    const on = sqaState.level===l.key;
+    return `<button onclick="sqaSelectLevel('${l.key}')" style="border:none;border-radius:8px;padding:7px 16px;font-family:inherit;font-size:12.5px;font-weight:${on?800:600};cursor:pointer;white-space:nowrap;background:${on?'#fff':'transparent'};color:${on?'#6d4be0':'#8a8b98'};box-shadow:${on?'0 1px 3px rgba(20,20,40,0.12)':'none'};">${l.label}</button>`;
+  }).join('');
+
+  const subTabsList = defs.filter(d=>d.group===sqaState.level);
+  const subTabsHtml = subTabsList.map(d=>{
+    const on = d.key===active.key;
+    return `<button onclick="sqaSelectMetric('${d.key}')" style="border:none;border-radius:8px;padding:7px 13px;font-family:inherit;font-size:12px;font-weight:${on?700:600};cursor:pointer;white-space:nowrap;background:${on?'#6d4be0':'transparent'};color:${on?'#fff':'#8a8b98'};box-shadow:${on?'0 1px 3px rgba(109,75,224,0.35)':'none'};">${d.short}</button>`;
+  }).join('');
+  const subSelectHtml = `<select onchange="sqaSelectMetric(this.value)" style="width:100%;border:1px solid #e6e7ee;background:#f4f5f8;border-radius:8px;padding:8px 10px;font-size:12.5px;font-weight:700;color:#3a3b47;">
+    ${subTabsList.map(d=>`<option value="${d.key}"${d.key===active.key?' selected':''}>${d.label}</option>`).join('')}
+  </select>`;
+
+  const fullNote = sqaState.minPct===100 ? ' (ever-present)' : '';
+  const thresholdBlock = isDist ? `
+    <div style="margin:6px 18px 2px;background:#faf9fc;border:1px solid #eceaf4;border-radius:12px;padding:12px 15px;">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-size:12px;font-weight:700;color:#3a3b47;">Minimum participation</span>
+        <span style="font-size:15px;font-weight:800;color:#6d4be0;">\u2265 ${sqaState.minPct}% of minutes</span>
+      </div>
+      <input type="range" min="0" max="100" step="10" value="${sqaState.minPct}" oninput="sqaSetThreshold(this.value)" style="width:100%;accent-color:#6d4be0;cursor:pointer;" />
+      <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:9px;font-weight:700;color:#b7b8c4;">
+        <span>0%</span><span>50%</span><span>100%</span>
+      </div>
+      <p style="margin:8px 0 0;font-size:11px;line-height:1.4;color:#8a8b98;">Players who covered <strong style="color:#6d4be0;">at least ${sqaState.minPct}%</strong> of the club's total minutes${fullNote}.</p>
+    </div>` : '';
+
+  const valHeadLabel = isDist ? ('PLAYERS \u2265 '+sqaState.minPct+'%') : (active.unit ? active.unit.toUpperCase() : active.short.toUpperCase());
+
+  const detail = sqaBuildDetail();
+  const detailModal = detail ? `<div style="position:fixed;inset:0;z-index:1200;background:rgba(20,20,40,0.45);display:flex;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)sqaCloseDetail()">
+    <div style="width:100%;max-width:480px;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -8px 30px rgba(20,20,40,0.25);max-height:80vh;display:flex;flex-direction:column;">
+      <div style="display:flex;align-items:center;gap:11px;padding:16px 18px 14px;border-bottom:1px solid #f0f0f5;flex-shrink:0;">
+        <div style="width:34px;height:34px;border-radius:8px;background:${detail.club.color};flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.06);"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:15px;font-weight:800;letter-spacing:-0.3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${detail.club.name} · ${detail.def.label}</div>
+          <div style="font-size:11.5px;font-weight:600;color:#8a8b98;">${detail.sub}</div>
+        </div>
+        <button onclick="sqaCloseDetail()" style="border:none;background:#f4f5f8;width:30px;height:30px;border-radius:50%;font-size:16px;color:#6b6c7a;cursor:pointer;flex-shrink:0;">\u00d7</button>
+      </div>
+      <div style="overflow-y:auto;padding:8px 12px 16px;">
+        ${detail.items.map(it=>`<div style="display:flex;align-items:center;gap:11px;padding:9px 8px;border-bottom:1px solid #f4f4f8;">
+          <div style="width:24px;height:24px;border-radius:6px;background:#efeaff;color:#6d4be0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;">${it.idx}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:700;color:#1c1d26;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${it.primary}</div>
+            <div style="font-size:10.5px;font-weight:600;color:#a3a4b0;">${it.secondary}</div>
+          </div>
+          <span ${it.tag}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>` : '';
+
+  return `<div style="max-width:760px;margin:0 auto;padding:14px 12px 30px;font-family:'Manrope',-apple-system,Helvetica,Arial,sans-serif;color:#1c1d26;">
+    <div style="background:#fff;border:1px solid #e6e7ee;border-radius:16px;box-shadow:0 2px 8px rgba(20,20,40,0.05);overflow:hidden;">
+      <div style="padding:16px 18px 0;">
+        <div style="min-width:0;">
+          <h1 style="margin:0;font-size:16px;font-weight:800;letter-spacing:-0.3px;">Squad Analytics</h1>
+          <p style="margin:1px 0 0;font-size:11.5px;font-weight:600;color:#8a8b98;">Premier League 2025/26 · through GW ${sqaState.gw}</p>
+        </div>
+        <div style="display:inline-flex;margin-top:13px;background:#f4f5f8;border:1px solid #e6e7ee;border-radius:10px;padding:3px;">${levelsHtml}</div>
+      </div>
+      <div class="sqa-tabs-desktop" style="display:flex;gap:4px;margin:13px 0 0;padding:0 14px;background:#faf9fc;border-top:1px solid #f0f0f5;border-bottom:1px solid #f0f0f5;overflow-x:auto;">${subTabsHtml}</div>
+      <div class="sqa-tabs-mobile" style="display:none;padding:12px 18px 0;">${subSelectHtml}</div>
+      <div style="padding:12px 18px 6px;display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+        <p style="margin:0;font-size:11.5px;line-height:1.4;color:#8a8b98;">${active.caption}</p>
+        <span style="font-size:10px;font-weight:700;color:#c3c4cf;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;">Tap a value for details</span>
+      </div>
+      ${thresholdBlock}
+      <div style="display:flex;align-items:center;padding:8px 18px;border-bottom:1px solid #f0f0f5;">
+        <span style="width:26px;font-size:10px;font-weight:700;color:#a3a4b0;text-transform:uppercase;letter-spacing:0.5px;">#</span>
+        <span style="flex:1;font-size:10px;font-weight:700;color:#a3a4b0;text-transform:uppercase;letter-spacing:0.5px;">Club</span>
+        <span style="width:190px;text-align:right;font-size:10px;font-weight:700;color:#a3a4b0;text-transform:uppercase;letter-spacing:0.5px;">${valHeadLabel}</span>
+      </div>
+      ${rowsHtml}
+    </div>
+  </div>
+  ${detailModal}
+  <style>@media(max-width:619px){.sqa-tabs-desktop{display:none !important;}.sqa-tabs-mobile{display:block !important;}}</style>`;
+}
+
+function sqaSelectLevel(key){
+  const first = SQA_DEFS.find(d=>d.group===key);
+  sqaState = {...sqaState, level:key, metricKey:first.key};
+  renderPredict();
+}
+function sqaSelectMetric(key){
+  sqaState = {...sqaState, metricKey:key};
+  renderPredict();
+}
+function sqaSetThreshold(val){
+  sqaState = {...sqaState, minPct:parseInt(val,10)};
+  renderPredict();
+}
+function sqaOpenDetail(name){
+  sqaState = {...sqaState, detail:name};
+  renderPredict();
+}
+function sqaCloseDetail(){
+  sqaState = {...sqaState, detail:null};
+  renderPredict();
 }
 
 function renderLeaderboardPane(comp){
