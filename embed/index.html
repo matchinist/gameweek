@@ -296,6 +296,35 @@ table.lb-table{width:100%;border-collapse:collapse;}
 #toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--text);color:white;font-family:var(--mono);font-size:11px;padding:9px 18px;border-radius:6px;z-index:999;transition:transform 0.25s ease,opacity 0.25s ease;pointer-events:none;white-space:nowrap;opacity:0;}
 #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
 </style>
+<script>
+// Apply any cached operator theme immediately, before first paint, so
+// repeat visits don't flash the default light colours before the async
+// fetch (further down) resolves and applies the real theme. First-ever
+// visit for a given client still has a brief flash — there's nothing to
+// preload yet — but every visit after that is instant and correct.
+(function(){
+  try{
+    var client = new URLSearchParams(location.search).get('client') || 'demo';
+    var cached = localStorage.getItem('gw_theme_'+client);
+    if(!cached) return;
+    var t = JSON.parse(cached);
+    var root = document.documentElement.style;
+    if(t.accent_color){
+      root.setProperty('--accent', t.accent_color);
+      root.setProperty('--accent-2', t.accent_color);
+      root.setProperty('--accent-light', t.accent_color+'1A');
+    }
+    if(t.bg_color) root.setProperty('--bg', t.bg_color);
+    if(t.surface_color) root.setProperty('--white', t.surface_color);
+    if(t.text_color){
+      root.setProperty('--text', t.text_color);
+      root.setProperty('--text-2', t.text_color+'B3');
+      root.setProperty('--text-3', t.text_color+'80');
+      root.setProperty('--border', t.text_color+'26');
+    }
+  }catch(e){}
+})();
+</script>
 </head>
 <body>
 <div class="app" id="app">
@@ -4450,6 +4479,14 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
             root.setProperty('--text-3', op.text_color+'80'); // ~50% alpha
             root.setProperty('--border', op.text_color+'26'); // ~15% alpha
           }
+          // Cache for next visit's pre-paint script (see <head>), so the
+          // flash of default colours only ever happens once per client.
+          try{
+            localStorage.setItem('gw_theme_'+CLIENT_PARAM, JSON.stringify({
+              accent_color: op.accent_color||null, bg_color: op.bg_color||null,
+              surface_color: op.surface_color||null, text_color: op.text_color||null,
+            }));
+          }catch(e){}
         }
       }catch(e){}
     }
