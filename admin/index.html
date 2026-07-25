@@ -241,7 +241,7 @@ tbody tr:hover td{background:var(--bg);}
       <span class="ni-icon">⟨⟩</span> Embed & Integration
     </button>
     <button class="nav-item" onclick="nav('branding')">
-      <span class="ni-icon">🎨</span> Branding
+      <span class="ni-icon">🎨</span> Customisation
     </button>
   </div>
 
@@ -566,7 +566,7 @@ tbody tr:hover td{background:var(--bg);}
     <div class="view" id="view-branding">
       <div class="page-header">
         <div>
-          <div class="page-title">Branding</div>
+          <div class="page-title">Customisation</div>
           <div class="page-sub" style="font-size:15px;">Customise the look of your embed widget.</div>
         </div>
       </div>
@@ -1317,7 +1317,7 @@ function nav(view, subLabel){
   });
 
   // breadcrumb
-  const labels = {dashboard:'Dashboard','comp-detail':'Competitions','competitions':'Competitions',embed:'Embed & Integration',settings:'Settings',branding:'Branding',billing:'Usage & Billing'};
+  const labels = {dashboard:'Dashboard','comp-detail':'Competitions','competitions':'Competitions',embed:'Embed & Integration',settings:'Settings',branding:'Customisation',billing:'Usage & Billing'};
   let bc = '';
   if(view==='comp-detail' && subLabel){
     bc = `<span>Competitions</span><span class="sep">/</span><span class="current">${subLabel}</span>`;
@@ -1850,18 +1850,28 @@ function renderBrandingPreview(vals){
     surface: document.getElementById('brand-surface')?.value || '#FFFFFF',
     text: document.getElementById('brand-text')?.value || '#0F1117',
   };
-  const text2 = v.text+'B3', border = v.text+'26';
+  const text2 = v.text+'B3', text3 = v.text+'80', border = v.text+'26';
+  const logoUrl = currentOperator?.logo_url;
+  const companyName = currentOperator?.company_name || 'Your site';
   el.style.background = v.bg;
   el.innerHTML = `
-    <div style="background:${v.surface};border:1px solid ${border};border-radius:10px;padding:14px 16px;font-family:Inter,sans-serif;">
-      <div style="font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:${text2};margin-bottom:8px;">Preview · Premier League</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <span style="font-size:14px;font-weight:700;color:${v.text};">Arsenal vs Coventry City</span>
+    <div style="border-radius:12px;overflow:hidden;border:1px solid ${border};">
+      <div style="background:${v.surface};padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid ${border};">
+        ${logoUrl
+          ? `<img src="${logoUrl}" alt="${companyName}" style="height:24px;max-width:120px;object-fit:contain;">`
+          : `<span style="font-family:var(--mono);font-size:14px;font-weight:800;color:${v.text};">game<span style="color:${v.accent};">week</span></span>`}
+        <span style="font-size:11px;font-weight:500;color:${text3};margin-left:auto;">${companyName}</span>
       </div>
-      <div style="display:flex;gap:8px;">
-        <button style="flex:1;padding:9px;border-radius:7px;border:none;background:${v.accent};color:#fff;font-size:12px;font-weight:700;cursor:default;">1</button>
-        <button style="flex:1;padding:9px;border-radius:7px;border:1px solid ${border};background:transparent;color:${v.text};font-size:12px;font-weight:600;cursor:default;">X</button>
-        <button style="flex:1;padding:9px;border-radius:7px;border:1px solid ${border};background:transparent;color:${v.text};font-size:12px;font-weight:600;cursor:default;">2</button>
+      <div style="background:${v.surface};padding:14px 16px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:${text2};margin-bottom:8px;">Preview · Premier League</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <span style="font-size:14px;font-weight:700;color:${v.text};">Arsenal vs Coventry City</span>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button style="flex:1;padding:9px;border-radius:7px;border:none;background:${v.accent};color:#fff;font-size:12px;font-weight:700;cursor:default;">1</button>
+          <button style="flex:1;padding:9px;border-radius:7px;border:1px solid ${border};background:transparent;color:${v.text};font-size:12px;font-weight:600;cursor:default;">X</button>
+          <button style="flex:1;padding:9px;border-radius:7px;border:1px solid ${border};background:transparent;color:${v.text};font-size:12px;font-weight:600;cursor:default;">2</button>
+        </div>
       </div>
     </div>`;
 }
@@ -1938,6 +1948,7 @@ function renderLogoPreview(){
     preview.innerHTML = `<span style="font-size:10px;color:var(--text-3);text-align:center;">No logo</span>`;
     if(removeBtn) removeBtn.style.display='none';
   }
+  renderBrandingPreview();
 }
 
 async function uploadOperatorLogo(file){
