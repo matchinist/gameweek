@@ -376,6 +376,27 @@ table.lb-table{width:100%;border-collapse:collapse;}
     <div class="app-header">
       <div class="header-top">
         <div class="header-logo" id="hdr-logo">game<span>week</span><span id="hdr-operator-badge" style="font-family:var(--sans);font-weight:500;color:var(--text-3);font-size:11px;margin-left:6px;"></span></div>
+        <script>
+        // Apply any cached logo the instant both logo elements exist in the
+        // DOM — same idea as the theme-colour preload in <head>, so repeat
+        // visits don't flash the "gameweek" wordmark before the async
+        // operator fetch (further down) resolves.
+        (function(){
+          try{
+            var client = new URLSearchParams(location.search).get('client') || 'demo';
+            var cached = localStorage.getItem('gw_theme_'+client);
+            if(!cached) return;
+            var t = JSON.parse(cached);
+            if(!t.logo_url) return;
+            var hdrLogo = document.getElementById('hdr-logo');
+            var authLogo = document.getElementById('auth-modal-logo');
+            var badge = document.getElementById('hdr-operator-badge');
+            var badgeHtml = badge ? badge.outerHTML : '';
+            if(hdrLogo) hdrLogo.innerHTML = '<img src="'+t.logo_url+'" alt="'+(t.company_name||'Logo')+'" style="height:28px;max-width:160px;object-fit:contain;vertical-align:middle;">'+badgeHtml;
+            if(authLogo) authLogo.innerHTML = '<img src="'+t.logo_url+'" alt="'+(t.company_name||'Logo')+'" style="height:32px;max-width:180px;object-fit:contain;">';
+          }catch(e){}
+        })();
+        </script>
         <div class="header-user" onclick="toggleProfile()">
           <div class="header-avatar" id="hdr-avatar">?</div>
           <div class="header-username" id="hdr-username">Sign in</div>
@@ -4485,6 +4506,7 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
             localStorage.setItem('gw_theme_'+CLIENT_PARAM, JSON.stringify({
               accent_color: op.accent_color||null, bg_color: op.bg_color||null,
               surface_color: op.surface_color||null, text_color: op.text_color||null,
+              logo_url: op.logo_url||null, company_name: op.company_name||null,
             }));
           }catch(e){}
         }
