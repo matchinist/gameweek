@@ -303,7 +303,7 @@ table.lb-table{width:100%;border-collapse:collapse;}
   <!-- ── AUTH MODAL (overlay) ── -->
   <div class="auth-modal-overlay" id="auth-modal-overlay" onmousedown="authModalMouseDownTarget=event.target" onclick="if(event.target===this&&authModalMouseDownTarget===this)closeAuthModal()">
     <div class="auth-modal">
-      <div class="auth-modal-logo">game<span>week</span></div>
+      <div class="auth-modal-logo" id="auth-modal-logo">game<span>week</span></div>
       <div class="auth-modal-reason" id="auth-modal-reason">Sign in to make predictions</div>
       <div class="auth-toggle">
         <button class="auth-tab active" id="tab-login" onclick="switchAuth('login')">Sign in</button>
@@ -4426,6 +4426,8 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
           if(op.logo_url){
             const logoEl = document.getElementById('hdr-logo');
             if(logoEl) logoEl.innerHTML = `<img src="${op.logo_url}" alt="${op.company_name||'Logo'}" style="height:28px;max-width:160px;object-fit:contain;vertical-align:middle;">`;
+            const authLogoEl = document.getElementById('auth-modal-logo');
+            if(authLogoEl) authLogoEl.innerHTML = `<img src="${op.logo_url}" alt="${op.company_name||'Logo'}" style="height:32px;max-width:180px;object-fit:contain;">`;
           }
           // Operator-level widget theme, set in the admin's Branding page.
           // Only 4 colours are configured directly (accent, page bg, card
