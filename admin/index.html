@@ -2654,13 +2654,6 @@ async function saveCompSettings(){
 }
 
 async function setCompStatus(id,status){
-  if(status==='active'){
-    const op=state.operatorProfile;
-    const bypass=op?.is_admin||['ercanvural.bm@gmail.com','ercanvural.bm+admin@gmail.com','ercanvural.bm+spursweb@gmail.com'].includes((op?.email||'').toLowerCase());
-    if(!bypass&&op?.subscription_required===true){
-      showPaywall(); return;
-    }
-  }
   getComp(id).status=status;
   const ok = await saveAdminState();
   if(!ok) return; // saveAdminState already toasted the failure
