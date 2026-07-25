@@ -277,6 +277,11 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .bonus-box .bb-label{font-size:9.5px;font-weight:700;color:oklch(0.5 0.01 260);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .bonus-box .bb-value{font-size:12px;font-weight:800;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .bonus-box .bb-plus{font-size:16px;font-weight:400;color:oklch(0.65 0.01 260);line-height:1;}
+.dual-range{position:absolute;left:0;top:0;width:100%;margin:0;height:26px;background:none;pointer-events:none;-webkit-appearance:none;appearance:none;}
+.dual-range::-webkit-slider-runnable-track{height:6px;background:transparent;}
+.dual-range::-moz-range-track{height:6px;background:transparent;}
+.dual-range::-webkit-slider-thumb{pointer-events:auto;-webkit-appearance:none;width:18px;height:18px;margin-top:-6px;border-radius:50%;background:#6d4be0;border:2px solid #fff;box-shadow:0 1px 4px rgba(20,20,40,.3);cursor:pointer;}
+.dual-range::-moz-range-thumb{pointer-events:auto;width:18px;height:18px;border-radius:50%;background:#6d4be0;border:2px solid #fff;box-shadow:0 1px 4px rgba(20,20,40,.3);cursor:pointer;}
 </style>
 </head>
 <body>
@@ -291,6 +296,7 @@ table.lb-table{width:100%;border-collapse:collapse;}
         </div>
       </div>
       <div id="comp-tabs-wrap">
+        <div id="main-tabs" style="display:flex;gap:6px;padding:10px 16px 0;"></div>
         <div class="comp-tabs" id="comp-tabs"></div>
       </div>
     </div>
@@ -550,9 +556,43 @@ function toggleProfile(){
   if(profileEl.classList.contains('active')){goTab('predict');}
   else{goTab('profile');}
 }
+const MAIN_TAB_GROUPS = {
+  predictor: ['score','betting','ranking','lineup'],
+  advanced: ['analytics','topscorers'],
+};
+function mainGroupOf(mode){ return MAIN_TAB_GROUPS.advanced.includes(mode) ? 'advanced' : 'predictor'; }
+let mainTabGroup = 'predictor';
+
+function renderMainTabs(){
+  const el = document.getElementById('main-tabs');
+  if(!el) return;
+  const tabs = [
+    {key:'predictor', label:'Predictor Modes'},
+    {key:'advanced', label:'Advanced Widgets'},
+  ];
+  el.innerHTML = tabs.map(t=>{
+    const on = mainTabGroup===t.key;
+    return `<button onclick="switchMainTab('${t.key}')" style="border:none;border-radius:8px 8px 0 0;padding:8px 16px;font-family:var(--sans);font-size:12.5px;font-weight:${on?700:600};cursor:pointer;background:${on?'var(--white)':'transparent'};color:${on?'var(--accent)':'var(--text-3)'};border-bottom:2px solid ${on?'var(--accent)':'transparent'};">${t.label}</button>`;
+  }).join('');
+}
+function switchMainTab(key){
+  if(mainTabGroup===key) return;
+  mainTabGroup = key;
+  const allowed = MAIN_TAB_GROUPS[key];
+  if(!allowed.includes(COMPS[currentCompIdx].mode)){
+    const firstIdx = COMPS.findIndex(c=>allowed.includes(c.mode));
+    if(firstIdx>=0) currentCompIdx = firstIdx;
+  }
+  predictSubTab='predictions'; predsDirty=false;
+  document.documentElement.style.setProperty('--comp-color',COMPS[currentCompIdx].color);
+  renderMainTabs(); renderCompTabs(); renderPredict();
+}
+
 function renderCompTabs(){
+  renderMainTabs();
   const el=document.getElementById('comp-tabs');
-  el.innerHTML=COMPS.map((c,i)=>`<button class="comp-tab${i===currentCompIdx?' active':''}" onclick="switchComp(${i})"><span style="display:inline-block;padding:7px 14px;border-radius:8px;background:${i===currentCompIdx?'oklch(0.94 0.05 275 / 0.7)':'transparent'};">${c.name}</span></button>`).join('');
+  const visible = COMPS.map((c,i)=>({c,i})).filter(({c})=>mainGroupOf(c.mode)===mainTabGroup);
+  el.innerHTML=visible.map(({c,i})=>`<button class="comp-tab${i===currentCompIdx?' active':''}" onclick="switchComp(${i})"><span style="display:inline-block;padding:7px 14px;border-radius:8px;background:${i===currentCompIdx?'oklch(0.94 0.05 275 / 0.7)':'transparent'};">${c.name}</span></button>`).join('');
   document.documentElement.style.setProperty('--comp-color',COMPS[currentCompIdx].color);
 }
 function switchComp(idx){currentCompIdx=idx;predictSubTab='predictions';predsDirty=false;document.documentElement.style.setProperty('--comp-color',COMPS[idx].color);renderCompTabs();renderPredict();setTimeout(()=>{const active=document.querySelector('.comp-tab.active');if(active)active.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});},50);}
@@ -2724,7 +2764,7 @@ function renderSquadAnalytics(){
     </div>
   </div>` : '';
 
-  return `<div style="max-width:760px;margin:0 auto;padding:0 0 20px;font-family:'Manrope',-apple-system,Helvetica,Arial,sans-serif;color:#1c1d26;">
+  return `<div style="padding:0 0 20px;font-family:'Manrope',-apple-system,Helvetica,Arial,sans-serif;color:#1c1d26;">
     <div style="background:#fff;border:1px solid #e6e7ee;border-radius:16px;box-shadow:0 2px 8px rgba(20,20,40,0.05);overflow:hidden;">
       <div style="padding:16px 18px 0;">
         <div style="min-width:0;">
@@ -2801,7 +2841,7 @@ function tsGoals(){
     const count = 17 - pi; // Haaland 17 ... down to 6
     const events = [];
     for(let i=0;i<count;i++){
-      const h = (pi*37 + i*53) % 90;
+      const h = (pi*37 + i*53) % 95;
       events.push({ minute: 1+h, type: types[(pi*3+i*7)%4], oppPos: 1+((pi*5+i*11)%20) });
     }
     return {name,club,color,events};
@@ -2836,7 +2876,7 @@ function renderTopScorers(){
 
   const filtered = tsGoals().map(p=>{
     const hits = p.events.filter(e=> isScore
-      ? ((s.goalType==='all'||e.type===s.goalType) && e.minute>=lo && e.minute<=(hi===90?95:hi))
+      ? ((s.goalType==='all'||e.type===s.goalType) && e.minute>=lo && e.minute<=hi)
       : (e.oppPos>=pLo && e.oppPos<=pHi));
     return {...p, count:hits.length, hits};
   }).filter(p=>p.count>0).sort((a,b)=>b.count-a.count);
@@ -2845,9 +2885,7 @@ function renderTopScorers(){
   const total = filtered.reduce((t,p)=>t+p.count,0);
 
   const rowsHtml = filtered.slice(0,12).map((p,i)=>{
-    const meta = isScore
-      ? `${p.club} \u00b7 avg ${Math.round(p.hits.reduce((t,e)=>t+e.minute,0)/p.count)}'`
-      : `${p.club} \u00b7 vs ${[...new Set(p.hits.map(e=>e.oppPos))].length} different sides`;
+    const meta = p.club;
     const rankColor = i<3 ? '#6d4be0' : '#a3a4b0';
     return `<div style="display:flex;align-items:center;padding:10px 18px;border-bottom:1px solid #f4f4f8;background:${i===0?'#f6f4fd':'#fff'};">
       <span style="width:26px;font-size:12.5px;font-weight:800;color:${rankColor};">${i+1}</span>
@@ -2891,15 +2929,15 @@ function renderTopScorers(){
       </div>
       <div style="position:relative;height:26px;">
         <div style="position:absolute;left:0;right:0;top:10px;height:6px;border-radius:3px;background:#e6e7ee;"></div>
-        <div style="${tsFill(lo/90*100, hi/90*100)}"></div>
-        <input type="range" min="0" max="90" step="5" value="${lo}" oninput="tsSetMinLo(this.value)" style="position:absolute;left:0;top:0;width:100%;margin:0;height:26px;background:none;-webkit-appearance:none;appearance:none;" />
-        <input type="range" min="0" max="90" step="5" value="${hi}" oninput="tsSetMinHi(this.value)" style="position:absolute;left:0;top:0;width:100%;margin:0;height:26px;background:none;-webkit-appearance:none;appearance:none;" />
+        <div style="${tsFill(lo/95*100, hi/95*100)}"></div>
+        <input type="range" class="dual-range" min="0" max="95" step="5" value="${lo}" oninput="tsSetMinLo(this.value)" />
+        <input type="range" class="dual-range" min="0" max="95" step="5" value="${hi}" oninput="tsSetMinHi(this.value)" />
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:9px;font-weight:700;color:#b7b8c4;">
         <span>0'</span><span>45'</span><span>90'+</span>
       </div>
       <div style="display:flex;gap:5px;margin-top:11px;flex-wrap:wrap;">
-        ${[['Full match',0,90],['1st half',0,45],['2nd half',45,90],['Last 15',75,90]].map(([label,a,b])=>
+        ${[['Full match',0,90],['1st half',0,45],['2nd half',45,90],['Last 15',75,90],['After 90\'',90,95]].map(([label,a,b])=>
           `<button onclick="tsSetMinutes(${a},${b})" style="${tsChip(lo===a&&hi===b)}">${label}</button>`).join('')}
       </div>
     </div>` : '';
@@ -2912,8 +2950,8 @@ function renderTopScorers(){
       <div style="position:relative;height:26px;">
         <div style="position:absolute;left:0;right:0;top:10px;height:6px;border-radius:3px;background:#e6e7ee;"></div>
         <div style="${tsFill((pLo-1)/19*100, (pHi-1)/19*100)}"></div>
-        <input type="range" min="1" max="20" step="1" value="${pLo}" oninput="tsSetPosLo(this.value)" style="position:absolute;left:0;top:0;width:100%;margin:0;height:26px;background:none;-webkit-appearance:none;appearance:none;" />
-        <input type="range" min="1" max="20" step="1" value="${pHi}" oninput="tsSetPosHi(this.value)" style="position:absolute;left:0;top:0;width:100%;margin:0;height:26px;background:none;-webkit-appearance:none;appearance:none;" />
+        <input type="range" class="dual-range" min="1" max="20" step="1" value="${pLo}" oninput="tsSetPosLo(this.value)" />
+        <input type="range" class="dual-range" min="1" max="20" step="1" value="${pHi}" oninput="tsSetPosHi(this.value)" />
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:9px;font-weight:700;color:#b7b8c4;">
         <span>1st</span><span>10th</span><span>20th</span>
@@ -2928,7 +2966,7 @@ function renderTopScorers(){
     ? `${s.goalType==='all'?'All goals':activeType.label+'s'} scored between ${lo}' and ${hi}'.`
     : `Goals scored against clubs currently ${pLo}${tsSuffix(pLo)} to ${pHi}${tsSuffix(pHi)} in the table.`;
 
-  return `<div style="max-width:620px;margin:0 auto;padding:0 0 20px;font-family:'Manrope',-apple-system,Helvetica,Arial,sans-serif;color:#1c1d26;">
+  return `<div style="padding:0 0 20px;font-family:'Manrope',-apple-system,Helvetica,Arial,sans-serif;color:#1c1d26;">
     <div style="background:#fff;border:1px solid #e6e7ee;border-radius:16px;box-shadow:0 2px 8px rgba(20,20,40,0.05);overflow:hidden;">
       <div style="padding:16px 18px 0;">
         <h1 style="margin:0;font-size:16px;font-weight:800;letter-spacing:-0.3px;">Top Scorers</h1>
