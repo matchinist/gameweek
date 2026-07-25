@@ -398,7 +398,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
           <input class="form-input" id="ct-logo" placeholder="https://example.com/logo.png" style="flex:1;" oninput="previewLogo('ct')">
           <div id="ct-logo-preview" style="width:36px;height:36px;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-3);overflow:hidden;flex-shrink:0;">IMG</div>
         </div>
-        <div style="font-size:11px;color:var(--text-3);margin-top:4px;">Paste a direct image URL (PNG, SVG, WebP). Displayed in the embed widget next to match fixtures.</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+          <label class="btn btn-ghost btn-xs" style="cursor:pointer;">Upload file<input type="file" accept="image/*" style="display:none;" onchange="uploadTeamLogo('ct',this.files[0])"></label>
+          <span id="ct-logo-upload-status" style="font-size:11px;color:var(--text-3);"></span>
+        </div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:4px;">Paste a direct image URL, or upload a file — uploading replaces whatever URL is in the field above.</div>
       </div>
       <div class="form-group">
         <label class="form-label">Sport</label>
@@ -435,6 +439,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
           <input class="form-input" id="et-logo" placeholder="https://example.com/logo.png" style="flex:1;" oninput="previewLogo('et')">
           <div id="et-logo-preview" style="width:36px;height:36px;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-3);overflow:hidden;flex-shrink:0;">IMG</div>
         </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+          <label class="btn btn-ghost btn-xs" style="cursor:pointer;">Upload file<input type="file" accept="image/*" style="display:none;" onchange="uploadTeamLogo('et',this.files[0])"></label>
+          <span id="et-logo-upload-status" style="font-size:11px;color:var(--text-3);"></span>
+        </div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:4px;">Paste a direct image URL, or upload a file — uploading replaces whatever URL is in the field above.</div>
       </div>
       <div class="form-group">
         <label class="form-label">Sport</label>
@@ -1095,6 +1104,30 @@ function previewLogo(prefix){
   const el=document.getElementById(prefix+'-logo-preview');
   if(url){ el.innerHTML=`<img src="${url}" style="width:100%;height:100%;object-fit:contain;" onerror="this.parentElement.innerHTML='ERR'">`; }
   else { el.textContent='IMG'; }
+}
+
+async function uploadTeamLogo(prefix, file){
+  const statusEl = document.getElementById(prefix+'-logo-upload-status');
+  if(!file) return;
+  if(!file.type.startsWith('image/')){ if(statusEl) statusEl.textContent='Please choose an image file'; return; }
+  if(statusEl){ statusEl.textContent='Uploading\u2026'; statusEl.style.color='var(--text-3)'; }
+  try{
+    const ext = (file.name.split('.').pop()||'png').toLowerCase();
+    const path = 'logos/team_'+uid()+'_'+Date.now()+'.'+ext;
+    const {error:upErr} = await supa.storage.from('player-photos').upload(path, file, {contentType:file.type});
+    if(upErr){ if(statusEl){statusEl.textContent='Upload failed: '+upErr.message; statusEl.style.color='var(--red)';} return; }
+    const {data:urlData} = supa.storage.from('player-photos').getPublicUrl(path);
+    const logoUrl = urlData?.publicUrl;
+    if(!logoUrl){ if(statusEl){statusEl.textContent='Upload failed: could not get file URL'; statusEl.style.color='var(--red)';} return; }
+    // Uploading overwrites whatever URL was typed in the field, matching
+    // what the create/save handlers already read from this same input.
+    document.getElementById(prefix+'-logo').value = logoUrl;
+    previewLogo(prefix);
+    if(statusEl){ statusEl.textContent='\u2713 Uploaded'; statusEl.style.color='var(--green)'; }
+  }catch(e){
+    console.error('team logo upload failed:', e);
+    if(statusEl){ statusEl.textContent='Upload failed: '+e.message; statusEl.style.color='var(--red)'; }
+  }
 }
 
 function createTeam(){
