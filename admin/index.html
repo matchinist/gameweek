@@ -2184,11 +2184,20 @@ function roundSelectTournament(prefix, keepGw){
   const season = seasons[CURRENT_SEASON];
   const gwRounds = season?.rounds||[];
 
-  // Populate gameweek dropdown (only for current season)
+  // Populate gameweek dropdown (only for current season) — defaults to
+  // whichever gameweek is "current" (first one not fully resulted yet)
+  // rather than an "All gameweeks" option, since that's what an admin
+  // adding events almost always wants to see first.
   if(gwSel && !keepGw){
     if(gwRounds.length){
+      let defaultIdx = gwRounds.length - 1; // fallback: last gameweek if every one is already done
+      for(let i=0;i<gwRounds.length;i++){
+        const eids = gwRounds[i].eventIds||[];
+        const allDone = eids.length>0 && eids.every(eid=>dmEvents[eid]?.result!=null);
+        if(!allDone){ defaultIdx = i; break; }
+      }
       gwSel.innerHTML = '<option value="">All gameweeks · '+CURRENT_SEASON+'</option>'
-        + gwRounds.map((r,i)=>`<option value="${i}">${r.label}</option>`).join('');
+        + gwRounds.map((r,i)=>`<option value="${i}"${i===defaultIdx?' selected':''}>${r.label}</option>`).join('');
       gwSel.style.display = '';
     } else {
       gwSel.innerHTML = '';
@@ -3125,7 +3134,7 @@ function initOperatorChrome(){
     overallPrizes:c.overall_prizes||null,
     aliases:c.comp_aliases||[],
     scopeText:c.scope_text||'',
-    users:c.users, predictions:c.predictions,
+    users:0, predictions:0, // placeholders — overwritten just below with real counts
     rounds: (rounds||[]).filter(r=>r.competition_id===c.id).map(r=>({
       id:r.id, label:r.label, status:r.status, deadline:r.deadline||'',
       eventIds:r.event_ids||[], tournamentIds:r.tournament_ids||[],
@@ -3134,6 +3143,27 @@ function initOperatorChrome(){
       prizes:r.prizes||null
     }))
   }));
+
+  // Real usage counts, computed from actual predictions rather than the
+  // static (never-updated) users/predictions columns on gw_competitions.
+  // "Users" = distinct players who've made at least one prediction in that
+  // competition; "Predictions" = total prediction rows submitted.
+  try{
+    const {data:usageRows} = await supa.from('gw_predictions')
+      .select('competition_id,username,player_id')
+      .eq('client_key',CLIENT_KEY);
+    const byComp = {}; // competition_id -> {users:Set, predictions:count}
+    (usageRows||[]).forEach(r=>{
+      if(!byComp[r.competition_id]) byComp[r.competition_id] = {users:new Set(), predictions:0};
+      byComp[r.competition_id].users.add(r.username || r.player_id);
+      byComp[r.competition_id].predictions++;
+    });
+    state.competitions.forEach(c=>{
+      const u = byComp[c.id];
+      c.users = u ? u.users.size : 0;
+      c.predictions = u ? u.predictions : 0;
+    });
+  }catch(e){ console.error('usage aggregation failed:', e); }
 
   // Load global DM data (shared across all clients — no client_key filter)
   const [{data:teams},{data:tournaments},{data:events},{data:coverage}] = await Promise.all([
