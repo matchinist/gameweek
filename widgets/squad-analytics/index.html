@@ -28,20 +28,84 @@ const CLIENT_KEY = new URLSearchParams(location.search).get('client') || '';
 const SEASON = '2026/27';
 const LEAGUE_NAME_MATCH = 'premier league'; // default league for this widget, per spec
 
-let sqaState = { level:'consistency', metricKey:'started' };
+let sqaState = { level:'consistency', metricKey:'started', minPct:50 };
 const SQA_DEFS = [
   { group:'consistency', key:'started',   short:'Started',       label:'Started players',    caption:'Distinct players given a start this season. Fewer means a more settled first XI.' },
-  { group:'consistency', key:'minutes',   short:'Participation', label:'Participated players', caption:'Players covering at least a set share of the club\u2019s total minutes. Not tracked yet — showing 0 until minutes data is recorded.' },
-  { group:'consistency', key:'lineups',   short:'Lineups',       label:'Different lineups',   caption:'Distinct starting XIs fielded. Not tracked yet — showing 0 until enough matchdays have lineups recorded.' },
-  { group:'consistency', key:'avgChange', short:'Avg change',    label:'Avg change / game',   caption:'Average starters swapped between matches. Not tracked yet — showing 0 until enough matchdays have lineups recorded.' },
+  { group:'consistency', key:'minutes',   short:'Participation', label:'Participated players', caption:'Players covering at least the chosen share of the club\u2019s total available minutes this season.' },
+  { group:'consistency', key:'lineups',   short:'Lineups',       label:'Different lineups',   caption:'Distinct starting XI combinations fielded this season. Fewer means the manager keeps naming the same team.' },
+  { group:'consistency', key:'avgChange', short:'Avg change',    label:'Avg change / game',   caption:'Average number of starters swapped between consecutive matches. Lower means more lineup continuity.' },
   { group:'demographics', key:'nations',  short:'Nationalities', label:'Nationalities used',  caption:'Distinct nationalities used. Not tracked yet — player nationality isn\u2019t recorded in Data Manager.' },
   { group:'demographics', key:'avgAge',   short:'Avg age',       label:'Average age of XI',   caption:'Mean age of players fielded. Not tracked yet — player date of birth isn\u2019t recorded in Data Manager.' },
   { group:'demographics', key:'zodiac',   short:'Zodiac',        label:'Most popular zodiac', caption:'Most common star sign in the squad. Not tracked yet — player date of birth isn\u2019t recorded in Data Manager.' },
 ];
 
-let CLUBS = []; // [{id,name,logo,startedCount,startedPlayerIds:[],startedPlayerNames:Map}]
+let CLUBS = []; // [{id,name,logo,startedIds,startedNames,lineupsCount,avgChange,minutesByPlayer,totalMatches}]
 let LOAD_ERROR = null;
 let GW_NUMBER = null; // rough matchday count used for the header sub-line
+
+// ── Minutes-played logic ────────────────────────────────────────────────
+// - Never subbed off  -> 90
+// - Subbed off        -> the minute they came off
+// - Subbed on         -> (90 + overtime) minus the minute they came on,
+//                        unless they were themselves later subbed off, in
+//                        which case it's (their own sub-off minute) minus
+//                        (their own sub-on minute).
+function computeClubStats(events, playerTeamOf, clubId){
+  const startedSet = new Set();
+  const lineupCombos = new Set();
+  const minutesByPlayer = {};
+  const lineupsChron = [];
+  let totalMatches = 0;
+
+  events.forEach(e=>{
+    const side = e.home_id===clubId ? e.lineup?.home : (e.away_id===clubId ? e.lineup?.away : null);
+    if(!side) return;
+    const xi = (Array.isArray(side) ? side : Object.values(side)).filter(Boolean);
+    if(!xi.length) return;
+    totalMatches++;
+    xi.forEach(pid=>startedSet.add(pid));
+    lineupCombos.add([...xi].sort().join(','));
+    lineupsChron.push({ kickoff: e.kickoff, xi: new Set(xi) });
+
+    const overtime = e.result?.overtime || 0;
+    const finalMinute = 90 + overtime;
+    const clubSubs = (e.scorers||[]).filter(s=>s.type==='sub' && (playerTeamOf[s.outId]===clubId || playerTeamOf[s.inId]===clubId));
+    const subOffMinute = {}, subOnMinute = {};
+    clubSubs.forEach(s=>{
+      if(s.outId!=null) subOffMinute[s.outId]=s.minute;
+      if(s.inId!=null) subOnMinute[s.inId]=s.minute;
+    });
+
+    xi.forEach(pid=>{
+      const mins = subOffMinute[pid]!=null ? subOffMinute[pid] : 90;
+      minutesByPlayer[pid] = (minutesByPlayer[pid]||0) + mins;
+    });
+    Object.keys(subOnMinute).forEach(pid=>{
+      if(xi.includes(pid)) return; // already a starter, already counted above
+      let mins = subOffMinute[pid]!=null
+        ? (subOffMinute[pid] - subOnMinute[pid])   // subbed on, then subbed off again
+        : (finalMinute - subOnMinute[pid]);        // subbed on, played to full time
+      if(mins<0) mins = 0;
+      minutesByPlayer[pid] = (minutesByPlayer[pid]||0) + mins;
+    });
+  });
+
+  lineupsChron.sort((a,b)=> new Date(a.kickoff) - new Date(b.kickoff));
+  let totalChange=0, pairs=0;
+  for(let i=1;i<lineupsChron.length;i++){
+    const prev=lineupsChron[i-1].xi, cur=lineupsChron[i].xi;
+    let diff=0;
+    cur.forEach(pid=>{ if(!prev.has(pid)) diff++; });
+    totalChange+=diff; pairs++;
+  }
+
+  return {
+    startedIds:[...startedSet],
+    lineupsCount: lineupCombos.size,
+    avgChange: pairs ? totalChange/pairs : 0,
+    minutesByPlayer, totalMatches,
+  };
+}
 
 async function boot(){
   const root = document.getElementById('root');
@@ -81,30 +145,26 @@ async function boot(){
     const clubIdSet = new Set(clubTeams.map(t=>t.id));
     const leagueEvents = (events||[]).filter(e => clubIdSet.has(e.home_id) && clubIdSet.has(e.away_id) && e.lineup);
 
-    CLUBS = clubTeams.map(t=>{
-      const started = new Set();
-      const namesById = {};
-      leagueEvents.forEach(e=>{
-        let side = null;
-        if(e.home_id===t.id) side = e.lineup?.home;
-        else if(e.away_id===t.id) side = e.lineup?.away;
-        if(!side) return;
-        const ids = Array.isArray(side) ? side : Object.values(side).filter(Boolean);
-        ids.forEach(pid=>{ if(pid) started.add(pid); });
-      });
-      return { id:t.id, name:t.name, logo:t.logo||'', startedCount:started.size, startedIds:[...started] };
-    }).sort((a,b)=>a.name.localeCompare(b.name));
+    // Full roster for these clubs — needed to resolve which team a sub
+    // event's players belong to (scorers don't carry a team id directly),
+    // and to show real names in the detail modals.
+    const {data:rosterPlayers} = await supa.from('gw_dm_players').select('id,full_name,team_id').in('team_id',clubTeams.map(t=>t.id));
+    const playerTeamOf = {}, nameMap = {};
+    (rosterPlayers||[]).forEach(p=>{ playerTeamOf[p.id]=p.team_id; nameMap[p.id]=p.full_name; });
 
-    // Player names for the detail modal, resolved lazily from gw_dm_players
-    // only for the IDs actually needed, rather than pulling every player.
-    const neededIds = new Set(CLUBS.flatMap(c=>c.startedIds));
-    if(neededIds.size){
-      const {data:players} = await supa.from('gw_dm_players').select('id,full_name').in('id',[...neededIds]);
-      const nameMap = {}; (players||[]).forEach(p=>{ nameMap[p.id]=p.full_name; });
-      CLUBS.forEach(c=>{ c.startedNames = c.startedIds.map(id=>nameMap[id]||id); });
-    } else {
-      CLUBS.forEach(c=>{ c.startedNames = []; });
-    }
+    CLUBS = clubTeams.map(t=>{
+      const stats = computeClubStats(leagueEvents, playerTeamOf, t.id);
+      return {
+        id:t.id, name:t.name, logo:t.logo||'',
+        startedCount: stats.startedIds.length,
+        startedIds: stats.startedIds,
+        startedNames: stats.startedIds.map(id=>nameMap[id]||id),
+        lineupsCount: stats.lineupsCount,
+        avgChange: stats.avgChange,
+        minutesByPlayer: stats.minutesByPlayer,
+        totalMatches: stats.totalMatches,
+      };
+    }).sort((a,b)=>a.name.localeCompare(b.name));
 
     GW_NUMBER = Math.max(1, Math.round(leagueEvents.length / Math.max(1,clubTeams.length) * 2));
   }catch(e){
@@ -133,6 +193,24 @@ function sqaHeatCell(v,min,max){
   return `min-width:46px;text-align:center;padding:6px 12px;border-radius:8px;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;border:none;white-space:nowrap;background:rgba(109,75,224,${alpha.toFixed(2)});color:${color};`;
 }
 
+function sqaMetricVal(c, key){
+  switch(key){
+    case 'started':   return {value:c.startedCount, sort:c.startedCount, resolved:true};
+    case 'lineups':   return {value:c.lineupsCount, sort:c.lineupsCount, resolved:true};
+    case 'avgChange': return {value:c.avgChange.toFixed(1), sort:c.avgChange, resolved:true};
+    case 'minutes': {
+      const totalPossible = c.totalMatches*90;
+      const th = sqaState.minPct;
+      let n = 0;
+      if(totalPossible>0){
+        Object.values(c.minutesByPlayer).forEach(m=>{ if((m/totalPossible*100) >= th) n++; });
+      }
+      return {value:n, sort:n, resolved:true};
+    }
+    default: return {value:0, sort:0, resolved:false};
+  }
+}
+
 function render(){
   const root = document.getElementById('root');
   if(LOAD_ERROR){
@@ -142,16 +220,30 @@ function render(){
   const defs = SQA_DEFS;
   const active = defs.find(d=>d.key===sqaState.metricKey) || defs[0];
   const isStarted = active.key==='started';
+  const isDist = active.key==='minutes';
+  const metricVal = c => sqaMetricVal(c, active.key);
+  const resolved = CLUBS.length ? metricVal(CLUBS[0]).resolved : false;
 
-  const rows = isStarted
-    ? [...CLUBS].sort((a,b)=>a.startedCount-b.startedCount) // fewer started = more settled = ranked 1st
-    : [...CLUBS]; // every other metric: 0 for everyone, keep alphabetical
-  const vals = rows.map(c=>isStarted?c.startedCount:0);
+  const rows = resolved
+    ? [...CLUBS].sort((a,b)=>metricVal(a).sort - metricVal(b).sort) // lower = more settled/consistent = ranked 1st, for all 4 real metrics
+    : [...CLUBS]; // demographics we can't compute yet: 0 for everyone, keep alphabetical
+  const vals = rows.map(c=>metricVal(c).sort);
   const minV = Math.min(...vals,0), maxV = Math.max(...vals,0);
 
+  const thresholdBlock = isDist ? `
+    <div style="margin:6px 18px 2px;background:#faf9fc;border:1px solid #eceaf4;border-radius:12px;padding:12px 15px;">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-size:12px;font-weight:700;color:#3a3b47;">Minimum participation</span>
+        <span style="font-size:15px;font-weight:800;color:#6d4be0;">\u2265 ${sqaState.minPct}% of available minutes</span>
+      </div>
+      <input type="range" min="0" max="100" step="10" value="${sqaState.minPct}" oninput="sqaSetThreshold(this.value)" style="width:100%;accent-color:#6d4be0;cursor:pointer;" />
+      <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:9px;font-weight:700;color:#b7b8c4;">
+        <span>0%</span><span>50%</span><span>100%</span>
+      </div>
+    </div>` : '';
+
   const rowsHtml = rows.map((c,i)=>{
-    const val = isStarted ? c.startedCount : 0;
-    const you = false;
+    const val = metricVal(c).value;
     const rankColor = i<3 ? '#6d4be0' : '#a3a4b0';
     const clickAttr = isStarted ? ` onclick="sqaOpenDetail('${c.id}')"` : '';
     return `<div style="display:flex;align-items:center;padding:10px 18px;border-bottom:1px solid #f4f4f8;">
@@ -215,10 +307,11 @@ function render(){
       <div style="padding:12px 18px 6px;">
         <p style="margin:0;font-size:11.5px;line-height:1.4;color:#8a8b98;">${active.caption}</p>
       </div>
+      ${thresholdBlock}
       <div style="display:flex;align-items:center;padding:8px 18px;border-bottom:1px solid #f0f0f5;">
         <span style="width:26px;font-size:10px;font-weight:700;color:#a3a4b0;text-transform:uppercase;letter-spacing:0.5px;">#</span>
         <span style="flex:1;font-size:10px;font-weight:700;color:#a3a4b0;text-transform:uppercase;letter-spacing:0.5px;">Club</span>
-        <span style="width:110px;text-align:right;font-size:10px;font-weight:700;color:#a3a4b0;text-transform:uppercase;letter-spacing:0.5px;">${isStarted?'Players':'\u2014'}</span>
+        <span style="width:110px;text-align:right;font-size:10px;font-weight:700;color:#a3a4b0;text-transform:uppercase;letter-spacing:0.5px;">${resolved?'Value':'\u2014'}</span>
       </div>
       ${rowsHtml || '<div style="padding:28px 18px;text-align:center;font-size:12.5px;color:#a3a4b0;">No teams configured for this league yet.</div>'}
     </div>
@@ -232,6 +325,7 @@ function sqaSelectLevel(key){
   render();
 }
 function sqaSelectMetric(key){ sqaState = {...sqaState, metricKey:key}; render(); }
+function sqaSetThreshold(val){ sqaState = {...sqaState, minPct:parseInt(val,10)}; render(); }
 function sqaOpenDetail(id){ sqaState = {...sqaState, detail:id}; render(); }
 function sqaCloseDetail(){ sqaState = {...sqaState, detail:null}; render(); }
 
