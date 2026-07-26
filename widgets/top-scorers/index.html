@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Top Scorers</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  html,body{height:100%;}
+  body { margin:0; background:transparent; font-family:'Manrope',-apple-system,Helvetica,Arial,sans-serif; color:#1c1d26; }
+  .ts-tabs-desktop{display:flex;gap:4px;margin:13px 0 0;padding:0 14px;background:#faf9fc;border-top:1px solid #f0f0f5;border-bottom:1px solid #f0f0f5;overflow-x:auto;}
+  .ts-tabs-mobile{display:none;padding:12px 18px 0;}
+  @media(max-width:619px){.ts-tabs-desktop{display:none !important;}.ts-tabs-mobile{display:block !important;}}
+  .dual-range{position:absolute;left:0;top:0;width:100%;margin:0;height:26px;background:none;pointer-events:none;-webkit-appearance:none;appearance:none;}
+  .dual-range::-webkit-slider-runnable-track{height:6px;background:transparent;}
+  .dual-range::-moz-range-track{height:6px;background:transparent;}
+  .dual-range::-webkit-slider-thumb{pointer-events:auto;-webkit-appearance:none;width:18px;height:18px;margin-top:-6px;border-radius:50%;background:#6d4be0;border:2px solid #fff;box-shadow:0 1px 4px rgba(20,20,40,.3);cursor:pointer;}
+  .dual-range::-moz-range-thumb{pointer-events:auto;width:18px;height:18px;border-radius:50%;background:#6d4be0;border:2px solid #fff;box-shadow:0 1px 4px rgba(20,20,40,.3);cursor:pointer;}
+  ::-webkit-scrollbar{height:0;width:0;}
+</style>
+</head>
+<body>
+<div id="root" style="padding:12px;">
+  <div style="text-align:center;padding:60px 20px;color:#8a8b98;font-size:13px;">Loading top scorers…</div>
+</div>
+<script>
+const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY, {auth:{persistSession:false}});
+const CLIENT_KEY = new URLSearchParams(location.search).get('client') || '';
+const SEASON = '2026/27';
+const LEAGUE_NAME_MATCH = 'premier league';
+
+let tsState = { level:'score', goalType:'all', minLo:0, minHi:95, posLo:1, posHi:20 };
+const TS_TYPES = [
+  { key:'all',        label:'All goal types' },
+  { key:'leading',    label:'Leading goal' },
+  { key:'equalising', label:'Equalising goal' },
+  { key:'reducing',   label:'Reducing difference' },
+  { key:'increasing', label:'Increasing difference' },
+];
+
+let GOALS = []; // [{playerId,name,teamId,teamName,teamLogo,minute,type,oppPos:null}]
+let LOAD_ERROR = null;
+let GW_NUMBER = null;
+
+// ── Goal classification ─────────────────────────────────────────────────
+// For each goal, compare the scoring team's score differential right BEFORE
+// that goal to classify it. Since a single goal only ever moves the scoring
+// team's own tally by +1, the differential *before* the goal fully
+// determines the type:
+//   before <  -1  (behind by 2+)      -> Reducing difference
+//   before === -1 (behind by 1)       -> Equalising goal
+//   before === 0  (level)             -> Leading goal
+//   before >=  1  (already ahead)     -> Increasing difference
+function classifyGoals(sortedGoalEvents, homeId, awayId){
+  let home = 0, away = 0;
+  return sortedGoalEvents.map(g=>{
+    const isHome = g.teamId === homeId;
+    const before = isHome ? (home-away) : (away-home);
+    let type;
+    if(before < -1) type = 'reducing';
+    else if(before === -1) type = 'equalising';
+    else if(before === 0) type = 'leading';
+    else type = 'increasing';
+    if(isHome) home++; else away++;
+    return { ...g, type };
+  });
+}
+
+async function boot(){
+  const root = document.getElementById('root');
+  if(!CLIENT_KEY){
+    root.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#c0392b;font-size:13px;">Missing ?client= in the widget URL.</div>';
+    return;
+  }
+  try{
+    const [{data:coverage}, {data:tournaments}, {data:teams}, {data:events}] = await Promise.all([
+      supa.from('gw_client_coverage').select('*').eq('client_key',CLIENT_KEY).maybeSingle(),
+      supa.from('gw_dm_tournaments').select('*'),
+      supa.from('gw_dm_teams').select('*'),
+      supa.from('gw_dm_events').select('*'),
+    ]);
+
+    const tourIds = coverage?.tournament_ids ? new Set(coverage.tournament_ids) : null;
+    const teamIds = coverage?.team_ids ? new Set(coverage.team_ids) : null;
+
+    const visibleTournaments = (tournaments||[]).filter(t => !tourIds || tourIds.has(t.id));
+    const league = visibleTournaments.find(t => (t.name||'').toLowerCase().includes(LEAGUE_NAME_MATCH))
+                || (tournaments||[]).find(t => (t.name||'').toLowerCase().includes(LEAGUE_NAME_MATCH));
+
+    let leagueTeamIds = new Set();
+    if(league && league.seasons && league.seasons[SEASON]){
+      (league.seasons[SEASON].teamIds||[]).forEach(id=>leagueTeamIds.add(id));
+    }
+    if(leagueTeamIds.size===0 && teamIds){ teamIds.forEach(id=>leagueTeamIds.add(id)); }
+
+    const allTeams = (teams||[]).filter(t => !teamIds || teamIds.has(t.id));
+    const clubTeams = allTeams.filter(t => leagueTeamIds.size===0 || leagueTeamIds.has(t.id));
+    const teamById = {}; clubTeams.forEach(t=>{ teamById[t.id]=t; });
+    const clubIdSet = new Set(clubTeams.map(t=>t.id));
+
+    const leagueEvents = (events||[]).filter(e => clubIdSet.has(e.home_id) && clubIdSet.has(e.away_id) && e.scorers && e.scorers.length);
+
+    // Player -> team, resolved from the full roster of tracked clubs (goal
+    // scorer entries don't carry a team id directly, only a player id).
+    const {data:rosterPlayers} = await supa.from('gw_dm_players').select('id,full_name,team_id').in('team_id',clubTeams.map(t=>t.id));
+    const playerTeamOf = {}, nameMap = {};
+    (rosterPlayers||[]).forEach(p=>{ playerTeamOf[p.id]=p.team_id; nameMap[p.id]=p.full_name; });
+
+    const allGoals = [];
+    leagueEvents.forEach(e=>{
+      const goalEvents = (e.scorers||[])
+        .filter(s=>(!s.type||s.type==='goal') && s.playerId && playerTeamOf[s.playerId])
+        .map(s=>({ playerId:s.playerId, teamId:playerTeamOf[s.playerId], minute:s.minute||0 }))
+        .sort((a,b)=>a.minute-b.minute);
+      const classified = classifyGoals(goalEvents, e.home_id, e.away_id);
+      classified.forEach(g=>{
+        const t = teamById[g.teamId];
+        allGoals.push({
+          playerId:g.playerId,
+          name: nameMap[g.playerId] || g.playerId,
+          teamId: g.teamId,
+          teamName: t ? t.name : '',
+          teamLogo: t ? (t.logo||'') : '',
+          minute: g.minute,
+          type: g.type,
+        });
+      });
+    });
+    GOALS = allGoals;
+    GW_NUMBER = Math.max(1, Math.round(leagueEvents.length / Math.max(1,clubTeams.length) * 2));
+  }catch(e){
+    console.error('top scorers load failed:', e);
+    LOAD_ERROR = e;
+  }
+  render();
+}
+
+function tsSuffix(n){
+  if(n%10===1 && n!==11) return 'st';
+  if(n%10===2 && n!==12) return 'nd';
+  if(n%10===3 && n!==13) return 'rd';
+  return 'th';
+}
+function tsFill(a,b){
+  return `position:absolute;top:10px;height:6px;border-radius:3px;left:${a}%;width:${Math.max(0,b-a)}%;background:linear-gradient(90deg,#8a6bf0,#6d4be0);`;
+}
+function tsHeatCell(v,min,max){
+  const t = max===min ? 0.6 : (v-min)/(max-min);
+  const alpha = 0.12 + t*0.78;
+  const color = t>0.55 ? '#fff' : '#4a3aa0';
+  return `min-width:46px;text-align:center;padding:6px 12px;border-radius:8px;font-size:14px;font-weight:800;background:rgba(109,75,224,${alpha.toFixed(2)});color:${color};`;
+}
+function tsChip(on){
+  return `border:1px solid ${on?'#6d4be0':'#e6e7ee'};background:${on?'#efeaff':'#fff'};color:${on?'#6d4be0':'#8a8b98'};border-radius:7px;padding:5px 10px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;`;
+}
+function tsCrest(name, url, size){
+  const img = url ? `<img src="${url}" alt="" onerror="this.style.display='none';" style="width:100%;height:100%;object-fit:contain;padding:${Math.round(size*0.12)}px;box-sizing:border-box;" />` : '';
+  return `<div style="position:relative;width:${size}px;height:${size}px;border-radius:6px;background:#f4f5f8;flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.06);overflow:hidden;">${img}</div>`;
+}
+
+function render(){
+  const root = document.getElementById('root');
+  if(LOAD_ERROR){
+    root.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#c0392b;font-size:13px;">Could not load top scorers. Please refresh.</div>';
+    return;
+  }
+  const s = tsState;
+  const isScore = s.level==='score';
+  const lo = Math.min(s.minLo,s.minHi), hi = Math.max(s.minLo,s.minHi);
+  const pLo = Math.min(s.posLo,s.posHi), pHi = Math.max(s.posLo,s.posHi);
+  const activeType = TS_TYPES.find(t=>t.key===s.goalType);
+
+  let filtered = [];
+  if(isScore){
+    const hits = GOALS.filter(g => (s.goalType==='all'||g.type===s.goalType) && g.minute>=lo && g.minute<=hi);
+    const byPlayer = {};
+    hits.forEach(g=>{
+      if(!byPlayer[g.playerId]) byPlayer[g.playerId] = { playerId:g.playerId, name:g.name, teamName:g.teamName, teamLogo:g.teamLogo, count:0, minutes:[] };
+      byPlayer[g.playerId].count++;
+      byPlayer[g.playerId].minutes.push(g.minute);
+    });
+    filtered = Object.values(byPlayer).sort((a,b)=>b.count-a.count);
+  }
+  // Opponent level needs league-table position data we don't track yet —
+  // shown as an empty state below rather than guessing.
+
+  const maxG = filtered.length ? filtered[0].count : 1;
+  const total = filtered.reduce((t,p)=>t+p.count,0);
+
+  const rowsHtml = filtered.slice(0,20).map((p,i)=>{
+    const rankColor = i<3 ? '#6d4be0' : '#a3a4b0';
+    return `<div style="display:flex;align-items:center;padding:10px 18px;border-bottom:1px solid #f4f4f8;background:${i===0?'#f6f4fd':'#fff'};">
+      <span style="width:26px;font-size:12.5px;font-weight:800;color:${rankColor};">${i+1}</span>
+      <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
+        ${tsCrest(p.teamName, p.teamLogo, 24)}
+        <div style="min-width:0;">
+          <div style="font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}</div>
+          <div style="font-size:10.5px;font-weight:600;color:#a3a4b0;">${p.teamName}</div>
+        </div>
+      </div>
+      <div style="width:96px;display:flex;justify-content:flex-end;">
+        <span style="${tsHeatCell(p.count,1,maxG)}">${p.count}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  const isEmpty = isScore && filtered.length===0;
+  const emptyHtml = isEmpty ? `<div style="padding:28px 18px;text-align:center;">
+      <div style="font-size:13px;font-weight:700;color:#8a8b98;">No goals in this filter</div>
+      <div style="font-size:11.5px;font-weight:600;color:#b7b8c4;margin-top:3px;">Widen the range, or check Data Manager has goals recorded for this league.</div>
+    </div>` : '';
+  const notTrackedHtml = !isScore ? `<div style="padding:28px 18px;text-align:center;">
+      <div style="font-size:13px;font-weight:700;color:#8a8b98;">Not tracked yet</div>
+      <div style="font-size:11.5px;font-weight:600;color:#b7b8c4;margin-top:3px;">Filtering by opponent league position needs table-standings data Data Manager doesn't record yet.</div>
+    </div>` : '';
+
+  const levelsHtml = [
+    {key:'score', label:'Score'},
+    {key:'opponent', label:'Opponent'},
+  ].map(l=>{
+    const on = s.level===l.key;
+    return `<button onclick="tsSelectLevel('${l.key}')" style="border:none;border-radius:8px;padding:7px 16px;font-family:inherit;font-size:12.5px;font-weight:${on?800:600};cursor:pointer;white-space:nowrap;background:${on?'#fff':'transparent'};color:${on?'#6d4be0':'#8a8b98'};box-shadow:${on?'0 1px 3px rgba(20,20,40,0.12)':'none'};">${l.label}</button>`;
+  }).join('');
+
+  const scoreFilters = isScore ? `<div style="margin:14px 0 0;background:#faf9fc;border:1px solid #eceaf4;border-radius:12px;padding:14px 15px;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+        <span style="font-size:11px;font-weight:700;color:#8a8b98;text-transform:uppercase;letter-spacing:0.4px;">Goal type</span>
+        <select onchange="tsSetGoalType(this.value)" style="flex:1;min-width:180px;border:1px solid #e6e7ee;background:#fff;border-radius:8px;padding:8px 10px;font-size:12.5px;font-weight:700;color:#3a3b47;">
+          ${TS_TYPES.map(t=>`<option value="${t.key}"${t.key===s.goalType?' selected':''}>${t.label}</option>`).join('')}
+        </select>
+      </div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:7px;">
+        <span style="font-size:12px;font-weight:700;color:#3a3b47;">Minute range</span>
+        <span style="font-size:14px;font-weight:800;color:#6d4be0;">${lo}' – ${hi}'</span>
+      </div>
+      <div style="position:relative;height:26px;">
+        <div style="position:absolute;left:0;right:0;top:10px;height:6px;border-radius:3px;background:#e6e7ee;"></div>
+        <div style="${tsFill(lo/95*100, hi/95*100)}"></div>
+        <input type="range" class="dual-range" min="0" max="95" step="5" value="${lo}" oninput="tsSetMinLo(this.value)" />
+        <input type="range" class="dual-range" min="0" max="95" step="5" value="${hi}" oninput="tsSetMinHi(this.value)" />
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:9px;font-weight:700;color:#b7b8c4;">
+        <span>0'</span><span>45'</span><span>90'+</span>
+      </div>
+      <div style="display:flex;gap:5px;margin-top:11px;flex-wrap:wrap;">
+        ${[['Full match',0,90],['1st half',0,45],['2nd half',45,90],['Last 15',75,90],["After 90'",90,95]].map(([label,a,b])=>
+          `<button onclick="tsSetMinutes(${a},${b})" style="${tsChip(lo===a&&hi===b)}">${label}</button>`).join('')}
+      </div>
+    </div>` : '';
+
+  const opponentFilters = !isScore ? `<div style="margin:14px 0 0;background:#faf9fc;border:1px solid #eceaf4;border-radius:12px;padding:14px 15px;">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:7px;">
+        <span style="font-size:12px;font-weight:700;color:#3a3b47;">Opponent league position</span>
+        <span style="font-size:14px;font-weight:800;color:#6d4be0;">${pLo}${tsSuffix(pLo)} – ${pHi}${tsSuffix(pHi)}</span>
+      </div>
+      <div style="position:relative;height:26px;opacity:0.4;pointer-events:none;">
+        <div style="position:absolute;left:0;right:0;top:10px;height:6px;border-radius:3px;background:#e6e7ee;"></div>
+        <div style="${tsFill((pLo-1)/19*100, (pHi-1)/19*100)}"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:9px;font-weight:700;color:#b7b8c4;">
+        <span>1st</span><span>10th</span><span>20th</span>
+      </div>
+    </div>` : '';
+
+  const summary = isScore
+    ? `${s.goalType==='all'?'All goals':activeType.label+'s'} scored between ${lo}' and ${hi}'.`
+    : `Goals scored against clubs currently ${pLo}${tsSuffix(pLo)} to ${pHi}${tsSuffix(pHi)} in the table.`;
+
+  root.innerHTML = `<div style="max-width:620px;margin:0 auto;padding:0 0 20px;font-family:'Manrope',-apple-system,Helvetica,Arial,sans-serif;color:#1c1d26;">
+    <div style="background:#fff;border:1px solid #e6e7ee;border-radius:16px;box-shadow:0 2px 8px rgba(20,20,40,0.05);overflow:hidden;">
+      <div style="padding:16px 18px 0;">
+        <h1 style="margin:0;font-size:16px;font-weight:800;letter-spacing:-0.3px;">Top Scorers</h1>
+        <p style="margin:1px 0 0;font-size:11.5px;font-weight:600;color:#8a8b98;">Premier League ${SEASON}${GW_NUMBER?' · through GW '+GW_NUMBER:''}</p>
+        <div style="display:inline-flex;margin-top:13px;background:#f4f5f8;border:1px solid #e6e7ee;border-radius:10px;padding:3px;">${levelsHtml}</div>
+      </div>
+      <div style="padding:0 18px;">${scoreFilters}${opponentFilters}</div>
+      <div style="padding:13px 18px 10px;display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+        <p style="margin:0;font-size:11.5px;line-height:1.4;color:#8a8b98;">${summary}</p>
+        <span style="font-size:10px;font-weight:700;color:#c3c4cf;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;">${isScore?total+' goals · '+filtered.length+' players':''}</span>
+      </div>
+      <div style="display:flex;align-items:center;padding:8px 18px;border-bottom:1px solid #f0f0f5;">
+        <span style="width:26px;font-size:10px;font-weight:700;color:#a3a4b0;text-transform:uppercase;letter-spacing:0.5px;">#</span>
+        <span style="flex:1;font-size:10px;font-weight:700;color:#a3a4b0;text-transform:uppercase;letter-spacing:0.5px;">Player</span>
+        <span style="width:96px;text-align:right;font-size:10px;font-weight:700;color:#a3a4b0;text-transform:uppercase;letter-spacing:0.5px;">Goals</span>
+      </div>
+      ${isScore ? rowsHtml : ''}
+      ${emptyHtml}
+      ${notTrackedHtml}
+    </div>
+  </div>`;
+}
+
+function tsSelectLevel(key){ tsState = {...tsState, level:key}; render(); }
+function tsSetGoalType(val){ tsState = {...tsState, goalType:val}; render(); }
+function tsSetMinLo(val){ tsState = {...tsState, minLo:parseInt(val,10)}; render(); }
+function tsSetMinHi(val){ tsState = {...tsState, minHi:parseInt(val,10)}; render(); }
+function tsSetMinutes(a,b){ tsState = {...tsState, minLo:a, minHi:b}; render(); }
+
+boot();
+</script>
+</body>
+</html>
