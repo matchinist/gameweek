@@ -715,6 +715,10 @@ function renderPredict(){
     document.getElementById('predict-content').innerHTML=renderTopScorers();
     return;
   }
+  if(comp.mode==='fantasy'){
+    document.getElementById('predict-content').innerHTML=renderFantasyPane(comp);
+    return;
+  }
   if(selectedRound[currentCompIdx]===undefined)selectedRound[currentCompIdx]=getDefaultRoundIdx(comp);
   let html=predictSubTab==='predictions'?renderPredictionsPane(comp):(comp.mode==='lineup'?renderLineupLeaderboardShell(comp):renderLeaderboardPane(comp));
   document.getElementById('predict-content').innerHTML=html;
