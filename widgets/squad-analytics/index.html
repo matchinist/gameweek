@@ -30,13 +30,13 @@ const LEAGUE_NAME_MATCH = 'premier league'; // default league for this widget, p
 
 let sqaState = { level:'consistency', metricKey:'started', minPct:50 };
 const SQA_DEFS = [
-  { group:'consistency', key:'started',   short:'Started',       label:'Started players',    caption:'Distinct players given a start this season. Fewer means a more settled first XI.' },
-  { group:'consistency', key:'minutes',   short:'Participation', label:'Participated players', caption:'Players covering at least the chosen share of the club\u2019s total available minutes this season.' },
-  { group:'consistency', key:'lineups',   short:'Lineups',       label:'Different lineups',   caption:'Distinct starting XI combinations fielded this season. Fewer means the manager keeps naming the same team.' },
-  { group:'consistency', key:'avgChange', short:'Avg change',    label:'Avg change / game',   caption:'Average number of starters swapped between consecutive matches. Lower means more lineup continuity.' },
-  { group:'demographics', key:'nations',  short:'Nationalities', label:'Nationalities used',  caption:'Distinct nationalities used. Not tracked yet — player nationality isn\u2019t recorded in Data Manager.' },
-  { group:'demographics', key:'avgAge',   short:'Avg age',       label:'Average age of XI',   caption:'Mean age of players fielded. Not tracked yet — player date of birth isn\u2019t recorded in Data Manager.' },
-  { group:'demographics', key:'zodiac',   short:'Zodiac',        label:'Most popular zodiac', caption:'Most common star sign in the squad. Not tracked yet — player date of birth isn\u2019t recorded in Data Manager.' },
+  { group:'consistency', key:'started',   short:'Started',       label:'Started players',    lowerBetter:true,  caption:'Distinct players given a start this season. Fewer means a more settled first XI.' },
+  { group:'consistency', key:'minutes',   short:'Participation', label:'Participated players', lowerBetter:true,  caption:'Players covering at least the chosen share of the club\u2019s total available minutes this season.' },
+  { group:'consistency', key:'lineups',   short:'Lineups',       label:'Different lineups',   lowerBetter:true,  caption:'Distinct starting XI combinations fielded this season. Fewer means the manager keeps naming the same team.' },
+  { group:'consistency', key:'avgChange', short:'Avg change',    label:'Avg change / game',   lowerBetter:true,  caption:'Average number of starters swapped between consecutive matches. Lower means more lineup continuity.' },
+  { group:'demographics', key:'nations',  short:'Nationalities', label:'Nationalities used',  lowerBetter:false, caption:'Distinct nationalities among players who\u2019ve played at least 1 minute this season. Higher means a more international squad.' },
+  { group:'demographics', key:'avgAge',   short:'Avg age',       label:'Average age of XI',   lowerBetter:false, caption:'Mean age of players who\u2019ve played at least 1 minute this season.' },
+  { group:'demographics', key:'zodiac',   short:'Zodiac',        label:'Most popular zodiac', lowerBetter:false, caption:'Most common star sign among players who\u2019ve played at least 1 minute this season.' },
 ];
 
 let CLUBS = []; // [{id,name,logo,startedIds,startedNames,lineupsCount,avgChange,minutesByPlayer,totalMatches}]
@@ -50,6 +50,40 @@ let GW_NUMBER = null; // rough matchday count used for the header sub-line
 //                        unless they were themselves later subbed off, in
 //                        which case it's (their own sub-off minute) minus
 //                        (their own sub-on minute).
+function zodiacFromBirthday(birthday){
+  if(!birthday) return null;
+  const d = new Date(birthday);
+  if(isNaN(d.getTime())) return null;
+  const m = d.getUTCMonth()+1, day = d.getUTCDate();
+  // Each entry: [sign, endMonth, endDay] — the sign whose range ENDS on or
+  // after (m,day), checked in calendar order starting after Dec 21. Using
+  // ordinal (month,day) comparisons directly avoids the classic off-by-range
+  // bug where a "same month" span like Dec 22-31 accidentally swallows the
+  // whole month.
+  const bounds = [
+    ['Capricorn',1,19], ['Aquarius',2,18], ['Pisces',3,20], ['Aries',4,19],
+    ['Taurus',5,20], ['Gemini',6,20], ['Cancer',7,22], ['Leo',8,22],
+    ['Virgo',9,22], ['Libra',10,22], ['Scorpio',11,21], ['Sagittarius',12,21],
+    ['Capricorn',12,31],
+  ];
+  for(const [sign, em, ed] of bounds){
+    if(m<em || (m===em && day<=ed)) return sign;
+  }
+  return null;
+}
+function ageFromBirthday(birthday){
+  if(!birthday) return null;
+  const d = new Date(birthday);
+  if(isNaN(d.getTime())) return null;
+  return Math.floor((Date.now()-d)/(365.25*24*60*60*1000));
+}
+function sqaMode(arr){
+  if(!arr.length) return null;
+  const m={}; let best=arr[0], bc=0;
+  arr.forEach(v=>{ m[v]=(m[v]||0)+1; if(m[v]>bc){bc=m[v];best=v;} });
+  return {value:best, count:bc};
+}
+
 function computeClubStats(events, playerTeamOf, clubId){
   const startedSet = new Set();
   const lineupCombos = new Set();
@@ -99,8 +133,11 @@ function computeClubStats(events, playerTeamOf, clubId){
     totalChange+=diff; pairs++;
   }
 
+  const playedIds = Object.keys(minutesByPlayer).filter(pid=>minutesByPlayer[pid]>=1);
+
   return {
     startedIds:[...startedSet],
+    playedIds,
     lineupsCount: lineupCombos.size,
     avgChange: pairs ? totalChange/pairs : 0,
     minutesByPlayer, totalMatches,
@@ -147,13 +184,22 @@ async function boot(){
 
     // Full roster for these clubs — needed to resolve which team a sub
     // event's players belong to (scorers don't carry a team id directly),
-    // and to show real names in the detail modals.
-    const {data:rosterPlayers} = await supa.from('gw_dm_players').select('id,full_name,team_id').in('team_id',clubTeams.map(t=>t.id));
-    const playerTeamOf = {}, nameMap = {};
-    (rosterPlayers||[]).forEach(p=>{ playerTeamOf[p.id]=p.team_id; nameMap[p.id]=p.full_name; });
+    // to show real names in the detail modals, and to compute the
+    // demographic stats from nationality/birthday.
+    const {data:rosterPlayers} = await supa.from('gw_dm_players').select('id,full_name,team_id,nationality,birthday').in('team_id',clubTeams.map(t=>t.id));
+    const playerTeamOf = {}, nameMap = {}, natMap = {}, bdayMap = {};
+    (rosterPlayers||[]).forEach(p=>{
+      playerTeamOf[p.id]=p.team_id; nameMap[p.id]=p.full_name;
+      natMap[p.id]=p.nationality||null; bdayMap[p.id]=p.birthday||null;
+    });
 
     CLUBS = clubTeams.map(t=>{
       const stats = computeClubStats(leagueEvents, playerTeamOf, t.id);
+
+      const nats = stats.playedIds.map(pid=>natMap[pid]).filter(Boolean);
+      const ages = stats.playedIds.map(pid=>ageFromBirthday(bdayMap[pid])).filter(a=>a!=null && !isNaN(a));
+      const zodiacs = stats.playedIds.map(pid=>zodiacFromBirthday(bdayMap[pid])).filter(Boolean);
+
       return {
         id:t.id, name:t.name, logo:t.logo||'',
         startedCount: stats.startedIds.length,
@@ -163,6 +209,9 @@ async function boot(){
         avgChange: stats.avgChange,
         minutesByPlayer: stats.minutesByPlayer,
         totalMatches: stats.totalMatches,
+        nationsCount: new Set(nats).size,
+        avgAge: ages.length ? (ages.reduce((s,a)=>s+a,0)/ages.length) : 0,
+        zodiacMode: sqaMode(zodiacs),
       };
     }).sort((a,b)=>a.name.localeCompare(b.name));
 
@@ -182,12 +231,12 @@ function sqaCrest(name, url, size){
   const img = url ? `<img src="${url}" alt="" onerror="this.style.display='none';" style="width:100%;height:100%;object-fit:contain;padding:${Math.round(size*0.12)}px;box-sizing:border-box;" />` : '';
   return `<div style="position:relative;width:${size}px;height:${size}px;border-radius:${size>=32?8:6}px;background:#f4f5f8;flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.06);overflow:hidden;">${img}</div>`;
 }
-function sqaHeatCell(v,min,max){
+function sqaHeatCell(v,min,max,highIntense){
   if(max===min){ // every club at the same value (usually all-zero, no data yet)
     return `min-width:46px;text-align:center;padding:6px 12px;border-radius:8px;font-family:inherit;font-size:13.5px;font-weight:800;border:none;white-space:nowrap;background:#f0f0f5;color:#a3a4b0;`;
   }
   const t0 = (v-min)/(max-min);
-  const t = 1-t0; // lower "started" count = better/more settled = more intense
+  const t = highIntense ? t0 : 1-t0;
   const alpha = 0.10 + t*0.80;
   const color = t>0.55 ? '#fff' : '#4a3aa0';
   return `min-width:46px;text-align:center;padding:6px 12px;border-radius:8px;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;border:none;white-space:nowrap;background:rgba(109,75,224,${alpha.toFixed(2)});color:${color};`;
@@ -198,6 +247,13 @@ function sqaMetricVal(c, key){
     case 'started':   return {value:c.startedCount, sort:c.startedCount, resolved:true};
     case 'lineups':   return {value:c.lineupsCount, sort:c.lineupsCount, resolved:true};
     case 'avgChange': return {value:c.avgChange.toFixed(1), sort:c.avgChange, resolved:true};
+    case 'nations':   return {value:c.nationsCount, sort:c.nationsCount, resolved:true};
+    case 'avgAge':    return {value:c.avgAge.toFixed(1), sort:c.avgAge, resolved:true};
+    case 'zodiac':    return {
+      value: c.zodiacMode ? `${c.zodiacMode.value} \u00b7 ${c.zodiacMode.count}` : '\u2014',
+      sort: c.zodiacMode ? c.zodiacMode.count : 0,
+      resolved:true,
+    };
     case 'minutes': {
       const totalPossible = c.totalMatches*90;
       const th = sqaState.minPct;
@@ -225,8 +281,8 @@ function render(){
   const resolved = CLUBS.length ? metricVal(CLUBS[0]).resolved : false;
 
   const rows = resolved
-    ? [...CLUBS].sort((a,b)=>metricVal(a).sort - metricVal(b).sort) // lower = more settled/consistent = ranked 1st, for all 4 real metrics
-    : [...CLUBS]; // demographics we can't compute yet: 0 for everyone, keep alphabetical
+    ? [...CLUBS].sort((a,b)=> active.lowerBetter ? metricVal(a).sort - metricVal(b).sort : metricVal(b).sort - metricVal(a).sort)
+    : [...CLUBS]; // metrics we can't compute at all yet: keep alphabetical
   const vals = rows.map(c=>metricVal(c).sort);
   const minV = Math.min(...vals,0), maxV = Math.max(...vals,0);
 
@@ -244,6 +300,7 @@ function render(){
 
   const rowsHtml = rows.map((c,i)=>{
     const val = metricVal(c).value;
+    const sortVal = metricVal(c).sort;
     const rankColor = i<3 ? '#6d4be0' : '#a3a4b0';
     const clickAttr = isStarted ? ` onclick="sqaOpenDetail('${c.id}')"` : '';
     return `<div style="display:flex;align-items:center;padding:10px 18px;border-bottom:1px solid #f4f4f8;">
@@ -253,7 +310,7 @@ function render(){
         <span style="font-size:13.5px;font-weight:600;color:#1c1d26;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.name}</span>
       </div>
       <div style="width:110px;display:flex;justify-content:flex-end;">
-        <button${clickAttr} style="${sqaHeatCell(val,minV,maxV)}">${val}</button>
+        <button${clickAttr} style="${sqaHeatCell(sortVal,minV,maxV,!active.lowerBetter)}">${val}</button>
       </div>
     </div>`;
   }).join('');
