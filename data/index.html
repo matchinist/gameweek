@@ -371,6 +371,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
         </div>
       </div>
       <div class="form-group">
+        <label class="form-label">Total Games at Club (until 2026/27)</label>
+        <input class="form-input" type="number" id="cp-total-games" min="0" placeholder="e.g. 143">
+        <div style="font-size:11px;color:var(--text-3);margin-top:4px;">Career appearances for this club up to the start of the 2026/27 season — a manual baseline, since Data Manager's own match history only goes back to when you started entering results.</div>
+      </div>
+      <div class="form-group">
         <label class="form-label">Photo</label>
         <input type="file" id="cp-photo" accept="image/*" style="font-size:12px;">
         <div style="font-size:11px;color:var(--text-3);margin-top:4px;">Or paste a URL:</div>
@@ -817,6 +822,7 @@ function editPlayer(id){
   document.getElementById('cp-nationality').value = p.nationality||'';
   document.getElementById('cp-number').value = p.jersey_number??'';
   document.getElementById('cp-position').value = p.position||'MID';
+  document.getElementById('cp-total-games').value = p.total_games??'';
   document.getElementById('cp-photo-url').value = p.photo_url||'';
   document.getElementById('cp-photo').value = '';
   document.getElementById('cp-submit-btn').textContent = 'Save Changes';
@@ -831,6 +837,7 @@ function resetPlayerForm(){
   document.getElementById('cp-nationality').value='';
   document.getElementById('cp-number').value='';
   document.getElementById('cp-position').value='MID';
+  document.getElementById('cp-total-games').value='';
   document.getElementById('cp-photo').value='';
   document.getElementById('cp-photo-url').value='';
 }
@@ -845,6 +852,8 @@ async function createPlayer(){
   const nationality=document.getElementById('cp-nationality').value||null;
   const jersey_number=document.getElementById('cp-number').value?parseInt(document.getElementById('cp-number').value):null;
   const position=document.getElementById('cp-position').value||null;
+  const totalGamesInput=document.getElementById('cp-total-games').value;
+  const total_games=totalGamesInput!==''?parseInt(totalGamesInput):null;
   let photo_url=document.getElementById('cp-photo-url').value.trim()||null;
   
   // Handle file upload if provided
@@ -871,7 +880,7 @@ async function createPlayer(){
   }
 
   if(isEditing){
-    const {data,error}=await supa.from('gw_dm_players').update({team_id,full_name,birthday,nationality,photo_url,jersey_number,position}).eq('id',editingPlayerId).select().single();
+    const {data,error}=await supa.from('gw_dm_players').update({team_id,full_name,birthday,nationality,photo_url,jersey_number,position,total_games}).eq('id',editingPlayerId).select().single();
     if(error){toast('Failed: '+error.message);return;}
     const idx=players.findIndex(p=>p.id===editingPlayerId);
     if(idx>=0) players[idx]=data;
@@ -884,7 +893,7 @@ async function createPlayer(){
     return;
   }
 
-  const {data,error}=await supa.from('gw_dm_players').insert({team_id,full_name,birthday,nationality,photo_url,jersey_number,position}).select().single();
+  const {data,error}=await supa.from('gw_dm_players').insert({team_id,full_name,birthday,nationality,photo_url,jersey_number,position,total_games}).select().single();
   if(error){toast('Failed: '+error.message);return;}
   
   players.push(data);
