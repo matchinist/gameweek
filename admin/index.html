@@ -255,10 +255,7 @@ tbody tr:hover td{background:var(--bg);}
   <div class="sidebar-section">
     <div class="sidebar-section-label">Widgets</div>
     <button class="nav-item" onclick="nav('widgets')">
-      <span class="ni-icon">📊</span> Squad Analytics
-    </button>
-    <button class="nav-item" onclick="nav('widgets-topscorers')">
-      <span class="ni-icon">⚽</span> Top Scorers
+      <span class="ni-icon">📊</span> Widgets
     </button>
   </div>
 
@@ -485,11 +482,12 @@ tbody tr:hover td{background:var(--bg);}
     <div class="view" id="view-widgets">
       <div class="page-header">
         <div>
-          <div class="page-title">Squad Analytics</div>
-          <div class="page-sub" style="font-size:15px;">A standalone widget — not a competition, no setup required beyond pasting the snippet below.</div>
+          <div class="page-title">Widgets</div>
+          <div class="page-sub" style="font-size:15px;">Standalone widgets — not competitions, no setup required beyond pasting the snippets below.</div>
         </div>
       </div>
 
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin:8px 0 10px;">Squad Analytics</div>
       <div class="two-col">
         <div>
           <div class="card" style="margin-bottom:14px;">
@@ -525,17 +523,8 @@ tbody tr:hover td{background:var(--bg);}
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- ── TOP SCORERS WIDGET ── -->
-    <div class="view" id="view-widgets-topscorers">
-      <div class="page-header">
-        <div>
-          <div class="page-title">Top Scorers</div>
-          <div class="page-sub" style="font-size:15px;">A standalone widget — not a competition, no setup required beyond pasting the snippet below.</div>
-        </div>
-      </div>
-
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin:24px 0 10px;">Top Scorers</div>
       <div class="two-col">
         <div>
           <div class="card" style="margin-bottom:14px;">
@@ -1419,7 +1408,7 @@ function nav(view, subLabel){
   });
 
   // breadcrumb
-  const labels = {dashboard:'Dashboard','comp-detail':'Competitions','competitions':'Competitions',embed:'Embed & Integration',settings:'Settings',branding:'Customisation',billing:'Usage & Billing',widgets:'Squad Analytics','widgets-topscorers':'Top Scorers'};
+  const labels = {dashboard:'Dashboard','comp-detail':'Competitions','competitions':'Competitions',embed:'Embed & Integration',settings:'Settings',branding:'Customisation',billing:'Usage & Billing',widgets:'Widgets'};
   let bc = '';
   if(view==='comp-detail' && subLabel){
     bc = `<span>Competitions</span><span class="sep">/</span><span class="current">${subLabel}</span>`;
@@ -1431,8 +1420,7 @@ function nav(view, subLabel){
   if(view==='dashboard') renderDashboard();
   if(view==='competitions') renderCompList();
   if(view==='embed') renderEmbedInfo();
-  if(view==='widgets') renderWidgetsInfo();
-  if(view==='widgets-topscorers') renderTopScorersWidgetInfo();
+  if(view==='widgets'){ renderWidgetsInfo(); renderTopScorersWidgetInfo(); }
   if(view==='settings') renderSettings();
   if(view==='branding') renderBranding();
   if(view==='billing') renderBilling();
