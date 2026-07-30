@@ -348,6 +348,14 @@ const LOGO={
   'Sunderland':'https://upload.wikimedia.org/wikipedia/en/6/63/Sunderland_AFC_logo.svg',
   'Tottenham':'https://upload.wikimedia.org/wikipedia/en/b/b4/Tottenham_Hotspur.svg',
   'West Ham':'https://upload.wikimedia.org/wikipedia/en/c/c2/West_Ham_United_FC_logo.svg',
+  'Lakers':'https://upload.wikimedia.org/wikipedia/commons/3/3c/Los_Angeles_Lakers_logo.svg',
+  'Celtics':'https://upload.wikimedia.org/wikipedia/en/8/8f/Boston_Celtics.svg',
+  'Warriors':'https://upload.wikimedia.org/wikipedia/en/0/01/Golden_State_Warriors_logo.svg',
+  'Bucks':'https://upload.wikimedia.org/wikipedia/en/4/4a/Milwaukee_Bucks_logo.svg',
+  'Nuggets':'https://upload.wikimedia.org/wikipedia/en/7/76/Denver_Nuggets.svg',
+  'Heat':'https://upload.wikimedia.org/wikipedia/en/f/fb/Miami_Heat_logo.svg',
+  'Suns':'https://upload.wikimedia.org/wikipedia/en/d/dc/Phoenix_Suns_logo.svg',
+  '76ers':'https://upload.wikimedia.org/wikipedia/en/0/0e/Philadelphia_76ers_logo.svg',
 };
 const lg=n=>LOGO[n]||'';
 
@@ -446,6 +454,14 @@ const COMPS=[
   {id:'c7',name:'Lineup Predictor',mode:'lineup',color:'#0EA5E9',
     rounds:[{id:'rl1',label:'Gameweek 1',status:'open',eventId:'erl_lu1'},{id:'rl2',label:'Gameweek 2',status:'upcoming',eventId:'erl_lu2'}]},
   {id:'c8',name:'Squad Analytics',mode:'analytics',color:'#6d4be0'},
+  {id:'c10',name:'Margin Predictor',mode:'betting',rulesKey:'margin',color:'#EA580C',
+    markets:[{type:'winner',label:'Winner',points:2},{type:'margin',label:'Winning Margin',points:4}],
+    tournamentNames:['NBA'],
+    overallPrizes:[{pos:1,text:'Team jersey'},{pos:2,text:'\u20ac50 store credit'},{pos:3,text:'\u20ac25 store credit'}],
+    rounds:[
+      {id:'rm1',label:'Week 1',status:'completed',deadline:'2026-11-05T19:30',eventIds:['nba_p1','nba_p2','nba_p3'],prizes:[{pos:1,text:'\u20ac15 store credit'}]},
+      {id:'rm2',label:'Week 2',status:'open',deadline:'2026-11-12T19:30',eventIds:['nba1','nba2','nba3','nba4'],prizes:[{pos:1,text:'\u20ac15 store credit'}]},
+    ]},
   {id:'c9',name:'Top Scorers',mode:'topscorers',color:'#6d4be0'},
   // CS2 Fantasy hidden from demo for now — being built out separately at
   // /cs2fantasy until it's ready to rejoin the tab strip here.
@@ -500,6 +516,13 @@ const EVENTS={
   // Betting Round 2 — e302 predicted+locked (awaiting result), e301 resulted (with points)
   e302:{tournament:'Serie A',home:'Inter',away:'AC Milan',homeLogo:lg('Inter'),awayLogo:lg('AC Milan'),kickoff:'29 Aug · 20:45',res:null,locked:true},
   e301:{tournament:'La Liga',home:'Real Madrid',away:'Atletico',homeLogo:lg('Real Madrid'),awayLogo:lg('Atletico'),kickoff:'25 Aug · 21:00',res:{h:3,a:0},locked:true},
+  nba1:{tournament:'NBA',home:'Lakers',away:'Warriors',homeLogo:lg('Lakers'),awayLogo:lg('Warriors'),kickoff:'12 Nov · 20:00',res:{h:112,a:108},locked:true},
+  nba2:{tournament:'NBA',home:'Celtics',away:'Heat',homeLogo:lg('Celtics'),awayLogo:lg('Heat'),kickoff:'12 Nov · 22:30',res:null},
+  nba3:{tournament:'NBA',home:'Nuggets',away:'Suns',homeLogo:lg('Nuggets'),awayLogo:lg('Suns'),kickoff:'13 Nov · 21:00',res:null},
+  nba4:{tournament:'NBA',home:'Bucks',away:'76ers',homeLogo:lg('Bucks'),awayLogo:lg('76ers'),kickoff:'13 Nov · 23:00',res:null},
+  nba_p1:{tournament:'NBA',home:'Lakers',away:'Nuggets',homeLogo:lg('Lakers'),awayLogo:lg('Nuggets'),kickoff:'05 Nov · 20:00',res:{h:118,a:110},locked:true},
+  nba_p2:{tournament:'NBA',home:'Celtics',away:'Bucks',homeLogo:lg('Celtics'),awayLogo:lg('Bucks'),kickoff:'05 Nov · 22:30',res:{h:104,a:101},locked:true},
+  nba_p3:{tournament:'NBA',home:'Warriors',away:'Suns',homeLogo:lg('Warriors'),awayLogo:lg('Suns'),kickoff:'06 Nov · 21:00',res:{h:99,a:127},locked:true},
   // Betting open
   e303:{tournament:'La Liga',home:'Barcelona',away:'Real Madrid',homeLogo:lg('Barcelona'),awayLogo:lg('Real Madrid'),kickoff:'30 Aug \u00b7 21:00',res:null},
   e304:{tournament:'Serie A',home:'Everton',away:'Liverpool',homeLogo:lg('Everton'),awayLogo:lg('Liverpool'),kickoff:'31 Aug \u00b7 20:45',res:null},
@@ -520,6 +543,8 @@ let preds={
   // Betting Round 2: e302 predicted (awaiting result), e301 predicted (resulted)
   e302:{'1x2':'H','ou25':'U','btts':'N'},
   e301:{'1x2':'H','ou25':'O','btts':'N'},
+  // Margin Predictor: correct winner, wrong margin bucket
+  nba1:{'winner':'H','margin':'m2'},
 
   // Ranking GW2: user predicted order
   r8_ranking:['rt2','rt1','rt5','rt3','rt4','rt6'],
@@ -535,6 +560,9 @@ const LB_DATA={
   c3:{r5a:[{u:'xavi_8',points:5},{u:'demo_user',points:4},{u:'stadyum76',points:3},{u:'footy_oracle',points:3},{u:'matchday_man',points:2},{u:'bvb_predictor',points:1},{u:'arsenal_fan',points:5},{u:'golazo99',points:3},{u:'tipster_pro',points:2},{u:'bet_master',points:1}],
       r5:[{u:'xavi_8',points:7},{u:'demo_user',points:5},{u:'stadyum76',points:5},{u:'footy_oracle',points:3},{u:'matchday_man',points:2},{u:'bvb_predictor',points:1},{u:'arsenal_fan',points:4},{u:'golazo99',points:3},{u:'tipster_pro',points:2},{u:'bet_master',points:0}],
       overall:[{u:'xavi_8',points:14},{u:'demo_user',points:10},{u:'stadyum76',points:9},{u:'footy_oracle',points:7},{u:'matchday_man',points:5},{u:'arsenal_fan',points:5},{u:'bvb_predictor',points:3},{u:'golazo99',points:3},{u:'tipster_pro',points:2},{u:'bet_master',points:1}]},
+  c10:{rm1:[{u:'footy_oracle',points:18},{u:'demo_user',points:14},{u:'xavi_8',points:12},{u:'stadyum76',points:12},{u:'arsenal_fan',points:10},{u:'matchday_man',points:8},{u:'bvb_predictor',points:6},{u:'golazo99',points:6},{u:'tipster_pro',points:4},{u:'bet_master',points:0}],
+       rm2:[{u:'footy_oracle',points:6},{u:'xavi_8',points:6},{u:'stadyum76',points:6},{u:'demo_user',points:2},{u:'arsenal_fan',points:2},{u:'matchday_man',points:2},{u:'bvb_predictor',points:2},{u:'golazo99',points:0},{u:'tipster_pro',points:0},{u:'bet_master',points:0}],
+       overall:[{u:'footy_oracle',points:24},{u:'xavi_8',points:18},{u:'stadyum76',points:18},{u:'demo_user',points:16},{u:'arsenal_fan',points:12},{u:'matchday_man',points:10},{u:'bvb_predictor',points:8},{u:'golazo99',points:6},{u:'tipster_pro',points:4},{u:'bet_master',points:0}]},
   c4:{r7:[{u:'footy_oracle',points:11,correct:5},{u:'demo_user',points:9,correct:4},{u:'xavi_8',points:7,correct:3},{u:'stadyum76',points:7,correct:3},{u:'matchday_man',points:5,correct:2},{u:'arsenal_fan',points:5,correct:2},{u:'bvb_predictor',points:3,correct:1},{u:'golazo99',points:2,correct:1},{u:'tipster_pro',points:2,correct:1},{u:'bet_master',points:0,correct:0}],r8:[{u:'demo_user',points:9,correct:4},{u:'footy_oracle',points:7,correct:3},{u:'stadyum76',points:5,correct:2},{u:'xavi_8',points:5,correct:2},{u:'matchday_man',points:4,correct:2},{u:'arsenal_fan',points:4,correct:1},{u:'bvb_predictor',points:2,correct:1},{u:'golazo99',points:2,correct:1},{u:'tipster_pro',points:0,correct:0},{u:'bet_master',points:0,correct:0}],
       overall:[{u:'demo_user',points:9,correct:4},{u:'footy_oracle',points:7,correct:3},{u:'stadyum76',points:5,correct:2},{u:'xavi_8',points:5,correct:2},{u:'matchday_man',points:4,correct:2},{u:'arsenal_fan',points:4,correct:1},{u:'bvb_predictor',points:2,correct:1},{u:'golazo99',points:2,correct:1},{u:'tipster_pro',points:0,correct:0},{u:'bet_master',points:0,correct:0}]},
 };
@@ -574,7 +602,7 @@ function controlBandOpen(comp, roundOptionsHtml, tabsHtml, tabsMobileHtml, selec
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
       <div style="display:flex;align-items:center;gap:8px;">
         <select class="round-select control-band-select" onchange="${selectOnchange||'changeRound(this.value)'}">${roundOptionsHtml}</select>
-        <button class="rules-btn" onclick="showRules('${comp.mode}')">Rules</button>
+        <button class="rules-btn" onclick="showRules('${comp.rulesKey||comp.mode}')">Rules</button>
       </div>
       <div class="predict-subtabs">${tabsHtml}</div>
     </div>
@@ -1641,6 +1669,8 @@ function renderPredictionsPane(comp){
 }
 
 const TEAM_COLORS={
+    'Lakers':'#552583','Celtics':'#007A33','Warriors':'#1D428A','Bucks':'#00471B',
+    'Nuggets':'#0E2240','Heat':'#98002E','Suns':'#1D1160','76ers':'#006BB6',
     'Arsenal':'oklch(0.5 0.17 25)','Chelsea':'oklch(0.45 0.15 255)',
     'Manchester City':'oklch(0.55 0.17 250)','Manchester United':'oklch(0.5 0.19 30)',
     'Liverpool':'oklch(0.5 0.19 25)','Tottenham Hotspur':'oklch(0.35 0.02 260)',
@@ -1659,11 +1689,32 @@ const TEAM_COLORS={
     'Bayern':'oklch(0.5 0.19 25)','Dortmund':'oklch(0.85 0.18 90)',
     'Inter':'oklch(0.4 0.17 255)'
 };
+// ── MARGIN PREDICTOR (basketball) ───────────────────────────────────────
+// Basketball has no draws and scores are far too high for exact-score
+// prediction to be playable, so the natural equivalent is winner plus a
+// bucketed winning margin.
+const MARGIN_BUCKETS = [
+  {key:'m1', label:'1-5'},
+  {key:'m2', label:'6-10'},
+  {key:'m3', label:'11-20'},
+  {key:'m4', label:'20+'},
+];
+function marginBucket(diff){
+  if(diff<=5) return 'm1';
+  if(diff<=10) return 'm2';
+  if(diff<=20) return 'm3';
+  return 'm4';
+}
+function marginLabel(key){
+  const b = MARGIN_BUCKETS.find(x=>x.key===key);
+  return b ? b.label : key;
+}
+
 function teamBadge(logo,name){
   const abbr=(name||'?').split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();
   const bg=TEAM_COLORS[name]||'oklch(0.55 0.19 275)';
   const style=`background:${bg};`;
-  if(logo)return`<div class="ev-badge"><img src="${logo}" alt="${name}" style="width:38px;height:38px;object-fit:contain;"></div>`;
+  if(logo)return`<div class="ev-badge"><img src="${logo}" alt="${name}" style="width:38px;height:38px;object-fit:contain;" onerror="this.parentElement.setAttribute('style','${style}color:#fff;');this.parentElement.textContent='${abbr}';"></div>`;
   return`<div class="ev-badge">${abbr}</div>`;
 }
 function scorePoints(pred,res,scoring){
@@ -1698,6 +1749,8 @@ function renderEventCard(ev,comp,isRoundOpen){
         if(mkt.type==='1x2') actualM = ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
         else if(mkt.type==='ou25') actualM = (ev.res.h+ev.res.a)>2.5?'O':'U';
         else if(mkt.type==='btts') actualM = (ev.res.h>0&&ev.res.a>0)?'Y':'N';
+        else if(mkt.type==='winner') actualM = ev.res.h>ev.res.a?'H':'A'; // no draws in basketball
+        else if(mkt.type==='margin') actualM = marginBucket(Math.abs(ev.res.h-ev.res.a));
         const isRight = !!pick && pick===actualM;
         const pts = isRight ? (mkt.points||0) : 0;
         if(isRight) earnedPts+=pts;
@@ -1744,6 +1797,8 @@ function renderEventCard(ev,comp,isRoundOpen){
         if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${mpred['1x2']==='H'?' selected home':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','H')"`}>Home Win</button><button class="btn-1x2${mpred['1x2']==='D'?' selected draw':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','D')"`}>X</button><button class="btn-1x2${mpred['1x2']==='A'?' selected away':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','A')"`}>Away</button></div>`;
         else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['ou25']==='O'?' selected':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','ou25','O')"`}>Over</button><button class="btn-ou under${mpred['ou25']==='U'?' selected':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','ou25','U')"`}>Under</button></div>`;
         else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['btts']==='Y'?' selected':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','btts','Y')"`}>Yes</button><button class="btn-ou under${mpred['btts']==='N'?' selected':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','btts','N')"`}>No</button></div>`;
+        else if(mkt.type==='winner')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['winner']==='H'?' selected':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','winner','H')"`}>${ev.home}</button><button class="btn-ou under${mpred['winner']==='A'?' selected':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','winner','A')"`}>${ev.away}</button></div>`;
+        else if(mkt.type==='margin')html+=`<div class="btns-1x2">${MARGIN_BUCKETS.map(b=>`<button class="btn-1x2${mpred['margin']===b.key?' selected home':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','margin','${b.key}')"`}>${b.label}</button>`).join('')}</div>`;
         html+='</div>';
       });
       html+='</div>';
@@ -1768,6 +1823,8 @@ function renderEventCard(ev,comp,isRoundOpen){
         if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${pick==='H'?' selected home':''}" disabled>Home Win</button><button class="btn-1x2${pick==='D'?' selected draw':''}" disabled>X</button><button class="btn-1x2${pick==='A'?' selected away':''}" disabled>Away</button></div>`;
         else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='O'?' selected':''}" disabled>Over</button><button class="btn-ou under${pick==='U'?' selected':''}" disabled>Under</button></div>`;
         else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='Y'?' selected':''}" disabled>Yes</button><button class="btn-ou under${pick==='N'?' selected':''}" disabled>No</button></div>`;
+        else if(mkt.type==='winner')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='H'?' selected':''}" disabled>${ev.home}</button><button class="btn-ou under${pick==='A'?' selected':''}" disabled>${ev.away}</button></div>`;
+        else if(mkt.type==='margin')html+=`<div class="btns-1x2">${MARGIN_BUCKETS.map(b=>`<button class="btn-1x2${pick===b.key?' selected home':''}" disabled>${b.label}</button>`).join('')}</div>`;
         html+='</div>';
       });
       html+=`<div style="display:flex;justify-content:flex-end;padding-top:8px;border-top:1px solid oklch(0.92 0.004 260);"><span class="pred-correct ${earnedPts>0?'yes':'no'}">Total: ${earnedPts>0?'+':''}${earnedPts} pts</span></div>`;
@@ -1797,6 +1854,13 @@ function renderEventCard(ev,comp,isRoundOpen){
             +'<button class="btn-ou over'+(b==='Y'?' selected':'')+'" disabled>Yes</button>'
             +'<button class="btn-ou under'+(b==='N'?' selected':'')+'" disabled>No</button>'
             +'</div>';
+          else if(mkt.type==='winner')html+='<div class="btns-ou">'
+            +'<button class="btn-ou over'+(mpred2['winner']==='H'?' selected':'')+'" disabled>'+ev.home+'</button>'
+            +'<button class="btn-ou under'+(mpred2['winner']==='A'?' selected':'')+'" disabled>'+ev.away+'</button>'
+            +'</div>';
+          else if(mkt.type==='margin')html+='<div class="btns-1x2">'
+            +MARGIN_BUCKETS.map(function(bk){return '<button class="btn-1x2'+(mpred2['margin']===bk.key?' selected home':'')+'" disabled>'+bk.label+'</button>';}).join('')
+            +'</div>';
           html+='</div>';
         });
         html+='<div style="font-size:11px;color:oklch(0.58 0.01 260);margin-top:4px;">⏳ Awaiting result</div>';
@@ -1806,21 +1870,7 @@ function renderEventCard(ev,comp,isRoundOpen){
       }
     }
   } else {
-    if(comp.mode==='betting'){
-      const markets=comp.markets||[];
-      html+='<div style="display:flex;flex-direction:column;gap:8px;">';
-      markets.forEach(mkt=>{
-        html+=`<div><div class="pred-label" style="margin-bottom:5px;font-size:13px;font-weight:600;color:oklch(0.4 0.01 260);">${mkt.label}</div>`;
-        if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2" disabled style="opacity:0.55;">Home Win</button><button class="btn-1x2" disabled style="opacity:0.55;">X</button><button class="btn-1x2" disabled style="opacity:0.55;">Away</button></div>`;
-        else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou" disabled style="opacity:0.55;">Over</button><button class="btn-ou" disabled style="opacity:0.55;">Under</button></div>`;
-        else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou" disabled style="opacity:0.55;">Yes</button><button class="btn-ou" disabled style="opacity:0.55;">No</button></div>`;
-        html+='</div>';
-      });
-      html+='<div style="text-align:left;font-size:12px;color:var(--red);font-weight:600;">\u26a0\ufe0f No prediction made.</div>';
-      html+='</div>';
-    } else {
-      html+='<div style="font-size:12px;color:var(--text-3);">No prediction made.</div>';
-    }
+    html+='<div style="font-size:12px;color:var(--text-3);">No prediction made.</div>';
     if(comp.mode==='lms'&&hasRes&&ev._survivorCount!==undefined){
       html+=`<div style="text-align:left;font-family:var(--sans);font-size:11px;font-weight:700;color:var(--text-2);margin-top:6px;">${ev._survivorCount} survived</div>`;
     }
@@ -2492,7 +2542,16 @@ function submitPreds(){
   const comp=COMPS[currentCompIdx],round=comp.rounds[selectedRound[currentCompIdx]];
   if(!round)return;
   const events=round.eventIds.map(id=>({id,...EVENTS[id]})).filter(e=>e.home&&!e.res&&!e.locked);
-  const done=events.filter(ev=>{const p=preds[ev.id];return p&&p.h!==undefined&&p.a!==undefined;}).length;
+  // Prediction shape differs per mode: score mode stores {h,a}, betting-style
+  // modes store an object keyed by market type. Count accordingly rather than
+  // assuming the score shape.
+  const done=events.filter(ev=>{
+    const p=preds[ev.id];
+    if(!p) return false;
+    if(comp.mode==='score') return p.h!==undefined&&p.a!==undefined;
+    if(comp.mode==='betting') return typeof p==='object'&&Object.keys(p).length>0;
+    return true;
+  }).length;
   toast('\u2713 '+done+' of '+events.length+' predictions saved');
 }
 
@@ -3242,36 +3301,48 @@ function demoScoreBreakdown(comp,round,uname,target){
   return {pts:out.reduce((t,e)=>t+e.pts,0),events:out};
 }
 
+// Reverse-engineers a plausible per-market breakdown from a user's target
+// score. Written generically over comp.markets rather than hardcoded to the
+// football market set, so it works for any sport's markets (e.g. the
+// basketball winner/margin pair) without special-casing.
 function demoBettingBreakdown(comp,round,uname,target){
   const rng=demoRng(demoHash(uname+'|'+round.id));
   const evs=(round.eventIds||[]).map(id=>({id,...EVENTS[id]})).filter(e=>e&&e.res);
   const order=[...evs].sort(()=>rng()-0.5);
   const mkts=comp.markets||[];
-  const p3=(mkts.find(m=>m.type==='1x2')||{}).points||3;
-  const p2=(mkts.find(m=>m.type==='ou25')||{}).points||2;
-  const E=order.length;
-  // Decompose target into n3 * p3 + n2 * p2 within capacity (1x p3 and 2x p2 per event)
-  let n3=target%2===1?1:0, n2=Math.floor((target-p3*n3)/p2);
-  while(n2>2*E&&n3+2<=E){n3+=2;n2=Math.floor((target-p3*n3)/p2);}
-  if(n2<0){n3=0;n2=0;}
-  n3=Math.min(n3,E);n2=Math.min(n2,2*E);
+
+  function actualFor(mkt,ev){
+    if(mkt.type==='1x2') return ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
+    if(mkt.type==='ou25') return (ev.res.h+ev.res.a)>2.5?'O':'U';
+    if(mkt.type==='btts') return (ev.res.h>0&&ev.res.a>0)?'Y':'N';
+    if(mkt.type==='winner') return ev.res.h>ev.res.a?'H':'A';
+    if(mkt.type==='margin') return marginBucket(Math.abs(ev.res.h-ev.res.a));
+    return null;
+  }
+  function wrongFor(mkt,actual){
+    let pool=[];
+    if(mkt.type==='1x2') pool=['H','D','A'];
+    else if(mkt.type==='ou25') pool=['O','U'];
+    else if(mkt.type==='btts') pool=['Y','N'];
+    else if(mkt.type==='winner') pool=['H','A'];
+    else if(mkt.type==='margin') pool=MARGIN_BUCKETS.map(b=>b.key);
+    pool=pool.filter(x=>x!==actual);
+    return pool.length?pool[Math.floor(rng()*pool.length)]:actual;
+  }
+
+  // Greedily award correct picks until the target points are used up.
+  let remaining=target;
   const out=[];
   order.forEach(ev=>{
     const markets=[];let evPts=0;
     mkts.forEach(mkt=>{
-      let actual=null;
-      if(mkt.type==='1x2') actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
-      else if(mkt.type==='ou25') actual=(ev.res.h+ev.res.a)>2.5?'O':'U';
-      else if(mkt.type==='btts') actual=(ev.res.h>0&&ev.res.a>0)?'Y':'N';
-      let take=false;
-      if(mkt.type==='1x2'&&n3>0){take=true;n3--;}
-      else if(mkt.type!=='1x2'&&n2>0){take=true;n2--;}
+      const actual=actualFor(mkt,ev);
+      const pts=mkt.points||0;
+      const take = pts>0 && remaining>=pts;
       let pick;
-      if(take){pick=actual;evPts+=(mkt.points||0);}
-      else if(mkt.type==='1x2'){const others=['H','D','A'].filter(x=>x!==actual);pick=others[Math.floor(rng()*others.length)];}
-      else if(mkt.type==='ou25'){pick=actual==='O'?'U':'O';}
-      else{pick=actual==='Y'?'N':'Y';}
-      markets.push({mkt,pick,isRight:take,pts:take?(mkt.points||0):0});
+      if(take){ pick=actual; evPts+=pts; remaining-=pts; }
+      else { pick=wrongFor(mkt,actual); }
+      markets.push({mkt,pick,isRight:take,pts:take?pts:0});
     });
     out.push({home:ev.home,away:ev.away,res:ev.res,markets,evPts});
   });
@@ -3283,6 +3354,8 @@ function demoPickLabel(mkt,pick){
   if(mkt.type==='1x2')return pick==='H'?'Home Win':pick==='D'?'X':'Away';
   if(mkt.type==='ou25')return pick==='O'?'Over':'Under';
   if(mkt.type==='btts')return pick==='Y'?'Yes':'No';
+  if(mkt.type==='winner')return pick==='H'?'Home':'Away';
+  if(mkt.type==='margin')return marginLabel(pick);
   return pick;
 }
 
@@ -3407,6 +3480,18 @@ function showRules(mode){
 <div><strong style="color:var(--text);">Elimination:</strong> Events are resolved in kick-off order. If your prediction is wrong, you are eliminated at that event. All remaining events are irrelevant.</div>
 <div><strong style="color:var(--text);">Winning:</strong> The last player(s) still standing after all events win the round.</div>
 <div><strong style="color:var(--text);">Note:</strong> You must predict ALL events before the round starts. No two events can share the same kick-off time.</div>
+</div>`,
+    margin:`<h3 style="margin-bottom:12px;">Margin Predictor Rules</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">How to play:</strong> For each game, pick the winner and how many points they'll win by. Basketball has no draws, and exact scores are effectively unguessable \u2014 so the margin is bucketed into ranges instead.</div>
+<div><strong style="color:var(--text);">Points:</strong></div>
+<div style="padding-left:12px;">
+\u2022 Correct winner \u2014 <strong style="color:var(--green);">+2 pts</strong><br>
+\u2022 Correct winning margin \u2014 <strong style="color:var(--green);">+4 pts</strong>
+</div>
+<div><strong style="color:var(--text);">Margin ranges:</strong> 1-5, 6-10, 11-20, or 20+ points.</div>
+<div>The two markets score independently \u2014 you can land the margin even if you called the wrong team, though getting both is where the points are.</div>
+<div><strong style="color:var(--text);">Leaderboard:</strong> Players are ranked by total points across the week.</div>
 </div>`,
     fantasy:`<h3 style="margin-bottom:12px;">CS2 Simple Fantasy Rules</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
