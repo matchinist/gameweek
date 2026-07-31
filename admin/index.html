@@ -1782,7 +1782,20 @@ const SPORT_MARKETS = {
   handball: [
     {type:'1x2',     label:'1X2 — Match Result',   sub:'Home win, Draw, or Away win',                                     points:3},
     {type:'ptrange', label:'Total Points Range',   sub:'Combined final score of both teams: 0–50, 51–65, or 66+', points:3,
-      options:[{key:'r1',label:'0–50'},{key:'r2',label:'51–65'},{key:'r3',label:'66+'}]},
+      metric:'total',
+      options:[{key:'r1',label:'0–50',max:50},{key:'r2',label:'51–65',max:65},{key:'r3',label:'66+'}]},
+  ],
+  baseball: [
+    {type:'winner', label:'Winner',            sub:'Which team wins — no draws in baseball',                     points:2},
+    {type:'margin', label:'Winning Margin',    sub:'How many runs the winner wins by: 1, 2–3, 4–6, or 7+', points:4,
+      metric:'margin',
+      options:[{key:'m1',label:'1',max:1},{key:'m2',label:'2–3',max:3},{key:'m3',label:'4–6',max:6},{key:'m4',label:'7+'}]},
+  ],
+  basketball: [
+    {type:'winner', label:'Winner',            sub:'Which team wins — no draws in basketball',                        points:2},
+    {type:'margin', label:'Winning Margin',    sub:'How many points the winner wins by: 1–5, 6–10, 11–20, or 20+', points:4,
+      metric:'margin',
+      options:[{key:'m1',label:'1–5',max:5},{key:'m2',label:'6–10',max:10},{key:'m3',label:'11–20',max:20},{key:'m4',label:'20+'}]},
   ],
 };
 function marketsForSport(sport){ return SPORT_MARKETS[sport] || SPORT_MARKETS.football; }
@@ -1858,7 +1871,8 @@ async function createComp(){
     const defs = marketsForSport(bettingSport);
     markets = defs.filter(m => document.getElementById('mkt-'+m.type)?.checked).map(m => {
       const entry = { type:m.type, label:m.label, points: parseInt(document.getElementById('pts-'+m.type)?.value)||m.points };
-      if(m.options) entry.options = m.options; // pass range buckets through for the scoring engine / UI
+      if(m.options) entry.options = m.options; // bucket definitions for the scoring engine / UI
+      if(m.metric) entry.metric = m.metric;     // which quantity the buckets measure
       return entry;
     });
     if(!markets.length){ toast('Select at least one market'); return; }
