@@ -2228,12 +2228,14 @@ async function refreshDMState(){
     supa.from('gw_dm_events').select('*'),
     supa.from('gw_client_coverage').select('*').eq('client_key',CLIENT_KEY).maybeSingle(),
   ]);
-  // No coverage row at all means this client hasn't been curated yet —
-  // show everything, same as before this feature existed, so nobody's
-  // picker suddenly goes empty. A saved row (even with an empty list) is
-  // a deliberate choice and gets honored as-is.
-  coverageState.tournamentIds = coverage ? new Set(coverage.tournament_ids||[]) : null;
-  coverageState.teamIds = coverage ? new Set(coverage.team_ids||[]) : null;
+  if(coverage){
+    coverageState.tournamentIds = new Set(coverage.tournament_ids||[]);
+    coverageState.teamIds = new Set(coverage.team_ids||[]);
+  } else {
+    const def = defaultCoverageFor(tournaments);
+    coverageState.tournamentIds = def.tournamentIds;
+    coverageState.teamIds = def.teamIds;
+  }
   dmState.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||''}));
   // Tournament visibility per client is now entirely owned by Coverage
   // (getDMTournaments applies that filter) — restricted_email was a single-
@@ -2259,6 +2261,21 @@ function populateTournamentDropdown(prefix){
 }
 
 const CURRENT_SEASON = '2026/27';
+
+// A client with no coverage row hasn't been curated yet. Rather than
+// exposing every tournament and team in the shared Data Manager, default
+// them to Premier League and its current-season teams. A saved row (even
+// an empty one) is a deliberate choice and is always honoured as-is.
+function defaultCoverageFor(tournaments){
+  const pl = (tournaments||[]).find(t=>(t.name||'').toLowerCase().includes('premier league'));
+  if(!pl) return {tournamentIds:null, teamIds:null}; // no PL set up yet — fall back to showing everything
+  const seasons = pl.seasons||{};
+  const season = seasons[CURRENT_SEASON] || Object.values(seasons)[0] || {};
+  return {
+    tournamentIds: new Set([pl.id]),
+    teamIds: new Set(season.teamIds||[]),
+  };
+}
 function roundSelectTournament(prefix, keepGw){
   const tId = document.getElementById(prefix+'-round-tournament-select').value;
   const availWrap = document.getElementById(prefix+'-round-available-wrap');
@@ -3290,8 +3307,14 @@ function initOperatorChrome(){
     supa.from('gw_dm_events').select('*'),
     supa.from('gw_client_coverage').select('*').eq('client_key',CLIENT_KEY).maybeSingle(),
   ]);
-  coverageState.tournamentIds = coverage ? new Set(coverage.tournament_ids||[]) : null;
-  coverageState.teamIds = coverage ? new Set(coverage.team_ids||[]) : null;
+  if(coverage){
+    coverageState.tournamentIds = new Set(coverage.tournament_ids||[]);
+    coverageState.teamIds = new Set(coverage.team_ids||[]);
+  } else {
+    const def = defaultCoverageFor(tournaments);
+    coverageState.tournamentIds = def.tournamentIds;
+    coverageState.teamIds = def.teamIds;
+  }
   dmState.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color}));
   dmState.tournaments = (tournaments||[])
     .map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,color:t.color,seasons:t.seasons||{}}));
