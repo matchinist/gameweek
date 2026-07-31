@@ -2256,7 +2256,7 @@ async function refreshDMState(){
   // operator-only mechanism that can't express "share this tournament across
   // several clients," which Coverage needs to support.
   dmState.tournaments = (tournaments||[])
-    .map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,color:t.color,seasons:t.seasons||{}}));
+    .map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,sport:t.sport||'football',color:t.color,seasons:t.seasons||{}}));
   const evMap={};
   (events||[]).forEach(e=>{ evMap[e.id]={homeId:e.home_id,awayId:e.away_id,kickoff:e.kickoff,result:e.result,status:e.status,line:e.line||2.5}; });
   dmState.events=evMap;
@@ -3331,7 +3331,7 @@ function initOperatorChrome(){
   }
   dmState.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color}));
   dmState.tournaments = (tournaments||[])
-    .map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,color:t.color,seasons:t.seasons||{}}));
+    .map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,sport:t.sport||'football',color:t.color,seasons:t.seasons||{}}));
   const evMap = {};
   (events||[]).forEach(e=>{
     evMap[e.id]={homeId:e.home_id,awayId:e.away_id,kickoff:e.kickoff,result:e.result,status:e.status,line:e.line||2.5};
