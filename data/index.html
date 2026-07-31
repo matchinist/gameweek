@@ -1277,7 +1277,7 @@ function renderRoundItem(r,i,season,t,isOpen){
   let html=`<div class="round-item${isOpen?' open':''}" id="round-${r.id}">
     <div class="round-item-header" onclick="toggleRound('${r.id}')">
       <span class="ri-num">${String(i+1).padStart(2,'0')}</span>
-      <span class="ri-name">${r.label}</span>
+      <span class="ri-name" id="ri-name-${r.id}">${r.label}</span>
       <span class="ri-meta">${r.eventIds.length} events${r.deadline?' · '+fmtKickoff(r.deadline):''}</span>
       <span class="ri-chevron">›</span>
     </div>
@@ -1406,7 +1406,12 @@ function toggleRound(id){
 
 function updateRoundLabel(id,val){
   const season=getSeasonData(S.activeTournamentId,S.activeSeason);
-  const r=season.rounds.find(x=>x.id===id);if(r){r.label=val;save();}
+  const r=season.rounds.find(x=>x.id===id);
+  if(!r) return;
+  r.label=val;
+  const nameEl=document.getElementById('ri-name-'+id);
+  if(nameEl) nameEl.textContent=val;
+  save();
 }
 
 function updateRoundDeadline(id,val){
