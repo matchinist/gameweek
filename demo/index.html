@@ -356,6 +356,12 @@ const LOGO={
   'Heat':'https://upload.wikimedia.org/wikipedia/en/f/fb/Miami_Heat_logo.svg',
   'Suns':'https://upload.wikimedia.org/wikipedia/en/d/dc/Phoenix_Suns_logo.svg',
   '76ers':'https://upload.wikimedia.org/wikipedia/en/0/0e/Philadelphia_76ers_logo.svg',
+  'Yankees':'https://upload.wikimedia.org/wikipedia/commons/2/25/NewYorkYankees_caplogo.svg',
+  'Dodgers':'https://upload.wikimedia.org/wikipedia/commons/6/69/Los_Angeles_Dodgers_logo.svg',
+  'Red Sox':'https://upload.wikimedia.org/wikipedia/commons/6/6d/Boston_Red_Sox_cap_logo.svg',
+  'Cubs':'https://upload.wikimedia.org/wikipedia/commons/8/80/Chicago_Cubs_logo.svg',
+  'Astros':'https://upload.wikimedia.org/wikipedia/commons/8/8b/Houston-Astros-Logo.svg',
+  'Braves':'https://upload.wikimedia.org/wikipedia/commons/e/ec/Atlanta_Braves.svg',
 };
 const lg=n=>LOGO[n]||'';
 
@@ -420,12 +426,36 @@ const COMPS=[
       {id:'r1',label:'Gameweek 3',status:'open',deadline:'2026-08-31T14:00',eventIds:['e1','e2','e3','e4','e5','e6'],prizes:[{pos:1,text:'€20 bookmaker credit'},{pos:2,text:'Free bet token'}]},
     ]},
   {id:'c3',name:'Betting Markets',mode:'betting',color:'#059669',
-    markets:[{type:'1x2',label:'Match Result',points:3},{type:'ou25',label:'Over / Under',points:2},{type:'btts',label:'Both Teams to Score',points:2}],
-    tournamentNames:['La Liga','Serie A'],
-    overallPrizes:[{pos:1,text:'€150 bookmaker credit'},{pos:2,text:'€75 bookmaker credit'},{pos:3,text:'€25 bookmaker credit'}],
-    rounds:[
-      {id:'r5a',label:'Gameweek 1',status:'completed',deadline:'2026-08-16T17:00',eventIds:['e305','e306'],prizes:[{pos:1,text:'€15 free bet'}]},
-      {id:'r5',label:'Gameweek 2',status:'open',deadline:'2026-08-30T17:00',eventIds:['e302','e301','e303','e304'],prizes:[{pos:1,text:'€15 free bet'}]},
+    // Betting Markets carries one variant per sport. The active variant's
+    // markets/rounds/prizes are merged onto the comp before rendering, so
+    // every downstream mode behaviour works unchanged.
+    sportVariants:[
+      {key:'soccer',label:'Soccer',rulesKey:'betting',
+        markets:[{type:'1x2',label:'Match Result',points:3},{type:'ou25',label:'Over / Under',points:2},{type:'btts',label:'Both Teams to Score',points:2}],
+        tournamentNames:['La Liga','Serie A'],
+        overallPrizes:[{pos:1,text:'€150 bookmaker credit'},{pos:2,text:'€75 bookmaker credit'},{pos:3,text:'€25 bookmaker credit'}],
+        rounds:[
+          {id:'r5a',label:'Gameweek 1',status:'completed',deadline:'2026-08-16T17:00',eventIds:['e305','e306'],prizes:[{pos:1,text:'€15 free bet'}]},
+          {id:'r5',label:'Gameweek 2',status:'open',deadline:'2026-08-30T17:00',eventIds:['e302','e301','e303','e304'],prizes:[{pos:1,text:'€15 free bet'}]},
+        ]},
+      {key:'basketball',label:'Basketball',rulesKey:'margin',
+        markets:[{type:'winner',label:'Winner',points:2},{type:'margin',label:'Winning Margin',points:4,metric:'margin',
+          options:[{key:'m1',label:'1-5',max:5},{key:'m2',label:'6-10',max:10},{key:'m3',label:'11-20',max:20},{key:'m4',label:'20+'}]}],
+        tournamentNames:['NBA'],
+        overallPrizes:[{pos:1,text:'Team jersey'},{pos:2,text:'€50 store credit'},{pos:3,text:'€25 store credit'}],
+        rounds:[
+          {id:'rm1',label:'Week 1',status:'completed',deadline:'2026-11-05T19:30',eventIds:['nba_p1','nba_p2','nba_p3'],prizes:[{pos:1,text:'€15 store credit'}]},
+          {id:'rm2',label:'Week 2',status:'open',deadline:'2026-11-12T19:30',eventIds:['nba1','nba2','nba3','nba4'],prizes:[{pos:1,text:'€15 store credit'}]},
+        ]},
+      {key:'baseball',label:'Baseball',rulesKey:'marginBaseball',
+        markets:[{type:'winner',label:'Winner',points:2},{type:'margin',label:'Winning Margin',points:4,metric:'margin',
+          options:[{key:'m1',label:'1',max:1},{key:'m2',label:'2-3',max:3},{key:'m3',label:'4-6',max:6},{key:'m4',label:'7+'}]}],
+        tournamentNames:['MLB'],
+        overallPrizes:[{pos:1,text:'Team cap'},{pos:2,text:'€50 store credit'},{pos:3,text:'€25 store credit'}],
+        rounds:[
+          {id:'rb1',label:'Series 1',status:'completed',deadline:'2026-06-07T18:30',eventIds:['mlb_p1','mlb_p2','mlb_p3'],prizes:[{pos:1,text:'€15 store credit'}]},
+          {id:'rb2',label:'Series 2',status:'open',deadline:'2026-06-14T18:30',eventIds:['mlb1','mlb2','mlb3','mlb4'],prizes:[{pos:1,text:'€15 store credit'}]},
+        ]},
     ]},
   {id:'c4',name:'Ranking',mode:'ranking',color:'#8B5CF6',
     tournamentNames:['Premier League'],
@@ -454,14 +484,6 @@ const COMPS=[
   {id:'c7',name:'Lineup Predictor',mode:'lineup',color:'#0EA5E9',
     rounds:[{id:'rl1',label:'Gameweek 1',status:'open',eventId:'erl_lu1'},{id:'rl2',label:'Gameweek 2',status:'upcoming',eventId:'erl_lu2'}]},
   {id:'c8',name:'Squad Analytics',mode:'analytics',color:'#6d4be0'},
-  {id:'c10',name:'Margin Predictor',mode:'betting',rulesKey:'margin',color:'#EA580C',
-    markets:[{type:'winner',label:'Winner',points:2},{type:'margin',label:'Winning Margin',points:4}],
-    tournamentNames:['NBA'],
-    overallPrizes:[{pos:1,text:'Team jersey'},{pos:2,text:'\u20ac50 store credit'},{pos:3,text:'\u20ac25 store credit'}],
-    rounds:[
-      {id:'rm1',label:'Week 1',status:'completed',deadline:'2026-11-05T19:30',eventIds:['nba_p1','nba_p2','nba_p3'],prizes:[{pos:1,text:'\u20ac15 store credit'}]},
-      {id:'rm2',label:'Week 2',status:'open',deadline:'2026-11-12T19:30',eventIds:['nba1','nba2','nba3','nba4'],prizes:[{pos:1,text:'\u20ac15 store credit'}]},
-    ]},
   {id:'c9',name:'Top Scorers',mode:'topscorers',color:'#6d4be0'},
   // CS2 Fantasy hidden from demo for now — being built out separately at
   // /cs2fantasy until it's ready to rejoin the tab strip here.
@@ -523,6 +545,13 @@ const EVENTS={
   nba_p1:{tournament:'NBA',home:'Lakers',away:'Nuggets',homeLogo:lg('Lakers'),awayLogo:lg('Nuggets'),kickoff:'05 Nov · 20:00',res:{h:118,a:110},locked:true},
   nba_p2:{tournament:'NBA',home:'Celtics',away:'Bucks',homeLogo:lg('Celtics'),awayLogo:lg('Bucks'),kickoff:'05 Nov · 22:30',res:{h:104,a:101},locked:true},
   nba_p3:{tournament:'NBA',home:'Warriors',away:'Suns',homeLogo:lg('Warriors'),awayLogo:lg('Suns'),kickoff:'06 Nov · 21:00',res:{h:99,a:127},locked:true},
+  mlb1:{tournament:'MLB',home:'Yankees',away:'Red Sox',homeLogo:lg('Yankees'),awayLogo:lg('Red Sox'),kickoff:'14 Jun · 19:05',res:{h:5,a:3},locked:true},
+  mlb2:{tournament:'MLB',home:'Dodgers',away:'Cubs',homeLogo:lg('Dodgers'),awayLogo:lg('Cubs'),kickoff:'14 Jun · 22:10',res:null},
+  mlb3:{tournament:'MLB',home:'Astros',away:'Braves',homeLogo:lg('Astros'),awayLogo:lg('Braves'),kickoff:'15 Jun · 20:15',res:null},
+  mlb4:{tournament:'MLB',home:'Cubs',away:'Yankees',homeLogo:lg('Cubs'),awayLogo:lg('Yankees'),kickoff:'15 Jun · 21:40',res:null},
+  mlb_p1:{tournament:'MLB',home:'Red Sox',away:'Astros',homeLogo:lg('Red Sox'),awayLogo:lg('Astros'),kickoff:'07 Jun · 19:05',res:{h:2,a:1},locked:true},
+  mlb_p2:{tournament:'MLB',home:'Braves',away:'Dodgers',homeLogo:lg('Braves'),awayLogo:lg('Dodgers'),kickoff:'07 Jun · 20:20',res:{h:9,a:1},locked:true},
+  mlb_p3:{tournament:'MLB',home:'Yankees',away:'Cubs',homeLogo:lg('Yankees'),awayLogo:lg('Cubs'),kickoff:'08 Jun · 18:35',res:{h:4,a:8},locked:true},
   // Betting open
   e303:{tournament:'La Liga',home:'Barcelona',away:'Real Madrid',homeLogo:lg('Barcelona'),awayLogo:lg('Real Madrid'),kickoff:'30 Aug \u00b7 21:00',res:null},
   e304:{tournament:'Serie A',home:'Everton',away:'Liverpool',homeLogo:lg('Everton'),awayLogo:lg('Liverpool'),kickoff:'31 Aug \u00b7 20:45',res:null},
@@ -545,6 +574,8 @@ let preds={
   e301:{'1x2':'H','ou25':'O','btts':'N'},
   // Margin Predictor: correct winner, wrong margin bucket
   nba1:{'winner':'H','margin':'m2'},
+  // Baseball: correct winner, correct margin (5-3 = 2 runs)
+  mlb1:{'winner':'H','margin':'m2'},
 
   // Ranking GW2: user predicted order
   r8_ranking:['rt2','rt1','rt5','rt3','rt4','rt6'],
@@ -557,12 +588,15 @@ const LB_DATA={
       overall:[{u:'footy_oracle',points:29},{u:'demo_user',points:27},{u:'stadyum76',points:17},{u:'bvb_predictor',points:10},{u:'xavi_8',points:9},{u:'matchday_man',points:9},{u:'arsenal_fan',points:8},{u:'golazo99',points:5},{u:'tipster_pro',points:2},{u:'bet_master',points:1}]},
   c2:{r3:[{u:'footy_oracle',predictions:3,correct:3},{u:'demo_user',predictions:2,correct:1},{u:'stadyum76',predictions:2,correct:1},{u:'matchday_man',predictions:3,correct:0},{u:'xavi_8',predictions:1,correct:1},{u:'arsenal_fan',predictions:2,correct:1},{u:'golazo99',predictions:3,correct:0},{u:'bvb_predictor',predictions:1,correct:0},{u:'tipster_pro',predictions:2,correct:1},{u:'bet_master',predictions:1,correct:0}],
       overall:[{u:'footy_oracle',survived:1,correct:3},{u:'demo_user',survived:1,correct:1},{u:'stadyum76',survived:1,correct:1},{u:'arsenal_fan',survived:1,correct:1},{u:'tipster_pro',survived:1,correct:1},{u:'xavi_8',survived:0,correct:1},{u:'matchday_man',survived:0,correct:0},{u:'golazo99',survived:0,correct:0},{u:'bvb_predictor',survived:0,correct:0},{u:'bet_master',survived:0,correct:0}]},
-  c3:{r5a:[{u:'xavi_8',points:5},{u:'demo_user',points:4},{u:'stadyum76',points:3},{u:'footy_oracle',points:3},{u:'matchday_man',points:2},{u:'bvb_predictor',points:1},{u:'arsenal_fan',points:5},{u:'golazo99',points:3},{u:'tipster_pro',points:2},{u:'bet_master',points:1}],
-      r5:[{u:'xavi_8',points:7},{u:'demo_user',points:5},{u:'stadyum76',points:5},{u:'footy_oracle',points:3},{u:'matchday_man',points:2},{u:'bvb_predictor',points:1},{u:'arsenal_fan',points:4},{u:'golazo99',points:3},{u:'tipster_pro',points:2},{u:'bet_master',points:0}],
-      overall:[{u:'xavi_8',points:14},{u:'demo_user',points:10},{u:'stadyum76',points:9},{u:'footy_oracle',points:7},{u:'matchday_man',points:5},{u:'arsenal_fan',points:5},{u:'bvb_predictor',points:3},{u:'golazo99',points:3},{u:'tipster_pro',points:2},{u:'bet_master',points:1}]},
-  c10:{rm1:[{u:'footy_oracle',points:18},{u:'demo_user',points:14},{u:'xavi_8',points:12},{u:'stadyum76',points:12},{u:'arsenal_fan',points:10},{u:'matchday_man',points:8},{u:'bvb_predictor',points:6},{u:'golazo99',points:6},{u:'tipster_pro',points:4},{u:'bet_master',points:0}],
-       rm2:[{u:'footy_oracle',points:6},{u:'xavi_8',points:6},{u:'stadyum76',points:6},{u:'demo_user',points:2},{u:'arsenal_fan',points:2},{u:'matchday_man',points:2},{u:'bvb_predictor',points:2},{u:'golazo99',points:0},{u:'tipster_pro',points:0},{u:'bet_master',points:0}],
-       overall:[{u:'footy_oracle',points:24},{u:'xavi_8',points:18},{u:'stadyum76',points:18},{u:'demo_user',points:16},{u:'arsenal_fan',points:12},{u:'matchday_man',points:10},{u:'bvb_predictor',points:8},{u:'golazo99',points:6},{u:'tipster_pro',points:4},{u:'bet_master',points:0}]},
+  c3:{r5a:[{u:'xavi_8',points:5},{u:'demo_user',points:3},{u:'stadyum76',points:3},{u:'footy_oracle',points:3},{u:'matchday_man',points:2},{u:'bvb_predictor',points:0},{u:'arsenal_fan',points:5},{u:'golazo99',points:3},{u:'tipster_pro',points:2},{u:'bet_master',points:0}],
+      r5:[{u:'xavi_8',points:7},{u:'demo_user',points:5},{u:'stadyum76',points:5},{u:'footy_oracle',points:3},{u:'matchday_man',points:2},{u:'bvb_predictor',points:0},{u:'arsenal_fan',points:3},{u:'golazo99',points:3},{u:'tipster_pro',points:2},{u:'bet_master',points:0}],
+      'overall:soccer':[{u:'xavi_8',points:12},{u:'demo_user',points:8},{u:'stadyum76',points:8},{u:'arsenal_fan',points:8},{u:'footy_oracle',points:6},{u:'golazo99',points:6},{u:'matchday_man',points:4},{u:'tipster_pro',points:4},{u:'bvb_predictor',points:0},{u:'bet_master',points:0}],
+      rm1:[{u:'footy_oracle',points:18},{u:'demo_user',points:14},{u:'xavi_8',points:12},{u:'stadyum76',points:12},{u:'arsenal_fan',points:10},{u:'matchday_man',points:8},{u:'bvb_predictor',points:6},{u:'golazo99',points:6},{u:'tipster_pro',points:4},{u:'bet_master',points:0}],
+      rm2:[{u:'footy_oracle',points:6},{u:'xavi_8',points:6},{u:'stadyum76',points:6},{u:'demo_user',points:2},{u:'arsenal_fan',points:2},{u:'matchday_man',points:2},{u:'bvb_predictor',points:2},{u:'golazo99',points:0},{u:'tipster_pro',points:0},{u:'bet_master',points:0}],
+      'overall:basketball':[{u:'footy_oracle',points:24},{u:'xavi_8',points:18},{u:'stadyum76',points:18},{u:'demo_user',points:16},{u:'arsenal_fan',points:12},{u:'matchday_man',points:10},{u:'bvb_predictor',points:8},{u:'golazo99',points:6},{u:'tipster_pro',points:4},{u:'bet_master',points:0}],
+      rb1:[{u:'demo_user',points:18},{u:'stadyum76',points:14},{u:'footy_oracle',points:12},{u:'golazo99',points:12},{u:'xavi_8',points:10},{u:'arsenal_fan',points:8},{u:'matchday_man',points:6},{u:'bvb_predictor',points:6},{u:'tipster_pro',points:2},{u:'bet_master',points:0}],
+      rb2:[{u:'xavi_8',points:6},{u:'demo_user',points:6},{u:'matchday_man',points:6},{u:'footy_oracle',points:2},{u:'stadyum76',points:2},{u:'arsenal_fan',points:2},{u:'golazo99',points:2},{u:'bvb_predictor',points:0},{u:'tipster_pro',points:0},{u:'bet_master',points:0}],
+      'overall:baseball':[{u:'demo_user',points:24},{u:'stadyum76',points:16},{u:'xavi_8',points:16},{u:'footy_oracle',points:14},{u:'golazo99',points:14},{u:'arsenal_fan',points:10},{u:'matchday_man',points:12},{u:'bvb_predictor',points:6},{u:'tipster_pro',points:2},{u:'bet_master',points:0}]},
   c4:{r7:[{u:'footy_oracle',points:11,correct:5},{u:'demo_user',points:9,correct:4},{u:'xavi_8',points:7,correct:3},{u:'stadyum76',points:7,correct:3},{u:'matchday_man',points:5,correct:2},{u:'arsenal_fan',points:5,correct:2},{u:'bvb_predictor',points:3,correct:1},{u:'golazo99',points:2,correct:1},{u:'tipster_pro',points:2,correct:1},{u:'bet_master',points:0,correct:0}],r8:[{u:'demo_user',points:9,correct:4},{u:'footy_oracle',points:7,correct:3},{u:'stadyum76',points:5,correct:2},{u:'xavi_8',points:5,correct:2},{u:'matchday_man',points:4,correct:2},{u:'arsenal_fan',points:4,correct:1},{u:'bvb_predictor',points:2,correct:1},{u:'golazo99',points:2,correct:1},{u:'tipster_pro',points:0,correct:0},{u:'bet_master',points:0,correct:0}],
       overall:[{u:'demo_user',points:9,correct:4},{u:'footy_oracle',points:7,correct:3},{u:'stadyum76',points:5,correct:2},{u:'xavi_8',points:5,correct:2},{u:'matchday_man',points:4,correct:2},{u:'arsenal_fan',points:4,correct:1},{u:'bvb_predictor',points:2,correct:1},{u:'golazo99',points:2,correct:1},{u:'tipster_pro',points:0,correct:0},{u:'bet_master',points:0,correct:0}]},
 };
@@ -747,8 +781,46 @@ function shortPitchName(name){
   if(parts.length<2) return name;
   return parts[0].charAt(0) + '. ' + parts.slice(1).join(' ');
 }
+// ── SPORT VARIANTS ──────────────────────────────────────────────────────
+// A comp with sportVariants exposes one sub-tab per sport. The selected
+// variant's markets/rounds/prizes are merged onto the comp object before
+// anything renders, so every existing behaviour (locking, scoring,
+// leaderboards, history popups) works without knowing variants exist.
+let selectedSportVariant = {}; // comp.id -> variant key
+
+function activeVariant(comp){
+  if(!comp.sportVariants || !comp.sportVariants.length) return null;
+  const key = selectedSportVariant[comp.id];
+  return comp.sportVariants.find(v=>v.key===key) || comp.sportVariants[0];
+}
+function resolveComp(comp){
+  const v = activeVariant(comp);
+  if(!v) return comp;
+  return {...comp, markets:v.markets, rounds:v.rounds,
+          tournamentNames:v.tournamentNames, overallPrizes:v.overallPrizes,
+          rulesKey:v.rulesKey||comp.rulesKey, variantKey:v.key};
+}
+function switchSportVariant(compId, key){
+  if(selectedSportVariant[compId]===key) return;
+  selectedSportVariant[compId]=key;
+  // Round/leaderboard selections index into a different round list per
+  // variant, so reset them rather than carrying a stale index across.
+  selectedRound[currentCompIdx]=undefined;
+  lbSelection[currentCompIdx]=undefined;
+  predsDirty=false;
+  renderPredict();
+}
+function sportVariantTabs(comp){
+  if(!comp.sportVariants || comp.sportVariants.length<2) return '';
+  const active = activeVariant(comp);
+  return `<div style="display:flex;gap:4px;padding:0 16px 10px;">`+comp.sportVariants.map(v=>{
+    const on = v.key===active.key;
+    return `<button onclick="switchSportVariant('${comp.id}','${v.key}')" style="border:1px solid ${on?'var(--accent)':'var(--border)'};background:${on?'var(--accent-light)':'transparent'};color:${on?'var(--accent)':'var(--text-3)'};border-radius:999px;padding:6px 14px;font-family:var(--sans);font-size:12px;font-weight:${on?700:600};cursor:pointer;white-space:nowrap;">${v.label}</button>`;
+  }).join('')+`</div>`;
+}
+
 function renderPredict(){
-  const comp=COMPS[currentCompIdx];
+  const comp=resolveComp(COMPS[currentCompIdx]);
   if(comp.mode==='analytics'){
     document.getElementById('predict-content').innerHTML=renderSquadAnalytics();
     return;
@@ -763,7 +835,7 @@ function renderPredict(){
   }
   if(selectedRound[currentCompIdx]===undefined)selectedRound[currentCompIdx]=getDefaultRoundIdx(comp);
   let html=predictSubTab==='predictions'?renderPredictionsPane(comp):(comp.mode==='lineup'?renderLineupLeaderboardShell(comp):renderLeaderboardPane(comp));
-  document.getElementById('predict-content').innerHTML=html;
+  document.getElementById('predict-content').innerHTML=sportVariantTabs(COMPS[currentCompIdx])+html;
 }
 function switchPredictSubTab(tab){predictSubTab=tab;renderPredict();}
 
@@ -1671,6 +1743,8 @@ function renderPredictionsPane(comp){
 const TEAM_COLORS={
     'Lakers':'#552583','Celtics':'#007A33','Warriors':'#1D428A','Bucks':'#00471B',
     'Nuggets':'#0E2240','Heat':'#98002E','Suns':'#1D1160','76ers':'#006BB6',
+    'Yankees':'#132448','Dodgers':'#005A9C','Red Sox':'#BD3039',
+    'Cubs':'#0E3386','Astros':'#EB6E1F','Braves':'#CE1141',
     'Arsenal':'oklch(0.5 0.17 25)','Chelsea':'oklch(0.45 0.15 255)',
     'Manchester City':'oklch(0.55 0.17 250)','Manchester United':'oklch(0.5 0.19 30)',
     'Liverpool':'oklch(0.5 0.19 25)','Tottenham Hotspur':'oklch(0.35 0.02 260)',
@@ -3220,7 +3294,8 @@ function renderLeaderboardPane(comp){
   html+='</div>';
 
   const cData=LB_DATA[comp.id];
-  const rKey=isOverall?'overall':(round?.id||'');
+  const overallKey = comp.variantKey ? ('overall:'+comp.variantKey) : 'overall';
+  const rKey=isOverall?overallKey:(round?.id||'');
   let rows=cData?.[rKey]||[];
   if(!rows.length){html+='<div class="empty"><div class="empty-icon">\u{1F3C6}</div><div class="empty-title">No predictions yet</div></div>';return html;}
   const activePrizes = isOverall ? comp.overallPrizes : round?.prizes;
@@ -3481,7 +3556,19 @@ function showRules(mode){
 <div><strong style="color:var(--text);">Winning:</strong> The last player(s) still standing after all events win the round.</div>
 <div><strong style="color:var(--text);">Note:</strong> You must predict ALL events before the round starts. No two events can share the same kick-off time.</div>
 </div>`,
-    margin:`<h3 style="margin-bottom:12px;">Margin Predictor Rules</h3>
+    marginBaseball:`<h3 style="margin-bottom:12px;">Margin Predictor Rules \u2014 Baseball</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">How to play:</strong> For each game, pick the winner and how many runs they'll win by. Baseball has no draws, and one-run games are common \u2014 so the margin is bucketed into ranges.</div>
+<div><strong style="color:var(--text);">Points:</strong></div>
+<div style="padding-left:12px;">
+\u2022 Correct winner \u2014 <strong style="color:var(--green);">+2 pts</strong><br>
+\u2022 Correct winning margin \u2014 <strong style="color:var(--green);">+4 pts</strong>
+</div>
+<div><strong style="color:var(--text);">Margin ranges:</strong> 1, 2-3, 4-6, or 7+ runs.</div>
+<div>The two markets score independently \u2014 you can land the margin even if you called the wrong team.</div>
+<div><strong style="color:var(--text);">Leaderboard:</strong> Players are ranked by total points across the series.</div>
+</div>`,
+    margin:`<h3 style="margin-bottom:12px;">Margin Predictor Rules \u2014 Basketball</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
 <div><strong style="color:var(--text);">How to play:</strong> For each game, pick the winner and how many points they'll win by. Basketball has no draws, and exact scores are effectively unguessable \u2014 so the margin is bucketed into ranges instead.</div>
 <div><strong style="color:var(--text);">Points:</strong></div>
