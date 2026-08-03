@@ -417,13 +417,25 @@ const FANTASY_DATA = (function(){
 
 const COMPS=[
   {id:'c1',name:'Score Predictor',mode:'score',color:'#4F46E5',
-    scoring:{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1},
-    tournamentNames:['Premier League'],
-    overallPrizes:[{pos:1,text:'€100 bookmaker credit'},{pos:2,text:'€50 bookmaker credit'},{pos:3,text:'Free bet token'}],
-    rounds:[
-      {id:'r0a',label:'Gameweek 1',status:'completed',deadline:'2026-08-16T14:00',eventIds:['e0a','e0b','e0c','e0d'],prizes:[{pos:1,text:'€20 bookmaker credit'},{pos:2,text:'Free bet token'}]},
-      {id:'r0b',label:'Gameweek 2',status:'completed',deadline:'2026-08-23T14:00',eventIds:['e0e','e0f','e0g','e0h'],prizes:[{pos:1,text:'€20 bookmaker credit'},{pos:2,text:'Free bet token'}]},
-      {id:'r1',label:'Gameweek 3',status:'open',deadline:'2026-08-31T14:00',eventIds:['e1','e2','e3','e4','e5','e6'],prizes:[{pos:1,text:'€20 bookmaker credit'},{pos:2,text:'Free bet token'}]},
+    sportVariants:[
+      {key:'football',label:'Football',
+        scoring:{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1},
+        tournamentNames:['Premier League'],
+        overallPrizes:[{pos:1,text:'€100 bookmaker credit'},{pos:2,text:'€50 bookmaker credit'},{pos:3,text:'Free bet token'}],
+        rounds:[
+          {id:'r0a',label:'Gameweek 1',status:'completed',deadline:'2026-08-16T14:00',eventIds:['e0a','e0b','e0c','e0d'],prizes:[{pos:1,text:'€20 bookmaker credit'},{pos:2,text:'Free bet token'}]},
+          {id:'r0b',label:'Gameweek 2',status:'completed',deadline:'2026-08-23T14:00',eventIds:['e0e','e0f','e0g','e0h'],prizes:[{pos:1,text:'€20 bookmaker credit'},{pos:2,text:'Free bet token'}]},
+          {id:'r1',label:'Gameweek 3',status:'open',deadline:'2026-08-31T14:00',eventIds:['e1','e2','e3','e4','e5','e6'],prizes:[{pos:1,text:'€20 bookmaker credit'},{pos:2,text:'Free bet token'}]},
+        ]},
+      // Tennis is best-of-5 sets, so an open score box makes no sense —
+      // there are only six possible outcomes. Rendered as a picker instead.
+      {key:'tennis',label:'Tennis',scoreUnit:'sets',scoreOptions:[[3,0],[3,1],[3,2],[2,3],[1,3],[0,3]],
+        scoring:{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1},
+        tournamentNames:['ATP Masters'],
+        overallPrizes:[{pos:1,text:'Centre court tickets'},{pos:2,text:'€50 store credit'},{pos:3,text:'Signed cap'}],
+        rounds:[
+          {id:'rt1',label:'Round of 16',status:'open',deadline:'2026-09-12T13:30',eventIds:['tn1','tn2','tn3','tn4','tn5','tn6'],prizes:[{pos:1,text:'€20 store credit'}]},
+        ]},
     ]},
   {id:'c3',name:'Betting Markets',mode:'betting',color:'#059669',
     // Betting Markets carries one variant per sport. The active variant's
@@ -552,6 +564,12 @@ const EVENTS={
   mlb_p1:{tournament:'MLB',home:'Red Sox',away:'Astros',homeLogo:lg('Red Sox'),awayLogo:lg('Astros'),kickoff:'07 Jun · 19:05',res:{h:2,a:1},locked:true},
   mlb_p2:{tournament:'MLB',home:'Braves',away:'Dodgers',homeLogo:lg('Braves'),awayLogo:lg('Dodgers'),kickoff:'07 Jun · 20:20',res:{h:9,a:1},locked:true},
   mlb_p3:{tournament:'MLB',home:'Yankees',away:'Cubs',homeLogo:lg('Yankees'),awayLogo:lg('Cubs'),kickoff:'08 Jun · 18:35',res:{h:4,a:8},locked:true},
+  tn1:{tournament:'ATP Masters',home:'Alcaraz',away:'Sinner',kickoff:'12 Sep · 14:00',res:{h:3,a:1},locked:true},
+  tn2:{tournament:'ATP Masters',home:'Djokovic',away:'Medvedev',kickoff:'12 Sep · 16:30',res:{h:2,a:3},locked:true},
+  tn3:{tournament:'ATP Masters',home:'Zverev',away:'Rune',kickoff:'13 Sep · 13:00',res:null},
+  tn4:{tournament:'ATP Masters',home:'Ruud',away:'Fritz',kickoff:'13 Sep · 15:30',res:null},
+  tn5:{tournament:'ATP Masters',home:'Tsitsipas',away:'Rublev',kickoff:'14 Sep · 13:00',res:null},
+  tn6:{tournament:'ATP Masters',home:'De Minaur',away:'Shelton',kickoff:'14 Sep · 15:30',res:null},
   // Betting open
   e303:{tournament:'La Liga',home:'Barcelona',away:'Real Madrid',homeLogo:lg('Barcelona'),awayLogo:lg('Real Madrid'),kickoff:'30 Aug \u00b7 21:00',res:null},
   e304:{tournament:'Serie A',home:'Everton',away:'Liverpool',homeLogo:lg('Everton'),awayLogo:lg('Liverpool'),kickoff:'31 Aug \u00b7 20:45',res:null},
@@ -576,6 +594,9 @@ let preds={
   nba1:{'winner':'H','margin':'m2'},
   // Baseball: correct winner, correct margin (5-3 = 2 runs)
   mlb1:{'winner':'H','margin':'m2'},
+  // Tennis: tn1 exact (3-1), tn2 missed (picked 3-2, actual 2-3)
+  tn1:{h:3,a:1},
+  tn2:{h:3,a:2},
 
   // Ranking GW2: user predicted order
   r8_ranking:['rt2','rt1','rt5','rt3','rt4','rt6'],
@@ -585,7 +606,9 @@ const LB_DATA={
   c1:{r0a:[{u:'footy_oracle',points:14},{u:'demo_user',points:9},{u:'stadyum76',points:7},{u:'bvb_predictor',points:5},{u:'xavi_8',points:4},{u:'matchday_man',points:3},{u:'arsenal_fan',points:3},{u:'golazo99',points:2},{u:'tipster_pro',points:1},{u:'bet_master',points:0}],
       r0b:[{u:'demo_user',points:11},{u:'footy_oracle',points:8},{u:'stadyum76',points:6},{u:'bvb_predictor',points:4},{u:'matchday_man',points:4},{u:'xavi_8',points:3},{u:'arsenal_fan',points:2},{u:'golazo99',points:2},{u:'tipster_pro',points:1},{u:'bet_master',points:1}],
       r1:[{u:'footy_oracle',points:7},{u:'demo_user',points:7},{u:'stadyum76',points:4},{u:'arsenal_fan',points:3},{u:'xavi_8',points:2},{u:'matchday_man',points:2},{u:'bvb_predictor',points:1},{u:'golazo99',points:1},{u:'tipster_pro',points:0},{u:'bet_master',points:0}],
-      overall:[{u:'footy_oracle',points:29},{u:'demo_user',points:27},{u:'stadyum76',points:17},{u:'bvb_predictor',points:10},{u:'xavi_8',points:9},{u:'matchday_man',points:9},{u:'arsenal_fan',points:8},{u:'golazo99',points:5},{u:'tipster_pro',points:2},{u:'bet_master',points:1}]},
+      'overall:football':[{u:'footy_oracle',points:29},{u:'demo_user',points:27},{u:'stadyum76',points:17},{u:'bvb_predictor',points:10},{u:'xavi_8',points:9},{u:'matchday_man',points:9},{u:'arsenal_fan',points:8},{u:'golazo99',points:5},{u:'tipster_pro',points:2},{u:'bet_master',points:1}],
+      rt1:[{u:'footy_oracle',points:10},{u:'demo_user',points:7},{u:'xavi_8',points:7},{u:'stadyum76',points:6},{u:'arsenal_fan',points:5},{u:'matchday_man',points:4},{u:'golazo99',points:3},{u:'bvb_predictor',points:2},{u:'tipster_pro',points:1},{u:'bet_master',points:0}],
+      'overall:tennis':[{u:'footy_oracle',points:10},{u:'demo_user',points:7},{u:'xavi_8',points:7},{u:'stadyum76',points:6},{u:'arsenal_fan',points:5},{u:'matchday_man',points:4},{u:'golazo99',points:3},{u:'bvb_predictor',points:2},{u:'tipster_pro',points:1},{u:'bet_master',points:0}]},
   c2:{r3:[{u:'footy_oracle',predictions:3,correct:3},{u:'demo_user',predictions:2,correct:1},{u:'stadyum76',predictions:2,correct:1},{u:'matchday_man',predictions:3,correct:0},{u:'xavi_8',predictions:1,correct:1},{u:'arsenal_fan',predictions:2,correct:1},{u:'golazo99',predictions:3,correct:0},{u:'bvb_predictor',predictions:1,correct:0},{u:'tipster_pro',predictions:2,correct:1},{u:'bet_master',predictions:1,correct:0}],
       overall:[{u:'footy_oracle',survived:1,correct:3},{u:'demo_user',survived:1,correct:1},{u:'stadyum76',survived:1,correct:1},{u:'arsenal_fan',survived:1,correct:1},{u:'tipster_pro',survived:1,correct:1},{u:'xavi_8',survived:0,correct:1},{u:'matchday_man',survived:0,correct:0},{u:'golazo99',survived:0,correct:0},{u:'bvb_predictor',survived:0,correct:0},{u:'bet_master',survived:0,correct:0}]},
   c3:{r5a:[{u:'xavi_8',points:5},{u:'demo_user',points:3},{u:'stadyum76',points:3},{u:'footy_oracle',points:3},{u:'matchday_man',points:2},{u:'bvb_predictor',points:0},{u:'arsenal_fan',points:5},{u:'golazo99',points:3},{u:'tipster_pro',points:2},{u:'bet_master',points:0}],
@@ -796,8 +819,9 @@ function activeVariant(comp){
 function resolveComp(comp){
   const v = activeVariant(comp);
   if(!v) return comp;
-  return {...comp, markets:v.markets, rounds:v.rounds,
+  return {...comp, markets:v.markets||comp.markets, rounds:v.rounds,
           tournamentNames:v.tournamentNames, overallPrizes:v.overallPrizes,
+          scoring:v.scoring||comp.scoring, scoreOptions:v.scoreOptions, scoreUnit:v.scoreUnit,
           rulesKey:v.rulesKey||comp.rulesKey, variantKey:v.key};
 }
 function switchSportVariant(compId, key){
@@ -1743,6 +1767,9 @@ function renderPredictionsPane(comp){
 const TEAM_COLORS={
     'Lakers':'#552583','Celtics':'#007A33','Warriors':'#1D428A','Bucks':'#00471B',
     'Nuggets':'#0E2240','Heat':'#98002E','Suns':'#1D1160','76ers':'#006BB6',
+    'Alcaraz':'#C8102E','Sinner':'#0057B8','Djokovic':'#1B4D3E','Medvedev':'#5A2D82',
+    'Zverev':'#D97706','Rune':'#0E7490','Ruud':'#7C2D12','Fritz':'#1E3A8A',
+    'Tsitsipas':'#0F766E','Rublev':'#9333EA','De Minaur':'#065F46','Shelton':'#B91C1C',
     'Yankees':'#132448','Dodgers':'#005A9C','Red Sox':'#BD3039',
     'Cubs':'#0E3386','Astros':'#EB6E1F','Braves':'#CE1141',
     'Arsenal':'oklch(0.5 0.17 25)','Chelsea':'oklch(0.45 0.15 255)',
@@ -1784,21 +1811,33 @@ function marginLabel(key){
   return b ? b.label : key;
 }
 
+// Tennis is player-vs-player, so there's no club crest to show. Nationality
+// flags do the same job: instant visual identification. Flag images rather
+// than emoji, because Windows browsers render flag emoji as bare letters.
+const PLAYER_NAT = {
+  'Alcaraz':'es','Sinner':'it','Djokovic':'rs','Medvedev':'ru',
+  'Zverev':'de','Rune':'dk','Ruud':'no','Fritz':'us',
+  'Tsitsipas':'gr','Rublev':'ru','De Minaur':'au','Shelton':'us',
+};
+
 function teamBadge(logo,name){
   const abbr=(name||'?').split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();
   const bg=TEAM_COLORS[name]||'oklch(0.55 0.19 275)';
   const style=`background:${bg};`;
   if(logo)return`<div class="ev-badge"><img src="${logo}" alt="${name}" style="width:38px;height:38px;object-fit:contain;" onerror="this.parentElement.setAttribute('style','${style}color:#fff;');this.parentElement.textContent='${abbr}';"></div>`;
+  const nat=PLAYER_NAT[name];
+  if(nat)return`<div class="ev-badge"><img src="https://flagcdn.com/w40/${nat}.png" alt="${name}" style="width:30px;height:22px;object-fit:cover;border-radius:3px;box-shadow:0 0 0 1px rgba(0,0,0,0.12);" onerror="this.parentElement.setAttribute('style','${style}color:#fff;');this.parentElement.textContent='${abbr}';"></div>`;
   return`<div class="ev-badge">${abbr}</div>`;
 }
-function scorePoints(pred,res,scoring){
+function scorePoints(pred,res,scoring,unit){
   if(!pred||!res||res.h==null||res.a==null)return[0,''];
   const s=scoring||{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1};
+  const u=unit||'goals'; // 'sets' for tennis, 'goals' for football
   const eH=parseInt(pred.h)==res.h,eA=parseInt(pred.a)==res.a;
   if(eH&&eA)return[s.exactScore,'Exact score correct'];
-  if(eH)return[s.homeGoals,'Home team goals correct'];
-  if(eA)return[s.awayGoals,'Away team goals correct'];
-  if((parseInt(pred.h)+parseInt(pred.a))==(res.h+res.a))return[s.totalGoals,'Total goals correct'];
+  if(eH)return[s.homeGoals,'Home '+u+' correct'];
+  if(eA)return[s.awayGoals,'Away '+u+' correct'];
+  if((parseInt(pred.h)+parseInt(pred.a))==(res.h+res.a))return[s.totalGoals,'Total '+u+' correct'];
   return[0,'No points scored'];
 }
 
@@ -1813,7 +1852,7 @@ function renderEventCard(ev,comp,isRoundOpen){
   let correct=null,earnedPts=null,pointsBreakdown='',bettingMarketDetails=null;
   if(hasRes&&hasPred){
     if(comp.mode==='lms'){const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';correct=pred===actual;}
-    else if(comp.mode==='score'){[earnedPts,pointsBreakdown]=scorePoints(pred,ev.res,comp.scoring);correct=earnedPts>0;}
+    else if(comp.mode==='score'){[earnedPts,pointsBreakdown]=scorePoints(pred,ev.res,comp.scoring,comp.scoreUnit);correct=earnedPts>0;}
     else if(comp.mode==='betting'&&typeof pred==='object'){
       earnedPts=0;
       bettingMarketDetails=[];
@@ -1843,7 +1882,11 @@ function renderEventCard(ev,comp,isRoundOpen){
 
   // Middle section (score inputs, result, or locked pick)
   let midSection;
-  if(comp.mode==='score'&&canPredict){
+  if(comp.mode==='score'&&canPredict&&comp.scoreOptions){
+    // Fixed set-score outcomes (e.g. best-of-5 tennis) — shown in the
+    // prediction area below rather than as free-entry boxes.
+    midSection = (hv!==''&&av!=='') ? `<div class="ev-score">${hv}\u2013${av}</div>` : '<div class="ev-vs">vs</div>';
+  } else if(comp.mode==='score'&&canPredict){
     midSection=`<div class="score-inline-mid"><input class="score-num-inline${hv!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${hv}" id="sh-${ev.id}" oninput="pickScore('${ev.id}','h',this.value)"><span class="score-inline-dash">\u2013</span><input class="score-num-inline${av!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${av}" id="sa-${ev.id}" oninput="pickScore('${ev.id}','a',this.value)"></div>`;
   } else if(hasRes){
     midSection=`<div class="ev-score">${ev.res.h}\u2013${ev.res.a}</div>`;
@@ -1859,6 +1902,11 @@ function renderEventCard(ev,comp,isRoundOpen){
     // Open for prediction
     if(comp.mode==='lms'){
       html+=`<div class="btns-1x2"><button class="btn-1x2${pred==='H'?' selected home':''}" data-val="H" onclick="pick('${ev.id}','H')">Home Win</button><button class="btn-1x2${pred==='D'?' selected draw':''}" data-val="D" onclick="pick('${ev.id}','D')">X</button><button class="btn-1x2${pred==='A'?' selected away':''}" data-val="A" onclick="pick('${ev.id}','A')">Away</button></div>`;
+    } else if(comp.mode==='score'&&comp.scoreOptions){
+      html+='<div class="btns-1x2" style="flex-wrap:wrap;">'+comp.scoreOptions.map(function(o){
+        var sel=(pred&&pred.h===o[0]&&pred.a===o[1])?' selected home':'';
+        return '<button class="btn-1x2'+sel+'" style="flex:1 1 30%;min-width:64px;" onclick="pickSetScore(\''+ev.id+'\','+o[0]+','+o[1]+')">'+o[0]+'\u2013'+o[1]+'</button>';
+      }).join('')+'</div>';
     } else if(comp.mode==='score'){
       html+='<div style="font-size:11px;color:var(--text-3);text-align:center;padding:2px 0;">Enter scores above \u2191</div>';
     } else if(comp.mode==='betting'){
@@ -1991,6 +2039,14 @@ function updateSubmitBtnText(){
   const btn=document.querySelector('.submit-preds-btn');
   if(btn) btn.textContent = predCount===openEvents.length?'✓ All predictions saved':'Save Predictions ('+predCount+'/'+openEvents.length+')';
 }
+// Fixed set-score pick (tennis). Writes the same {h,a} shape as pickScore
+// so scoring, the leaderboard and the save flow all work unchanged.
+function pickSetScore(id,h,a){
+  predsDirty=true;
+  preds[id]={h:h,a:a};
+  renderPredict();
+}
+
 function pickScore(id,side,val){
   predsDirty=true;
   if(!preds[id]||typeof preds[id]!=='object')preds[id]={};
