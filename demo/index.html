@@ -58,6 +58,25 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 @keyframes authshake{10%,90%{transform:translateX(-1px);}20%,80%{transform:translateX(2px);}30%,50%,70%{transform:translateX(-4px);}40%,60%{transform:translateX(4px);}}
 .auth-modal.shake{animation:authshake 0.4s;}
 .auth-terms{font-size:11px;color:var(--text-3);text-align:center;margin-top:14px;line-height:1.5;}
+.filter-bar{display:flex;gap:8px;padding:10px 16px 12px;border-bottom:1px solid var(--border);background:var(--white);}
+.filter-item{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:3px;}
+.filter-label{font-family:var(--sans);font-size:9.5px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-3);padding-left:2px;}
+.filter-select{
+  width:100%;min-width:0;appearance:none;-webkit-appearance:none;
+  font-family:var(--sans);font-size:12.5px;font-weight:600;color:var(--text);
+  background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  padding:8px 22px 8px 10px;cursor:pointer;
+  text-overflow:ellipsis;
+  background-image:url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239AA2B1' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 8px center;
+}
+.filter-select:focus{outline:none;border-color:var(--accent);}
+.filter-select:disabled{opacity:0.5;cursor:default;}
+@media(max-width:420px){
+  .filter-bar{gap:5px;padding:9px 12px 11px;}
+  .filter-select{font-size:11.5px;padding:7px 18px 7px 8px;background-position:right 6px center;}
+  .filter-label{font-size:8.5px;}
+}
 .comp-tabs{display:flex;gap:0;overflow-x:auto;border-bottom:1px solid oklch(0.92 0.004 260);padding:0 16px;-webkit-overflow-scrolling:touch;align-items:center;}
 .comp-tabs::-webkit-scrollbar{display:none;}
 .comp-tabs::-webkit-scrollbar{display:none;}
@@ -296,8 +315,7 @@ table.lb-table{width:100%;border-collapse:collapse;}
         </div>
       </div>
       <div id="comp-tabs-wrap">
-        <div id="main-tabs" style="display:flex;gap:6px;padding:10px 16px 0;"></div>
-        <div class="comp-tabs" id="comp-tabs"></div>
+        <div class="filter-bar" id="filter-bar"></div>
       </div>
     </div>
     <div class="scroll-area" id="scroll-area">
@@ -442,7 +460,7 @@ const COMPS=[
     // markets/rounds/prizes are merged onto the comp before rendering, so
     // every downstream mode behaviour works unchanged.
     sportVariants:[
-      {key:'soccer',label:'Soccer',rulesKey:'betting',
+      {key:'football',label:'Football',rulesKey:'betting',
         markets:[{type:'1x2',label:'Match Result',points:3},{type:'ou25',label:'Over / Under',points:2},{type:'btts',label:'Both Teams to Score',points:2}],
         tournamentNames:['La Liga','Serie A'],
         overallPrizes:[{pos:1,text:'€150 bookmaker credit'},{pos:2,text:'€75 bookmaker credit'},{pos:3,text:'€25 bookmaker credit'}],
@@ -613,7 +631,7 @@ const LB_DATA={
       overall:[{u:'footy_oracle',survived:1,correct:3},{u:'demo_user',survived:1,correct:1},{u:'stadyum76',survived:1,correct:1},{u:'arsenal_fan',survived:1,correct:1},{u:'tipster_pro',survived:1,correct:1},{u:'xavi_8',survived:0,correct:1},{u:'matchday_man',survived:0,correct:0},{u:'golazo99',survived:0,correct:0},{u:'bvb_predictor',survived:0,correct:0},{u:'bet_master',survived:0,correct:0}]},
   c3:{r5a:[{u:'xavi_8',points:5},{u:'demo_user',points:3},{u:'stadyum76',points:3},{u:'footy_oracle',points:3},{u:'matchday_man',points:2},{u:'bvb_predictor',points:0},{u:'arsenal_fan',points:5},{u:'golazo99',points:3},{u:'tipster_pro',points:2},{u:'bet_master',points:0}],
       r5:[{u:'xavi_8',points:7},{u:'demo_user',points:5},{u:'stadyum76',points:5},{u:'footy_oracle',points:3},{u:'matchday_man',points:2},{u:'bvb_predictor',points:0},{u:'arsenal_fan',points:3},{u:'golazo99',points:3},{u:'tipster_pro',points:2},{u:'bet_master',points:0}],
-      'overall:soccer':[{u:'xavi_8',points:12},{u:'demo_user',points:8},{u:'stadyum76',points:8},{u:'arsenal_fan',points:8},{u:'footy_oracle',points:6},{u:'golazo99',points:6},{u:'matchday_man',points:4},{u:'tipster_pro',points:4},{u:'bvb_predictor',points:0},{u:'bet_master',points:0}],
+      'overall:football':[{u:'xavi_8',points:12},{u:'demo_user',points:8},{u:'stadyum76',points:8},{u:'arsenal_fan',points:8},{u:'footy_oracle',points:6},{u:'golazo99',points:6},{u:'matchday_man',points:4},{u:'tipster_pro',points:4},{u:'bvb_predictor',points:0},{u:'bet_master',points:0}],
       rm1:[{u:'footy_oracle',points:18},{u:'demo_user',points:14},{u:'xavi_8',points:12},{u:'stadyum76',points:12},{u:'arsenal_fan',points:10},{u:'matchday_man',points:8},{u:'bvb_predictor',points:6},{u:'golazo99',points:6},{u:'tipster_pro',points:4},{u:'bet_master',points:0}],
       rm2:[{u:'footy_oracle',points:6},{u:'xavi_8',points:6},{u:'stadyum76',points:6},{u:'demo_user',points:2},{u:'arsenal_fan',points:2},{u:'matchday_man',points:2},{u:'bvb_predictor',points:2},{u:'golazo99',points:0},{u:'tipster_pro',points:0},{u:'bet_master',points:0}],
       'overall:basketball':[{u:'footy_oracle',points:24},{u:'xavi_8',points:18},{u:'stadyum76',points:18},{u:'demo_user',points:16},{u:'arsenal_fan',points:12},{u:'matchday_man',points:10},{u:'bvb_predictor',points:8},{u:'golazo99',points:6},{u:'tipster_pro',points:4},{u:'bet_master',points:0}],
@@ -691,46 +709,99 @@ function toggleProfile(){
   if(profileEl.classList.contains('active')){goTab('predict');}
   else{goTab('profile');}
 }
-const MAIN_TAB_GROUPS = {
-  predictor: ['score','betting','ranking','lineup'],
-  advanced: ['analytics','topscorers'],
-};
-function mainGroupOf(mode){ return MAIN_TAB_GROUPS.advanced.includes(mode) ? 'advanced' : 'predictor'; }
-let mainTabGroup = 'predictor';
+// ── CASCADING FILTERS ───────────────────────────────────────────────────
+// Three dependent dropdowns replace the old tab strips: Type -> Sport ->
+// Feature. Each narrows the next, and an invalid combination can never be
+// selected because the options are always derived from what actually exists.
+const WIDGET_MODES = ['analytics','topscorers'];
+const SPORT_LABELS = {football:'Football',tennis:'Tennis',basketball:'Basketball',baseball:'Baseball'};
 
-function renderMainTabs(){
-  const el = document.getElementById('main-tabs');
-  if(!el) return;
-  const tabs = [
-    {key:'predictor', label:'Predictor Modes'},
-    {key:'advanced', label:'Advanced Widgets'},
-  ];
-  el.innerHTML = tabs.map(t=>{
-    const on = mainTabGroup===t.key;
-    return `<button onclick="switchMainTab('${t.key}')" style="border:none;border-radius:8px 8px 0 0;padding:8px 16px;font-family:var(--sans);font-size:12.5px;font-weight:${on?700:600};cursor:pointer;background:${on?'var(--white)':'transparent'};color:${on?'var(--accent)':'var(--text-3)'};border-bottom:2px solid ${on?'var(--accent)':'transparent'};">${t.label}</button>`;
-  }).join('');
+function compType(c){ return WIDGET_MODES.includes(c.mode) ? 'widgets' : 'predictor'; }
+function compSports(c){
+  return c.sportVariants ? c.sportVariants.map(v=>v.key) : [c.sport||'football'];
 }
-function switchMainTab(key){
-  if(mainTabGroup===key) return;
-  mainTabGroup = key;
-  const allowed = MAIN_TAB_GROUPS[key];
-  if(!allowed.includes(COMPS[currentCompIdx].mode)){
-    const firstIdx = COMPS.findIndex(c=>allowed.includes(c.mode));
-    if(firstIdx>=0) currentCompIdx = firstIdx;
+
+let filterState = {type:'predictor', sport:'football'};
+
+function sportsForType(type){
+  const out=[];
+  COMPS.forEach(c=>{ if(compType(c)===type) compSports(c).forEach(s=>{ if(!out.includes(s)) out.push(s); }); });
+  return out;
+}
+function compsFor(type,sport){
+  return COMPS.map((c,i)=>({c,i})).filter(({c})=>compType(c)===type && compSports(c).includes(sport));
+}
+
+// Re-resolves the selection after any filter changes, keeping the current
+// choice where it's still valid and falling back to the first option where
+// it isn't.
+function applyFilters(){
+  const sports = sportsForType(filterState.type);
+  if(!sports.includes(filterState.sport)) filterState.sport = sports.includes('football') ? 'football' : sports[0];
+
+  const avail = compsFor(filterState.type, filterState.sport);
+  if(!avail.length) return;
+  if(!avail.some(({i})=>i===currentCompIdx)) currentCompIdx = avail[0].i;
+
+  // Point the chosen comp at the selected sport, if it has variants.
+  const comp = COMPS[currentCompIdx];
+  if(comp.sportVariants && compSports(comp).includes(filterState.sport)){
+    selectedSportVariant[comp.id] = filterState.sport;
   }
-  predictSubTab='predictions'; predsDirty=false;
-  document.documentElement.style.setProperty('--comp-color',COMPS[currentCompIdx].color);
-  renderMainTabs(); renderCompTabs(); renderPredict();
+  document.documentElement.style.setProperty('--comp-color',comp.color);
 }
 
-function renderCompTabs(){
-  renderMainTabs();
-  const el=document.getElementById('comp-tabs');
-  const visible = COMPS.map((c,i)=>({c,i})).filter(({c})=>mainGroupOf(c.mode)===mainTabGroup);
-  el.innerHTML=visible.map(({c,i})=>`<button class="comp-tab${i===currentCompIdx?' active':''}" onclick="switchComp(${i})"><span style="display:inline-block;padding:7px 14px;border-radius:8px;background:${i===currentCompIdx?'oklch(0.94 0.05 275 / 0.7)':'transparent'};">${c.name}</span></button>`).join('');
-  document.documentElement.style.setProperty('--comp-color',COMPS[currentCompIdx].color);
+function renderFilters(){
+  applyFilters();
+  const el = document.getElementById('filter-bar');
+  if(!el) return;
+
+  const types = [{key:'predictor',label:'Predictor'},{key:'widgets',label:'Widgets'}];
+  const sports = sportsForType(filterState.type);
+  const feats = compsFor(filterState.type, filterState.sport);
+
+  const sel = (id,label,opts,val,handler,disabled) => `
+    <div class="filter-item">
+      <span class="filter-label">${label}</span>
+      <select class="filter-select" id="${id}" onchange="${handler}(this.value)"${disabled?' disabled':''}>
+        ${opts.map(o=>`<option value="${o.v}"${o.v===val?' selected':''}>${o.l}</option>`).join('')}
+      </select>
+    </div>`;
+
+  el.innerHTML =
+    sel('f-type','Type',types.map(t=>({v:t.key,l:t.label})),filterState.type,'setFilterType') +
+    sel('f-sport','Sport',sports.map(s=>({v:s,l:SPORT_LABELS[s]||s})),filterState.sport,'setFilterSport',sports.length<2) +
+    sel('f-feature','Feature',feats.map(({c,i})=>({v:String(i),l:c.name})),String(currentCompIdx),'setFilterFeature',feats.length<2);
 }
-function switchComp(idx){currentCompIdx=idx;predictSubTab='predictions';predsDirty=false;document.documentElement.style.setProperty('--comp-color',COMPS[idx].color);renderCompTabs();renderPredict();setTimeout(()=>{const active=document.querySelector('.comp-tab.active');if(active)active.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});},50);}
+
+function resetForNewSelection(){
+  predictSubTab='predictions'; predsDirty=false;
+  selectedRound[currentCompIdx]=undefined;
+  lbSelection[currentCompIdx]=undefined;
+}
+function setFilterType(v){
+  if(filterState.type===v) return;
+  filterState.type=v;
+  const avail=compsFor(v, filterState.sport);
+  currentCompIdx = (avail[0]||compsFor(v,sportsForType(v)[0])[0]).i;
+  resetForNewSelection(); renderFilters(); renderPredict();
+}
+function setFilterSport(v){
+  if(filterState.sport===v) return;
+  filterState.sport=v;
+  const avail=compsFor(filterState.type,v);
+  if(avail.length && !avail.some(({i})=>i===currentCompIdx)) currentCompIdx=avail[0].i;
+  resetForNewSelection(); renderFilters(); renderPredict();
+}
+function setFilterFeature(v){
+  const idx=parseInt(v,10);
+  if(currentCompIdx===idx) return;
+  currentCompIdx=idx;
+  resetForNewSelection(); renderFilters(); renderPredict();
+}
+// Kept so existing call sites keep working.
+function renderCompTabs(){ renderFilters(); }
+function switchComp(idx){ setFilterFeature(String(idx)); }
 
 // ── PREDICT (merged header: round + status + tabs in ONE bar) ─────────────
 function parseKickoffMs(s){
@@ -827,6 +898,7 @@ function resolveComp(comp){
 function switchSportVariant(compId, key){
   if(selectedSportVariant[compId]===key) return;
   selectedSportVariant[compId]=key;
+  filterState.sport=key;
   // Round/leaderboard selections index into a different round list per
   // variant, so reset them rather than carrying a stale index across.
   selectedRound[currentCompIdx]=undefined;
@@ -859,7 +931,7 @@ function renderPredict(){
   }
   if(selectedRound[currentCompIdx]===undefined)selectedRound[currentCompIdx]=getDefaultRoundIdx(comp);
   let html=predictSubTab==='predictions'?renderPredictionsPane(comp):(comp.mode==='lineup'?renderLineupLeaderboardShell(comp):renderLeaderboardPane(comp));
-  document.getElementById('predict-content').innerHTML=sportVariantTabs(COMPS[currentCompIdx])+html;
+  document.getElementById('predict-content').innerHTML=html;
 }
 function switchPredictSubTab(tab){predictSubTab=tab;renderPredict();}
 
