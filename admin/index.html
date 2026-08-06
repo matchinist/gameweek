@@ -1904,6 +1904,7 @@ async function createComp(){
   const mode = document.getElementById('new-comp-mode').value;
   const name = MODE_DESCRIPTIONS[mode]?.title || mode;
   let scoring = null, markets = null;
+  let scoreSport = null;
   if(mode==='score'){
     scoring = {
       exactScore: parseInt(document.getElementById('pts-exact').value)||5,
@@ -1911,6 +1912,12 @@ async function createComp(){
       awayGoals:  parseInt(document.getElementById('pts-away').value)||2,
       totalGoals: parseInt(document.getElementById('pts-total').value)||1,
     };
+    scoreSport = document.getElementById('score-sport')?.value || 'football';
+    const cfg = scoreSportConfig(scoreSport);
+    scoring.unit = cfg.unit;
+    // Sports with a fixed set of possible final scores (volleyball, tennis)
+    // carry them here, so the player picks instead of typing numbers.
+    if(cfg.scoreOptions) scoring.scoreOptions = cfg.scoreOptions;
   }
   let bettingSport = null;
   if(mode==='betting'){
