@@ -2394,7 +2394,15 @@ function rankRowHTML(t, idx, opts){
     </div>`;
     const b = badge(team, isTarget?36:26);
     const inner = alignEnd ? nameBlock+b : b+nameBlock;
-    return `<div style="display:inline-flex;align-items:center;gap:${isTarget?'10px':'7px'};padding:${isTarget?'6px 12px':'3px 2px'};${isTarget?'background:var(--accent-light);border:1.5px solid var(--accent);border-radius:12px;':'opacity:0.75;'}">${inner}</div>`;
+    const hl = isTarget && !neutral;
+    // Neutral (ranking whole matches): both sides get identical, clearly
+    // visible treatment so the row reads as one fixture, not a team pick.
+    const pstyle = hl
+      ? 'gap:10px;padding:6px 12px;background:var(--accent-light);border:1.5px solid var(--accent);border-radius:12px;'
+      : (neutral
+          ? 'gap:9px;padding:6px 11px;background:var(--bg);border:1px solid var(--border);border-radius:12px;'
+          : 'gap:7px;padding:3px 2px;opacity:0.75;');
+    return `<div style="display:inline-flex;align-items:center;${pstyle}">${inner}</div>`;
   }
 
   const dragHandle = draggable ? `<span class="drag-handle" style="display:flex;flex-direction:column;gap:3px;cursor:grab;flex-shrink:0;padding:8px;margin:-8px;">
