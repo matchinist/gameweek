@@ -1949,7 +1949,7 @@ async function createComp(){
     lineupConfig = { teamId, teamName: team?.name||'' };
   }
   const c = {
-    id: 'c'+uid(), name, mode, sport: bettingSport, scoring, markets, rankingConfig, lineupConfig, rouletteConfig,
+    id: 'c'+uid(), name, mode, sport: bettingSport||scoreSport, scoring, markets, rankingConfig, lineupConfig, rouletteConfig,
     longTerm: false, scopeText: document.getElementById('new-comp-scope')?.value.trim()||'',
     status: 'draft', color: mode==='lineup'?'#0EA5E9':'#8B5CF6', users: 0, predictions: 0, rounds: []
   };
@@ -2223,6 +2223,12 @@ async function openModal(id){
     if(id==='modal-create-comp'){
       // Close round modal if somehow open
       document.getElementById('modal-create-round')?.classList.remove('open');
+      // Initialise the form for whichever mode is preselected. Without this
+      // the mode-specific config stays hidden until the dropdown is touched,
+      // and the sport dropdown never populates — so a competition saved on
+      // first open silently falls back to football.
+      await refreshDMState();
+      updateModeDescription();
     }
     if(id==='modal-create-round'){
       roundAddedEvents = [];
