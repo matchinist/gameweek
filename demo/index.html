@@ -510,7 +510,7 @@ const COMPS=[
     sportVariants:[
       {key:'football',label:'Football',
         tournamentNames:['Premier League'],
-        rankingConfig:{metric:'xG',decimals:1,pointsPerCorrect:2,perfectBonus:5},
+        rankingConfig:{title:'Rank the teams by xG',metric:'xG',metricLabel:'xG',itemNoun:'team',decimals:1,pointsPerCorrect:2,perfectBonus:5},
         overallPrizes:[{pos:1,text:'Signed team shirt'},{pos:2,text:'\u20ac50 bookmaker credit'},{pos:3,text:'Free bet token'}],
         rounds:[
           {id:'r7',label:'Gameweek 3',status:'open',deadline:'2026-08-31T14:00',prizes:[{pos:1,text:'\u20ac10 free bet'}],
@@ -536,7 +536,7 @@ const COMPS=[
       // the night's fixtures by how many combined points they expect.
       {key:'basketball',label:'Basketball',
         tournamentNames:['NBA'],
-        rankingConfig:{metric:'PTS',decimals:0,neutral:true,pointsPerCorrect:2,perfectBonus:5},
+        rankingConfig:{title:'Rank the games by total points',metric:'PTS',metricLabel:'total points',itemNoun:'game',decimals:0,neutral:true,pointsPerCorrect:2,perfectBonus:5},
         overallPrizes:[{pos:1,text:'Team jersey'},{pos:2,text:'\u20ac50 store credit'},{pos:3,text:'Signed cap'}],
         rounds:[
           {id:'rkb2',label:'Week 2',status:'open',deadline:'2026-11-12T19:30',prizes:[{pos:1,text:'\u20ac15 store credit'}],
@@ -756,7 +756,9 @@ function getModeExplainer(comp){
   }
   if(comp.mode==='ranking'){
     const per=comp.rankingConfig?.pointsPerCorrect||2, bonus=comp.rankingConfig?.perfectBonus||5;
-    return `Earn <strong style="color:var(--accent);">${per} pts</strong> for each team ranked in the correct position, plus a <strong style="color:var(--accent);">${bonus} pt</strong> bonus for a perfect ranking.`;
+    // 'team' or 'game' depending on what the variant actually ranks.
+    const noun=(comp.rankingConfig && comp.rankingConfig.itemNoun) || 'team';
+    return `Earn <strong style="color:var(--accent);">${per} pts</strong> for each ${noun} ranked in the correct position, plus a <strong style="color:var(--accent);">${bonus} pt</strong> bonus for a perfect ranking.`;
   }
   if(comp.mode==='lineup'){
     return `Earn <strong style="color:var(--accent);">10 pts</strong> for each correct player, plus a <strong style="color:var(--accent);">30 pt</strong> bonus if all 11 are correct.`;
@@ -764,7 +766,7 @@ function getModeExplainer(comp){
   return '';
 }
 function controlBandOpen(comp, roundOptionsHtml, tabsHtml, tabsMobileHtml, selectOnchange){
-  const title = MODE_TITLES[comp.mode] || comp.name;
+  const title = (comp.rankingConfig && comp.rankingConfig.title) || MODE_TITLES[comp.mode] || comp.name;
   return `<div class="control-band">
     <div style="margin-bottom:12px;">
       <h1 style="margin:0 0 3px;font-size:16px;font-weight:800;letter-spacing:-0.3px;color:var(--text);">${title}</h1>
@@ -1949,7 +1951,7 @@ function renderPredictionsPane(comp){
     html+=`<div style="padding:0 8px 12px;">`;
     if(isCompleted&&actualOrder){
       html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 8px 12px;">
-        <span style="font-size:13px;font-weight:700;color:var(--text);">Your prediction vs Actual (${comp.rankingConfig?.metric||'xG'})</span>
+        <span style="font-size:13px;font-weight:700;color:var(--text);">Your order vs Actual (${comp.rankingConfig?.metricLabel||comp.rankingConfig?.metric||'xG'})</span>
         <span style="font-family:var(--mono);font-size:14px;font-weight:800;color:${correctCount===teams.length?'var(--green)':'var(--accent)'};">${totalPts} pts</span>
       </div>`;
       // Show results comparison
@@ -2430,12 +2432,27 @@ function rankRowHTML(t, idx, opts){
         <div class="rank-num" style="font-family:var(--mono);font-weight:800;font-size:15px;color:var(--text);">${idx+1}</div>
         ${dragHandle}
       </div>
+      ${neutral ? `
+      <div style="flex:1;min-width:0;display:flex;align-items:center;gap:8px;">
+        <div style="display:flex;align-items:center;gap:7px;min-width:0;flex:1;">
+          ${badge(t,26)}
+          <span style="font-weight:700;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</span>
+        </div>
+        <span style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--text-3);flex-shrink:0;">vs</span>
+        <div style="display:flex;align-items:center;gap:7px;min-width:0;flex:1;">
+          ${badge({name:oppName,logo:oppLogo},26)}
+          <span style="font-weight:700;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${oppName}</span>
+        </div>
+        ${showResult
+          ? `<div style="text-align:right;flex-shrink:0;"><div style="font-family:var(--mono);font-weight:800;font-size:14px;color:${isCorrect?'var(--green)':'var(--text)'};">${rankFmt(rankVal(t), rankCfg)}</div><div style="font-size:8px;color:var(--text-3);">${rankUnit(rankCfg)} ${isCorrect?'\u2713':'\u2717'}</div></div>`
+          : `<span style="font-family:var(--mono);font-size:9px;color:var(--text-3);flex-shrink:0;">${dateShort}</span>`}
+      </div>` : `
       <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;">
         <div style="display:flex;align-items:center;gap:9px;padding:6px 10px;background:var(--accent-light);border:1.5px solid var(--accent);border-radius:11px;">
           ${badge(t,32)}
           <div style="min-width:0;flex:1;">
             <div style="font-weight:700;font-size:14px;color:var(--text);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
-            <div style="font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:0.05em;color:var(--accent);text-transform:uppercase;">${neutral?(dateShort||''):(venue+' \u00b7 Your pick')}</div>
+            <div style="font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:0.05em;color:var(--accent);text-transform:uppercase;">${venue} \u00b7 Your pick</div>
           </div>
           ${showResult?`<div style="text-align:right;flex-shrink:0;"><div style="font-family:var(--mono);font-weight:800;font-size:14px;color:${isCorrect?'var(--green)':'var(--text)'};">${rankFmt(rankVal(t), rankCfg)}</div><div style="font-size:8px;color:var(--text-3);">${rankUnit(rankCfg)} ${isCorrect?'\u2713':'\u2717'}</div></div>`:''}
         </div>
@@ -2445,7 +2462,7 @@ function rankRowHTML(t, idx, opts){
           <span style="font-size:11px;font-weight:500;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${oppName}</span>
           ${!showResult?`<span style="font-family:var(--mono);font-size:9px;color:var(--text-3);white-space:nowrap;">\u00b7 ${dateShort}</span>`:''}
         </div>
-      </div>
+      </div>`}
     </div>
   </div>`;
 }
