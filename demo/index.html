@@ -557,6 +557,38 @@ const COMPS=[
             ]},
         ]},
     ]},
+  // MATCH UPS: ten head-to-heads per round. The reader picks whichever
+  // player they think outscores the other that gameweek.
+  {id:'c11',name:'Match Ups',mode:'matchups',color:'#DB2777',
+    tournamentNames:['Premier League'],
+    matchupConfig:{pointsPerCorrect:2,perfectBonus:6},
+    overallPrizes:[{pos:1,text:'Signed shirt'},{pos:2,text:'\u20ac50 store credit'},{pos:3,text:'Club scarf'}],
+    rounds:[
+      {id:'rmu2',label:'Gameweek 3',status:'open',deadline:'2026-08-31T14:00',prizes:[{pos:1,text:'\u20ac15 store credit'}],matchups:[
+      {id:'mu1',a:{name:'Saka',club:'Arsenal',logo:lg('Arsenal'),fixture:'vs Wolves (H)'},b:{name:'Palmer',club:'Chelsea',logo:lg('Chelsea'),fixture:'at Spurs (A)'}},
+      {id:'mu2',a:{name:'Haaland',club:'Man City',logo:lg('Man City'),fixture:'vs Chelsea (H)'},b:{name:'Salah',club:'Liverpool',logo:lg('Liverpool'),fixture:'at Man Utd (A)'}},
+      {id:'mu3',a:{name:'Son',club:'Spurs',logo:lg('Spurs'),fixture:'vs Everton (H)'},b:{name:'Isak',club:'Newcastle',logo:lg('Newcastle'),fixture:'at Man City (A)'}},
+      {id:'mu4',a:{name:'Fernandes',club:'Man Utd',logo:lg('Man Utd'),fixture:'vs Newcastle (H)'},b:{name:'Odegaard',club:'Arsenal',logo:lg('Arsenal'),fixture:'vs Wolves (H)'}},
+      {id:'mu5',a:{name:'Foden',club:'Man City',logo:lg('Man City'),fixture:'vs Chelsea (H)'},b:{name:'Gakpo',club:'Liverpool',logo:lg('Liverpool'),fixture:'at Man Utd (A)'}},
+      {id:'mu6',a:{name:'Jackson',club:'Chelsea',logo:lg('Chelsea'),fixture:'at Spurs (A)'},b:{name:'Watkins',club:'Aston Villa',logo:lg('Aston Villa'),fixture:'vs Brighton (H)'}},
+      {id:'mu7',a:{name:'Rice',club:'Arsenal',logo:lg('Arsenal'),fixture:'vs Wolves (H)'},b:{name:'Mac Allister',club:'Liverpool',logo:lg('Liverpool'),fixture:'at Man Utd (A)'}},
+      {id:'mu8',a:{name:'Maddison',club:'Spurs',logo:lg('Spurs'),fixture:'vs Everton (H)'},b:{name:'Rogers',club:'Aston Villa',logo:lg('Aston Villa'),fixture:'vs Brighton (H)'}},
+      {id:'mu9',a:{name:'Bruno G',club:'Newcastle',logo:lg('Newcastle'),fixture:'at Man City (A)'},b:{name:'Garnacho',club:'Man Utd',logo:lg('Man Utd'),fixture:'vs Newcastle (H)'}},
+      {id:'mu10',a:{name:'Mbeumo',club:'Brentford',logo:lg('Brentford'),fixture:'vs Fulham (H)'},b:{name:'Bowen',club:'West Ham',logo:lg('West Ham'),fixture:'at Brighton (A)'}},
+      ]},
+      {id:'rmu1',label:'Gameweek 2',status:'completed',deadline:'2026-08-24T14:00',prizes:[{pos:1,text:'\u20ac15 store credit'}],matchups:[
+      {id:'mu1',a:{name:'Saka',club:'Arsenal',logo:lg('Arsenal'),fixture:'vs Newcastle (H)',pts:14},b:{name:'Palmer',club:'Chelsea',logo:lg('Chelsea'),fixture:'at Man Utd (A)',pts:6}},
+      {id:'mu2',a:{name:'Haaland',club:'Man City',logo:lg('Man City'),fixture:'vs Wolves (H)',pts:16},b:{name:'Salah',club:'Liverpool',logo:lg('Liverpool'),fixture:'at Everton (A)',pts:9}},
+      {id:'mu3',a:{name:'Son',club:'Spurs',logo:lg('Spurs'),fixture:'at Liverpool (A)',pts:4},b:{name:'Isak',club:'Newcastle',logo:lg('Newcastle'),fixture:'at Arsenal (A)',pts:7}},
+      {id:'mu4',a:{name:'Fernandes',club:'Man Utd',logo:lg('Man Utd'),fixture:'vs Chelsea (H)',pts:5},b:{name:'Odegaard',club:'Arsenal',logo:lg('Arsenal'),fixture:'vs Newcastle (H)',pts:11}},
+      {id:'mu5',a:{name:'Foden',club:'Man City',logo:lg('Man City'),fixture:'vs Wolves (H)',pts:12},b:{name:'Gakpo',club:'Liverpool',logo:lg('Liverpool'),fixture:'at Everton (A)',pts:3}},
+      {id:'mu6',a:{name:'Jackson',club:'Chelsea',logo:lg('Chelsea'),fixture:'at Man Utd (A)',pts:8},b:{name:'Watkins',club:'Aston Villa',logo:lg('Aston Villa'),fixture:'vs Fulham (H)',pts:8}},
+      {id:'mu7',a:{name:'Rice',club:'Arsenal',logo:lg('Arsenal'),fixture:'vs Newcastle (H)',pts:6},b:{name:'Mac Allister',club:'Liverpool',logo:lg('Liverpool'),fixture:'at Everton (A)',pts:5}},
+      {id:'mu8',a:{name:'Maddison',club:'Spurs',logo:lg('Spurs'),fixture:'at Liverpool (A)',pts:3},b:{name:'Rogers',club:'Aston Villa',logo:lg('Aston Villa'),fixture:'vs Fulham (H)',pts:10}},
+      {id:'mu9',a:{name:'Bruno G',club:'Newcastle',logo:lg('Newcastle'),fixture:'at Arsenal (A)',pts:7},b:{name:'Garnacho',club:'Man Utd',logo:lg('Man Utd'),fixture:'vs Chelsea (H)',pts:2}},
+      {id:'mu10',a:{name:'Mbeumo',club:'Brentford',logo:lg('Brentford'),fixture:'vs West Ham (H)',pts:9},b:{name:'Bowen',club:'West Ham',logo:lg('West Ham'),fixture:'at Brentford (A)',pts:13}},
+      ]},
+    ]},
   {id:'c7',name:'Lineup Predictor',mode:'lineup',color:'#0EA5E9',
     rounds:[{id:'rl1',label:'Gameweek 1',status:'open',eventId:'erl_lu1'},{id:'rl2',label:'Gameweek 2',status:'upcoming',eventId:'erl_lu2'}]},
   {id:'c8',name:'Squad Analytics',mode:'analytics',color:'#6d4be0'},
@@ -708,8 +740,12 @@ const MODE_DESCRIPTIONS={score:'Predict the exact score for each match. Points a
 function roundBarRules(mode){
   return `<button class="rules-btn" onclick="showRules('${mode}')">Rules</button><div class="round-bar-spacer"></div>`;
 }
-const MODE_TITLES={score:'Predict the exact score',betting:'Predict the markets',ranking:'Rank the teams by xG',lineup:'Pick the starting XI',roulette:'Spin the score matrix'};
+const MODE_TITLES={matchups:'Pick the higher scorer',score:'Predict the exact score',betting:'Predict the markets',ranking:'Rank the teams by xG',lineup:'Pick the starting XI',roulette:'Spin the score matrix'};
 function getModeExplainer(comp){
+  if(comp.mode==='matchups'){
+    const c=comp.matchupConfig||{pointsPerCorrect:2,perfectBonus:6};
+    return `Pick the player you think outscores the other. <strong style="color:var(--accent);">${c.pointsPerCorrect} pts</strong> per correct call, <strong style="color:var(--accent);">+${c.perfectBonus}</strong> for a clean sweep.`;
+  }
   if(comp.mode==='score'){
     const s=comp.scoring||{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1};
     return `Earn <strong style="color:var(--accent);">${s.exactScore} pts</strong> for a spot-on scoreline, <strong style="color:var(--accent);">${s.homeGoals} pts</strong> for the right result, and <strong style="color:var(--accent);">${s.totalGoals} pt</strong> for the correct total goals.`;
@@ -976,6 +1012,103 @@ function sportVariantTabs(comp){
   }).join('')+`</div>`;
 }
 
+// ── MATCH UPS ───────────────────────────────────────────────────────────
+// Ten player head-to-heads per round. Pick whoever you think scores more
+// points that gameweek; the club crest and fixture give the context needed
+// to judge it.
+function matchupPick(roundId, muId, side){
+  const key = roundId + '_matchups';
+  if(!preds[key] || typeof preds[key] !== 'object') preds[key] = {};
+  // Tapping the same side again clears the pick.
+  if(preds[key][muId] === side) delete preds[key][muId];
+  else preds[key][muId] = side;
+  predsDirty = true;
+  const btn = document.querySelector('.submit-preds-btn');
+  if(btn) btn.classList.remove('disabled');
+  renderPredict();
+}
+
+function muSideHTML(mu, side, o){
+  const p = mu[side];
+  const picked = o.pick === side;
+  const isWinner = o.showResult && o.winner === side;
+  const isLoser  = o.showResult && o.winner && o.winner !== side;
+
+  let border = 'var(--border)', bg = 'var(--white)';
+  if(o.showResult){
+    if(picked && isWinner){ border = 'var(--green)'; bg = 'var(--green-light)'; }
+    else if(picked){ border = 'var(--red)'; bg = 'var(--white)'; }
+    else if(isWinner){ border = 'var(--border)'; bg = 'var(--bg)'; }
+  } else if(picked){ border = 'var(--accent)'; bg = 'var(--accent-light)'; }
+
+  const crest = p.logo
+    ? `<img src="${p.logo}" alt="${p.club}" style="width:26px;height:26px;object-fit:contain;flex-shrink:0;">`
+    : `<div style="width:26px;height:26px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:8px;font-weight:800;color:var(--text-2);flex-shrink:0;">${(p.club||'?').slice(0,3).toUpperCase()}</div>`;
+
+  const score = o.showResult && p.pts != null
+    ? `<div style="font-family:var(--mono);font-size:17px;font-weight:800;color:${isWinner?'var(--green)':'var(--text-3)'};line-height:1;">${p.pts}</div>`
+    : '';
+
+  const click = o.locked ? '' : ` onclick="matchupPick('${o.roundId}','${mu.id}','${side}')"`;
+  return `<button${click} style="flex:1;min-width:0;display:flex;align-items:center;gap:9px;padding:10px 11px;border:1.5px solid ${border};background:${bg};border-radius:11px;text-align:left;cursor:${o.locked?'default':'pointer'};font-family:var(--sans);">
+    ${crest}
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:13.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</div>
+      <div style="font-size:10px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.fixture}</div>
+    </div>
+    ${score}
+  </button>`;
+}
+
+function renderMatchupsPane(comp){
+  const ri = selectedRound[currentCompIdx];
+  const round = comp.rounds[ri];
+  if(!round || !round.matchups) return '';
+  const isDone = round.status === 'completed';
+  const cfg = comp.matchupConfig || {pointsPerCorrect:2, perfectBonus:6};
+  const picks = preds[round.id + '_matchups'] || {};
+
+  let correct = 0, resolved = 0;
+  round.matchups.forEach(mu => {
+    if(mu.a.pts == null || mu.b.pts == null) return;
+    resolved++;
+    const w = mu.a.pts === mu.b.pts ? null : (mu.a.pts > mu.b.pts ? 'a' : 'b');
+    if(w && picks[mu.id] === w) correct++;
+  });
+  const pts = correct * cfg.pointsPerCorrect + (resolved && correct === resolved ? cfg.perfectBonus : 0);
+  const made = Object.keys(picks).length;
+
+  const tabs = `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Match Ups</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`;
+  const roundSelect = comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('');
+
+  let html = `<div style="padding:12px 16px 0;">${controlBandOpen(comp, roundSelect, tabs, tabs)}</div></div>`;
+
+  html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px 6px;">
+    <span style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text-3);">${isDone ? 'YOUR RESULT' : made + ' / ' + round.matchups.length + ' PICKED'}</span>
+    ${isDone ? `<span style="font-family:var(--mono);font-size:20px;font-weight:900;color:var(--accent);">${pts} pts</span>` : ''}
+  </div>`;
+
+  html += '<div style="padding:0 8px 12px;">';
+  round.matchups.forEach((mu, i) => {
+    const winner = (mu.a.pts != null && mu.b.pts != null && mu.a.pts !== mu.b.pts)
+      ? (mu.a.pts > mu.b.pts ? 'a' : 'b') : null;
+    const o = {pick: picks[mu.id], showResult: isDone, winner, locked: isDone, roundId: round.id};
+    html += `<div style="background:var(--white);border:1px solid var(--border);border-radius:14px;margin-bottom:8px;padding:10px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        ${muSideHTML(mu, 'a', o)}
+        <span style="font-family:var(--mono);font-size:10px;font-weight:800;color:var(--text-3);flex-shrink:0;">VS</span>
+        ${muSideHTML(mu, 'b', o)}
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+
+  if(!isDone){
+    html += `<div style="padding:0 16px 16px;"><button class="submit-preds-btn${made ? '' : ' disabled'}" onclick="submitPreds()">${made === round.matchups.length ? '\u2713 All picks saved' : 'Save Picks (' + made + '/' + round.matchups.length + ')'}</button></div>`;
+  }
+  return html;
+}
+
 function renderPredict(){
   const comp=resolveComp(COMPS[currentCompIdx]);
   if(comp.mode==='analytics'){
@@ -988,6 +1121,12 @@ function renderPredict(){
   }
   if(comp.mode==='fantasy'){
     document.getElementById('predict-content').innerHTML=renderFantasyPane(comp);
+    return;
+  }
+  if(comp.mode==='matchups'){
+    if(selectedRound[currentCompIdx]===undefined)selectedRound[currentCompIdx]=getDefaultRoundIdx(comp);
+    const inner = predictSubTab==='predictions' ? renderMatchupsPane(comp) : renderLeaderboardPane(comp);
+    document.getElementById('predict-content').innerHTML=sportVariantTabs(COMPS[currentCompIdx])+inner;
     return;
   }
   if(selectedRound[currentCompIdx]===undefined)selectedRound[currentCompIdx]=getDefaultRoundIdx(comp);
@@ -2231,6 +2370,10 @@ function rankRowHTML(t, idx, opts){
   const draggable = !!opts.draggable;
   const showResult = !!opts.showResult;
   const isCorrect = !!opts.isCorrect;
+  const rankCfg = opts.cfg || null;
+  // When ranking whole matches rather than one team's output, neither side is
+  // "the pick" — both are shown with equal weight and no venue label.
+  const neutral = !!(rankCfg && rankCfg.neutral);
   const oppName = t.opponentName || (t.opponent||'').replace(/^(vs|at)\s+/,'').split(' \u00b7 ')[0] || '';
   const oppLogo = t.opponentLogo || '';
   const dateShort = t.dateShort || ((t.opponent||'').split(' \u00b7 ')[1] || '');
@@ -3770,6 +3913,17 @@ function showRules(mode){
 <div><strong style="color:var(--text);">Margin ranges:</strong> 1, 2-3, 4-6, or 7+ runs.</div>
 <div>The two markets score independently \u2014 you can land the margin even if you called the wrong team.</div>
 <div><strong style="color:var(--text);">Leaderboard:</strong> Players are ranked by total points across the series.</div>
+</div>`,
+    matchups:`<h3 style="margin-bottom:12px;">Match Ups Rules</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">How to play:</strong> Ten head-to-heads each gameweek. For every pair, pick the player you think will score more fantasy points.</div>
+<div><strong style="color:var(--text);">Points:</strong></div>
+<div style="padding-left:12px;">
+\u2022 Each correct pick \u2014 <strong style="color:var(--green);">+2 pts</strong><br>
+\u2022 All ten correct \u2014 <strong style="color:var(--green);">+6 bonus</strong>
+</div>
+<div><strong style="color:var(--text);">Ties:</strong> If both players finish on the same score, the match up is void and nobody scores for it.</div>
+<div>The club crest and fixture are shown for each player, so you can weigh up the opposition before choosing.</div>
 </div>`,
     margin:`<h3 style="margin-bottom:12px;">Margin Predictor Rules \u2014 Basketball</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
