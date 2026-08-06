@@ -447,7 +447,14 @@ const COMPS=[
         ]},
       // Tennis is best-of-5 sets, so an open score box makes no sense —
       // there are only six possible outcomes. Rendered as a picker instead.
-      {key:'tennis',label:'Tennis',scoreUnit:'sets',scoreOptions:[[3,0],[3,1],[3,2],[2,3],[1,3],[0,3]],
+      {key:'volleyball',label:'Volleyball',scoreUnit:'sets',scoreOptions:[[3,0],[3,1],[3,2],[0,3],[1,3],[2,3]],
+        scoring:{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1},
+        tournamentNames:['SuperLega'],
+        overallPrizes:[{pos:1,text:'Match tickets'},{pos:2,text:'\u20ac50 store credit'},{pos:3,text:'Club shirt'}],
+        rounds:[
+          {id:'rv1',label:'Round 1',status:'open',deadline:'2026-10-18T17:30',eventIds:['vb1','vb2','vb3','vb4','vb5','vb6'],prizes:[{pos:1,text:'\u20ac20 store credit'}]},
+        ]},
+      {key:'tennis',label:'Tennis',scoreUnit:'sets',scoreOptions:[[3,0],[3,1],[3,2],[0,3],[1,3],[2,3]],
         scoring:{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1},
         tournamentNames:['ATP Masters'],
         overallPrizes:[{pos:1,text:'Centre court tickets'},{pos:2,text:'€50 store credit'},{pos:3,text:'Signed cap'}],
@@ -588,6 +595,12 @@ const EVENTS={
   tn4:{tournament:'ATP Masters',home:'Ruud',away:'Fritz',kickoff:'13 Sep · 15:30',res:null},
   tn5:{tournament:'ATP Masters',home:'Tsitsipas',away:'Rublev',kickoff:'14 Sep · 13:00',res:null},
   tn6:{tournament:'ATP Masters',home:'De Minaur',away:'Shelton',kickoff:'14 Sep · 15:30',res:null},
+  vb1:{tournament:'SuperLega',home:'Itas Trentino',away:'Sir Safety Perugia',kickoff:'18 Oct · 18:00',res:{h:3,a:1},locked:true},
+  vb2:{tournament:'SuperLega',home:'Cucine Lube Civitanova',away:'Rana Verona',kickoff:'18 Oct · 18:00',res:{h:2,a:3},locked:true},
+  vb3:{tournament:'SuperLega',home:'Valsa Group Modena',away:'Allianz Milano',kickoff:'25 Oct · 18:00',res:null},
+  vb4:{tournament:'SuperLega',home:'Gas Sales Bluenergy Piacenza',away:'Cisterna Volley',kickoff:'25 Oct · 18:00',res:null},
+  vb5:{tournament:'SuperLega',home:'Pallavolo Padova',away:'Vero Volley Monza',kickoff:'26 Oct · 18:00',res:null},
+  vb6:{tournament:'SuperLega',home:'Tinet Prata di Pordenone',away:'Puliservice Cuneo',kickoff:'26 Oct · 18:00',res:null},
   // Betting open
   e303:{tournament:'La Liga',home:'Barcelona',away:'Real Madrid',homeLogo:lg('Barcelona'),awayLogo:lg('Real Madrid'),kickoff:'30 Aug \u00b7 21:00',res:null},
   e304:{tournament:'Serie A',home:'Everton',away:'Liverpool',homeLogo:lg('Everton'),awayLogo:lg('Liverpool'),kickoff:'31 Aug \u00b7 20:45',res:null},
@@ -615,6 +628,9 @@ let preds={
   // Tennis: tn1 exact (3-1), tn2 missed (picked 3-2, actual 2-3)
   tn1:{h:3,a:1},
   tn2:{h:3,a:2},
+  // Volleyball: vb1 exact (3-1), vb2 missed (picked 3-2, actual 2-3)
+  vb1:{h:3,a:1},
+  vb2:{h:3,a:2},
 
   // Ranking GW2: user predicted order
   r8_ranking:['rt2','rt1','rt5','rt3','rt4','rt6'],
@@ -626,6 +642,8 @@ const LB_DATA={
       r1:[{u:'footy_oracle',points:7},{u:'demo_user',points:7},{u:'stadyum76',points:4},{u:'arsenal_fan',points:3},{u:'xavi_8',points:2},{u:'matchday_man',points:2},{u:'bvb_predictor',points:1},{u:'golazo99',points:1},{u:'tipster_pro',points:0},{u:'bet_master',points:0}],
       'overall:football':[{u:'footy_oracle',points:29},{u:'demo_user',points:27},{u:'stadyum76',points:17},{u:'bvb_predictor',points:10},{u:'xavi_8',points:9},{u:'matchday_man',points:9},{u:'arsenal_fan',points:8},{u:'golazo99',points:5},{u:'tipster_pro',points:2},{u:'bet_master',points:1}],
       rt1:[{u:'footy_oracle',points:10},{u:'demo_user',points:7},{u:'xavi_8',points:7},{u:'stadyum76',points:6},{u:'arsenal_fan',points:5},{u:'matchday_man',points:4},{u:'golazo99',points:3},{u:'bvb_predictor',points:2},{u:'tipster_pro',points:1},{u:'bet_master',points:0}],
+      rv1:[{u:'footy_oracle',points:10},{u:'demo_user',points:6},{u:'xavi_8',points:6},{u:'stadyum76',points:5},{u:'arsenal_fan',points:5},{u:'matchday_man',points:3},{u:'golazo99',points:2},{u:'bvb_predictor',points:2},{u:'tipster_pro',points:1},{u:'bet_master',points:0}],
+      'overall:volleyball':[{u:'footy_oracle',points:10},{u:'demo_user',points:6},{u:'xavi_8',points:6},{u:'stadyum76',points:5},{u:'arsenal_fan',points:5},{u:'matchday_man',points:3},{u:'golazo99',points:2},{u:'bvb_predictor',points:2},{u:'tipster_pro',points:1},{u:'bet_master',points:0}],
       'overall:tennis':[{u:'footy_oracle',points:10},{u:'demo_user',points:7},{u:'xavi_8',points:7},{u:'stadyum76',points:6},{u:'arsenal_fan',points:5},{u:'matchday_man',points:4},{u:'golazo99',points:3},{u:'bvb_predictor',points:2},{u:'tipster_pro',points:1},{u:'bet_master',points:0}]},
   c2:{r3:[{u:'footy_oracle',predictions:3,correct:3},{u:'demo_user',predictions:2,correct:1},{u:'stadyum76',predictions:2,correct:1},{u:'matchday_man',predictions:3,correct:0},{u:'xavi_8',predictions:1,correct:1},{u:'arsenal_fan',predictions:2,correct:1},{u:'golazo99',predictions:3,correct:0},{u:'bvb_predictor',predictions:1,correct:0},{u:'tipster_pro',predictions:2,correct:1},{u:'bet_master',predictions:1,correct:0}],
       overall:[{u:'footy_oracle',survived:1,correct:3},{u:'demo_user',survived:1,correct:1},{u:'stadyum76',survived:1,correct:1},{u:'arsenal_fan',survived:1,correct:1},{u:'tipster_pro',survived:1,correct:1},{u:'xavi_8',survived:0,correct:1},{u:'matchday_man',survived:0,correct:0},{u:'golazo99',survived:0,correct:0},{u:'bvb_predictor',survived:0,correct:0},{u:'bet_master',survived:0,correct:0}]},
@@ -714,7 +732,7 @@ function toggleProfile(){
 // Feature. Each narrows the next, and an invalid combination can never be
 // selected because the options are always derived from what actually exists.
 const WIDGET_MODES = ['analytics','topscorers'];
-const SPORT_LABELS = {football:'Football',tennis:'Tennis',basketball:'Basketball',baseball:'Baseball'};
+const SPORT_LABELS = {football:'Football',tennis:'Tennis',basketball:'Basketball',baseball:'Baseball',volleyball:'Volleyball',handball:'Handball'};
 
 function compType(c){ return WIDGET_MODES.includes(c.mode) ? 'widgets' : 'predictor'; }
 function compSports(c){
@@ -770,7 +788,7 @@ function renderFilters(){
 
   el.innerHTML =
     sel('f-type','Type',types.map(t=>({v:t.key,l:t.label})),filterState.type,'setFilterType') +
-    sel('f-sport','Sport',sports.map(s=>({v:s,l:SPORT_LABELS[s]||s})),filterState.sport,'setFilterSport',sports.length<2) +
+    sel('f-sport','Sport',sports.map(s=>({v:s,l:SPORT_LABELS[s]||(s.charAt(0).toUpperCase()+s.slice(1))})),filterState.sport,'setFilterSport',sports.length<2) +
     sel('f-feature','Feature',feats.map(({c,i})=>({v:String(i),l:c.name})),String(currentCompIdx),'setFilterFeature',feats.length<2);
 }
 
@@ -1839,6 +1857,10 @@ function renderPredictionsPane(comp){
 const TEAM_COLORS={
     'Lakers':'#552583','Celtics':'#007A33','Warriors':'#1D428A','Bucks':'#00471B',
     'Nuggets':'#0E2240','Heat':'#98002E','Suns':'#1D1160','76ers':'#006BB6',
+    'Itas Trentino':'#00539B','Sir Safety Perugia':'#F5A800','Cucine Lube Civitanova':'#B01116',
+    'Rana Verona':'#0033A0','Valsa Group Modena':'#FFD100','Allianz Milano':'#003D7C',
+    'Gas Sales Bluenergy Piacenza':'#E30613','Cisterna Volley':'#0B4EA2','Pallavolo Padova':'#D4001F',
+    'Vero Volley Monza':'#E4002B','Tinet Prata di Pordenone':'#F5B800','Puliservice Cuneo':'#0F5FA6',
     'Alcaraz':'#C8102E','Sinner':'#0057B8','Djokovic':'#1B4D3E','Medvedev':'#5A2D82',
     'Zverev':'#D97706','Rune':'#0E7490','Ruud':'#7C2D12','Fritz':'#1E3A8A',
     'Tsitsipas':'#0F766E','Rublev':'#9333EA','De Minaur':'#065F46','Shelton':'#B91C1C',

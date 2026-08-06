@@ -2665,11 +2665,14 @@ function teamBadge(logo,name){
 function scorePoints(pred,res,scoring){
   if(!pred||!res||res.h==null||res.a==null)return[0,''];
   const s=scoring||{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1};
+  // Unit comes from the competition's sport ('sets' for volleyball/tennis),
+  // so the breakdown doesn't say "goals" on a volleyball match.
+  const u=s.unit||'goals';
   const eH=parseInt(pred.h)==res.h,eA=parseInt(pred.a)==res.a;
   if(eH&&eA)return[s.exactScore,'Exact score correct'];
-  if(eH)return[s.homeGoals,'Home team goals correct'];
-  if(eA)return[s.awayGoals,'Away team goals correct'];
-  if((parseInt(pred.h)+parseInt(pred.a))==(res.h+res.a))return[s.totalGoals,'Total goals correct'];
+  if(eH)return[s.homeGoals,'Home team '+u+' correct'];
+  if(eA)return[s.awayGoals,'Away team '+u+' correct'];
+  if((parseInt(pred.h)+parseInt(pred.a))==(res.h+res.a))return[s.totalGoals,'Total '+u+' correct'];
   return[0,'No points scored'];
 }
 
@@ -2713,7 +2716,12 @@ function renderEventCard(ev,comp,isRoundOpen){
 
   // Middle section (score inputs, result, or locked pick)
   let midSection;
-  if(comp.mode==='score'&&canPredict){
+  if(comp.mode==='score'&&canPredict&&comp.scoring?.scoreOptions){
+    // Set-based sports (volleyball, tennis): only a handful of final scores
+    // are possible, so the pick happens in the buttons below rather than
+    // in free-entry boxes.
+    midSection = (hv!==''&&av!=='') ? `<div class="ev-score">${hv}\u2013${av}</div>` : '<div class="ev-vs">vs</div>';
+  } else if(comp.mode==='score'&&canPredict){
     midSection=`<div class="score-inline-mid"><input class="score-num-inline${hv!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${hv}" id="sh-${ev.id}" oninput="pickScore('${ev.id}','h',this.value)"><span class="score-inline-dash">\u2013</span><input class="score-num-inline${av!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${av}" id="sa-${ev.id}" oninput="pickScore('${ev.id}','a',this.value)"></div>`;
   } else if(hasRes){
     midSection = comp.mode==='betting'
@@ -2731,6 +2739,11 @@ function renderEventCard(ev,comp,isRoundOpen){
     // Open for prediction
     if(comp.mode==='lms'){
       html+=`<div class="btns-1x2"><button class="btn-1x2${pred==='H'?' selected home':''}" data-val="H" onclick="pick('${ev.id}','H')">${t('homeWin')}</button><button class="btn-1x2${pred==='D'?' selected draw':''}" data-val="D" onclick="pick('${ev.id}','D')">X</button><button class="btn-1x2${pred==='A'?' selected away':''}" data-val="A" onclick="pick('${ev.id}','A')">${t('away')}</button></div>`;
+    } else if(comp.mode==='score'&&comp.scoring?.scoreOptions){
+      html+='<div class="btns-1x2" style="flex-wrap:wrap;">'+comp.scoring.scoreOptions.map(function(o){
+        var sel=(pred&&parseInt(pred.h)===o[0]&&parseInt(pred.a)===o[1])?' selected home':'';
+        return '<button class="btn-1x2'+sel+'" style="flex:1 1 30%;min-width:64px;" onclick="pickSetScore(\''+ev.id+'\','+o[0]+','+o[1]+')">'+o[0]+'\u2013'+o[1]+'</button>';
+      }).join('')+'</div>';
     } else if(comp.mode==='score'){
       html+='<div style="font-size:11px;color:var(--text-3);text-align:center;padding:2px 0;">Enter scores above \u2191</div>';
     } else if(comp.mode==='betting'){
@@ -2878,6 +2891,16 @@ function pickScore(id,side,val){
   const btn=document.querySelector('.submit-preds-btn');
   if(btn&&predsDirty){btn.classList.remove('disabled');}
   updateSubmitBtnText();
+}
+function pickSetScore(id,h,a){
+  predsDirty=true;
+  if(!preds[id]||typeof preds[id]!=='object')preds[id]={};
+  // Tapping the same score again clears it, matching how market picks behave.
+  if(preds[id].h===h&&preds[id].a===a){ delete preds[id].h; delete preds[id].a; }
+  else { preds[id].h=h; preds[id].a=a; }
+  const btn=document.querySelector('.submit-preds-btn');
+  if(btn&&predsDirty){btn.classList.remove('disabled');}
+  renderPredict();
 }
 function pickMarket(evId,market,val){
   predsDirty=true;
@@ -3682,11 +3705,14 @@ function renderPredictionsPane(comp){
 function scorePoints(pred,res,scoring){
   if(!pred||!res||res.h==null||res.a==null)return[0,''];
   const s=scoring||{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1};
+  // Unit comes from the competition's sport ('sets' for volleyball/tennis),
+  // so the breakdown doesn't say "goals" on a volleyball match.
+  const u=s.unit||'goals';
   const eH=parseInt(pred.h)==res.h,eA=parseInt(pred.a)==res.a;
   if(eH&&eA)return[s.exactScore,'Exact score correct'];
-  if(eH)return[s.homeGoals,'Home team goals correct'];
-  if(eA)return[s.awayGoals,'Away team goals correct'];
-  if((parseInt(pred.h)+parseInt(pred.a))==(res.h+res.a))return[s.totalGoals,'Total goals correct'];
+  if(eH)return[s.homeGoals,'Home team '+u+' correct'];
+  if(eA)return[s.awayGoals,'Away team '+u+' correct'];
+  if((parseInt(pred.h)+parseInt(pred.a))==(res.h+res.a))return[s.totalGoals,'Total '+u+' correct'];
   return[0,'No points scored'];
 }
 
@@ -3730,7 +3756,12 @@ function renderEventCard(ev,comp,isOpen){
 
   // Middle section (score inputs, result, or locked pick)
   let midSection;
-  if(comp.mode==='score'&&canPredict){
+  if(comp.mode==='score'&&canPredict&&comp.scoring?.scoreOptions){
+    // Set-based sports (volleyball, tennis): only a handful of final scores
+    // are possible, so the pick happens in the buttons below rather than
+    // in free-entry boxes.
+    midSection = (hv!==''&&av!=='') ? `<div class="ev-score">${hv}\u2013${av}</div>` : '<div class="ev-vs">vs</div>';
+  } else if(comp.mode==='score'&&canPredict){
     midSection=`<div class="score-inline-mid"><input class="score-num-inline${hv!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${hv}" id="sh-${ev.id}" oninput="pickScore('${ev.id}','h',this.value)"><span class="score-inline-dash">\u2013</span><input class="score-num-inline${av!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${av}" id="sa-${ev.id}" oninput="pickScore('${ev.id}','a',this.value)"></div>`;
   } else if(hasRes){
     midSection = comp.mode==='betting'
@@ -3748,6 +3779,11 @@ function renderEventCard(ev,comp,isOpen){
     // Open for prediction
     if(comp.mode==='lms'){
       html+=`<div class="btns-1x2"><button class="btn-1x2${pred==='H'?' selected home':''}" data-val="H" onclick="pick('${ev.id}','H')">${t('homeWin')}</button><button class="btn-1x2${pred==='D'?' selected draw':''}" data-val="D" onclick="pick('${ev.id}','D')">X</button><button class="btn-1x2${pred==='A'?' selected away':''}" data-val="A" onclick="pick('${ev.id}','A')">${t('away')}</button></div>`;
+    } else if(comp.mode==='score'&&comp.scoring?.scoreOptions){
+      html+='<div class="btns-1x2" style="flex-wrap:wrap;">'+comp.scoring.scoreOptions.map(function(o){
+        var sel=(pred&&parseInt(pred.h)===o[0]&&parseInt(pred.a)===o[1])?' selected home':'';
+        return '<button class="btn-1x2'+sel+'" style="flex:1 1 30%;min-width:64px;" onclick="pickSetScore(\''+ev.id+'\','+o[0]+','+o[1]+')">'+o[0]+'\u2013'+o[1]+'</button>';
+      }).join('')+'</div>';
     } else if(comp.mode==='score'){
       html+='<div style="font-size:11px;color:var(--text-3);text-align:center;padding:2px 0;">Enter scores above \u2191</div>';
     } else if(comp.mode==='betting'){
