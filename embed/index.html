@@ -1253,11 +1253,13 @@ const MODE_TITLES={score:'Predict the exact score',betting:'Predict the markets'
 function getModeExplainer(comp){
   if(comp.mode==='score'){
     const s=comp.scoring||{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1};
-    return t('explainerScore',{
+    const txt = t('explainerScore',{
       exact:`<strong style="color:var(--accent);">${s.exactScore} pts</strong>`,
       home:`<strong style="color:var(--accent);">${s.homeGoals} pts</strong>`,
       total:`<strong style="color:var(--accent);">${s.totalGoals} pt</strong>`,
     });
+    // Sports scored in sets shouldn't read "goals" in the explainer.
+    return s.unit && s.unit!=='goals' ? txt.replace(/goals/gi, s.unit).replace(/gol/gi, s.unit) : txt;
   }
   if(comp.mode==='betting'){
     const parts=(comp.markets||[]).map(m=>t('ptsForMarket',{pts:`<strong style="color:var(--accent);">${m.points} pts</strong>`,market:marketLabel(m)}));
