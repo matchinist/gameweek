@@ -500,8 +500,9 @@ tbody tr:hover td{background:var(--bg);}
         <div class="card-header">
           <span class="card-title">Registered users <span id="users-count" style="color:var(--text-3);font-weight:500;"></span></span>
           <input class="form-input" id="users-search" type="search" name="gw-user-filter"
-                 placeholder="Search name or email" autocomplete="off"
+                 placeholder="Search users" autocomplete="gw-no-autofill"
                  autocorrect="off" autocapitalize="off" spellcheck="false"
+                 data-lpignore="true" data-form-type="other"
                  oninput="usersSetSearch(this.value)"
                  style="width:230px;padding:7px 10px;font-size:12px;">
         </div>
