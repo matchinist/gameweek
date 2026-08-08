@@ -1060,7 +1060,7 @@ function muSideHTML(mu, side, o){
     : '';
 
   const click = o.locked ? '' : ` onclick="matchupPick('${o.roundId}','${mu.id}','${side}')"`;
-  return `<button${click} style="flex:1;min-width:0;display:flex;align-items:center;gap:9px;padding:10px 11px;border:1.5px solid ${border};background:${bg};border-radius:11px;text-align:left;cursor:${o.locked?'default':'pointer'};font-family:var(--sans);">
+  return `<button${click} style="flex:1;min-width:0;display:flex;align-items:center;gap:9px;padding:11px 12px;border:1px solid ${border};background:${bg};border-radius:14px;box-shadow:0 1px 2px oklch(0.2 0.02 260 / 0.04);text-align:left;cursor:${o.locked?'default':'pointer'};font-family:var(--sans);">
     ${crest}
     <div style="flex:1;min-width:0;">
       <div style="font-size:13.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</div>
@@ -1091,24 +1091,24 @@ function renderMatchupsPane(comp){
   const tabs = `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Match Ups</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`;
   const roundSelect = comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('');
 
-  let html = `<div style="padding:12px 16px 0;">${controlBandOpen(comp, roundSelect, tabs, tabs)}</div></div>`;
+  let html = controlBandOpen(comp, roundSelect, tabs, tabs) + '</div>';
 
-  html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px 6px;">
-    <span style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text-3);">${isDone ? 'YOUR RESULT' : ''}</span>
-    ${isDone ? `<span style="font-family:var(--mono);font-size:20px;font-weight:900;color:var(--accent);">${pts} pts</span>` : ''}
-  </div>`;
+  if(isDone){
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px 6px;">
+      <span style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text-3);">YOUR RESULT</span>
+      <span style="font-family:var(--mono);font-size:20px;font-weight:900;color:var(--accent);">${pts} pts</span>
+    </div>`;
+  }
 
   html += '<div style="padding:0 8px 12px;">';
   round.matchups.forEach((mu, i) => {
     const winner = (mu.a.pts != null && mu.b.pts != null && mu.a.pts !== mu.b.pts)
       ? (mu.a.pts > mu.b.pts ? 'a' : 'b') : null;
     const o = {pick: picks[mu.id], showResult: isDone, winner, locked: isDone, roundId: round.id};
-    html += `<div class="event-card" style="margin-bottom:10px;padding:12px 14px;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        ${muSideHTML(mu, 'a', o)}
-        <span style="font-family:var(--mono);font-size:10px;font-weight:800;color:var(--text-3);flex-shrink:0;">VS</span>
-        ${muSideHTML(mu, 'b', o)}
-      </div>
+    html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      ${muSideHTML(mu, 'a', o)}
+      <span style="font-family:var(--mono);font-size:10px;font-weight:800;color:var(--text-3);flex-shrink:0;">VS</span>
+      ${muSideHTML(mu, 'b', o)}
     </div>`;
   });
   html += '</div>';
