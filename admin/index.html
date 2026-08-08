@@ -499,7 +499,9 @@ tbody tr:hover td{background:var(--bg);}
       <div class="card">
         <div class="card-header">
           <span class="card-title">Registered users <span id="users-count" style="color:var(--text-3);font-weight:500;"></span></span>
-          <input class="form-input" id="users-search" placeholder="Search name or email"
+          <input class="form-input" id="users-search" type="search" name="gw-user-filter"
+                 placeholder="Search name or email" autocomplete="off"
+                 autocorrect="off" autocapitalize="off" spellcheck="false"
                  oninput="usersSetSearch(this.value)"
                  style="width:230px;padding:7px 10px;font-size:12px;">
         </div>
@@ -3088,30 +3090,37 @@ function copyWidgetsEmbed(){
 // submitted. Loaded once per visit and paged/filtered in memory, since the
 // list is small enough that round-tripping per page isn't worth it.
 const USERS_PAGE_SIZE = 25;
-let usersState = { rows:null, loading:false, page:1, search:'' };
+let usersState = { rows:null, loading:false, page:1, search:'', error:null };
 
 async function loadUsers(force){
   if(usersState.loading) return;
   if(usersState.rows && !force){ renderUsers(); return; }
-  usersState.loading = true;
+  usersState.loading = true; usersState.error = null;
   renderUsers();
   try{
     const [{data:players, error:pErr}, {data:preds}] = await Promise.all([
-      supa.from('gw_players').select('username,email,created_at').eq('client_key',CLIENT_KEY),
-      supa.from('gw_predictions').select('username').eq('client_key',CLIENT_KEY),
+      supa.from('gw_players').select('*').eq('client_key',CLIENT_KEY),
+      supa.from('gw_predictions').select('username,player_id').eq('client_key',CLIENT_KEY),
     ]);
     if(pErr) throw pErr;
-    const counts = {};
-    (preds||[]).forEach(r=>{ if(r.username) counts[r.username] = (counts[r.username]||0) + 1; });
+    const byName = {}, byId = {};
+    (preds||[]).forEach(r=>{
+      // One increment per prediction row — username when we have it,
+      // player_id otherwise. Counting both would double every row.
+      if(r.username) byName[r.username] = (byName[r.username]||0) + 1;
+      else if(r.player_id) byId[r.player_id] = (byId[r.player_id]||0) + 1;
+    });
     usersState.rows = (players||[]).map(p=>({
       username: p.username || '—',
       email: p.email || '',
-      predictions: counts[p.username] || 0,
-      created_at: p.created_at || null,
+      predictions: (byName[p.username] || 0) + (byId[p.id] || 0),
+      created_at: p.created_at || p.inserted_at || null,
     })).sort((a,b)=> b.predictions - a.predictions || a.username.localeCompare(b.username));
+    console.log('GW: loaded', usersState.rows.length, 'users for', CLIENT_KEY);
   }catch(e){
     console.error('GW: loadUsers failed', e);
     usersState.rows = [];
+    usersState.error = (e && e.message) ? e.message : 'Unknown error';
     toast('Could not load users');
   }
   usersState.loading = false;
@@ -3161,7 +3170,8 @@ function renderUsers(){
 
   if(!total){
     tb.innerHTML = `<tr><td colspan="4" style="padding:26px;text-align:center;color:var(--text-3);">${
-      usersState.search ? 'No users match that search.' : 'No registered users yet.'
+      usersState.error ? 'Could not load users: ' + escapeHtml(usersState.error)
+        : (usersState.search ? 'No users match that search.' : 'No registered users yet.')
     }</td></tr>`;
     if(pager) pager.innerHTML = '';
     return;
