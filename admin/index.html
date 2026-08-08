@@ -253,6 +253,13 @@ tbody tr:hover td{background:var(--bg);}
   </div>
 
   <div class="sidebar-section">
+    <div class="sidebar-section-label">Audience</div>
+    <button class="nav-item" onclick="nav('users')">
+      <span class="ni-icon">👥</span> Users
+    </button>
+  </div>
+
+  <div class="sidebar-section">
     <div class="sidebar-section-label">Widgets</div>
     <button class="nav-item" onclick="nav('widgets')">
       <span class="ni-icon">📊</span> Widgets
@@ -479,6 +486,40 @@ tbody tr:hover td{background:var(--bg);}
     </div>
 
     <!-- ── WIDGETS ── -->
+    <!-- ── USERS ── -->
+    <div class="view" id="view-users">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Users</div>
+          <div class="page-sub" style="font-size:15px;">Everyone who has registered to play on your site.</div>
+        </div>
+        <button class="btn btn-outline" onclick="exportUsersCSV()">Export CSV</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Registered users <span id="users-count" style="color:var(--text-3);font-weight:500;"></span></span>
+          <input class="form-input" id="users-search" placeholder="Search name or email"
+                 oninput="usersSetSearch(this.value)"
+                 style="width:230px;padding:7px 10px;font-size:12px;">
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th style="text-align:right;">Predictions</th>
+                <th>Registered</th>
+              </tr>
+            </thead>
+            <tbody id="users-table"></tbody>
+          </table>
+        </div>
+        <div id="users-pager" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-top:1px solid var(--border);"></div>
+      </div>
+    </div>
+
     <div class="view" id="view-widgets">
       <div class="page-header">
         <div>
@@ -1413,7 +1454,7 @@ function nav(view, subLabel){
   });
 
   // breadcrumb
-  const labels = {dashboard:'Dashboard','comp-detail':'Competitions','competitions':'Competitions',embed:'Embed & Integration',settings:'Settings',branding:'Customisation',billing:'Usage & Billing',widgets:'Widgets'};
+  const labels = {dashboard:'Dashboard','comp-detail':'Competitions','competitions':'Competitions',embed:'Embed & Integration',settings:'Settings',branding:'Customisation',billing:'Usage & Billing',widgets:'Widgets',users:'Users'};
   let bc = '';
   if(view==='comp-detail' && subLabel){
     bc = `<span>Competitions</span><span class="sep">/</span><span class="current">${subLabel}</span>`;
@@ -1426,6 +1467,7 @@ function nav(view, subLabel){
   if(view==='competitions') renderCompList();
   if(view==='embed') renderEmbedInfo();
   if(view==='widgets'){ renderWidgetsInfo(); renderTopScorersWidgetInfo(); }
+  if(view==='users') loadUsers();
   if(view==='settings') renderSettings();
   if(view==='branding') renderBranding();
   if(view==='billing') renderBilling();
@@ -3039,6 +3081,134 @@ function renderWidgetsInfo(){
 function copyWidgetsEmbed(){
   const code = `<iframe src="https://www.gameweek.cloud/widgets/squad-analytics?client=${CLIENT_KEY}" width="100%" height="680" frameborder="0" style="border-radius:10px;"></iframe>`;
   navigator.clipboard.writeText(code).then(()=>toast('Copied to clipboard'));
+}
+
+// ── USERS ───────────────────────────────────────────────────────────────
+// Registered players for this client, with how many predictions each has
+// submitted. Loaded once per visit and paged/filtered in memory, since the
+// list is small enough that round-tripping per page isn't worth it.
+const USERS_PAGE_SIZE = 25;
+let usersState = { rows:null, loading:false, page:1, search:'' };
+
+async function loadUsers(force){
+  if(usersState.loading) return;
+  if(usersState.rows && !force){ renderUsers(); return; }
+  usersState.loading = true;
+  renderUsers();
+  try{
+    const [{data:players, error:pErr}, {data:preds}] = await Promise.all([
+      supa.from('gw_players').select('username,email,created_at').eq('client_key',CLIENT_KEY),
+      supa.from('gw_predictions').select('username').eq('client_key',CLIENT_KEY),
+    ]);
+    if(pErr) throw pErr;
+    const counts = {};
+    (preds||[]).forEach(r=>{ if(r.username) counts[r.username] = (counts[r.username]||0) + 1; });
+    usersState.rows = (players||[]).map(p=>({
+      username: p.username || '—',
+      email: p.email || '',
+      predictions: counts[p.username] || 0,
+      created_at: p.created_at || null,
+    })).sort((a,b)=> b.predictions - a.predictions || a.username.localeCompare(b.username));
+  }catch(e){
+    console.error('GW: loadUsers failed', e);
+    usersState.rows = [];
+    toast('Could not load users');
+  }
+  usersState.loading = false;
+  renderUsers();
+}
+
+function usersFiltered(){
+  const q = usersState.search.trim().toLowerCase();
+  const rows = usersState.rows || [];
+  if(!q) return rows;
+  return rows.filter(r => r.username.toLowerCase().includes(q) || r.email.toLowerCase().includes(q));
+}
+function usersSetSearch(v){ usersState.search = v; usersState.page = 1; renderUsers(); }
+function usersGoPage(p){ usersState.page = p; renderUsers(); }
+
+function fmtUserDate(iso){
+  if(!iso) return '—';
+  const d = new Date(iso);
+  if(isNaN(d)) return '—';
+  return d.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'});
+}
+
+function renderUsers(){
+  const tb = document.getElementById('users-table');
+  const pager = document.getElementById('users-pager');
+  const countEl = document.getElementById('users-count');
+  if(!tb) return;
+
+  if(usersState.loading && !usersState.rows){
+    tb.innerHTML = '<tr><td colspan="4" style="padding:26px;text-align:center;color:var(--text-3);">Loading…</td></tr>';
+    if(pager) pager.innerHTML = '';
+    if(countEl) countEl.textContent = '';
+    return;
+  }
+
+  const all = usersFiltered();
+  const total = all.length;
+  const pages = Math.max(1, Math.ceil(total / USERS_PAGE_SIZE));
+  if(usersState.page > pages) usersState.page = pages;
+  const start = (usersState.page - 1) * USERS_PAGE_SIZE;
+  const slice = all.slice(start, start + USERS_PAGE_SIZE);
+
+  if(countEl){
+    const grand = (usersState.rows||[]).length;
+    countEl.textContent = usersState.search ? `· ${total} of ${grand}` : `· ${grand}`;
+  }
+
+  if(!total){
+    tb.innerHTML = `<tr><td colspan="4" style="padding:26px;text-align:center;color:var(--text-3);">${
+      usersState.search ? 'No users match that search.' : 'No registered users yet.'
+    }</td></tr>`;
+    if(pager) pager.innerHTML = '';
+    return;
+  }
+
+  tb.innerHTML = slice.map(r=>`<tr>
+    <td style="font-weight:600;">${escapeHtml(r.username)}</td>
+    <td style="color:var(--text-2);">${escapeHtml(r.email) || '—'}</td>
+    <td style="text-align:right;font-family:var(--mono);font-weight:700;">${r.predictions}</td>
+    <td style="color:var(--text-3);">${fmtUserDate(r.created_at)}</td>
+  </tr>`).join('');
+
+  if(pager){
+    const from = start + 1, to = Math.min(start + USERS_PAGE_SIZE, total);
+    pager.innerHTML = `
+      <span style="font-size:12px;color:var(--text-3);">Showing ${from}\u2013${to} of ${total}</span>
+      <span style="display:flex;align-items:center;gap:8px;">
+        <button class="btn btn-outline btn-sm" ${usersState.page<=1?'disabled':''} onclick="usersGoPage(${usersState.page-1})">Previous</button>
+        <span style="font-size:12px;color:var(--text-2);">Page ${usersState.page} of ${pages}</span>
+        <button class="btn btn-outline btn-sm" ${usersState.page>=pages?'disabled':''} onclick="usersGoPage(${usersState.page+1})">Next</button>
+      </span>`;
+  }
+}
+
+function escapeHtml(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// Exports the current filter, not just the visible page.
+function exportUsersCSV(){
+  const rows = usersFiltered();
+  if(!rows.length){ toast('Nothing to export'); return; }
+  const esc = v => {
+    const s = String(v==null?'':v);
+    return /[",\n;]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+  };
+  const lines = [['Username','Email','Predictions','Registered'].join(',')];
+  rows.forEach(r=>lines.push([esc(r.username), esc(r.email), r.predictions, esc(r.created_at||'')].join(',')));
+  // BOM so Excel opens UTF-8 names correctly
+  const blob = new Blob(['\ufeff' + lines.join('\r\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `gameweek-users-${CLIENT_KEY}-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast(`Exported ${rows.length} user${rows.length===1?'':'s'}`);
 }
 
 function renderTopScorersWidgetInfo(){
