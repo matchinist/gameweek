@@ -250,7 +250,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
     </div>
     <div class="main">
       <div class="main-header" id="main-header">
-        <div class="mh-left"><div class="mh-title">// teams</div></div>
+        <div class="mh-left"><div class="mh-title">Teams</div></div>
         <div id="main-header-actions">
           <button class="btn btn-primary btn-sm" onclick="openModal('modal-create-team')">+ Add Team</button>
         </div>
@@ -259,8 +259,12 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
         <div class="view active" id="view-teams">
           <div class="card">
             <div class="card-header">
-              <span class="card-title">All Teams — Global Pool</span>
-              <button class="btn btn-primary btn-sm" onclick="openModal('modal-create-team')">+ Add Team</button>
+              <span class="card-title">All Teams — Global Pool <span id="teams-count-label" style="color:var(--text-3);font-weight:400;"></span></span>
+              <span style="display:flex;align-items:center;gap:8px;">
+                <select class="form-select" id="teams-sport-filter" onchange="setTeamsSportFilter(this.value)"
+                        style="width:auto;min-width:150px;padding:6px 10px;font-size:12px;"></select>
+                <button class="btn btn-primary btn-sm" onclick="openModal('modal-create-team')">+ Add Team</button>
+              </span>
             </div>
             <div class="card-body">
               <div class="teams-grid" id="teams-grid"></div>
@@ -920,12 +924,12 @@ function navTo(page,tournamentId){
   if(page==='teams'){
     document.getElementById('nav-teams').classList.add('active');
     document.getElementById('view-teams').classList.add('active');
-    document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">// teams</div></div><div id="main-header-actions"><button class="btn btn-primary btn-sm" onclick="openModal(\'modal-create-team\')">+ Add Team</button></div>';
+    document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">Teams</div></div><div id="main-header-actions"><button class="btn btn-primary btn-sm" onclick="openModal(\'modal-create-team\')">+ Add Team</button></div>';
     renderTeams();
   } else if(page==='players'){
     document.getElementById('nav-players').classList.add('active');
     document.getElementById('view-players').classList.add('active');
-    document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">// players</div></div><div id="main-header-actions"><button class="btn btn-primary btn-sm" onclick="openModal(&#39;modal-create-player&#39;)">+ Add Player</button></div>';
+    document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">Players</div></div><div id="main-header-actions"><button class="btn btn-primary btn-sm" onclick="openModal(&#39;modal-create-player&#39;)">+ Add Player</button></div>';
     loadPlayers().then(renderPlayers);
   } else if(page==='tournament'){
     S.activeTournamentId=tournamentId;
@@ -935,12 +939,12 @@ function navTo(page,tournamentId){
   } else if(page==='coverage'){
     document.getElementById('nav-coverage').classList.add('active');
     document.getElementById('view-coverage').classList.add('active');
-    document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">// coverage</div></div>';
+    document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">Coverage</div></div>';
     renderCoverage();
   } else if(page==='clients'){
     document.getElementById('nav-clients').classList.add('active');
     document.getElementById('view-clients').classList.add('active');
-    document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">// clients</div></div>';
+    document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">Clients</div></div>';
     renderClients();
   }
 }
@@ -1100,18 +1104,51 @@ async function toggleClientSubscription(clientKey, required){
   }
 }
 
+let teamsSportFilter = 'all';
+function setTeamsSportFilter(v){ teamsSportFilter = v; renderTeams(); }
+
+// Circular badge: club crest when we have one, coloured initials otherwise.
+function teamBadgeHTML(t){
+  const initials = t.short || abbr(t.name || '?');
+  if(t.logo){
+    return `<div class="team-badge" style="background:#fff;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.08);overflow:hidden;">
+      <img src="${t.logo}" alt="" style="width:100%;height:100%;object-fit:contain;padding:4px;box-sizing:border-box;"
+           onerror="this.parentElement.setAttribute('style','background:${t.color}');this.parentElement.textContent='${initials}';">
+    </div>`;
+  }
+  return `<div class="team-badge" style="background:${t.color}">${initials}</div>`;
+}
+
 function renderTeams(){
   document.getElementById('nav-teams-count').textContent=S.teams.length;
   const el=document.getElementById('teams-grid');
-  if(!S.teams.length){el.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-icon">👕</div><div class="empty-title">No teams yet</div><div class="empty-sub">Add teams to the global pool.</div></div>';return;}
-  const sorted=[...S.teams].sort((a,b)=>a.name.localeCompare(b.name));
+
+  // Sport dropdown reflects the sports actually present in the pool.
+  const sel=document.getElementById('teams-sport-filter');
+  if(sel){
+    const counts={};
+    S.teams.forEach(t=>{ const s=t.sport||'football'; counts[s]=(counts[s]||0)+1; });
+    const keys=Object.keys(counts).sort((a,b)=>sportLabel(a).localeCompare(sportLabel(b)));
+    if(!keys.includes(teamsSportFilter) && teamsSportFilter!=='all') teamsSportFilter='all';
+    sel.innerHTML=`<option value="all"${teamsSportFilter==='all'?' selected':''}>All sports (${S.teams.length})</option>`
+      + keys.map(k=>`<option value="${k}"${teamsSportFilter===k?' selected':''}>${sportLabel(k)} (${counts[k]})</option>`).join('');
+  }
+
+  const filtered = teamsSportFilter==='all' ? S.teams : S.teams.filter(t=>(t.sport||'football')===teamsSportFilter);
+  const label=document.getElementById('teams-count-label');
+  if(label) label.textContent = teamsSportFilter==='all' ? `· ${S.teams.length}` : `· ${filtered.length} of ${S.teams.length}`;
+
+  if(!S.teams.length){el.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-icon">\ud83d\udc55</div><div class="empty-title">No teams yet</div><div class="empty-sub">Add your first team to get started.</div></div>';return;}
+  if(!filtered.length){el.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">\ud83d\udd0d</div><div class="empty-title">No ${sportLabel(teamsSportFilter)} teams</div><div class="empty-sub">Add one, or choose a different sport.</div></div>`;return;}
+
+  const sorted=[...filtered].sort((a,b)=>a.name.localeCompare(b.name));
   el.innerHTML=sorted.map(t=>`
     <div class="team-card">
-      <div class="team-badge" style="background:${t.color}">${t.short}</div>
+      ${teamBadgeHTML(t)}
       <div class="team-info"><div class="team-name">${t.name}</div><div class="team-short">${t.short}</div></div>
       <div class="team-actions">
-        <button class="team-action" onclick="editTeam('${t.id}')">✎</button>
-        <button class="team-action del" onclick="deleteTeam('${t.id}')">✕</button>
+        <button class="team-action" onclick="editTeam('${t.id}')">\u270e</button>
+        <button class="team-action del" onclick="deleteTeam('${t.id}')">\u2715</button>
       </div>
     </div>`).join('');
 }
