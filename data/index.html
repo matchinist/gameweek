@@ -2028,7 +2028,7 @@ async function loadDMData(){
             const localTeams = JSON.parse(localStorage.getItem(key)||'[]');
             if(localTeams.length){
               await supa.from('gw_dm_teams').upsert(
-                localTeams.map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||''})),
+                localTeams.map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||'',sport:t.sport||'football'})),
                 {onConflict:'id'}
               );
             }
@@ -2061,7 +2061,7 @@ async function loadDMData(){
   }
   // ── END MIGRATION ────────────────────────────────────────────────────────
 
-  S.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||''}))
+  S.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||'',sport:t.sport||'football'}))
     .sort((a,b)=>a.name.localeCompare(b.name));
   S.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,sport:t.sport||'football',color:t.color,seasons:t.seasons||{}}));
   const evMap={};
