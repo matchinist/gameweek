@@ -879,11 +879,11 @@ tbody tr:hover td{background:var(--bg);}
     <div id="form-signin">
       <div style="margin-bottom:14px;">
         <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;">Email</label>
-        <input type="email" id="admin-login-email" placeholder="you@company.com" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;" />
+        <input type="email" id="admin-login-email" autocomplete="username" name="gw-admin-email" placeholder="you@company.com" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;" />
       </div>
       <div style="margin-bottom:18px;">
         <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;">Password</label>
-        <input type="password" id="admin-login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;" />
+        <input type="password" id="admin-login-password" autocomplete="current-password" name="gw-admin-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;" />
       </div>
       <button id="admin-login-btn" onclick="adminLogin()" style="width:100%;padding:12px;background:#4F46E5;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">Sign in</button>
     </div>
@@ -892,11 +892,11 @@ tbody tr:hover td{background:var(--bg);}
     <div id="form-signup" style="display:none;">
       <div style="margin-bottom:14px;">
         <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;">Email</label>
-        <input type="email" id="signup-email" placeholder="you@company.com" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;" />
+        <input type="email" id="signup-email" autocomplete="username" name="gw-signup-email" placeholder="you@company.com" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;" />
       </div>
       <div style="margin-bottom:14px;">
         <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;">Password</label>
-        <input type="password" id="signup-password" placeholder="Min. 8 characters" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;" />
+        <input type="password" id="signup-password" autocomplete="new-password" name="gw-signup-password" placeholder="Min. 8 characters" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;box-sizing:border-box;" />
       </div>
       <div style="margin-bottom:18px;">
         <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;">Company / site name</label>
@@ -3399,6 +3399,11 @@ async function adminLogin(){
   const {error:authErr}=await supa.auth.signInWithPassword({email,password});
   if(authErr){btn.disabled=false;btn.textContent='Sign in';msg.style.color='#DC2626';msg.textContent='Incorrect email or password.';return;}
 
+  // Clear the credential fields before reloading. Leaving a filled password
+  // input in the DOM is what makes Chrome offer to "save a password" later
+  // when unrelated text fields are edited.
+  document.getElementById('admin-login-password').value='';
+  const su=document.getElementById('signup-password'); if(su) su.value='';
   document.getElementById('admin-login-overlay').style.display='none';
   location.reload();
 }
