@@ -499,10 +499,11 @@ tbody tr:hover td{background:var(--bg);}
       <div class="card">
         <div class="card-header">
           <span class="card-title">Registered users <span id="users-count" style="color:var(--text-3);font-weight:500;"></span></span>
-          <input class="form-input" id="users-search" type="search" name="gw-user-filter"
-                 placeholder="Search users" autocomplete="gw-no-autofill"
+          <input class="form-input" id="users-search" type="text" name="gw-user-filter"
+                 placeholder="Search users" autocomplete="gw-no-autofill" readonly
                  autocorrect="off" autocapitalize="off" spellcheck="false"
                  data-lpignore="true" data-form-type="other"
+                 onfocus="this.removeAttribute('readonly')"
                  oninput="usersSetSearch(this.value)"
                  style="width:230px;padding:7px 10px;font-size:12px;">
         </div>
@@ -1470,7 +1471,16 @@ function nav(view, subLabel){
   if(view==='competitions') renderCompList();
   if(view==='embed') renderEmbedInfo();
   if(view==='widgets'){ renderWidgetsInfo(); renderTopScorersWidgetInfo(); }
-  if(view==='users') loadUsers();
+  if(view==='users'){
+    const clearSearch = ()=>{
+      const el = document.getElementById('users-search');
+      if(el && el.value){ el.value=''; usersState.search=''; renderUsers(); }
+    };
+    clearSearch();
+    setTimeout(clearSearch, 150);
+    setTimeout(clearSearch, 600);
+    loadUsers();
+  }
   if(view==='settings') renderSettings();
   if(view==='branding') renderBranding();
   if(view==='billing') renderBilling();
@@ -1840,6 +1850,14 @@ const SPORT_MARKETS = {
     {type:'margin', label:'Winning Margin',    sub:'How many runs the winner wins by: 1, 2–3, 4–6, or 7+', points:4,
       metric:'margin',
       options:[{key:'m1',label:'1',max:1},{key:'m2',label:'2–3',max:3},{key:'m3',label:'4–6',max:6},{key:'m4',label:'7+'}]},
+  ],
+  american_football: [
+    {type:'winner', label:'Winner',         sub:'Which team wins the game',                                              points:2},
+    // Buckets follow how the game is actually scored: a field goal, a
+    // touchdown, two scores, then a blowout.
+    {type:'margin', label:'Winning Margin', sub:'How many points the winner wins by: 1–3, 4–7, 8–14, or 15+', points:4,
+      metric:'margin',
+      options:[{key:'m1',label:'1–3',max:3},{key:'m2',label:'4–7',max:7},{key:'m3',label:'8–14',max:14},{key:'m4',label:'15+'}]},
   ],
   basketball: [
     {type:'winner', label:'Winner',            sub:'Which team wins — no draws in basketball',                        points:2},
