@@ -959,6 +959,13 @@ tbody tr:hover td{background:var(--bg);}
       </div>
 
       <div class="form-group">
+        <label class="form-label">Competition name (optional)</label>
+        <input class="form-input" id="new-comp-name" placeholder="Leave blank to use the mode name" maxlength="60"
+               autocomplete="off" />
+        <div style="font-size:11px;color:var(--text-3);margin-top:6px;">The heading players see. Defaults to the game mode’s name if left empty.</div>
+      </div>
+
+      <div class="form-group">
         <label class="form-label">Scope description (optional)</label>
         <input class="form-input" id="new-comp-scope" placeholder="e.g. Premier League · Full season 2025/26 · 6 big clubs" maxlength="120" />
         <div style="font-size:11px;color:var(--text-3);margin-top:6px;">Shown to players under the competition name — a quick summary of what it covers. You can add or change this later from Settings too.</div>
@@ -1672,6 +1679,12 @@ function renderCompDetail(){
         <div class="card-header"><span class="card-title">Competition Settings</span></div>
         <div class="card-body">
           <div class="form-group">
+            <label class="form-label">Competition name</label>
+            <input class="form-input" id="edit-comp-name" placeholder="Leave blank to use the mode name"
+                   value="${(c.name||'').replace(/"/g,'&quot;')}" maxlength="60" autocomplete="off" />
+            <div style="font-size:11px;color:var(--text-3);margin-top:6px;">The heading players see for this competition.</div>
+          </div>
+          <div class="form-group">
             <label class="form-label">Scope description</label>
             <input class="form-input" id="edit-comp-scope" placeholder="e.g. Premier League · Full season 2025/26 · 6 big clubs" value="${(c.scopeText||'').replace(/"/g,'&quot;')}" maxlength="120" />
             <div style="font-size:11px;color:var(--text-3);margin-top:6px;">Shown to players under the competition name — a quick summary of what it covers. Optional.</div>
@@ -1965,7 +1978,8 @@ function populateLineupTeams(){
 
 async function createComp(){
   const mode = document.getElementById('new-comp-mode').value;
-  const name = MODE_DESCRIPTIONS[mode]?.title || mode;
+  const customName = document.getElementById('new-comp-name')?.value.trim() || '';
+  const name = customName || MODE_DESCRIPTIONS[mode]?.title || mode;
   let scoring = null, markets = null;
   let scoreSport = null;
   if(mode==='score'){
@@ -2029,6 +2043,8 @@ async function createComp(){
   if(!ok){ state.competitions = state.competitions.filter(x=>x.id!==c.id); return; } // saveAdminState already toasted the failure
   closeModal('modal-create-comp');
   document.getElementById('new-comp-mode').value='score';
+  const nameField=document.getElementById('new-comp-name'); if(nameField) nameField.value='';
+  const scopeField=document.getElementById('new-comp-scope'); if(scopeField) scopeField.value='';
   const lt = document.getElementById('lineup-team'); if(lt) lt.value='';
   const ltg = document.getElementById('lineup-team-group'); if(ltg) ltg.style.display='none';
   const rc = document.getElementById('roulette-config'); if(rc) rc.style.display='none';
@@ -2882,6 +2898,11 @@ async function toggleLongTerm(id,val){ getComp(id).longTerm=val; await saveAdmin
 
 async function saveCompSettings(){
   const c = getComp(state.currentComp);
+  const nameInput = document.getElementById('edit-comp-name');
+  if(nameInput){
+    // Blank falls back to the mode's own title rather than an empty heading.
+    c.name = nameInput.value.trim() || MODE_DESCRIPTIONS[c.mode]?.title || c.mode;
+  }
   const scopeInput = document.getElementById('edit-comp-scope');
   if(scopeInput) c.scopeText = scopeInput.value.trim();
   // Score mode — check if points changed and warn
