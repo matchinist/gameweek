@@ -316,6 +316,20 @@ function gwContrast(a,b){
   if(la==null||lb==null) return 21;
   return (Math.max(la,lb)+0.05)/(Math.min(la,lb)+0.05);
 }
+// Correct/incorrect stay green and red — that mapping is universal in sports
+// UIs and carries meaning the accent colour can't. But a green tuned for
+// white cards turns muddy on a dark one, so pick the variant that suits the
+// surface. Hue is unchanged; only lightness moves.
+function gwApplySemantics(root, surface){
+  var dark = (gwLum(surface) != null) && gwLum(surface) < 0.4;
+  root.setProperty('--green',       dark ? '#4ADE80' : '#16A34A');
+  root.setProperty('--red',         dark ? '#F87171' : '#DC2626');
+  // Pill backgrounds: a translucent tint of the chosen variant, so they
+  // read on both light and dark cards.
+  root.setProperty('--green-light', dark ? 'rgba(74,222,128,0.16)' : '#DCFCE7');
+  root.setProperty('--red-light',   dark ? 'rgba(248,113,113,0.16)' : '#FEE2E2');
+}
+
 function gwReadableText(text, surface){
   if(!text || !surface) return text;
   if(gwContrast(text, surface) >= 3) return text;
@@ -349,6 +363,7 @@ function gwReadableText(text, surface){
     }
     if(t.bg_color) root.setProperty('--bg', t.bg_color);
     if(t.surface_color) root.setProperty('--white', t.surface_color);
+    gwApplySemantics(root, t.surface_color || '#FFFFFF');
     if(t.text_color){
       var txt = gwReadableText(t.text_color, t.surface_color || '#FFFFFF');
       root.setProperty('--text', txt);
@@ -1834,7 +1849,7 @@ function renderLineupPredictor(comp){
         <span style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;">${t('form')}</span>
         ${formationCtl}
       </div>
-      <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:800;padding:4px 11px;border-radius:999px;background:${totalPts>0?'var(--green-light)':'var(--bg)'};color:${totalPts>0?'var(--green)':'var(--text-3)'};">${totalPts>0?'+':''}${totalPts} pts</span>
+      <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:800;padding:4px 11px;border-radius:999px;background:${totalPts>0?'var(--green-light)':'var(--bg)'};color:${totalPts>0?'var(--green)':'var(--text-3)'};">${totalPts>0?'\u2713 +':''}${totalPts} pts</span>
     </div>
     <div style="display:flex;gap:8px;padding:10px 16px 4px;">
       ${bonusBoxHTML('firstGoal', t('bonusFirstGoal'), bonus.firstGoal)}
@@ -2834,7 +2849,7 @@ function renderEventCard(ev,comp,isRoundOpen){
       html+='</div>';
     } else if(hasRes&&comp.mode==='score'&&earnedPts!=null){
       html+=`<div class="pred-result-row"><div class="pred-made">${t('yourPick')}: <strong>${pl}</strong></div><span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'✗ 0 pts'}</span></div>`;
-      if(pointsBreakdown)html+=`<div style="font-size:12px;color:${earnedPts>0?'var(--green)':'var(--text-3)'};margin-top:4px;font-weight:600;">${pointsBreakdown}</div>`;
+      if(pointsBreakdown)html+=`<div style="font-size:12px;color:${earnedPts>0?'var(--green)':'var(--text-3)'};margin-top:4px;font-weight:600;">${earnedPts>0?'\u2713 ':'\u2717 '}${pointsBreakdown}</div>`;
     } else if(hasRes&&correct!=null){
       html+=`<div class="pred-result-row"><div class="pred-made">${t('yourPick')}: <strong>${pl}</strong></div><span class="pred-correct ${correct?'yes':'no'}">${correct?'\u2713 '+t('correct'):'\u2717 '+t('wrong')}</span></div>`;
       if(comp.mode==='lms'&&ev._survivorCount!==undefined){
@@ -3858,7 +3873,7 @@ function renderEventCard(ev,comp,isOpen){
       html+='</div>';
     } else if(hasRes&&comp.mode==='score'&&earnedPts!=null){
       html+=`<div class="pred-result-row"><div class="pred-made">${t('yourPick')}: <strong>${pl}</strong></div><span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'\u2717 0 pts'}</span></div>`;
-      if(pointsBreakdown)html+=`<div style="font-size:12px;color:${earnedPts>0?'var(--green)':'var(--text-3)'};margin-top:4px;font-weight:600;">${pointsBreakdown}</div>`;
+      if(pointsBreakdown)html+=`<div style="font-size:12px;color:${earnedPts>0?'var(--green)':'var(--text-3)'};margin-top:4px;font-weight:600;">${earnedPts>0?'\u2713 ':'\u2717 '}${pointsBreakdown}</div>`;
     } else if(hasRes&&correct!=null){
       html+=`<div class="pred-result-row"><div class="pred-made">${t('yourPick')}: <strong>${pl}</strong></div><span class="pred-correct ${correct?'yes':'no'}">${correct?'\u2713 '+t('correct'):'\u2717 '+t('wrong')}</span></div>`;
       if(comp.mode==='lms'&&ev._survivorCount!==undefined){
@@ -4626,6 +4641,7 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
           }
           if(op.bg_color) root.setProperty('--bg', op.bg_color);
           if(op.surface_color) root.setProperty('--white', op.surface_color);
+          gwApplySemantics(root, op.surface_color || '#FFFFFF');
           if(op.text_color){
             // Legibility guard: content sits on cards, so check the text
             // colour against the surface rather than the page background.
