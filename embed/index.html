@@ -159,7 +159,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .btns-1x2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
 .btn-1x2{flex:1;padding:11px 4px;border:1px solid var(--border);border-radius:7px;background:var(--white);font-family:Inter,sans-serif;font-size:11px;font-weight:600;color:var(--text);cursor:pointer;transition:all 0.13s;text-align:center;line-height:1.2;}.btn-1x2:disabled{cursor:default;}.btn-ou:disabled{cursor:default;}
 @media(hover:hover) and (pointer:fine){.btn-1x2:hover{border-color:var(--accent);color:var(--accent);}}
-.btn-1x2.selected{border-color:#2563EB;background:#2563EB;color:white;}
+.btn-1x2.selected{border-color:var(--accent);background:var(--accent);color:var(--on-accent,#fff);}
 .pred-result-row{display:flex;align-items:center;justify-content:space-between;}
 .pred-made{font-family:Inter,sans-serif;font-size:13px;color:var(--text-2);font-weight:500;}
 .pred-made strong{font-family:'DM Mono',monospace;color:var(--text);font-weight:700;}
@@ -249,8 +249,8 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .btns-ou{display:flex;gap:6px;}
 .btn-ou{flex:1;padding:9px 4px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-family:Inter,sans-serif;font-size:11px;font-weight:600;color:var(--text);cursor:pointer;transition:all 0.13s;text-align:center;line-height:1.3;}
 .btn-ou .sub{display:block;font-size:8px;font-weight:400;opacity:0.6;margin-top:2px;}
-.btn-ou.over.selected{border-color:#2563EB;background:#2563EB;color:white;}
-.btn-ou.under.selected{border-color:#2563EB;background:#2563EB;color:white;}
+.btn-ou.over.selected{border-color:var(--accent);background:var(--accent);color:var(--on-accent,#fff);}
+.btn-ou.under.selected{border-color:var(--accent);background:var(--accent);color:var(--on-accent,#fff);}
 /* ── AUTH MODAL ── */
 .auth-modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,17,23,0.5);backdrop-filter:blur(2px);z-index:200;align-items:center;justify-content:center;padding:16px;}
 .auth-modal-overlay.open{display:flex;}
@@ -297,6 +297,36 @@ table.lb-table{width:100%;border-collapse:collapse;}
 #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
 </style>
 <script>
+// Most content sits on the card surface, not the page background. If an
+// operator picks a text colour that can't be read there (white text with
+// white cards, say), fall back to a legible tone rather than rendering
+// invisible text.
+function gwLum(hex){
+  var h = String(hex||'').replace('#','');
+  if(h.length===3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  if(h.length<6) return null;
+  var v = [0,2,4].map(function(i){
+    var c = parseInt(h.substr(i,2),16)/255;
+    return c<=0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055,2.4);
+  });
+  return 0.2126*v[0] + 0.7152*v[1] + 0.0722*v[2];
+}
+function gwContrast(a,b){
+  var la=gwLum(a), lb=gwLum(b);
+  if(la==null||lb==null) return 21;
+  return (Math.max(la,lb)+0.05)/(Math.min(la,lb)+0.05);
+}
+function gwReadableText(text, surface){
+  if(!text || !surface) return text;
+  if(gwContrast(text, surface) >= 3) return text;
+  // Below the readable threshold: choose whichever of dark/light actually
+  // contrasts better, rather than assuming from the surface's lightness.
+  // Mid-tone surfaces (a muted gold, say) are poor against both, so the
+  // comparison matters.
+  return gwContrast('#111111', surface) >= gwContrast('#FFFFFF', surface) ? '#111111' : '#FFFFFF';
+}
+</script>
+<script>
 // Apply any cached operator theme immediately, before first paint, so
 // repeat visits don't flash the default light colours before the async
 // fetch (further down) resolves and applies the real theme. First-ever
@@ -313,14 +343,18 @@ table.lb-table{width:100%;border-collapse:collapse;}
       root.setProperty('--accent', t.accent_color);
       root.setProperty('--accent-2', t.accent_color);
       root.setProperty('--accent-light', t.accent_color+'1A');
+      // Text drawn on top of the accent (selected picks, primary buttons)
+      // must stay readable when the accent is a light tone.
+      root.setProperty('--on-accent', gwReadableText('#FFFFFF', t.accent_color));
     }
     if(t.bg_color) root.setProperty('--bg', t.bg_color);
     if(t.surface_color) root.setProperty('--white', t.surface_color);
     if(t.text_color){
-      root.setProperty('--text', t.text_color);
-      root.setProperty('--text-2', t.text_color+'B3');
-      root.setProperty('--text-3', t.text_color+'80');
-      root.setProperty('--border', t.text_color+'26');
+      var txt = gwReadableText(t.text_color, t.surface_color || '#FFFFFF');
+      root.setProperty('--text', txt);
+      root.setProperty('--text-2', txt+'B3');
+      root.setProperty('--text-3', txt+'80');
+      root.setProperty('--border', txt+'26');
     }
   }catch(e){}
 })();
@@ -4588,14 +4622,18 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
             root.setProperty('--accent', op.accent_color);
             root.setProperty('--accent-2', op.accent_color);
             root.setProperty('--accent-light', op.accent_color+'1A'); // ~10% alpha
+            root.setProperty('--on-accent', gwReadableText('#FFFFFF', op.accent_color));
           }
           if(op.bg_color) root.setProperty('--bg', op.bg_color);
           if(op.surface_color) root.setProperty('--white', op.surface_color);
           if(op.text_color){
-            root.setProperty('--text', op.text_color);
-            root.setProperty('--text-2', op.text_color+'B3'); // ~70% alpha
-            root.setProperty('--text-3', op.text_color+'80'); // ~50% alpha
-            root.setProperty('--border', op.text_color+'26'); // ~15% alpha
+            // Legibility guard: content sits on cards, so check the text
+            // colour against the surface rather than the page background.
+            const txt = gwReadableText(op.text_color, op.surface_color || '#FFFFFF');
+            root.setProperty('--text', txt);
+            root.setProperty('--text-2', txt+'B3'); // ~70% alpha
+            root.setProperty('--text-3', txt+'80'); // ~50% alpha
+            root.setProperty('--border', txt+'26'); // ~15% alpha
           }
           // Cache for next visit's pre-paint script (see <head>), so the
           // flash of default colours only ever happens once per client.
