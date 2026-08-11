@@ -65,6 +65,8 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .comp-tab:hover{color:var(--text);}
 .comp-tab.active{font-weight:700;color:var(--accent);}
 .comp-tab-name{font-size:13px;}
+.comp-tabs-single{justify-content:center;}
+.comp-tab-single{padding:10px 4px 12px;font-size:19px;font-weight:800;letter-spacing:-0.3px;color:var(--text);cursor:default;white-space:nowrap;}
 
 
 .round-bar{display:flex;align-items:center;gap:8px;padding:10px 0;background:var(--white);border-bottom:1px solid var(--border);flex-wrap:wrap;}
@@ -1255,17 +1257,28 @@ function toggleProfile(){
 function renderCompTabs(){
   const el=document.getElementById('comp-tabs');
   const wrap=document.getElementById('comp-tabs-wrap');
+  const scopeEl=document.getElementById('comp-scope-text');
   // A comp= filter that narrows things to exactly one competition means the
   // embed is meant to show just that competition on its own — no switcher.
   compTabsHidden = COMP_FILTER.length>0 && COMPS.length===1;
   if(wrap) wrap.style.display = compTabsHidden ? 'none' : 'block';
-  el.innerHTML=COMPS.map((c,i)=>`<button class="comp-tab${i===currentCompIdx?' active':''}" onclick="switchComp(${i})"><span style="display:inline-block;padding:7px 14px;border-radius:8px;background:${i===currentCompIdx?'var(--accent-light)':'transparent'};">${c.name}</span></button>`).join('');
+  if(compTabsHidden) return;
+
+  const single = COMPS.length===1;
+  el.className = single ? 'comp-tabs comp-tabs-single' : 'comp-tabs';
+  if(single){
+    // Only one competition configured — show its name as a plain, centered
+    // header instead of a clickable tab; there's nothing to switch to.
+    el.innerHTML = `<div class="comp-tab-single">${COMPS[0].name}</div>`;
+  } else {
+    el.innerHTML=COMPS.map((c,i)=>`<button class="comp-tab${i===currentCompIdx?' active':''}" onclick="switchComp(${i})"><span style="display:inline-block;padding:7px 14px;border-radius:8px;background:${i===currentCompIdx?'var(--accent-light)':'transparent'};">${c.name}</span></button>`).join('');
+  }
   document.documentElement.style.setProperty('--comp-color',COMPS[currentCompIdx].color);
-  const scopeEl=document.getElementById('comp-scope-text');
   if(scopeEl){
     const scopeText=COMPS[currentCompIdx].scopeText;
     if(scopeText){ scopeEl.textContent=scopeText.replace(/\s*\|\s*/g,' · '); scopeEl.style.display='block'; }
     else { scopeEl.style.display='none'; }
+    scopeEl.style.textAlign = single ? 'center' : '';
   }
 }
 function switchComp(idx){
