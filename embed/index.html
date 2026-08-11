@@ -512,7 +512,7 @@ const I18N = {
     agreeTermsPrefix:'I agree to the', and:'and', termsAndConditions:'Terms and Conditions', privacyPolicy:'Privacy Policy',
     errNotRegisteredHere:"That account exists, but isn't registered on this site yet — try Register instead",
     errGeneric:'Something went wrong — please try again', creatingAccount:'Creating account…', signingIn:'Signing in…',
-    homeWin:'1', away:'2', over:'Over', under:'Under', yes:'Yes', no:'No',
+    homeWin:'Home', away:'Away', draw:'Draw', over:'Over', under:'Under', yes:'Yes', no:'No',
     mkt1x2:'1X2 Result', mktOu25:'Over/Under 2.5', mktBtts:'Both Teams to Score',
     explainerScore:'Earn {exact} for a spot-on scoreline, {home} for the right result, and {total} for the correct total goals.',
     ptsForMarket:'{pts} for {market}',
@@ -562,7 +562,7 @@ const I18N = {
     agreeTermsPrefix:'Kabul ediyorum:', and:'ve', termsAndConditions:'Kullanım Koşulları', privacyPolicy:'Gizlilik Politikası',
     errNotRegisteredHere:'Bu hesap var, ancak bu sitede henüz kayıtlı değil — Kayıt Ol\u0027u deneyin',
     errGeneric:'Bir şeyler ters gitti — lütfen tekrar deneyin', creatingAccount:'Hesap oluşturuluyor…', signingIn:'Giriş yapılıyor…',
-    homeWin:'1', away:'2', over:'Üst', under:'Alt', yes:'Evet', no:'Hayır',
+    homeWin:'Ev Sahibi', away:'Deplasman', draw:'Beraberlik', over:'Üst', under:'Alt', yes:'Evet', no:'Hayır',
     mkt1x2:'Maç Sonucu', mktOu25:'2.5 Alt / Üst', mktBtts:'Karşılıklı Gol Var',
     explainerScore:'Tam isabetli skor için {exact}, doğru sonuç için {home}, doğru toplam gol için {total} kazanın.',
     ptsForMarket:'{market} için {pts}',
@@ -612,7 +612,7 @@ const I18N = {
     agreeTermsPrefix:'Ich stimme den', and:'und', termsAndConditions:'AGB', privacyPolicy:'Datenschutzerklärung',
     errNotRegisteredHere:'Dieses Konto existiert, ist aber auf dieser Seite noch nicht registriert — nutze bitte Registrieren',
     errGeneric:'Etwas ist schiefgelaufen — bitte versuche es erneut', creatingAccount:'Konto wird erstellt…', signingIn:'Anmeldung läuft…',
-    homeWin:'1', away:'2', over:'Über', under:'Unter', yes:'Ja', no:'Nein',
+    homeWin:'Heim', away:'Auswärts', draw:'Unentschieden', over:'Über', under:'Unter', yes:'Ja', no:'Nein',
     mkt1x2:'1X2 Ergebnis', mktOu25:'Über/Unter 2,5', mktBtts:'Beide Teams treffen',
     explainerScore:'Erhalte {exact} für das exakte Ergebnis, {home} für den richtigen Ausgang und {total} für die korrekte Gesamtzahl der Tore.',
     ptsForMarket:'{pts} für {market}',
@@ -672,7 +672,7 @@ function marketBucketKey(mkt,res){
   return mkt.options[mkt.options.length-1].key;
 }
 function marketOptions(mkt,ev){
-  if(mkt.type==='1x2') return [{key:'H',label:t('homeWin')},{key:'D',label:'X'},{key:'A',label:t('away')}];
+  if(mkt.type==='1x2') return [{key:'H',label:t('homeWin')},{key:'D',label:t('draw')},{key:'A',label:t('away')}];
   if(mkt.type==='ou25') return [{key:'O',label:t('over')},{key:'U',label:t('under')}];
   if(mkt.type==='btts') return [{key:'Y',label:t('yes')},{key:'N',label:t('no')}];
   if(mkt.type==='winner') return [{key:'H',label:ev.home},{key:'A',label:ev.away}];
@@ -2885,7 +2885,7 @@ function renderEventCard(ev,comp,isRoundOpen){
   if(canPredict){
     // Open for prediction
     if(comp.mode==='lms'){
-      html+=`<div class="btns-1x2"><button class="btn-1x2${pred==='H'?' selected home':''}" data-val="H" onclick="pick('${ev.id}','H')">${t('homeWin')}</button><button class="btn-1x2${pred==='D'?' selected draw':''}" data-val="D" onclick="pick('${ev.id}','D')">X</button><button class="btn-1x2${pred==='A'?' selected away':''}" data-val="A" onclick="pick('${ev.id}','A')">${t('away')}</button></div>`;
+      html+=`<div class="btns-1x2"><button class="btn-1x2${pred==='H'?' selected home':''}" data-val="H" onclick="pick('${ev.id}','H')">${t('homeWin')}</button><button class="btn-1x2${pred==='D'?' selected draw':''}" data-val="D" onclick="pick('${ev.id}','D')">${t('draw')}</button><button class="btn-1x2${pred==='A'?' selected away':''}" data-val="A" onclick="pick('${ev.id}','A')">${t('away')}</button></div>`;
     } else if(comp.mode==='score'&&comp.scoring?.scoreOptions){
       html+='<div class="btns-1x2" style="flex-wrap:wrap;">'+comp.scoring.scoreOptions.map(function(o){
         var sel=(pred&&parseInt(pred.h)===o[0]&&parseInt(pred.a)===o[1])?' selected home':'';
@@ -2900,7 +2900,7 @@ function renderEventCard(ev,comp,isRoundOpen){
         html+=`<div><div class="pred-label" style="margin-bottom:5px;font-size:13px;font-weight:600;color:var(--text-2);">${marketLabel(mkt)}</div>`;
         const isLocked=(()=>{const ko=parseKickoffMs(ev.kickoffRaw||ev.kickoff);return ko!=null?(Date.now()>=ko-30*60*1000):(ev.locked||false);})();
         const dis=isLocked?'disabled style="pointer-events:none;opacity:0.7;"':'';
-        if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${mpred['1x2']==='H'?' selected home':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','H')"`}>${t('homeWin')}</button><button class="btn-1x2${mpred['1x2']==='D'?' selected draw':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','D')"`}>X</button><button class="btn-1x2${mpred['1x2']==='A'?' selected away':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','A')"`}>Away</button></div>`;
+        if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${mpred['1x2']==='H'?' selected home':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','H')"`}>${t('homeWin')}</button><button class="btn-1x2${mpred['1x2']==='D'?' selected draw':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','D')"`}>${t('draw')}</button><button class="btn-1x2${mpred['1x2']==='A'?' selected away':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','A')"`}>${t('away')}</button></div>`;
         else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['ou25']==='O'?' selected':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','ou25','O')"`}>${t('over')}</button><button class="btn-ou under${mpred['ou25']==='U'?' selected':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','ou25','U')"`}>${t('under')}</button></div>`;
         else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['btts']==='Y'?' selected':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','btts','Y')"`}>${t('yes')}</button><button class="btn-ou under${mpred['btts']==='N'?' selected':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','btts','N')"`}>${t('no')}</button></div>`;
         else html+=marketButtonsHTML(mkt,ev,mpred[mkt.type],!isLocked);
@@ -2911,7 +2911,7 @@ function renderEventCard(ev,comp,isRoundOpen){
   } else if(hasPred){
     // Locked — show pick and optionally points
     let pl='';
-    if(comp.mode==='lms')pl=pred==='H'?ev.home+' (Home)':pred==='D'?'Draw':ev.away+' (Away)';
+    if(comp.mode==='lms')pl=pred==='H'?ev.home+' ('+t('homeWin')+')':pred==='D'?t('draw'):ev.away+' ('+t('away')+')';
     else if(comp.mode==='score')pl=(pred.h??'-')+' \u2013 '+(pred.a??'-');
     else if(comp.mode==='betting'&&typeof pred==='object'){
       if(!hasRes){
@@ -2919,7 +2919,7 @@ function renderEventCard(ev,comp,isRoundOpen){
         html+='<div style="display:flex;flex-direction:column;gap:10px;">';
         markets.forEach(mkt=>{
           html+=`<div><div class="pred-label" style="margin-bottom:5px;font-size:13px;font-weight:600;color:var(--text-2);">${marketLabel(mkt)}</div>`;
-          if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${mpred['1x2']==='H'?' selected home':''}" disabled>${t('homeWin')}</button><button class="btn-1x2${mpred['1x2']==='D'?' selected draw':''}" disabled>X</button><button class="btn-1x2${mpred['1x2']==='A'?' selected away':''}" disabled>Away</button></div>`;
+          if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${mpred['1x2']==='H'?' selected home':''}" disabled>${t('homeWin')}</button><button class="btn-1x2${mpred['1x2']==='D'?' selected draw':''}" disabled>${t('draw')}</button><button class="btn-1x2${mpred['1x2']==='A'?' selected away':''}" disabled>${t('away')}</button></div>`;
           else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['ou25']==='O'?' selected':''}" disabled>${t('over')}</button><button class="btn-ou under${mpred['ou25']==='U'?' selected':''}" disabled>${t('under')}</button></div>`;
           else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['btts']==='Y'?' selected':''}" disabled>${t('yes')}</button><button class="btn-ou under${mpred['btts']==='N'?' selected':''}" disabled>${t('no')}</button></div>`;
           else html+=marketButtonsHTML(mkt,ev,mpred[mkt.type],false);
@@ -2935,7 +2935,7 @@ function renderEventCard(ev,comp,isRoundOpen){
       html+='<div style="display:flex;flex-direction:column;gap:8px;">';
       bettingMarketDetails.forEach(({mkt,pick,pts,isRight})=>{
         html+=`<div><div style="margin-bottom:5px;font-size:13px;font-weight:600;color:var(--text-2);display:flex;justify-content:space-between;align-items:center;"><span>${marketLabel(mkt)}</span><span class="pred-correct ${isRight?'yes':'no'}">+${pts} pts</span></div>`;
-        if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${pick==='H'?' selected home':''}" disabled>${t('homeWin')}</button><button class="btn-1x2${pick==='D'?' selected draw':''}" disabled>X</button><button class="btn-1x2${pick==='A'?' selected away':''}" disabled>${t('away')}</button></div>`;
+        if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${pick==='H'?' selected home':''}" disabled>${t('homeWin')}</button><button class="btn-1x2${pick==='D'?' selected draw':''}" disabled>${t('draw')}</button><button class="btn-1x2${pick==='A'?' selected away':''}" disabled>${t('away')}</button></div>`;
         else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='O'?' selected':''}" disabled>${t('over')}</button><button class="btn-ou under${pick==='U'?' selected':''}" disabled>${t('under')}</button></div>`;
         else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='Y'?' selected':''}" disabled>${t('yes')}</button><button class="btn-ou under${pick==='N'?' selected':''}" disabled>${t('no')}</button></div>`;
         else html+=marketButtonsHTML(mkt,ev,pick,false);
@@ -2960,8 +2960,8 @@ function renderEventCard(ev,comp,isRoundOpen){
           var h=mpred2['1x2'],o=mpred2['ou25'],b=mpred2['btts'];
           if(mkt.type==='1x2')html+='<div class="btns-1x2">'
             +'<button class="btn-1x2'+(h==='H'?' selected home':'')+'" disabled>'+t('homeWin')+'</button>'
-            +'<button class="btn-1x2'+(h==='D'?' selected draw':'')+'" disabled>X</button>'
-            +'<button class="btn-1x2'+(h==='A'?' selected away':'')+'" disabled>Away</button>'
+            +'<button class="btn-1x2'+(h==='D'?' selected draw':'')+'" disabled>'+t('draw')+'</button>'
+            +'<button class="btn-1x2'+(h==='A'?' selected away':'')+'" disabled>'+t('away')+'</button>'
             +'</div>';
           else if(mkt.type==='ou25')html+='<div class="btns-ou">'
             +'<button class="btn-ou over'+(o==='O'?' selected':'')+'" disabled>'+t('over')+'</button>'
@@ -3925,7 +3925,7 @@ function renderEventCard(ev,comp,isOpen){
   if(canPredict){
     // Open for prediction
     if(comp.mode==='lms'){
-      html+=`<div class="btns-1x2"><button class="btn-1x2${pred==='H'?' selected home':''}" data-val="H" onclick="pick('${ev.id}','H')">${t('homeWin')}</button><button class="btn-1x2${pred==='D'?' selected draw':''}" data-val="D" onclick="pick('${ev.id}','D')">X</button><button class="btn-1x2${pred==='A'?' selected away':''}" data-val="A" onclick="pick('${ev.id}','A')">${t('away')}</button></div>`;
+      html+=`<div class="btns-1x2"><button class="btn-1x2${pred==='H'?' selected home':''}" data-val="H" onclick="pick('${ev.id}','H')">${t('homeWin')}</button><button class="btn-1x2${pred==='D'?' selected draw':''}" data-val="D" onclick="pick('${ev.id}','D')">${t('draw')}</button><button class="btn-1x2${pred==='A'?' selected away':''}" data-val="A" onclick="pick('${ev.id}','A')">${t('away')}</button></div>`;
     } else if(comp.mode==='score'&&comp.scoring?.scoreOptions){
       html+='<div class="btns-1x2" style="flex-wrap:wrap;">'+comp.scoring.scoreOptions.map(function(o){
         var sel=(pred&&parseInt(pred.h)===o[0]&&parseInt(pred.a)===o[1])?' selected home':'';
@@ -3940,7 +3940,7 @@ function renderEventCard(ev,comp,isOpen){
         html+=`<div><div class="pred-label" style="margin-bottom:5px;font-size:13px;font-weight:600;color:var(--text-2);">${marketLabel(mkt)}</div>`;
         const isLocked=(()=>{const ko=parseKickoffMs(ev.kickoffRaw||ev.kickoff);return ko!=null?(Date.now()>=ko-30*60*1000):(ev.locked||false);})();
         const dis=isLocked?'disabled style="pointer-events:none;opacity:0.7;"':'';
-        if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${mpred['1x2']==='H'?' selected home':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','H')"`}>${t('homeWin')}</button><button class="btn-1x2${mpred['1x2']==='D'?' selected draw':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','D')"`}>X</button><button class="btn-1x2${mpred['1x2']==='A'?' selected away':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','A')"`}>Away</button></div>`;
+        if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${mpred['1x2']==='H'?' selected home':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','H')"`}>${t('homeWin')}</button><button class="btn-1x2${mpred['1x2']==='D'?' selected draw':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','D')"`}>${t('draw')}</button><button class="btn-1x2${mpred['1x2']==='A'?' selected away':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','A')"`}>${t('away')}</button></div>`;
         else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['ou25']==='O'?' selected':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','ou25','O')"`}>${t('over')}</button><button class="btn-ou under${mpred['ou25']==='U'?' selected':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','ou25','U')"`}>${t('under')}</button></div>`;
         else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['btts']==='Y'?' selected':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','btts','Y')"`}>${t('yes')}</button><button class="btn-ou under${mpred['btts']==='N'?' selected':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','btts','N')"`}>${t('no')}</button></div>`;
         else html+=marketButtonsHTML(mkt,ev,mpred[mkt.type],!isLocked);
@@ -3951,7 +3951,7 @@ function renderEventCard(ev,comp,isOpen){
   } else if(hasPred){
     // Locked — show pick and optionally points
     let pl='';
-    if(comp.mode==='lms')pl=pred==='H'?ev.home+' (Home)':pred==='D'?'Draw':ev.away+' (Away)';
+    if(comp.mode==='lms')pl=pred==='H'?ev.home+' ('+t('homeWin')+')':pred==='D'?t('draw'):ev.away+' ('+t('away')+')';
     else if(comp.mode==='score')pl=(pred.h??'-')+' \u2013 '+(pred.a??'-');
     else if(comp.mode==='betting'&&typeof pred==='object')pl=Object.entries(pred).map(([k,v])=>k.toUpperCase()+': '+v).join(' \u00b7 ');
 
@@ -3959,7 +3959,7 @@ function renderEventCard(ev,comp,isOpen){
       html+='<div style="display:flex;flex-direction:column;gap:8px;">';
       bettingMarketDetails.forEach(({mkt,pick,pts,isRight})=>{
         html+=`<div><div style="margin-bottom:5px;font-size:13px;font-weight:600;color:var(--text-2);display:flex;justify-content:space-between;align-items:center;"><span>${marketLabel(mkt)}</span><span class="pred-correct ${isRight?'yes':'no'}">+${pts} pts</span></div>`;
-        if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${pick==='H'?' selected home':''}" disabled>${t('homeWin')}</button><button class="btn-1x2${pick==='D'?' selected draw':''}" disabled>X</button><button class="btn-1x2${pick==='A'?' selected away':''}" disabled>${t('away')}</button></div>`;
+        if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${pick==='H'?' selected home':''}" disabled>${t('homeWin')}</button><button class="btn-1x2${pick==='D'?' selected draw':''}" disabled>${t('draw')}</button><button class="btn-1x2${pick==='A'?' selected away':''}" disabled>${t('away')}</button></div>`;
         else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='O'?' selected':''}" disabled>${t('over')}</button><button class="btn-ou under${pick==='U'?' selected':''}" disabled>${t('under')}</button></div>`;
         else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='Y'?' selected':''}" disabled>${t('yes')}</button><button class="btn-ou under${pick==='N'?' selected':''}" disabled>${t('no')}</button></div>`;
         else html+=marketButtonsHTML(mkt,ev,pick,false);
@@ -3984,8 +3984,8 @@ function renderEventCard(ev,comp,isOpen){
           var h=mpred2['1x2'],o=mpred2['ou25'],b=mpred2['btts'];
           if(mkt.type==='1x2')html+='<div class="btns-1x2">'
             +'<button class="btn-1x2'+(h==='H'?' selected home':'')+'" disabled>'+t('homeWin')+'</button>'
-            +'<button class="btn-1x2'+(h==='D'?' selected draw':'')+'" disabled>X</button>'
-            +'<button class="btn-1x2'+(h==='A'?' selected away':'')+'" disabled>Away</button>'
+            +'<button class="btn-1x2'+(h==='D'?' selected draw':'')+'" disabled>'+t('draw')+'</button>'
+            +'<button class="btn-1x2'+(h==='A'?' selected away':'')+'" disabled>'+t('away')+'</button>'
             +'</div>';
           else if(mkt.type==='ou25')html+='<div class="btns-ou">'
             +'<button class="btn-ou over'+(o==='O'?' selected':'')+'" disabled>'+t('over')+'</button>'
@@ -4013,7 +4013,7 @@ function renderEventCard(ev,comp,isOpen){
       html+='<div style="display:flex;flex-direction:column;gap:8px;">';
       markets.forEach(mkt=>{
         html+=`<div><div class="pred-label" style="margin-bottom:5px;font-size:13px;font-weight:600;color:var(--text-2);">${marketLabel(mkt)}</div>`;
-        if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2" disabled style="opacity:0.55;">${t('homeWin')}</button><button class="btn-1x2" disabled style="opacity:0.55;">X</button><button class="btn-1x2" disabled style="opacity:0.55;">${t('away')}</button></div>`;
+        if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2" disabled style="opacity:0.55;">${t('homeWin')}</button><button class="btn-1x2" disabled style="opacity:0.55;">${t('draw')}</button><button class="btn-1x2" disabled style="opacity:0.55;">${t('away')}</button></div>`;
         else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou" disabled style="opacity:0.55;">${t('over')}</button><button class="btn-ou" disabled style="opacity:0.55;">${t('under')}</button></div>`;
         else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou" disabled style="opacity:0.55;">${t('yes')}</button><button class="btn-ou" disabled style="opacity:0.55;">${t('no')}</button></div>`;
         else html+=marketButtonsHTML(mkt,ev,null,false);
@@ -4340,7 +4340,7 @@ function buildBettingEventHistory(comp,ev,val){
 
 function bettingPickLabel(mkt,pick){
   if(pick==null) return '\u2014';
-  if(mkt.type==='1x2') return pick==='H'?t('homeWin'):pick==='D'?'X':t('away');
+  if(mkt.type==='1x2') return pick==='H'?t('homeWin'):pick==='D'?t('draw'):t('away');
   if(mkt.type==='ou25') return pick==='O'?t('over'):t('under');
   if(mkt.type==='btts') return pick==='Y'?t('yes'):t('no');
   return pick;
