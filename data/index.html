@@ -261,6 +261,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
             <div class="card-header">
               <span class="card-title">All Teams — Global Pool <span id="teams-count-label" style="color:var(--text-3);font-weight:400;"></span></span>
               <span style="display:flex;align-items:center;gap:8px;">
+                <select class="form-select" id="teams-tournament-filter" onchange="setTeamsTournamentFilter(this.value)"
+                        style="width:auto;min-width:150px;padding:6px 10px;font-size:12px;"></select>
                 <select class="form-select" id="teams-sport-filter" onchange="setTeamsSportFilter(this.value)"
                         style="width:auto;min-width:150px;padding:6px 10px;font-size:12px;"></select>
                 <button class="btn btn-primary btn-sm" onclick="openModal('modal-create-team')">+ Add Team</button>
@@ -1107,6 +1109,18 @@ async function toggleClientSubscription(clientKey, required){
 let teamsSportFilter = 'all';
 function setTeamsSportFilter(v){ teamsSportFilter = v; renderTeams(); }
 
+let teamsTournamentFilter = 'all';
+function setTeamsTournamentFilter(v){ teamsTournamentFilter = v; renderTeams(); }
+
+// Union of team ids rostered in ANY season of the given tournament.
+function teamIdsInTournament(t){
+  const ids = new Set();
+  Object.values(t.seasons||{}).forEach(season=>{
+    (season.teamIds||[]).forEach(id=>ids.add(id));
+  });
+  return ids;
+}
+
 // Circular badge: club crest when we have one, coloured initials otherwise.
 function teamBadgeHTML(t){
   const initials = t.short || abbr(t.name || '?');
@@ -1134,12 +1148,35 @@ function renderTeams(){
       + keys.map(k=>`<option value="${k}"${teamsSportFilter===k?' selected':''}>${sportLabel(k)} (${counts[k]})</option>`).join('');
   }
 
-  const filtered = teamsSportFilter==='all' ? S.teams : S.teams.filter(t=>(t.sport||'football')===teamsSportFilter);
+  // Tournament dropdown reflects tournaments that actually have rostered teams.
+  const tselEl=document.getElementById('teams-tournament-filter');
+  const tournamentTeamIds={}; // tournament id -> Set of team ids
+  S.tournaments.forEach(t=>{ tournamentTeamIds[t.id]=teamIdsInTournament(t); });
+  if(tselEl){
+    const validIds=S.tournaments.map(t=>t.id);
+    if(!validIds.includes(teamsTournamentFilter) && teamsTournamentFilter!=='all') teamsTournamentFilter='all';
+    const withCounts=S.tournaments
+      .map(t=>({t, count:tournamentTeamIds[t.id].size}))
+      .filter(x=>x.count>0)
+      .sort((a,b)=>a.t.name.localeCompare(b.t.name));
+    tselEl.innerHTML=`<option value="all"${teamsTournamentFilter==='all'?' selected':''}>All tournaments (${S.teams.length})</option>`
+      + withCounts.map(({t,count})=>`<option value="${t.id}"${teamsTournamentFilter===t.id?' selected':''}>${t.name} (${count})</option>`).join('');
+  }
+
+  let filtered = teamsSportFilter==='all' ? S.teams : S.teams.filter(t=>(t.sport||'football')===teamsSportFilter);
+  let filterDescription = teamsSportFilter==='all' ? null : sportLabel(teamsSportFilter);
+  if(teamsTournamentFilter!=='all'){
+    const idSet=tournamentTeamIds[teamsTournamentFilter]||new Set();
+    filtered = filtered.filter(t=>idSet.has(t.id));
+    const tName=getTournament(teamsTournamentFilter)?.name || 'this tournament';
+    filterDescription = filterDescription ? `${filterDescription} teams in ${tName}` : tName;
+  }
   const label=document.getElementById('teams-count-label');
-  if(label) label.textContent = teamsSportFilter==='all' ? `· ${S.teams.length}` : `· ${filtered.length} of ${S.teams.length}`;
+  const anyFilterActive = teamsSportFilter!=='all' || teamsTournamentFilter!=='all';
+  if(label) label.textContent = anyFilterActive ? `· ${filtered.length} of ${S.teams.length}` : `· ${S.teams.length}`;
 
   if(!S.teams.length){el.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-icon">\ud83d\udc55</div><div class="empty-title">No teams yet</div><div class="empty-sub">Add your first team to get started.</div></div>';return;}
-  if(!filtered.length){el.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">\ud83d\udd0d</div><div class="empty-title">No ${sportLabel(teamsSportFilter)} teams</div><div class="empty-sub">Add one, or choose a different sport.</div></div>`;return;}
+  if(!filtered.length){el.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">\ud83d\udd0d</div><div class="empty-title">No ${filterDescription||''} teams</div><div class="empty-sub">Add one, or choose a different filter.</div></div>`;return;}
 
   const sorted=[...filtered].sort((a,b)=>a.name.localeCompare(b.name));
   el.innerHTML=sorted.map(t=>`
