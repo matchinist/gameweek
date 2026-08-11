@@ -1426,6 +1426,29 @@ function controlBandCountdown(iconOrEmoji, label, valueHtml, rightHtml){
   </div>`;
 }
 
+// Two-word (or longer) team names that overflow their container get
+// progressively abbreviated: "SV Werder Bremen" → "S. Werder Bremen" → if
+// still too wide → "S. Bremen". Single-word names are left untouched.
+function abbreviateTeamName(name, level){
+  const words = (name||'').trim().split(/\s+/);
+  if(words.length < 2) return name;
+  const initial = words[0].charAt(0) + '.';
+  if(level >= 2 || words.length === 2) return initial + ' ' + words[words.length-1];
+  return initial + ' ' + words.slice(1).join(' ');
+}
+function fitTeamName(el){
+  const full = el.getAttribute('data-full-name') || el.textContent;
+  if(!el.hasAttribute('data-full-name')) el.setAttribute('data-full-name', full);
+  el.textContent = full;
+  if(el.scrollWidth <= el.clientWidth + 1) return;
+  el.textContent = abbreviateTeamName(full, 1);
+  if(el.scrollWidth <= el.clientWidth + 1) return;
+  el.textContent = abbreviateTeamName(full, 2);
+}
+function fitAllTeamNames(root){
+  (root||document).querySelectorAll('.ev-name').forEach(fitTeamName);
+}
+
 function renderPredict(){
   if(!COMPS.length){
     document.getElementById('predict-content').innerHTML=`<div class="empty" style="padding-top:60px;"><div class="empty-icon">🏆</div><div class="empty-title">${t('noCompetitionsYet')}</div><div class="empty-sub">${t('checkBackSoon')}</div></div>`;
@@ -1435,6 +1458,7 @@ function renderPredict(){
   const comp=COMPS[currentCompIdx];
   let html=predictSubTab==='predictions'?renderPredictionsPane(comp):(comp.mode==='lineup'?renderLineupLeaderboardShell(comp):renderLeaderboardShell(comp));
   document.getElementById('predict-content').innerHTML=html;
+  requestAnimationFrame(()=>fitAllTeamNames());
   if(predictSubTab==='leaderboard'){
     if(comp.mode==='lineup') loadAndRenderLineupLeaderboard(comp);
     else loadAndRenderLeaderboard(comp);
@@ -3506,7 +3530,7 @@ function rlChangeRound(idx){
   selectedRound[currentCompIdx]=parseInt(idx);
   rlRemaining=RL_BUDGET; rlStakes={}; rlMeta={};
   const el=document.getElementById('predict-content');
-  if(el){el.innerHTML=renderRouletteHTML();}
+  if(el){el.innerHTML=renderRouletteHTML(); requestAnimationFrame(()=>fitAllTeamNames());}
   setTimeout(()=>initRouletteBoard(),50);
 }
 function rlPlaceBets(){toast('✓ Bets placed (demo — not persisted)');}
