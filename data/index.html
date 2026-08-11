@@ -1011,7 +1011,7 @@ function renderCoverageLists(){
     <label style="display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:6px;cursor:pointer;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
       <input type="checkbox" ${S.coverageTournamentIds.has(t.id)?'checked':''} onchange="toggleCoverageId('tournament','${t.id}',this.checked)" style="accent-color:var(--accent);width:15px;height:15px;">
       <div class="tni-badge" style="background:${t.color};width:20px;height:20px;font-size:9px;">${abbr(t.name)}</div>
-      <span style="font-size:13px;">${t.name}${t.country?' · '+t.country:''}</span>
+      <span style="font-size:13px;">${t.name}${t.country?' | '+t.country:''} | ${sportLabel(t.sport)}</span>
     </label>`).join('') : '<div style="padding:10px;font-size:12px;color:var(--text-3);">No tournaments yet.</div>';
 
   const teamList = document.getElementById('coverage-teams-list');
