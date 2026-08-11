@@ -533,6 +533,7 @@ const I18N = {
     competitionNotFound:'Competition not found', signOut:'Sign out',
     savePredictionsBtn:'Save Predictions ({n}/{total})', allPredictionsSaved:'✓ All predictions saved',
     eventsLock:'Events lock', locksBeforeKickoff:'30 min before kick-off time',
+    modeTitleScore:'Predict the exact score', modeTitleBetting:'Predict the markets', modeTitleRanking:'Rank the teams by xG', modeTitleLineup:'Pick the starting XI', modeTitleRoulette:'Spin the score matrix',
   },
   tr: {
     predictions:'Tahminler', leaderboard:'Lider Tablosu', builder:'Kadro Kur', rules:'Kurallar',
@@ -582,6 +583,7 @@ const I18N = {
     competitionNotFound:'Yarışma bulunamadı', signOut:'Çıkış yap',
     savePredictionsBtn:'Tahminleri Kaydet ({n}/{total})', allPredictionsSaved:'✓ Tüm tahminler kaydedildi',
     eventsLock:'Maçlar kilitleniyor', locksBeforeKickoff:'Başlangıçtan 30 dk önce',
+    modeTitleScore:'Kesin skoru tahmin et', modeTitleBetting:'Marketleri tahmin et', modeTitleRanking:'Takımları xG\'ye göre sırala', modeTitleLineup:'İlk 11\'i seç', modeTitleRoulette:'Skor matrisini çevir',
   },
   de: {
     predictions:'Tipps', leaderboard:'Rangliste', builder:'Builder', rules:'Regeln',
@@ -631,6 +633,7 @@ const I18N = {
     competitionNotFound:'Wettbewerb nicht gefunden', signOut:'Abmelden',
     savePredictionsBtn:'Tipps speichern ({n}/{total})', allPredictionsSaved:'✓ Alle Tipps gespeichert',
     eventsLock:'Events sperren', locksBeforeKickoff:'30 Min. vor Anpfiff',
+    modeTitleScore:'Tippe das exakte Ergebnis', modeTitleBetting:'Tippe die Märkte', modeTitleRanking:'Ordne die Teams nach xG', modeTitleLineup:'Wähle die Startelf', modeTitleRoulette:'Dreh die Ergebnis-Matrix',
   },
 };
 function t(key, vars){
@@ -1351,7 +1354,10 @@ function getDefaultRoundIdx(comp){
   return Math.max(0, comp.rounds.length-1);
 }
 
-const MODE_TITLES={score:'Predict the exact score',betting:'Predict the markets',ranking:'Rank the teams by xG',lineup:'Pick the starting XI',roulette:'Spin the score matrix'};
+function modeTitle(mode){
+  const keys={score:'modeTitleScore',betting:'modeTitleBetting',ranking:'modeTitleRanking',lineup:'modeTitleLineup',roulette:'modeTitleRoulette'};
+  return keys[mode] ? t(keys[mode]) : null;
+}
 function getModeExplainer(comp){
   if(comp.mode==='score'){
     const s=comp.scoring||{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1};
@@ -1381,7 +1387,7 @@ function getModeExplainer(comp){
   return '';
 }
 function controlBandOpen(comp, roundOptionsHtml, tabsHtml, tabsMobileHtml, selectOnchange){
-  const title = MODE_TITLES[comp.mode] || comp.name;
+  const title = modeTitle(comp.mode) || comp.name;
   return `<div class="control-band">
     <div style="margin-bottom:12px;">
       <h1 style="margin:0 0 3px;font-size:16px;font-weight:800;letter-spacing:-0.3px;color:var(--text);">${title}</h1>
