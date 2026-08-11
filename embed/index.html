@@ -531,6 +531,8 @@ const I18N = {
     totalPredictions:'Total Predictions', hitRate:'Hit Rate', activeCompetitions:'Active Competitions',
     endedCompetitions:'Ended Competitions', account:'Account', competitionsLabel:'Competitions',
     competitionNotFound:'Competition not found', signOut:'Sign out',
+    savePredictionsBtn:'Save Predictions ({n}/{total})', allPredictionsSaved:'✓ All predictions saved',
+    eventsLock:'Events lock', locksBeforeKickoff:'30 min before kick-off time',
   },
   tr: {
     predictions:'Tahminler', leaderboard:'Lider Tablosu', builder:'Kadro Kur', rules:'Kurallar',
@@ -578,6 +580,8 @@ const I18N = {
     totalPredictions:'Toplam Tahmin', hitRate:'İsabet Oranı', activeCompetitions:'Aktif Yarışmalar',
     endedCompetitions:'Biten Yarışmalar', account:'Hesap', competitionsLabel:'Yarışmalar',
     competitionNotFound:'Yarışma bulunamadı', signOut:'Çıkış yap',
+    savePredictionsBtn:'Tahminleri Kaydet ({n}/{total})', allPredictionsSaved:'✓ Tüm tahminler kaydedildi',
+    eventsLock:'Maçlar kilitleniyor', locksBeforeKickoff:'Başlangıçtan 30 dk önce',
   },
   de: {
     predictions:'Tipps', leaderboard:'Rangliste', builder:'Builder', rules:'Regeln',
@@ -625,6 +629,8 @@ const I18N = {
     totalPredictions:'Tipps insgesamt', hitRate:'Trefferquote', activeCompetitions:'Aktive Wettbewerbe',
     endedCompetitions:'Beendete Wettbewerbe', account:'Konto', competitionsLabel:'Wettbewerbe',
     competitionNotFound:'Wettbewerb nicht gefunden', signOut:'Abmelden',
+    savePredictionsBtn:'Tipps speichern ({n}/{total})', allPredictionsSaved:'✓ Alle Tipps gespeichert',
+    eventsLock:'Events sperren', locksBeforeKickoff:'30 Min. vor Anpfiff',
   },
 };
 function t(key, vars){
@@ -2728,7 +2734,7 @@ function renderPredictionsPane(comp){
     const openEvents=events.filter(ev=>!ev.res&&!ev.locked);
     const predCount=openEvents.filter(ev=>{const p=preds[ev.id];if(!p)return false;if(comp.mode==='score')return p.h!==undefined&&p.a!==undefined;if(comp.mode==='betting')return typeof p==='object'&&Object.keys(p).length>0;return!!p;}).length;
     if(openEvents.length){
-      html+=`<button class="submit-preds-btn${predsDirty?'':' disabled'}" onclick="submitPreds()">${predCount===openEvents.length?'✓ All predictions saved':'Save Predictions ('+predCount+'/'+openEvents.length+')'}</button>`;
+      html+=`<button class="submit-preds-btn${predsDirty?'':' disabled'}" onclick="submitPreds()">${predCount===openEvents.length?t('allPredictionsSaved'):t('savePredictionsBtn',{n:predCount,total:openEvents.length})}</button>`;
     }
   }
   return html;
@@ -2977,7 +2983,7 @@ function updateSubmitBtnText(){
   if(!openEvents.length) return;
   const predCount=openEvents.filter(ev=>{const p=preds[ev.id];if(!p)return false;if(comp.mode==='score')return p.h!==undefined&&p.a!==undefined;if(comp.mode==='betting')return typeof p==='object'&&Object.keys(p).length>0;return!!p;}).length;
   const btn=document.querySelector('.submit-preds-btn');
-  if(btn) btn.textContent = predCount===events.length?'✓ All predictions saved':'Save Predictions ('+predCount+'/'+events.length+')';
+  if(btn) btn.textContent = predCount===events.length?t('allPredictionsSaved'):t('savePredictionsBtn',{n:predCount,total:events.length});
 }
 function pickScore(id,side,val){
   predsDirty=true;
@@ -3658,13 +3664,13 @@ function renderPredictionsPane(comp){
     html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 ${t('allLocked')}</div>`;
   } else if(comp.mode==='score'){
     if(isOpen&&nextScoreLock){
-      html+=controlBandCountdown('⏱','Events lock','30 min before kick-off time', events.length?`${predCount} / ${events.length} set`:'');
+      html+=controlBandCountdown('⏱',t('eventsLock'),t('locksBeforeKickoff'), events.length?`${predCount} / ${events.length} set`:'');
     } else if(isOpen&&events.length&&events.every(ev=>ev.res||(ev._scoreLockAt!=null&&ev._scoreLockAt<=Date.now()))){
       html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 ${t('allLocked')}</div>`;
     }
   } else if(comp.mode==='betting'){
     if(isOpen&&nextBettingLock){
-      html+=controlBandCountdown('⏱','Events lock','30 min before kick-off time', events.length?`${bettingSetCount} / ${events.length} set`:'');
+      html+=controlBandCountdown('⏱',t('eventsLock'),t('locksBeforeKickoff'), events.length?`${bettingSetCount} / ${events.length} set`:'');
     } else if(isOpen&&events.length&&events.every(ev=>ev.res||(ev._bettingLockAt!=null&&ev._bettingLockAt<=Date.now()))){
       html+=`<div class="control-band-countdown" style="background:var(--bg);color:var(--text-2);">🔒 ${t('allLocked')}</div>`;
     }
@@ -3792,7 +3798,7 @@ function renderPredictionsPane(comp){
     const openEvents=events.filter(ev=>!ev.res);
     const predCount=openEvents.filter(ev=>{ const p=preds[ev.id]; if(!p)return false; if(comp.mode==='score')return p.h!==undefined&&p.a!==undefined; if(comp.mode==='betting')return typeof p==='object'&&Object.keys(p).length>0; return!!p; }).length;
     if(openEvents.length){
-    html+=`<button class="submit-preds-btn${predsDirty?'':' disabled'}" onclick="submitPreds()">${predCount===events.length?'✓ All predictions saved':'Save Predictions ('+predCount+'/'+events.length+')'}</button>`;
+    html+=`<button class="submit-preds-btn${predsDirty?'':' disabled'}" onclick="submitPreds()">${predCount===events.length?t('allPredictionsSaved'):t('savePredictionsBtn',{n:predCount,total:events.length})}</button>`;
     }
   }
   return html;
@@ -4507,51 +4513,55 @@ const RULES_HTML = {
 </div>`,
   },
   de: {
-    predictions:'Tipps', leaderboard:'Rangliste', builder:'Builder', rules:'Regeln',
-    locksIn:'Sperrt in', roundLocksIn:'Runde sperrt in', allLocked:'Alle Tipps gesperrt',
-    roundLocked:'Runde gesperrt', predictionsLocked:'Tipps gesperrt',
-    signIn:'Anmelden', register:'Registrieren', login:'Login', logout:'Abmelden',
-    email:'E-Mail', password:'Passwort', username:'Benutzername', forgotPassword:'Passwort vergessen?',
-    save:'Speichern', selected:'Ausgewählt', noPredictionMade:'Kein Tipp abgegeben.', loading:'Lädt…',
-    saveRanking:'Rangfolge speichern', saveStartingXI:'Startelf speichern', overall:'Gesamt',
-    rank:'#', player:'Spieler', points:'Punkte', prize:'Preis', you:'DU',
-    noCompetitionsYet:'Noch keine Wettbewerbe', noRoundsYet:'Noch keine Runden', checkBackSoon:'Schau bald wieder vorbei.',
-    noPredictionsYet:'Noch keine Tipps', noEventsYet:'Noch keine Spiele', beFirst:'Gib als Erster einen Tipp für diese Runde ab.',
-    pickMore:'Noch {n} auswählen zum Speichern', selectAllToSave:'Alle 11 Spieler auswählen zum Speichern',
-    correct:'Richtig', wrong:'Falsch', yourPick:'Dein Tipp', total:'Gesamt',
-    open:'Offen', done:'Beendet', locked:'Gesperrt',
-    predictionSaved:'Tipp gespeichert', couldNotSave:'Speichern fehlgeschlagen — prüfe deine Verbindung und versuche es erneut',
-    lineupSaved:'Aufstellung gespeichert', rankingSaved:'Rangfolge gespeichert',
-    errFillAllFields:'Bitte fülle alle Felder aus', errUsernameChars:'Der Benutzername darf nur Buchstaben, Zahlen und Unterstriche enthalten',
-    errUsernameShort:'Der Benutzername muss mindestens 3 Zeichen lang sein', errUsernameTaken:'Dieser Benutzername ist bereits vergeben',
-    errInvalidEmail:'Bitte gib eine gültige E-Mail-Adresse ein', errWeakPassword:'Das Passwort muss mindestens 6 Zeichen lang sein',
-    errAccountExists:'Mit dieser E-Mail existiert bereits ein Konto — versuche es mit Anmelden',
-    errWrongCredentials:'E-Mail oder Passwort ist falsch', errRateLimit:'Zu viele Versuche — bitte warte einen Moment und versuche es erneut',
-    errMustAgreeTerms:'Bitte stimme den AGB zu, um fortzufahren',
-    agreeTermsPrefix:'Ich stimme den', and:'und', termsAndConditions:'AGB', privacyPolicy:'Datenschutzerklärung',
-    errNotRegisteredHere:'Dieses Konto existiert, ist aber auf dieser Seite noch nicht registriert — nutze bitte Registrieren',
-    errGeneric:'Etwas ist schiefgelaufen — bitte versuche es erneut', creatingAccount:'Konto wird erstellt…', signingIn:'Anmeldung läuft…',
-    homeWin:'1', away:'2', over:'Über', under:'Unter', yes:'Ja', no:'Nein',
-    mkt1x2:'1X2 Ergebnis', mktOu25:'Über/Unter 2,5', mktBtts:'Beide Teams treffen',
-    explainerScore:'Erhalte {exact} für das exakte Ergebnis, {home} für den richtigen Ausgang und {total} für die korrekte Gesamtzahl der Tore.',
-    ptsForMarket:'{pts} für {market}',
-    explainerBetting:'Erhalte {parts}. Ein falscher Tipp bringt <strong style="color:var(--accent);">0 Pkt.</strong> für diesen Markt.',
-    explainerBettingNoMarkets:'Tippe mehrere Märkte pro Spiel — Punkte je richtigem Tipp, 0 bei einem falschen.',
-    explainerRanking:'Erhalte {per} für jedes Team auf der richtigen Position, plus einen Bonus von {bonus} für eine perfekte Rangfolge.',
-    explainerLineup:'Stelle die Startelf von {team} auf. Erhalte <strong style="color:var(--accent);">10 Pkt.</strong> für jeden richtigen Spieler, plus einen <strong style="color:var(--accent);">30 Pkt.</strong> Bonus für die perfekte Elf.',
-    form:'Formation', bonusFirstGoal:'Erstes Tor', bonusBestPlayer:'Bester Spieler', bonusFirstSubOut:'Erste Auswechslung',
-    bonusPickPrompt:'Spieler auswählen', bonusRequiredToast:'Beantworte alle 3 Bonusfragen vor dem Speichern',
-    bonusQFirstGoal:'Erster Torschütze', bonusQBestPlayer:'Bester Spieler (MVP)', bonusQFirstSubOut:'Zuerst ausgewechselter Spieler',
-    answerBonusQuestions:'Beantworte die Bonusfragen oben',
-    theTeam:'das Team',
-    freeToPlay:'Kostenlos spielen. Keine Einzahlung nötig.',
-    forgotIntro:'Gib die E-Mail-Adresse deines Kontos ein und wir senden dir einen Link zum Zurücksetzen des Passworts.',
-    sendResetLink2:'Link zum Zurücksetzen senden →', backToSignIn:'← Zurück zur Anmeldung', checkYourEmail:'Prüfe deine E-Mails',
-    resetSentMessage:'Wir haben einen Link zum Zurücksetzen des Passworts an {span} gesendet. Er ist 1 Stunde gültig.',
-    placePrize:'Preis für Platz {ord}', noPrizePosition:'Kein Preis für diese Position',
-    totalPredictions:'Tipps insgesamt', hitRate:'Trefferquote', activeCompetitions:'Aktive Wettbewerbe',
-    endedCompetitions:'Beendete Wettbewerbe', account:'Konto', competitionsLabel:'Wettbewerbe',
-    competitionNotFound:'Wettbewerb nicht gefunden', signOut:'Abmelden',
+    score:`<h3 style="margin-bottom:12px;">Ergebnistipp-Regeln</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">Spielweise:</strong> Tippe vor Ablauf der Frist das exakte Endergebnis für jedes Spiel.</div>
+<div><strong style="color:var(--text);">Punkte:</strong></div>
+<div style="padding-left:12px;">
+• Exaktes Ergebnis — <strong style="color:var(--green);">+5 Pkt.</strong><br>
+• Nur Heimtore richtig — <strong>+2 Pkt.</strong><br>
+• Nur Auswärtstore richtig — <strong>+2 Pkt.</strong><br>
+• Nur Gesamttore richtig — <strong>+1 Pkt.</strong>
+</div>
+<div><strong style="color:var(--text);">Rangliste:</strong> Spieler werden nach Gesamtpunkten sortiert. Die höchste Punktzahl gewinnt.</div>
+</div>`,
+    ranking:`<h3 style="margin-bottom:12px;">Rangfolge-Regeln</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">Spielweise:</strong> Sortiere die ausgewählten Teams nach erwarteten Toren (xG) für den Spieltag, vom höchsten zum niedrigsten.</div>
+<div><strong style="color:var(--text);">Punkte:</strong></div>
+<div style="padding-left:12px;">
+• Jedes Team auf der richtigen Position — <strong style="color:var(--green);">+2 Pkt.</strong><br>
+• Alle Teams in perfekter Reihenfolge — <strong style="color:var(--green);">+5 Bonuspunkte</strong>
+</div>
+<div><strong style="color:var(--text);">Tipp:</strong> Denk daran, welche Teams zu Hause spielen, wie ihre aktuelle Form ist und wie stark die Gegner sind.</div>
+</div>`,
+    betting:`<h3 style="margin-bottom:12px;">Wettmärkte-Regeln</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">Spielweise:</strong> Tippe für jedes Spiel mehrere Märkte. Jeder richtige Markt bringt Punkte.</div>
+<div><strong style="color:var(--text);">Märkte:</strong></div>
+<div style="padding-left:12px;">
+• 1X2 Ergebnis — Heimsieg, X oder Auswärtssieg<br>
+• Über/Unter 2,5 Tore — Fallen 3 oder mehr Tore?<br>
+• Beide Teams treffen — Treffen beide Mannschaften?
+</div>
+<div><strong style="color:var(--text);">Punkte:</strong> Jeder Markt hat einen eigenen, vom Betreiber festgelegten Punktwert. Ein falscher Tipp bringt <strong>0 Pkt.</strong> für diesen Markt — die anderen sind davon nicht betroffen.</div>
+</div>`,
+    lineup:`<h3 style="margin-bottom:12px;">Startelf-Tipp-Regeln</h3>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
+<div><strong style="color:var(--text);">Spielweise:</strong> Wähle die Startelf (11 Spieler) für das nächste Spiel des Teams, in beliebiger Formation (4-2-3-1, 4-3-3, 4-4-2 oder 3-4-2-1). Sperrt 2 Stunden vor Anpfiff.</div>
+<div><strong style="color:var(--text);">Punkte:</strong></div>
+<div style="padding-left:12px;">
+• Jeder richtige Spieler in deiner Aufstellung — <strong style="color:var(--green);">+10 Pkt.</strong><br>
+• Alle 11 Spieler richtig — <strong style="color:var(--green);">+30 Bonuspunkte</strong>
+</div>
+<div><strong style="color:var(--text);">Bonusfragen:</strong> Beantworte alle 3, bevor du deine Aufstellung speichern kannst. Jede bringt bei richtiger Antwort <strong style="color:var(--green);">+30 Pkt.</strong> und wird erst gewertet, sobald das Spiel als beendet markiert ist.</div>
+<div style="padding-left:12px;">
+• Erster Torschütze — wer erzielt das erste Tor im Spiel<br>
+• Bester Spieler — Spieler des Spiels, laut offizieller Sofascore-Bewertung<br>
+• Erste Auswechslung — wer wird als Erstes ausgewechselt
+</div>
+<div><strong style="color:var(--text);">Rangliste:</strong> Spieler werden nach Gesamtpunkten über alle korrekt getippten Aufstellungen sortiert.</div>
+</div>`,
   },
 };
 function showRules(mode){
