@@ -1908,6 +1908,9 @@ async function clearScore(){
 }
 
 function removeEventFromRound(eid){
+  const ev=S.events[eid];
+  const label=ev?`${ev.home||'?'} vs ${ev.away||'?'}`:'this event';
+  if(!confirm(`Delete ${label}? This permanently removes the event and cannot be undone. Any predictions players made on it will be lost.`))return;
   const season=getSeasonData(S.activeTournamentId,S.activeSeason);
   season.rounds.forEach(r=>{r.eventIds=r.eventIds.filter(x=>x!==eid);});
   delete S.events[eid];
