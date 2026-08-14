@@ -1394,11 +1394,15 @@ function renderEventMini(eid){
 
 function renderTeamPools(filter=''){
   const season=getSeasonData(S.activeTournamentId,S.activeSeason);
+  const tournament=getTournament(S.activeTournamentId);
   const assignedIds=new Set(season.teamIds);
   const poolEl=document.getElementById('pool-body');
   const assignEl=document.getElementById('assigned-body');
   if(!poolEl||!assignEl)return;
-  const base=[...S.teams].sort((a,b)=>a.name.localeCompare(b.name));
+  // Only offer teams that play the same sport as this tournament — a football
+  // tournament like the Europa League shouldn't list basketball/volleyball teams.
+  const sportMatch=t=>(t.sport||'football')===(tournament.sport||'football');
+  const base=[...S.teams].filter(sportMatch).sort((a,b)=>a.name.localeCompare(b.name));
   const filtered=filter?base.filter(t=>t.name.toLowerCase().includes(filter.toLowerCase())||t.short.toLowerCase().includes(filter.toLowerCase())):base;
   poolEl.innerHTML=filtered.map(t=>{
     const isAssigned=assignedIds.has(t.id);
