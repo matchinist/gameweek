@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Standings — Gameweek</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234F46E5'/%3E%3Ctext x='32' y='43' font-family='Arial,Helvetica,sans-serif' font-size='28' font-weight='800' fill='white' text-anchor='middle'%3EGW%3C/text%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#F9FAFB;--white:#FFFFFF;--border:#E2E4EA;
+  --text:#0F1117;--text-2:#6B7280;--text-3:#9CA3AF;
+  --accent:#4F46E5;--accent-2:#3730A3;--accent-light:#EEF2FF;--on-accent:#FFFFFF;
+  --green:#16A34A;--green-light:#DCFCE7;
+  --red:#DC2626;--red-light:#FEE2E2;
+  --amber:#D97706;--amber-light:#FEF3C7;
+  --mono:'Space Mono',monospace;--sans:'Inter',sans-serif;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;padding:16px;}
+.widget{max-width:640px;margin:0 auto;background:var(--white);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px oklch(0.2 0.02 260 / 0.04),0 6px 20px oklch(0.2 0.02 260 / 0.03);}
+.w-header{padding:16px 18px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.w-title{font-size:15px;font-weight:800;letter-spacing:-0.2px;}
+.w-sub{font-size:11.5px;color:var(--text-3);margin-top:2px;}
+.w-logo{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text-3);white-space:nowrap;}
+.w-logo span{color:var(--accent);}
+table{width:100%;border-collapse:collapse;}
+thead th{font-family:var(--mono);font-size:9.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.4px;text-align:center;padding:9px 4px;border-bottom:1px solid var(--border);}
+thead th.col-team{text-align:left;padding-left:14px;}
+thead th.col-rank{padding-left:14px;text-align:left;width:26px;}
+tbody td{font-size:12.5px;padding:9px 4px;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap;}
+tbody tr:last-child td{border-bottom:none;}
+td.col-rank{padding-left:14px;text-align:left;position:relative;}
+td.col-rank .zone-bar{position:absolute;left:0;top:0;bottom:0;width:3px;}
+td.col-team{text-align:left;padding-left:10px;font-weight:600;}
+.team-cell{display:flex;align-items:center;gap:8px;min-width:0;}
+.team-badge{width:20px;height:20px;border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:var(--text-2);background:var(--bg);overflow:hidden;}
+.team-badge img{width:100%;height:100%;object-fit:contain;}
+.team-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;}
+td.col-pts{font-weight:800;font-family:var(--mono);color:var(--text);}
+td.col-diff{font-family:var(--mono);color:var(--text-2);}
+td.col-diff.pos{color:var(--green);}
+td.col-diff.neg{color:var(--red);}
+.w-legend{padding:12px 18px 14px;display:flex;flex-wrap:wrap;gap:12px 16px;border-top:1px solid var(--border);}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-2);}
+.legend-swatch{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+.w-updated{padding:10px 18px;font-size:10.5px;color:var(--text-3);text-align:center;border-top:1px solid var(--border);}
+.w-empty,.w-error{padding:40px 20px;text-align:center;color:var(--text-3);font-size:13px;}
+.w-loading{padding:40px 20px;text-align:center;color:var(--text-3);font-size:12.5px;font-family:var(--mono);}
+@media(max-width:420px){
+  .col-p,.col-w,.col-d,.col-l{display:none;}
+}
+</style>
+</head>
+<body>
+<div class="widget" id="widget">
+  <div class="w-loading">Loading standings…</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI'; // same anon key used in gameweek-live.html
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+const params = new URLSearchParams(location.search);
+const TOURNAMENT_ID = params.get('tournament');
+const SEASON = params.get('season');
+const CLIENT = params.get('client');
+
+// ── theme helpers (same logic as gameweek-live.html, kept in sync) ──
+function gwLum(hex){
+  var h = String(hex||'').replace('#','');
+  if(h.length===3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  if(h.length<6) return null;
+  var v = [0,2,4].map(function(i){
+    var c = parseInt(h.substr(i,2),16)/255;
+    return c<=0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055,2.4);
+  });
+  return 0.2126*v[0] + 0.7152*v[1] + 0.0722*v[2];
+}
+function gwContrast(a,b){
+  var la=gwLum(a), lb=gwLum(b);
+  if(la==null||lb==null) return 21;
+  return (Math.max(la,lb)+0.05)/(Math.min(la,lb)+0.05);
+}
+function gwApplySemantics(root, surface){
+  var dark = (gwLum(surface) != null) && gwLum(surface) < 0.4;
+  root.setProperty('--green', dark ? '#4ADE80' : '#16A34A');
+  root.setProperty('--red',   dark ? '#F87171' : '#DC2626');
+  root.setProperty('--green-light', dark ? 'rgba(74,222,128,0.16)' : '#DCFCE7');
+  root.setProperty('--red-light',   dark ? 'rgba(248,113,113,0.16)' : '#FEE2E2');
+}
+function gwReadableText(text, surface){
+  if(!text || !surface) return text;
+  if(gwContrast(text, surface) >= 3) return text;
+  return gwContrast('#111111', surface) >= gwContrast('#FFFFFF', surface) ? '#111111' : '#FFFFFF';
+}
+function applyTheme(t){
+  if(!t) return;
+  const root = document.documentElement.style;
+  if(t.accent_color){
+    root.setProperty('--accent', t.accent_color);
+    root.setProperty('--accent-2', t.accent_color);
+    root.setProperty('--accent-light', t.accent_color+'1A');
+    root.setProperty('--on-accent', gwReadableText('#FFFFFF', t.accent_color));
+  }
+  if(t.bg_color) root.setProperty('--bg', t.bg_color);
+  if(t.surface_color) root.setProperty('--white', t.surface_color);
+  gwApplySemantics(root, t.surface_color || '#FFFFFF');
+  if(t.text_color){
+    const txt = gwReadableText(t.text_color, t.surface_color || '#FFFFFF');
+    root.setProperty('--text', txt);
+    root.setProperty('--text-2', txt+'B3');
+    root.setProperty('--text-3', txt+'80');
+    root.setProperty('--border', txt+'26');
+  }
+}
+if(CLIENT){
+  try{
+    const cached = localStorage.getItem('gw_theme_'+CLIENT);
+    if(cached) applyTheme(JSON.parse(cached));
+  }catch(e){}
+}
+
+// Zone colours cycle through a fixed, readable palette in the order zones
+// first appear (top of table down) — European spots green-ish, relegation
+// red-ish, everything else neutral, matching the convention every football
+// fan already recognises from Sofascore/league sites.
+const ZONE_PALETTE = ['var(--accent)','var(--green)','#0EA5E9','var(--amber)','var(--red)','#8B5CF6'];
+
+function escapeHtml(s){
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function teamBadge(team){
+  if(team && team.logo){
+    return `<div class="team-badge"><img src="${escapeHtml(team.logo)}" alt=""></div>`;
+  }
+  const initials = (team?.name||'??').replace(/[^A-Za-z0-9 ]/g,'').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase() || '?';
+  return `<div class="team-badge">${initials}</div>`;
+}
+
+async function boot(){
+  const el = document.getElementById('widget');
+  if(!TOURNAMENT_ID){
+    el.innerHTML = `<div class="w-error">No tournament specified. Add ?tournament=ID to the widget URL.</div>`;
+    return;
+  }
+
+  const [{data:tRow, error:tErr}, {data:teamRows}] = await Promise.all([
+    supa.from('gw_dm_tournaments').select('id,name,country,seasons').eq('id', TOURNAMENT_ID).maybeSingle(),
+    supa.from('gw_dm_teams').select('id,name,logo').limit(10000),
+  ]);
+
+  if(tErr || !tRow){
+    el.innerHTML = `<div class="w-error">Couldn't load this tournament.</div>`;
+    return;
+  }
+
+  const seasons = tRow.seasons || {};
+  const seasonKey = SEASON && seasons[SEASON] ? SEASON : Object.keys(seasons).sort().reverse()[0];
+  const season = seasonKey ? seasons[seasonKey] : null;
+  const standings = season?.standings;
+
+  if(!standings || !standings.rows || !standings.rows.length){
+    el.innerHTML = `<div class="w-header"><div><div class="w-title">${escapeHtml(tRow.name)}</div><div class="w-sub">${escapeHtml(tRow.country||'')}</div></div></div>
+      <div class="w-empty">Standings haven't been added for this season yet.</div>`;
+    return;
+  }
+
+  const teamsById = {};
+  (teamRows||[]).forEach(t=>{ teamsById[t.id]=t; });
+
+  const zoneColor = {};
+  (standings.zones||[]).forEach((z,i)=>{ zoneColor[z.id] = ZONE_PALETTE[i % ZONE_PALETTE.length]; });
+
+  const rows = [...standings.rows].sort((a,b)=>a.rank-b.rank);
+
+  let html = `<div class="w-header">
+    <div><div class="w-title">${escapeHtml(tRow.name)}</div><div class="w-sub">${escapeHtml(tRow.country||'')}${seasonKey?' · '+escapeHtml(seasonKey):''}</div></div>
+    <div class="w-logo">game<span>week</span></div>
+  </div>
+  <table>
+    <thead><tr>
+      <th class="col-rank">#</th>
+      <th class="col-team">Team</th>
+      <th class="col-p">P</th>
+      <th class="col-w">W</th>
+      <th class="col-d">D</th>
+      <th class="col-l">L</th>
+      <th>GD</th>
+      <th>Pts</th>
+    </tr></thead>
+    <tbody>`;
+
+  rows.forEach(r=>{
+    const team = r.teamId ? teamsById[r.teamId] : null;
+    const name = team?.name || r.name || 'Unknown';
+    const diffCls = r.diff>0 ? 'pos' : r.diff<0 ? 'neg' : '';
+    const diffText = r.diff>0 ? '+'+r.diff : r.diff;
+    const bar = r.zoneId && zoneColor[r.zoneId] ? `<span class="zone-bar" style="background:${zoneColor[r.zoneId]}"></span>` : '';
+    html += `<tr>
+      <td class="col-rank">${bar}${r.rank}</td>
+      <td class="col-team"><div class="team-cell">${teamBadge(team)}<span class="team-name">${escapeHtml(name)}</span></div></td>
+      <td class="col-p">${r.played}</td>
+      <td class="col-w">${r.w}</td>
+      <td class="col-d">${r.d}</td>
+      <td class="col-l">${r.l}</td>
+      <td class="col-diff ${diffCls}">${diffText}</td>
+      <td class="col-pts">${r.pts}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table>`;
+
+  if(standings.zones && standings.zones.length){
+    html += `<div class="w-legend">`;
+    standings.zones.forEach(z=>{
+      html += `<div class="legend-item"><span class="legend-swatch" style="background:${zoneColor[z.id]}"></span>${escapeHtml(z.label)}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  if(standings.updatedAt){
+    const d = new Date(standings.updatedAt);
+    html += `<div class="w-updated">Updated ${d.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'})}</div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+boot().catch(e=>{
+  console.error(e);
+  document.getElementById('widget').innerHTML = `<div class="w-error">Something went wrong loading standings.</div>`;
+});
+</script>
+</body>
+</html>

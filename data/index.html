@@ -744,6 +744,244 @@ async function save(){
   }catch(e){ console.error('DM save failed:',e.message); toast('Save failed: '+e.message); return false; }
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// Standings paste-and-parse
+// ─────────────────────────────────────────────────────────────────────────
+
+// Parses a raw copy-paste of a standings table (Sofascore-style) into
+// structured rows + zone labels. Handles both markdown-link form
+// "[text](url)" and plain text, since clipboard content varies by source.
+const STANDINGS_HEADER_TOKENS = new Set(['AllHomeAway','P','W','D','L','DIFF','GLS','Last 5','Pts']);
+// Once the real data ends, sites like Sofascore append a legend block that
+// just re-lists the zone names as plain text, then a tie-break sentence,
+// then a glossary line — none of that is row data, so stop there.
+const STANDINGS_STOP_PATTERNS = [/^Rules and legend$/i, /^In the event that/i, /^PMatches played/i];
+
+function stripMarkdownLink(line){
+  const m = line.match(/^\[(.*)\]\(.*\)$/);
+  return m ? m[1] : line;
+}
+function isStandingsStatToken(s){
+  return /^-?\d+$/.test(s) || /^\d+:\d+$/.test(s);
+}
+function parseStandingsPaste(raw){
+  const rawLines = raw.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  const lines = [];
+  for(const l of rawLines){
+    if(STANDINGS_STOP_PATTERNS.some(p=>p.test(l))) break;
+    lines.push(stripMarkdownLink(l));
+  }
+  const zones = [];
+  const rows = [];
+  let currentZone = null, zoneOrder = 0, i = 0;
+  while(i < lines.length){
+    const line = lines[i];
+    if(STANDINGS_HEADER_TOKENS.has(line)){ i++; continue; }
+    const looksLikeRank = /^\d+$/.test(line);
+    if(looksLikeRank && i+8 < lines.length){
+      const rank = parseInt(line,10);
+      const name = lines[i+1];
+      const cells = lines.slice(i+2, i+9);
+      if(cells.length===7 && cells.every(isStandingsStatToken)){
+        const [p,w,d,l,diff,gls,pts] = cells;
+        const [gf,ga] = gls.split(':').map(Number);
+        rows.push({ rank, name, played:+p, w:+w, d:+d, l:+l, diff:+diff, gf, ga, pts:+pts, zoneId: currentZone });
+        i += 9; continue;
+      }
+    }
+    if(!looksLikeRank){
+      const label = line;
+      if(!currentZone || zones[zones.length-1].label !== label){
+        currentZone = 'zone'+(zoneOrder++);
+        zones.push({ id: currentZone, label });
+      }
+      i++; continue;
+    }
+    i++;
+  }
+  return { zones, rows };
+}
+
+// Matches a short paste name ("Köln", "M'gladbach", "HSV") against the
+// tournament's actual team pool ("1. FC Köln", "Borussia Mönchengladbach").
+const STANDINGS_PREFIX_TOKENS = new Set(['1','FC','SV','SC','RB','TSG','VfB','VfL','FSV','SGE','SpVgg','TuS','TSV','MSV']);
+const STANDINGS_ALIASES = { 'mgladbach':'monchengladbach', 'gladbach':'monchengladbach', 'hsv':'hamburger' };
+function standingsNormalize(s){
+  return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()
+    .replace(/['’]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+}
+function standingsCoreOf(fullName){
+  const tokens = standingsNormalize(fullName).split(' ').filter(Boolean);
+  const core = tokens.filter(t=>!STANDINGS_PREFIX_TOKENS.has(t.toUpperCase()) && !/^\d+$/.test(t));
+  return core.length ? core.join(' ') : standingsNormalize(fullName);
+}
+function matchStandingsTeam(shortName, teams){
+  const normShort = standingsNormalize(shortName);
+  const aliasTarget = STANDINGS_ALIASES[normShort];
+  let best = null;
+  for(const team of teams){
+    const core = standingsCoreOf(team.name);
+    const fullNorm = standingsNormalize(team.name);
+    let score = 0;
+    if(aliasTarget && core.includes(aliasTarget)) score = 100;
+    else if(core === normShort) score = 95;
+    else if(fullNorm.includes(normShort)) score = 85;
+    else if(core.includes(normShort) || normShort.includes(core)) score = 75;
+    else {
+      const shortTokens = normShort.split(' ').filter(Boolean);
+      const coreTokens = core.split(' ').filter(Boolean);
+      const overlap = shortTokens.filter(t=>coreTokens.includes(t)).length;
+      if(overlap>0) score = 40 + overlap*10;
+    }
+    if(score > 0 && (!best || score > best.score)) best = { id: team.id, name: team.name, score };
+  }
+  return best;
+}
+
+// Holds the last parsed-and-matched preview until the operator saves it.
+let standingsPreviewState = null;
+
+function previewStandingsPaste(){
+  const raw = document.getElementById('standings-paste').value;
+  if(!raw.trim()){ toast('Paste a standings table first'); return; }
+  const season = getSeasonData(S.activeTournamentId, S.activeSeason);
+  const poolTeams = season.teamIds.map(id=>getTeam(id)).filter(Boolean);
+  if(!poolTeams.length){ toast('Assign teams to this tournament\'s Teams tab first'); return; }
+
+  const parsed = parseStandingsPaste(raw);
+  if(!parsed.rows.length){ toast('Couldn\'t find any team rows in that paste — check the format'); return; }
+
+  const rows = parsed.rows.map(r=>{
+    const m = matchStandingsTeam(r.name, poolTeams);
+    return { ...r, teamId: m ? m.id : null, matchedName: m ? m.name : null, matchScore: m ? m.score : 0 };
+  });
+  standingsPreviewState = { zones: parsed.zones, rows };
+  renderStandingsPreview(poolTeams);
+}
+
+function renderStandingsPreview(poolTeams){
+  const st = standingsPreviewState;
+  const el = document.getElementById('standings-preview');
+  if(!st){ el.innerHTML=''; return; }
+  const unmatchedCount = st.rows.filter(r=>!r.teamId || r.matchScore<75).length;
+  let html = `<div class="card">
+    <div class="card-header">
+      <span class="card-title">Preview — ${st.rows.length} teams</span>
+      <span style="font-size:11px;color:${unmatchedCount?'var(--red)':'var(--green)'};">${unmatchedCount ? unmatchedCount+' need review' : 'All matched'}</span>
+    </div>
+    <div class="card-body" style="padding:0;">
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+        <thead><tr style="border-bottom:1px solid var(--border);">
+          <th style="text-align:left;padding:8px 10px;font-size:10px;color:var(--text-3);">#</th>
+          <th style="text-align:left;padding:8px 10px;font-size:10px;color:var(--text-3);">Pasted name</th>
+          <th style="text-align:left;padding:8px 10px;font-size:10px;color:var(--text-3);">Matched team</th>
+          <th style="text-align:center;padding:8px 10px;font-size:10px;color:var(--text-3);">Pts</th>
+        </tr></thead>
+        <tbody>`;
+  st.rows.forEach((r,i)=>{
+    const badColor = !r.teamId ? 'var(--red)' : r.matchScore<75 ? 'var(--amber)' : 'var(--green)';
+    html += `<tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:6px 10px;color:var(--text-3);">${r.rank}</td>
+      <td style="padding:6px 10px;">${r.name}</td>
+      <td style="padding:6px 10px;">
+        <select onchange="overrideStandingsMatch(${i}, this.value)" style="font-size:12px;padding:3px 6px;border:1px solid ${badColor};border-radius:5px;background:var(--white);">
+          <option value="">— no match —</option>
+          ${poolTeams.map(t=>`<option value="${t.id}"${t.id===r.teamId?' selected':''}>${t.name}</option>`).join('')}
+        </select>
+      </td>
+      <td style="padding:6px 10px;text-align:center;font-family:var(--mono);font-weight:700;">${r.pts}</td>
+    </tr>`;
+  });
+  html += `</tbody></table></div>
+    <div class="card-body" style="border-top:1px solid var(--border);">
+      <button class="btn btn-primary btn-sm" onclick="saveStandingsToSeason()">Save Standings</button>
+    </div>
+  </div>`;
+  el.innerHTML = html;
+}
+
+function overrideStandingsMatch(rowIndex, teamId){
+  if(!standingsPreviewState) return;
+  const row = standingsPreviewState.rows[rowIndex];
+  const team = teamId ? getTeam(teamId) : null;
+  row.teamId = teamId || null;
+  row.matchedName = team ? team.name : null;
+  row.matchScore = team ? 100 : 0; // manual pick is treated as fully confident
+}
+
+async function saveStandingsToSeason(){
+  const st = standingsPreviewState;
+  if(!st) return;
+  const unmatched = st.rows.filter(r=>!r.teamId);
+  if(unmatched.length && !confirm(`${unmatched.length} team(s) have no match selected and will be saved without a linked team. Continue?`)) return;
+  const season = getSeasonData(S.activeTournamentId, S.activeSeason);
+  season.standings = {
+    updatedAt: new Date().toISOString(),
+    zones: st.zones,
+    rows: st.rows.map(r=>({
+      rank:r.rank, name:r.name, teamId:r.teamId||null,
+      played:r.played, w:r.w, d:r.d, l:r.l, diff:r.diff, gf:r.gf, ga:r.ga, pts:r.pts,
+      zoneId:r.zoneId,
+    })),
+  };
+  const ok = await save();
+  if(ok){
+    toast('Standings saved');
+    standingsPreviewState = null;
+    document.getElementById('standings-paste').value='';
+    renderTournamentView();
+  }
+}
+
+function clearStandings(){
+  if(!confirm('Remove saved standings for this season? This won\'t affect the raw paste — you can re-parse it anytime.')) return;
+  const season = getSeasonData(S.activeTournamentId, S.activeSeason);
+  delete season.standings;
+  save().then(ok=>{ if(ok){ toast('Standings cleared'); renderTournamentView(); } });
+}
+
+function renderStandingsTable(standings){
+  const zoneColors = ['var(--accent)','var(--green)','#0EA5E9','var(--amber)','var(--red)','#8B5CF6'];
+  const zoneColor = {};
+  (standings.zones||[]).forEach((z,i)=>{ zoneColor[z.id] = zoneColors[i % zoneColors.length]; });
+  const rows = [...standings.rows].sort((a,b)=>a.rank-b.rank);
+  let html = `<table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+    <thead><tr style="border-bottom:1px solid var(--border);">
+      <th style="text-align:left;padding:6px 8px;font-size:10px;color:var(--text-3);">#</th>
+      <th style="text-align:left;padding:6px 8px;font-size:10px;color:var(--text-3);">Team</th>
+      <th style="padding:6px 8px;font-size:10px;color:var(--text-3);">P</th>
+      <th style="padding:6px 8px;font-size:10px;color:var(--text-3);">W</th>
+      <th style="padding:6px 8px;font-size:10px;color:var(--text-3);">D</th>
+      <th style="padding:6px 8px;font-size:10px;color:var(--text-3);">L</th>
+      <th style="padding:6px 8px;font-size:10px;color:var(--text-3);">GD</th>
+      <th style="padding:6px 8px;font-size:10px;color:var(--text-3);">Pts</th>
+    </tr></thead><tbody>`;
+  rows.forEach(r=>{
+    const team = r.teamId ? getTeam(r.teamId) : null;
+    const name = team ? team.name : (r.name || 'Unknown');
+    const bar = r.zoneId && zoneColor[r.zoneId] ? `border-left:3px solid ${zoneColor[r.zoneId]};` : '';
+    const diffColor = r.diff>0 ? 'var(--green)' : r.diff<0 ? 'var(--red)' : 'var(--text-2)';
+    const diffText = r.diff>0 ? '+'+r.diff : r.diff;
+    html += `<tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:6px 8px;${bar}">${r.rank}</td>
+      <td style="padding:6px 8px;font-weight:600;">${name}</td>
+      <td style="padding:6px 8px;text-align:center;">${r.played}</td>
+      <td style="padding:6px 8px;text-align:center;">${r.w}</td>
+      <td style="padding:6px 8px;text-align:center;">${r.d}</td>
+      <td style="padding:6px 8px;text-align:center;">${r.l}</td>
+      <td style="padding:6px 8px;text-align:center;color:${diffColor};font-family:var(--mono);">${diffText}</td>
+      <td style="padding:6px 8px;text-align:center;font-weight:800;font-family:var(--mono);">${r.pts}</td>
+    </tr>`;
+  });
+  html += `</tbody></table>`;
+  if(standings.zones && standings.zones.length){
+    html += `<div style="display:flex;flex-wrap:wrap;gap:10px 14px;margin-top:10px;">
+      ${standings.zones.map(z=>`<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2);"><span style="width:8px;height:8px;border-radius:2px;background:${zoneColor[z.id]};"></span>${z.label}</div>`).join('')}
+    </div>`;
+  }
+  return html;
+}
+
 async function resetClientData(){
   if(!confirm('Reset ALL global data? This affects all operators. Cannot be undone.')) return;
   await Promise.all([
@@ -1327,6 +1565,7 @@ function renderTournamentView(){
   html+=`<div class="tabs">
     <button class="tab active" id="ttab-teams" onclick="switchTTab('teams')">Teams <span style="font-family:var(--mono);font-size:10px;color:var(--text-3);margin-left:4px;">${season.teamIds.length}</span></button>
     <button class="tab" id="ttab-rounds" onclick="switchTTab('rounds')">Rounds & Events <span style="font-family:var(--mono);font-size:10px;color:var(--text-3);margin-left:4px;">${season.rounds.length}</span></button>
+    <button class="tab" id="ttab-standings" onclick="switchTTab('standings')">Standings ${season.standings?.rows?.length?`<span style="font-family:var(--mono);font-size:10px;color:var(--text-3);margin-left:4px;">${season.standings.rows.length}</span>`:''}</button>
   </div>`;
 
   html+=`<div id="ttab-content-teams">
@@ -1368,6 +1607,34 @@ function renderTournamentView(){
   html+=`</div>`;
   if(season.rounds.length>0)html+=`<div style="margin-top:12px;"><button class="btn btn-outline btn-sm" onclick="addRound()">+ Add Round</button></div>`;
   html+=`</div>`;
+
+  html+=`<div id="ttab-content-standings" style="display:none;">
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header">
+        <span class="card-title">Paste standings</span>
+        <span style="font-size:11px;color:var(--text-3);">Copy the full table from Sofascore (or similar) and paste below</span>
+      </div>
+      <div class="card-body">
+        <textarea id="standings-paste" placeholder="Paste standings table here…" style="width:100%;height:140px;font-family:var(--mono);font-size:11.5px;padding:10px;border:1px solid var(--border);border-radius:8px;resize:vertical;"></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button class="btn btn-primary btn-sm" onclick="previewStandingsPaste()">Parse</button>
+          <button class="btn btn-outline btn-sm" onclick="document.getElementById('standings-paste').value='';document.getElementById('standings-preview').innerHTML='';">Clear</button>
+        </div>
+      </div>
+    </div>
+    <div id="standings-preview"></div>
+    ${season.standings && season.standings.rows && season.standings.rows.length ? `
+    <div class="card" style="margin-top:16px;">
+      <div class="card-header">
+        <span class="card-title">Current standings</span>
+        <span style="font-size:11px;color:var(--text-3);">Updated ${season.standings.updatedAt?new Date(season.standings.updatedAt).toLocaleString():''}</span>
+      </div>
+      <div class="card-body">
+        ${renderStandingsTable(season.standings)}
+        <button class="btn btn-danger btn-sm" style="margin-top:12px;" onclick="clearStandings()">Clear saved standings</button>
+      </div>
+    </div>` : ''}
+  </div>`;
 
   document.getElementById('tournament-content').innerHTML=html;
   renderTournamentNav();
@@ -1465,6 +1732,7 @@ function switchTTab(tab){
   document.getElementById('ttab-'+tab).classList.add('active');
   document.getElementById('ttab-content-teams').style.display=tab==='teams'?'block':'none';
   document.getElementById('ttab-content-rounds').style.display=tab==='rounds'?'block':'none';
+  document.getElementById('ttab-content-standings').style.display=tab==='standings'?'block':'none';
 }
 
 function selectSeason(s){S.activeSeason=s;S.openRounds.clear();renderTournamentView();}
