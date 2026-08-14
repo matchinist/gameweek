@@ -538,7 +538,11 @@ tbody tr:hover td{background:var(--bg);}
           <div class="card" style="margin-bottom:14px;">
             <div class="card-header"><span class="card-title">Embed Code</span></div>
             <div class="card-body">
-              <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">Paste this snippet anywhere on your site. It shows real Premier League squad data for your covered teams — there's nothing to create or configure, it's ready as soon as Data Manager has lineups recorded.</p>
+              <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">Paste this snippet anywhere on your site. It shows real squad data for your covered teams — there's nothing to create or configure beyond picking which tournament to display.</p>
+              <div class="form-group">
+                <label class="form-label">Tournament</label>
+                <select class="form-select" id="widgets-tournament-select" onchange="renderWidgetsInfo()"></select>
+              </div>
               <div class="embed-box" id="widgets-embed-code-box">
 &lt;iframe
   src="https://www.gameweek.cloud/widgets/squad-analytics?<span style="color:#FCD34D" id="widgets-embed-query-string">client=...</span>"
@@ -575,7 +579,11 @@ tbody tr:hover td{background:var(--bg);}
           <div class="card" style="margin-bottom:14px;">
             <div class="card-header"><span class="card-title">Embed Code</span></div>
             <div class="card-body">
-              <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">Paste this snippet anywhere on your site. It ranks real goalscorers for your covered Premier League teams — there's nothing to create or configure, it's ready as soon as Data Manager has goals recorded.</p>
+              <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">Paste this snippet anywhere on your site. It ranks real goalscorers for your covered teams — there's nothing to create or configure beyond picking which tournament to display.</p>
+              <div class="form-group">
+                <label class="form-label">Tournament</label>
+                <select class="form-select" id="ts-tournament-select" onchange="renderTopScorersWidgetInfo()"></select>
+              </div>
               <div class="embed-box" id="ts-embed-code-box">
 &lt;iframe
   src="https://www.gameweek.cloud/widgets/top-scorers?<span style="color:#FCD34D" id="ts-embed-query-string">client=...</span>"
@@ -600,6 +608,47 @@ tbody tr:hover td{background:var(--bg);}
                 <div><strong style="color:var(--text);">Goal type</strong> — reconstructed from every goal you enter in Data Manager, in chronological order, comparing the score right before each goal to classify it as a <em>Leading goal</em> (took the lead), <em>Equalising goal</em> (levelled it), <em>Reducing difference</em> (behind, narrowed the gap), or <em>Increasing difference</em> (already ahead, extended it).</div>
                 <div><strong style="color:var(--text);">Minute range</strong> — filters by the exact minute you recorded for each goal, including stoppage time if you've entered goals past the 90th minute.</div>
                 <div><strong style="color:var(--text);">Opponent position</strong> needs league table data Data Manager doesn't track yet — that level shows 0 for now rather than guessing.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin:24px 0 10px;">Standings</div>
+      <div class="two-col">
+        <div>
+          <div class="card" style="margin-bottom:14px;">
+            <div class="card-header"><span class="card-title">Embed Code</span></div>
+            <div class="card-body">
+              <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">Paste this snippet anywhere on your site. It shows a live league table — there's nothing to create or configure beyond picking which tournament to display.</p>
+              <div class="form-group">
+                <label class="form-label">Tournament</label>
+                <select class="form-select" id="standings-tournament-select" onchange="renderStandingsWidgetInfo()"></select>
+              </div>
+              <div class="embed-box" id="standings-embed-code-box">
+&lt;iframe
+  src="https://www.gameweek.cloud/widgets/standings?<span style="color:#FCD34D" id="standings-embed-query-string">client=...</span>"
+  width="100%"
+  height="680"
+  frameborder="0"
+  style="border-radius:10px;"
+&gt;&lt;/iframe&gt;
+                <button class="btn btn-outline btn-sm embed-copy-btn" onclick="copyStandingsEmbed()" style="font-family:var(--mono);font-size:10px;background:var(--sidebar-2);border-color:var(--sidebar-border);color:#9CA3AF;" id="standings-copy-btn">Copy</button>
+              </div>
+              <p style="font-size:11px;color:var(--text-3);margin-top:10px;">Your client key: <span style="font-family:var(--mono);color:var(--text)" id="standings-client-key-label">...</span></p>
+              <p style="font-size:11px;color:var(--text-3);margin-top:4px;"><a href="#" id="standings-test-link" target="_blank" style="color:var(--accent);text-decoration:none;">Open the live widget →</a></p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">How it's calculated</span></div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:12px;font-size:12px;color:var(--text-2);line-height:1.6;">
+                <div><strong style="color:var(--text);">Table data</strong> — pulled from whatever's been pasted into that tournament's Standings tab in Data Manager. Updates whenever that's refreshed there, no action needed on your side.</div>
+                <div><strong style="color:var(--text);">Which tournament shows</strong> — only tournaments enabled for your account under Coverage appear in the dropdown above. Need a different one? It has to be turned on in Coverage first.</div>
+                <div>If a tournament hasn't had standings pasted in yet, the widget shows a simple "not available yet" message rather than an empty or broken table.</div>
               </div>
             </div>
           </div>
@@ -1478,7 +1527,12 @@ function nav(view, subLabel){
   if(view==='dashboard') renderDashboard();
   if(view==='competitions') renderCompList();
   if(view==='embed') renderEmbedInfo();
-  if(view==='widgets'){ renderWidgetsInfo(); renderTopScorersWidgetInfo(); }
+  if(view==='widgets'){
+    // Coverage can change between visits, and dmState/coverageState may not
+    // be populated yet if the operator hasn't opened the round-builder this
+    // session — refresh first so the tournament dropdowns are accurate.
+    refreshDMState().then(()=>{ renderWidgetsInfo(); renderTopScorersWidgetInfo(); renderStandingsWidgetInfo(); });
+  }
   if(view==='users'){
     const clearSearch = ()=>{
       const el = document.getElementById('users-search');
@@ -3113,16 +3167,47 @@ function renderEmbedInfo(){
   renderDomains();
 }
 
+function getCoveredTournaments(){
+  // null means no coverage has ever been configured for this client — the
+  // rest of the app treats that as "no restriction, show everything" (see
+  // defaultCoverageFor), so the widgets dropdown follows the same rule
+  // rather than silently showing an empty list.
+  const ids = coverageState.tournamentIds;
+  const all = dmState.tournaments||[];
+  const filtered = ids ? all.filter(t=>ids.has(t.id)) : all;
+  return filtered.sort((a,b)=>a.name.localeCompare(b.name));
+}
+function tournamentDropdownOptions(selectedId){
+  const covered = getCoveredTournaments();
+  if(!covered.length) return '<option value="">— none enabled in Coverage —</option>';
+  return covered.map(t=>`<option value="${t.id}"${t.id===selectedId?' selected':''}>${t.name}${t.country?' ('+t.country+')':''}</option>`).join('');
+}
+// Keeps the dropdown's current selection across re-renders (e.g. after the
+// operator picks a tournament, only that widget's own render should update,
+// not reset every dropdown back to its first option).
+function currentOrFirstTournamentId(selectId){
+  const el = document.getElementById(selectId);
+  const covered = getCoveredTournaments();
+  if(el && el.value && covered.some(t=>t.id===el.value)) return el.value;
+  return covered[0]?.id || '';
+}
+
 function renderWidgetsInfo(){
+  const sel = document.getElementById('widgets-tournament-select');
+  const tournamentId = currentOrFirstTournamentId('widgets-tournament-select');
+  if(sel) sel.innerHTML = tournamentDropdownOptions(tournamentId);
+  const qs = tournamentId ? `client=${CLIENT_KEY}&tournament=${tournamentId}` : `client=${CLIENT_KEY}`;
   const qsEl = document.getElementById('widgets-embed-query-string');
-  if(qsEl) qsEl.textContent = `client=${CLIENT_KEY}`;
+  if(qsEl) qsEl.textContent = qs;
   const keyLabel = document.getElementById('widgets-client-key-label');
   if(keyLabel) keyLabel.textContent = CLIENT_KEY;
   const testLink = document.getElementById('widgets-test-link');
-  if(testLink) testLink.href = `https://www.gameweek.cloud/widgets/squad-analytics?client=${CLIENT_KEY}`;
+  if(testLink) testLink.href = `https://www.gameweek.cloud/widgets/squad-analytics?${qs}`;
 }
 function copyWidgetsEmbed(){
-  const code = `<iframe src="https://www.gameweek.cloud/widgets/squad-analytics?client=${CLIENT_KEY}" width="100%" height="680" frameborder="0" style="border-radius:10px;"></iframe>`;
+  const tournamentId = currentOrFirstTournamentId('widgets-tournament-select');
+  const qs = tournamentId ? `client=${CLIENT_KEY}&tournament=${tournamentId}` : `client=${CLIENT_KEY}`;
+  const code = `<iframe src="https://www.gameweek.cloud/widgets/squad-analytics?${qs}" width="100%" height="680" frameborder="0" style="border-radius:10px;"></iframe>`;
   navigator.clipboard.writeText(code).then(()=>toast('Copied to clipboard'));
 }
 
@@ -3263,15 +3348,40 @@ function exportUsersCSV(){
 }
 
 function renderTopScorersWidgetInfo(){
+  const sel = document.getElementById('ts-tournament-select');
+  const tournamentId = currentOrFirstTournamentId('ts-tournament-select');
+  if(sel) sel.innerHTML = tournamentDropdownOptions(tournamentId);
+  const qs = tournamentId ? `client=${CLIENT_KEY}&tournament=${tournamentId}` : `client=${CLIENT_KEY}`;
   const qsEl = document.getElementById('ts-embed-query-string');
-  if(qsEl) qsEl.textContent = `client=${CLIENT_KEY}`;
+  if(qsEl) qsEl.textContent = qs;
   const keyLabel = document.getElementById('ts-client-key-label');
   if(keyLabel) keyLabel.textContent = CLIENT_KEY;
   const testLink = document.getElementById('ts-test-link');
-  if(testLink) testLink.href = `https://www.gameweek.cloud/widgets/top-scorers?client=${CLIENT_KEY}`;
+  if(testLink) testLink.href = `https://www.gameweek.cloud/widgets/top-scorers?${qs}`;
 }
 function copyTopScorersEmbed(){
-  const code = `<iframe src="https://www.gameweek.cloud/widgets/top-scorers?client=${CLIENT_KEY}" width="100%" height="680" frameborder="0" style="border-radius:10px;"></iframe>`;
+  const tournamentId = currentOrFirstTournamentId('ts-tournament-select');
+  const qs = tournamentId ? `client=${CLIENT_KEY}&tournament=${tournamentId}` : `client=${CLIENT_KEY}`;
+  const code = `<iframe src="https://www.gameweek.cloud/widgets/top-scorers?${qs}" width="100%" height="680" frameborder="0" style="border-radius:10px;"></iframe>`;
+  navigator.clipboard.writeText(code).then(()=>toast('Copied to clipboard'));
+}
+
+function renderStandingsWidgetInfo(){
+  const sel = document.getElementById('standings-tournament-select');
+  const tournamentId = currentOrFirstTournamentId('standings-tournament-select');
+  if(sel) sel.innerHTML = tournamentDropdownOptions(tournamentId);
+  const qs = tournamentId ? `client=${CLIENT_KEY}&tournament=${tournamentId}` : `client=${CLIENT_KEY}`;
+  const qsEl = document.getElementById('standings-embed-query-string');
+  if(qsEl) qsEl.textContent = qs;
+  const keyLabel = document.getElementById('standings-client-key-label');
+  if(keyLabel) keyLabel.textContent = CLIENT_KEY;
+  const testLink = document.getElementById('standings-test-link');
+  if(testLink) testLink.href = `https://www.gameweek.cloud/widgets/standings?${qs}`;
+}
+function copyStandingsEmbed(){
+  const tournamentId = currentOrFirstTournamentId('standings-tournament-select');
+  const qs = tournamentId ? `client=${CLIENT_KEY}&tournament=${tournamentId}` : `client=${CLIENT_KEY}`;
+  const code = `<iframe src="https://www.gameweek.cloud/widgets/standings?${qs}" width="100%" height="680" frameborder="0" style="border-radius:10px;"></iframe>`;
   navigator.clipboard.writeText(code).then(()=>toast('Copied to clipboard'));
 }
 
