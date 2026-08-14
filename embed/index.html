@@ -104,7 +104,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .score-inline-mid{display:flex;align-items:center;gap:6px;flex-shrink:0;min-width:80px;justify-content:center;}
 .score-inline-dash{font-family:Inter,sans-serif;font-size:14px;color:var(--text-3);font-weight:700;}
 /* ── SUBMIT BUTTON ── */
-.submit-preds-btn{display:block;width:calc(100% - 28px);margin:12px 14px 40px;padding:15px;background:var(--accent);color:white;border:none;border-radius:16px;font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;transition:opacity 0.13s;}
+.submit-preds-btn{display:block;width:100%;margin:12px 0 40px;padding:15px;background:var(--accent);color:white;border:none;border-radius:16px;font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;transition:opacity 0.13s;}
 .submit-preds-btn:hover{opacity:0.88;}
 .submit-preds-btn.disabled{background:var(--white);color:var(--text-3);border:1px solid var(--border);cursor:default;pointer-events:none;}
 .rank-item:active{cursor:grabbing;}
@@ -766,8 +766,15 @@ async function buildCompsFromRealData(){
       {data:tournamentRows},
       {data:opRow},
     ] = await Promise.all([
-      supa.from('gw_dm_teams').select('*'),
-      supa.from('gw_dm_events').select('*'),
+      supa.from('gw_dm_teams').select('*').limit(10000),
+      // No limit() here silently truncates at Supabase's default 1000-row cap once
+      // the platform's total event count (across every client) crosses that line —
+      // this table has no client_key column to filter by, so every client page
+      // currently pulls the entire shared event pool. Raised the cap as an
+      // immediate fix; the real long-term fix is scoping this query to only the
+      // event ids this client's rounds actually reference, plus a separate
+      // team-filtered query for lineup-mode competitions.
+      supa.from('gw_dm_events').select('*').limit(10000),
       supa.from('gw_competitions').select('*').eq('client_key',CLIENT_PARAM),
       supa.from('gw_rounds').select('*').eq('client_key',CLIENT_PARAM).order('sort_order'),
       supa.from('gw_dm_tournaments').select('id,name,seasons'),
@@ -4350,10 +4357,13 @@ function openPredHistory(uEnc){
   const u=decodeURIComponent(uEnc);
   if(!lbPredHistoryCache) return;
   const hist=lbPredHistoryCache.byUser[u]||[];
+  // Rounds are iterated oldest→newest when building this history, so reverse
+  // for display: newest matches first.
+  const histOrdered=[...hist].reverse();
   const safeU=u.replace(/</g,'&lt;').replace(/>/g,'&gt;');
   let body='';
   let lastRound=null;
-  hist.forEach(h=>{
+  histOrdered.forEach(h=>{
     if(!h.res) return; // only show resulted matches
     if(h.roundLabel && h.roundLabel!==lastRound){
       lastRound=h.roundLabel;
@@ -4407,10 +4417,6 @@ function closePredHistory(){
   if(wrap) wrap.innerHTML='';
 }
 
-function lbInitials(name){
-  const parts=(name||'').replace(/[^a-z0-9_ ]/gi,'').split(/[_ ]/).filter(Boolean);
-  return ((parts[0]?.[0]||'')+(parts[1]?.[0]||parts[0]?.[1]||'')).toUpperCase();
-}
 function buildLBTable(title,sub,rows,cellFn,colHeader,prizes,extraCellFn,extraColHeader,extra2CellFn,extra2ColHeader){
   const me=currentPlayer?.username;
   const prizeMap={};
@@ -4427,7 +4433,6 @@ function buildLBTable(title,sub,rows,cellFn,colHeader,prizes,extraCellFn,extraCo
   rows.forEach(row=>{
     const isMe=row.u===me;
     const rankColor=row.rank<=3?medalColor[row.rank]:'var(--text-3)';
-    const avatarBg=isMe?'linear-gradient(135deg,var(--accent),oklch(0.62 0.15 275))':'oklch(0.94 0.006 260)';
     const prizeText=prizeMap[row.rank];
     const icon=prizeIcon[row.rank]||'🏆';
     const bg=prizeBg[row.rank]||'oklch(0.95 0.02 275)';
@@ -4443,7 +4448,7 @@ function buildLBTable(title,sub,rows,cellFn,colHeader,prizes,extraCellFn,extraCo
     const extraCell = hasExtra ? extraCellFn(row).replace('<td ','<td class="lb-col-extra" ') : '';
     const extra2Cell = hasExtra2 ? extra2CellFn(row).replace('<td ','<td class="lb-col-extra2" ') : '';
     const youTag = isMe?`<span style="flex-shrink:0;margin-left:2px;font-size:9px;font-weight:800;color:var(--accent);background:var(--accent-light);padding:2px 6px;border-radius:5px;letter-spacing:0.3px;">${t('you')}</span>`:'';
-    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank" style="color:${rankColor};">${row.rank}</td><td><div style="display:flex;align-items:center;gap:8px;min-width:0;"><div style="width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:${isMe?'#fff':'var(--text-2)'};background:${avatarBg};">${lbInitials(row.u)}</div><span class="lb-uname ${isMe?'me':''}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row.u}</span>${youTag}</div></td>${cellFn(row)}${extraCell}${extra2Cell}${prizeCell}</tr>`;
+    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank" style="color:${rankColor};">${row.rank}</td><td><div style="display:flex;align-items:center;gap:8px;min-width:0;"><span class="lb-uname ${isMe?'me':''}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row.u}</span>${youTag}</div></td>${cellFn(row)}${extraCell}${extra2Cell}${prizeCell}</tr>`;
   });
   html+=`</tbody></table></div>`; return html;
 }

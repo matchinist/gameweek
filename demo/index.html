@@ -122,7 +122,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .score-inline-mid{display:flex;align-items:center;gap:6px;flex-shrink:0;min-width:80px;justify-content:center;}
 .score-inline-dash{font-family:Inter,sans-serif;font-size:14px;color:oklch(0.7 0.01 260);font-weight:700;}
 /* ── SUBMIT BUTTON ── */
-.submit-preds-btn{display:block;width:calc(100% - 28px);margin:12px 14px 40px;padding:15px;background:var(--accent);color:white;border:none;border-radius:16px;font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;transition:opacity 0.13s;}
+.submit-preds-btn{display:block;width:100%;margin:12px 0 40px;padding:15px;background:var(--accent);color:white;border:none;border-radius:16px;font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;transition:opacity 0.13s;}
 .submit-preds-btn:hover{opacity:0.88;}
 .submit-preds-btn.disabled{background:var(--white);color:var(--text-3);border:1px solid var(--border);cursor:default;pointer-events:none;}
 .rank-item:active{cursor:grabbing;}
@@ -3909,9 +3909,12 @@ function openPredHistory(uEnc){
   const u=decodeURIComponent(uEnc);
   if(!lbPredHistoryCache)return;
   const hist=lbPredHistoryCache.byUser[u]||[];
+  // Rounds are iterated oldest→newest when building this history, so reverse
+  // for display: newest matches first.
+  const histOrdered=[...hist].reverse();
   const safeU=u.replace(/</g,'&lt;').replace(/>/g,'&gt;');
   let body='',lastRound=null;
-  hist.forEach(h=>{
+  histOrdered.forEach(h=>{
     if(!h.res && !h.actualPos && !h.winnerName)return;
     if(h.roundLabel&&h.roundLabel!==lastRound){
       lastRound=h.roundLabel;
@@ -3980,10 +3983,6 @@ function closePredHistory(){
   if(wrap)wrap.innerHTML='';
 }
 
-function lbInitials(name){
-  const parts=(name||'').replace(/[^a-z0-9_ ]/gi,'').split(/[_ ]/).filter(Boolean);
-  return ((parts[0]?.[0]||'')+(parts[1]?.[0]||parts[0]?.[1]||'')).toUpperCase();
-}
 function ordinal(n){
   const s=['th','st','nd','rd'], v=n%100;
   return n+(s[(v-20)%10]||s[v]||s[0]);
@@ -4004,7 +4003,6 @@ function buildLBTable(title,sub,rows,cellFn,colHeader,prizes,extraCellFn,extraCo
   rows.forEach(row=>{
     const isMe=row.u===me;
     const rankColor=row.rank<=3?medalColor[row.rank]:'var(--text-3)';
-    const avatarBg=isMe?'linear-gradient(135deg,var(--accent),oklch(0.62 0.15 275))':'oklch(0.94 0.006 260)';
     const prizeText=prizeMap[row.rank];
     const icon=prizeIcon[row.rank]||'🏆';
     const bg=prizeBg[row.rank]||'oklch(0.95 0.02 275)';
@@ -4019,7 +4017,7 @@ function buildLBTable(title,sub,rows,cellFn,colHeader,prizes,extraCellFn,extraCo
     }
     const extraCell = hasExtra ? extraCellFn(row).replace('<td ','<td class="lb-col-extra" ') : '';
     const extra2Cell = hasExtra2 ? extra2CellFn(row).replace('<td ','<td class="lb-col-extra2" ') : '';
-    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank" style="color:${rankColor};">${row.rank}</td><td><div style="display:flex;align-items:center;gap:8px;min-width:0;"><div style="width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:${isMe?'#fff':'var(--text-2)'};background:${avatarBg};">${lbInitials(row.u)}</div><span class="lb-uname ${isMe?'me':''}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row.u}</span>${isMe?'<span style="flex-shrink:0;margin-left:2px;font-size:9px;font-weight:800;color:var(--accent);background:var(--accent-light);padding:2px 6px;border-radius:5px;letter-spacing:0.3px;">YOU</span>':''}</div></td>${cellFn(row)}${extraCell}${extra2Cell}${prizeCell}</tr>`;
+    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank" style="color:${rankColor};">${row.rank}</td><td><div style="display:flex;align-items:center;gap:8px;min-width:0;"><span class="lb-uname ${isMe?'me':''}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row.u}</span>${isMe?'<span style="flex-shrink:0;margin-left:2px;font-size:9px;font-weight:800;color:var(--accent);background:var(--accent-light);padding:2px 6px;border-radius:5px;letter-spacing:0.3px;">YOU</span>':''}</div></td>${cellFn(row)}${extraCell}${extra2Cell}${prizeCell}</tr>`;
   });
   html+='</tbody></table></div>';return html;
 }

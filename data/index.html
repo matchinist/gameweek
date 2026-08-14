@@ -244,6 +244,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
             <div class="sidebar-section-label" style="margin-bottom:0;">Tournaments</div>
             <button class="btn btn-primary btn-xs" onclick="document.getElementById('nt-sport').innerHTML=sportOptions('football');openModal('modal-create-tournament')">+</button>
           </div>
+          <select class="form-select" id="tournament-nav-sport-filter" onchange="setTournamentNavSportFilter(this.value)"
+                  style="width:calc(100% - 16px);margin:0 8px 8px;padding:5px 8px;font-size:11px;"></select>
           <div id="tournament-nav"></div>
         </div>
       </div>
@@ -261,6 +263,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
             <div class="card-header">
               <span class="card-title">All Teams — Global Pool <span id="teams-count-label" style="color:var(--text-3);font-weight:400;"></span></span>
               <span style="display:flex;align-items:center;gap:8px;">
+                <input class="form-input" id="teams-search" type="text" placeholder="Search teams…" oninput="setTeamsSearch(this.value)"
+                       style="width:150px;padding:6px 10px;font-size:12px;">
                 <select class="form-select" id="teams-tournament-filter" onchange="setTeamsTournamentFilter(this.value)"
                         style="width:auto;min-width:150px;padding:6px 10px;font-size:12px;"></select>
                 <select class="form-select" id="teams-sport-filter" onchange="setTeamsSportFilter(this.value)"
@@ -951,13 +955,29 @@ function navTo(page,tournamentId){
   }
 }
 
+let tournamentNavSportFilter = 'football';
+function setTournamentNavSportFilter(v){ tournamentNavSportFilter = v; renderTournamentNav(); }
+
 function renderTournamentNav(){
-  document.getElementById('tournament-nav').innerHTML=S.tournaments.map(t=>`
-    <button class="tournament-nav-item${S.activeTournamentId===t.id&&S.activePage==='tournament'?' active':''}" onclick="navTo('tournament','${t.id}')">
-      <div class="tni-badge" style="background:${t.color}">${abbr(t.name)}</div>
-      <span class="tni-name">${t.name}</span>
-      <span class="tni-count">${Object.keys(t.seasons).length}s</span>
-    </button>`).join('');
+  const sel=document.getElementById('tournament-nav-sport-filter');
+  if(sel){
+    const counts={};
+    S.tournaments.forEach(t=>{ const s=t.sport||'football'; counts[s]=(counts[s]||0)+1; });
+    const keys=Object.keys(counts).sort((a,b)=>sportLabel(a).localeCompare(sportLabel(b)));
+    if(!keys.includes(tournamentNavSportFilter) && tournamentNavSportFilter!=='all') tournamentNavSportFilter=keys.includes('football')?'football':'all';
+    sel.innerHTML=`<option value="all"${tournamentNavSportFilter==='all'?' selected':''}>All sports (${S.tournaments.length})</option>`
+      + keys.map(k=>`<option value="${k}"${tournamentNavSportFilter===k?' selected':''}>${sportLabel(k)} (${counts[k]})</option>`).join('');
+  }
+  const filtered = tournamentNavSportFilter==='all' ? S.tournaments : S.tournaments.filter(t=>(t.sport||'football')===tournamentNavSportFilter);
+  const navEl=document.getElementById('tournament-nav');
+  navEl.innerHTML = filtered.length
+    ? filtered.map(t=>`
+      <button class="tournament-nav-item${S.activeTournamentId===t.id&&S.activePage==='tournament'?' active':''}" onclick="navTo('tournament','${t.id}')">
+        <div class="tni-badge" style="background:${t.color}">${abbr(t.name)}</div>
+        <span class="tni-name">${t.name}</span>
+        <span class="tni-count">${Object.keys(t.seasons).length}s</span>
+      </button>`).join('')
+    : `<div style="padding:10px 8px;font-size:11px;color:var(--text-3);">No ${tournamentNavSportFilter==='all'?'':sportLabel(tournamentNavSportFilter)+' '}tournaments yet.</div>`;
 }
 
 // ── CLIENT COVERAGE ──────────────────────────────────────────────────────
@@ -1112,6 +1132,9 @@ function setTeamsSportFilter(v){ teamsSportFilter = v; renderTeams(); }
 let teamsTournamentFilter = 'all';
 function setTeamsTournamentFilter(v){ teamsTournamentFilter = v; renderTeams(); }
 
+let teamsSearchQuery = '';
+function setTeamsSearch(v){ teamsSearchQuery = v; renderTeams(); }
+
 // Union of team ids rostered in ANY season of the given tournament.
 function teamIdsInTournament(t){
   const ids = new Set();
@@ -1171,8 +1194,13 @@ function renderTeams(){
     const tName=getTournament(teamsTournamentFilter)?.name || 'this tournament';
     filterDescription = filterDescription ? `${filterDescription} teams in ${tName}` : tName;
   }
+  if(teamsSearchQuery.trim()){
+    const q=teamsSearchQuery.trim().toLowerCase();
+    filtered = filtered.filter(t=>t.name.toLowerCase().includes(q)||(t.short||'').toLowerCase().includes(q));
+    filterDescription = filterDescription ? `${filterDescription} matching "${teamsSearchQuery.trim()}"` : `matching "${teamsSearchQuery.trim()}"`;
+  }
   const label=document.getElementById('teams-count-label');
-  const anyFilterActive = teamsSportFilter!=='all' || teamsTournamentFilter!=='all';
+  const anyFilterActive = teamsSportFilter!=='all' || teamsTournamentFilter!=='all' || teamsSearchQuery.trim()!=='';
   if(label) label.textContent = anyFilterActive ? `· ${filtered.length} of ${S.teams.length}` : `· ${S.teams.length}`;
 
   if(!S.teams.length){el.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-icon">\ud83d\udc55</div><div class="empty-title">No teams yet</div><div class="empty-sub">Add your first team to get started.</div></div>';return;}
