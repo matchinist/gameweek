@@ -681,6 +681,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 // ── SUPABASE ──────────────────────────────────────────────────────────────
 const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
@@ -873,12 +874,95 @@ function previewStandingsPaste(){
   const parsed = parseStandingsPaste(raw);
   if(!parsed.rows.length){ toast('Couldn\'t find any team rows in that paste — check the format'); return; }
 
+  applyStandingsParseResult(parsed, poolTeams);
+}
+
+// Shared by both the paste parser and the spreadsheet importer — feeds
+// whichever one ran into the same preview/match/save pipeline so there's
+// only one code path downstream of "here are some rows and zones".
+function applyStandingsParseResult(parsed, poolTeams){
   const rows = parsed.rows.map(r=>{
     const m = matchStandingsTeam(r.name, poolTeams);
     return { ...r, teamId: m ? m.id : null, matchedName: m ? m.name : null, matchScore: m ? m.score : 0 };
   });
   standingsPreviewState = { zones: parsed.zones, rows };
   renderStandingsPreview(poolTeams);
+}
+
+// Expects columns, in order: Rank, Team, Played, W, D, L, GF, GA, Pts, Zone
+// (Zone optional). A header row is auto-detected and skipped if its first
+// cell isn't numeric — otherwise every row is treated as data.
+function parseStandingsSheet(sheetRows){
+  const zones = [];
+  const rows = [];
+  let currentZoneLabel = null, currentZoneId = null, zoneOrder = 0;
+
+  let dataRows = sheetRows;
+  if(dataRows.length && !/^-?\d+$/.test(String(dataRows[0][0]||'').trim())){
+    dataRows = dataRows.slice(1); // drop header row
+  }
+
+  dataRows.forEach(cells=>{
+    const [rankRaw, name, playedRaw, wRaw, dRaw, lRaw, gfRaw, gaRaw, ptsRaw, zoneRaw] = cells;
+    const rank = parseInt(rankRaw,10);
+    if(!rank || !name) return; // skip blank/malformed rows rather than failing the whole import
+    const played = +playedRaw||0, w = +wRaw||0, d = +dRaw||0, l = +lRaw||0;
+    const gf = +gfRaw||0, ga = +gaRaw||0, pts = +ptsRaw||0;
+    const zoneLabel = zoneRaw ? String(zoneRaw).trim() : '';
+    if(zoneLabel){
+      if(zoneLabel !== currentZoneLabel){
+        currentZoneId = 'zone'+(zoneOrder++);
+        currentZoneLabel = zoneLabel;
+        zones.push({ id: currentZoneId, label: zoneLabel });
+      }
+    } else {
+      currentZoneId = null; currentZoneLabel = null;
+    }
+    rows.push({ rank, name: String(name).trim(), played, w, d, l, diff: gf-ga, gf, ga, pts, zoneId: currentZoneId });
+  });
+
+  return { zones, rows };
+}
+
+function handleStandingsFileUpload(file){
+  if(!file) return;
+  const season = getSeasonData(S.activeTournamentId, S.activeSeason);
+  const poolTeams = season.teamIds.map(id=>getTeam(id)).filter(Boolean);
+  if(!poolTeams.length){ toast('Assign teams to this tournament\'s Teams tab first'); return; }
+
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    try{
+      const wb = XLSX.read(e.target.result, {type:'array', codepage:65001});
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const sheetRows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:'', blankrows:false});
+      const parsed = parseStandingsSheet(sheetRows);
+      if(!parsed.rows.length){ toast('Couldn\'t find any team rows in that file — check the columns match the template'); return; }
+      applyStandingsParseResult(parsed, poolTeams);
+      toast(`Parsed ${parsed.rows.length} teams from file`);
+    }catch(err){
+      console.error('Standings file import failed:', err);
+      toast('Couldn\'t read that file — make sure it\'s a valid Excel or CSV file');
+    }
+  };
+  reader.onerror = ()=>toast('Couldn\'t read that file');
+  reader.readAsArrayBuffer(file);
+}
+
+function downloadStandingsTemplate(){
+  const aoa = [
+    ['Rank','Team','Played','W','D','L','GF','GA','Pts','Zone'],
+    [1,'1. FC Köln',5,4,1,0,12,3,13,'Champions League'],
+    [2,'Bayer 04 Leverkusen',5,3,2,0,10,4,11,'Champions League'],
+    [5,'Borussia Mönchengladbach',5,2,1,2,6,6,7,'Europa League'],
+    [17,'VfB Stuttgart',5,0,1,4,2,10,1,'Relegation'],
+    [18,'SV Werder Bremen',5,0,0,5,1,14,0,'Relegation'],
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{wch:6},{wch:26},{wch:8},{wch:6},{wch:6},{wch:6},{wch:6},{wch:6},{wch:6},{wch:20}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Standings');
+  XLSX.writeFile(wb, 'gameweek-standings-template.xlsx');
 }
 
 function renderStandingsPreview(poolTeams){
@@ -1665,6 +1749,18 @@ function renderTournamentView(){
           <button class="btn btn-primary btn-sm" onclick="previewStandingsPaste()">Parse</button>
           <button class="btn btn-outline btn-sm" onclick="document.getElementById('standings-paste').value='';document.getElementById('standings-preview').innerHTML='';">Clear</button>
         </div>
+        <div style="display:flex;align-items:center;gap:10px;margin:16px 0 4px;">
+          <div style="flex:1;height:1px;background:var(--border);"></div>
+          <span style="font-size:11px;color:var(--text-3);">or</span>
+          <div style="flex:1;height:1px;background:var(--border);"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
+          <label class="btn btn-ghost btn-sm" style="cursor:pointer;">Upload Excel file
+            <input type="file" accept=".xlsx,.xls,.csv" style="display:none;" onchange="handleStandingsFileUpload(this.files[0]);this.value='';">
+          </label>
+          <a href="#" onclick="downloadStandingsTemplate();return false;" style="font-size:11px;color:var(--accent);text-decoration:none;">Download template ↓</a>
+        </div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:6px;">Columns, in order: Rank, Team, Played, W, D, L, GF, GA, Pts, Zone (Zone is optional — leave blank for no group colour).</div>
       </div>
     </div>
     <div id="standings-preview"></div>
