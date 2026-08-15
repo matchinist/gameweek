@@ -779,7 +779,15 @@ function isStandingsStatToken(s){
   return /^-?\d+$/.test(s) || /^\d+:\d+$/.test(s);
 }
 function parseStandingsPaste(raw){
-  const rawLines = raw.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  // A real copy from an HTML table (e.g. selecting Sofascore's table and
+  // Ctrl+C) typically joins the cells WITHIN a row with tabs — or runs of
+  // spaces, depending on browser — only breaking to a new line between
+  // rows. That's very different from one-cell-per-line, which is what some
+  // paste paths produce instead. Normalizing both to newlines here means
+  // every form parses identically, without affecting genuine multi-word
+  // zone labels (those only ever have single spaces between words).
+  const normalized = raw.replace(/\t+/g, '\n').replace(/ {2,}/g, '\n');
+  const rawLines = normalized.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
   const lines = [];
   for(const l of rawLines){
     if(STANDINGS_STOP_PATTERNS.some(p=>p.test(l))) break;
