@@ -471,6 +471,20 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
           <input class="form-input" id="et-color-hex" style="font-family:var(--mono);font-size:12px;max-width:110px;" oninput="syncColor('et')">
         </div>
       </div>
+      <div class="form-group">
+        <label class="form-label">Fixture Difficulty <span style="font-weight:400;color:var(--text-3);">— optional</span></label>
+        <div class="form-row form-row-2">
+          <div>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Home</label>
+            <select class="form-select" id="et-fd-home" onchange="colorFdSelect('et-fd-home')"></select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Away</label>
+            <select class="form-select" id="et-fd-away" onchange="colorFdSelect('et-fd-away')"></select>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:4px;">1 = easy fixture to play against this team, 5 = hardest. Leave unset if you don't use fixture difficulty.</div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-edit-team')">Cancel</button>
@@ -722,7 +736,7 @@ async function save(){
   try{
     if(S.teams.length){
       const {error:e1} = await supa.from('gw_dm_teams')
-        .upsert(S.teams.map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||'',sport:t.sport||'football'})),{onConflict:'id'});
+        .upsert(S.teams.map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||'',sport:t.sport||'football',fd_home:t.fdHome??null,fd_away:t.fdAway??null})),{onConflict:'id'});
       if(e1){ toast('Save failed: '+e1.message); console.error('teams save:',e1); return false; }
     }
     if(S.tournaments.length){
@@ -1504,6 +1518,22 @@ function createTeam(){
   toast(name+' added');
 }
 
+// FPL-style 1 (easy) – 5 (hard) fixture difficulty rating. Optional on every
+// team, so an unset value must render as a genuinely blank option — never
+// default to a specific number, since "unset" and "3" mean different things.
+const FD_COLORS = {1:'#16A34A',2:'#65A30D',3:'#D97706',4:'#EA580C',5:'#DC2626'};
+function fdOptionsHtml(selected){
+  let html = `<option value=""${!selected?' selected':''}>— not set —</option>`;
+  for(let i=1;i<=5;i++) html += `<option value="${i}"${String(selected)===String(i)?' selected':''}>${i}</option>`;
+  return html;
+}
+function colorFdSelect(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.style.color = el.value ? FD_COLORS[el.value] : '';
+  el.style.fontWeight = el.value ? '700' : '400';
+}
+
 function editTeam(id){
   S.editingTeamId=id;const t=getTeam(id);
   document.getElementById('et-name').value=t.name;
@@ -1512,6 +1542,9 @@ function editTeam(id){
   document.getElementById('et-color-hex').value=t.color;
   document.getElementById('et-logo').value=t.logo||'';
   document.getElementById('et-sport').innerHTML=sportOptions(t.sport);
+  document.getElementById('et-fd-home').innerHTML=fdOptionsHtml(t.fdHome);
+  document.getElementById('et-fd-away').innerHTML=fdOptionsHtml(t.fdAway);
+  colorFdSelect('et-fd-home'); colorFdSelect('et-fd-away');
   const prev=document.getElementById('et-logo-preview');
   if(t.logo) prev.innerHTML=`<img src="${t.logo}" style="width:100%;height:100%;object-fit:contain;">`;
   else prev.textContent='IMG';
@@ -1525,6 +1558,10 @@ function saveTeamEdit(){
   t.color=document.getElementById('et-color').value;
   t.logo=document.getElementById('et-logo').value.trim();
   t.sport=document.getElementById('et-sport').value||t.sport||'football';
+  const fdHomeVal = document.getElementById('et-fd-home').value;
+  const fdAwayVal = document.getElementById('et-fd-away').value;
+  t.fdHome = fdHomeVal ? +fdHomeVal : null;
+  t.fdAway = fdAwayVal ? +fdAwayVal : null;
   closeModal('modal-edit-team');renderTeams();
   if(S.activePage==='tournament')renderTournamentView();
   save();toast('Team updated');
@@ -2401,7 +2438,7 @@ async function loadDMData(){
   }
   // ── END MIGRATION ────────────────────────────────────────────────────────
 
-  S.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||'',sport:t.sport||'football'}))
+  S.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||'',sport:t.sport||'football',fdHome:t.fd_home ?? null,fdAway:t.fd_away ?? null}))
     .sort((a,b)=>a.name.localeCompare(b.name));
   S.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,sport:t.sport||'football',color:t.color,seasons:t.seasons||{}}));
   const evMap={};
