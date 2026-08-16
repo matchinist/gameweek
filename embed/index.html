@@ -77,20 +77,20 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .round-status.completed{background:var(--bg);color:var(--text-3);}
 .round-bar-right{margin-left:auto;display:flex;align-items:center;gap:4px;}
 .predict-subtabs{display:flex;gap:2px;flex-shrink:0;background:var(--accent-light);border-radius:999px;padding:3px;}
-.rules-btn{height:32px;padding:0 16px;display:inline-flex;align-items:center;font-size:13px;font-weight:600;color:var(--text-3);background:var(--white);border:1px solid var(--border);border-radius:999px;cursor:pointer;flex-shrink:0;transition:color .13s;}
+.rules-btn{height:26px;padding:0 14px;display:inline-flex;align-items:center;font-size:13px;font-weight:600;color:var(--text-3);background:var(--white);border:1px solid var(--border);border-radius:999px;cursor:pointer;flex-shrink:0;transition:color .13s;margin-top:-3px;}
 .rules-btn:hover{color:var(--text);}
 .predict-subtabs-mobile{display:none;}
 .predict-subtabs-mobile select{font-family:var(--mono);font-size:10px;font-weight:700;border:1px solid var(--border);background:var(--white);padding:4px 8px;border-radius:4px;cursor:pointer;outline:none;color:var(--text);text-transform:uppercase;}
 .ps-tab{padding:7px 16px;font-size:13px;font-weight:600;color:var(--text-3);background:transparent;border:none;border-radius:999px;cursor:pointer;transition:all 0.13s;white-space:nowrap;text-align:center;}
 .ps-tab:hover{color:var(--text);}
-.ps-tab.active{background:var(--accent);color:white;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,0.15);}
+.ps-tab.active{background:var(--accent);color:var(--on-accent,#fff);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,0.15);}
 @media(max-width:480px){
   .predict-subtabs{display:none !important;}
   .predict-subtabs-mobile{display:flex !important;width:100%;box-sizing:border-box;padding:3px;background:var(--accent-light);border-radius:11px;margin-top:10px;}
   .predict-subtabs-mobile .ps-tab{flex:1;height:34px;padding:0 4px;border-radius:8px;font-size:13px;}
   .predict-subtabs-mobile .ps-tab.active{background:var(--white);color:var(--text);box-shadow:0 1px 3px rgba(18,24,40,0.12);font-weight:700;}
   .control-band-select{height:32px;border-radius:10px;background:var(--white);font-size:13.5px;max-width:none;flex:1;min-width:0;}
-  .rules-btn{height:40px;padding:0 16px;border-radius:10px;font-size:13.5px;}
+  .rules-btn{height:26px;padding:0 14px;border-radius:999px;font-size:12.5px;}
   .events-list{grid-template-columns:1fr;padding:10px 0;}
   .event-card-top{padding:0;}
   .pred-area{padding:9px 10px;}
