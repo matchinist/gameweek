@@ -269,8 +269,9 @@ table.lb-table{width:100%;border-collapse:collapse;}
 @media(min-width:780px){
   .lineup-layout{flex-direction:row;align-items:flex-start;justify-content:center;}
 }
-.lineup-stats-card{width:100%;max-width:420px;background:var(--white);border:1px solid var(--border);border-radius:16px;box-shadow:0 2px 8px rgba(20,20,40,0.05);overflow:hidden;}
-@media(min-width:780px){ .lineup-stats-card{max-width:320px;} }
+.lineup-stats-card{width:100%;max-width:420px;background:var(--white);border:1px solid var(--border);border-radius:16px;box-shadow:0 2px 8px rgba(20,20,40,0.05);overflow:hidden;display:flex;flex-direction:column;}
+@media(min-width:780px){ .lineup-stats-card{max-width:380px;} }
+.lineup-stats-scroll{flex:1;overflow-y:auto;min-height:0;}
 .lineup-stats-header{padding:14px 16px 10px;border-bottom:1px solid var(--border);}
 .lineup-stats-title{font-size:13px;font-weight:800;color:var(--text);}
 .lineup-stats-group-label{font-family:var(--mono);font-size:9.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:9px 16px 5px;background:var(--bg);}
@@ -1500,6 +1501,7 @@ function renderPredict(){
   let html=predictSubTab==='predictions'?renderPredictionsPane(comp):(comp.mode==='lineup'?renderLineupLeaderboardShell(comp):renderLeaderboardShell(comp));
   document.getElementById('predict-content').innerHTML=html;
   requestAnimationFrame(()=>fitAllTeamNames());
+  if(comp.mode==='lineup' && predictSubTab==='predictions') requestAnimationFrame(()=>syncLineupStatsHeight());
   if(predictSubTab==='leaderboard'){
     if(comp.mode==='lineup') loadAndRenderLineupLeaderboard(comp);
     else loadAndRenderLeaderboard(comp);
@@ -1582,7 +1584,7 @@ const LINEUP_STATS_POS_LABELS = {GK:'Goalkeepers', DEF:'Defenders', MID:'Midfiel
 function renderLineupStatsTable(comp){
   const squad = squadFor(comp);
   const stats = computeLineupPlayerStats(comp);
-  const groups = ['GK','DEF','MID','FWD'].filter(pos=>(squad[pos]||[]).length);
+  const groups = ['FWD','MID','DEF','GK'].filter(pos=>(squad[pos]||[]).length);
   const tournamentIds = comp?.lineupConfig?.tournamentIds;
   const scopeLabel = (Array.isArray(tournamentIds) && tournamentIds.length)
     ? (tournamentIds.length===1 ? (TOURNAMENT_NAMES[tournamentIds[0]]||'Selected tournament') : `${tournamentIds.length} selected tournaments`)
@@ -1596,7 +1598,8 @@ function renderLineupStatsTable(comp){
   }
 
   let html = `<div class="lineup-stats-card">
-    <div class="lineup-stats-header"><div class="lineup-stats-title">Player Stats</div><div style="font-size:10.5px;color:var(--text-3);margin-top:2px;">${escapeHtmlLineup(scopeLabel)}</div></div>`;
+    <div class="lineup-stats-header"><div class="lineup-stats-title">Player Stats</div><div style="font-size:10.5px;color:var(--text-3);margin-top:2px;">${escapeHtmlLineup(scopeLabel)}</div></div>
+    <div class="lineup-stats-scroll">`;
 
   groups.forEach(pos=>{
     const players = [...squad[pos]].sort((a,b)=>{
@@ -1625,12 +1628,42 @@ function renderLineupStatsTable(comp){
     </table>`;
   });
 
-  html += `</div>`;
+  html += `</div></div>`;
   return html;
 }
 function escapeHtmlLineup(s){
   return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
+
+// Caps the player-stats card's height to match the pitch card's own
+// (measured, not assumed) height on desktop, with internal scrolling for
+// whatever doesn't fit — never the other way around, since a long squad
+// list stretching the pitch card taller than its natural size would look
+// broken. Cleared entirely on mobile, where both stack full-height instead.
+const LINEUP_STATS_BREAKPOINT = window.matchMedia('(min-width:780px)');
+function syncLineupStatsHeight(){
+  const pitchCard = document.querySelector('.lineup-pitch-card');
+  const statsCard = document.querySelector('.lineup-stats-card');
+  if(!pitchCard || !statsCard) return;
+  if(LINEUP_STATS_BREAKPOINT.matches){
+    // Clear any previous cap first so natural content height can be
+    // measured fresh, then only constrain it if the list is actually
+    // taller than the pitch — a shorter list should never be stretched.
+    // Using an explicit height (not max-height) here deliberately: a flex
+    // column's max-height alone doesn't reliably give its flex:1 child a
+    // definite height to compute overflow against in every browser engine,
+    // while an explicit height unambiguously does.
+    statsCard.style.height = '';
+    const naturalHeight = statsCard.offsetHeight;
+    const pitchHeight = pitchCard.offsetHeight;
+    if(naturalHeight > pitchHeight) statsCard.style.height = pitchHeight+'px';
+  } else {
+    statsCard.style.height = '';
+  }
+}
+window.addEventListener('resize', ()=>{
+  if(document.querySelector('.lineup-stats-card')) syncLineupStatsHeight();
+});
 
 const LIV_SQUAD = {
   GK: [
@@ -2096,7 +2129,7 @@ function renderLineupPredictor(comp){
       </div>
 
       <div class="lineup-layout">
-      <div style="width:100%;max-width:420px;background:var(--white);border:1px solid var(--border);border-radius:16px;box-shadow:0 2px 8px rgba(20,20,40,0.05);overflow:hidden;">
+      <div class="lineup-pitch-card" style="width:100%;max-width:420px;background:var(--white);border:1px solid var(--border);border-radius:16px;box-shadow:0 2px 8px rgba(20,20,40,0.05);overflow:hidden;">
         <div style="padding:12px 16px 0;">${fixtureHeader}</div>
         ${bonusRow}
         <div class="pitch-wrap" style="max-width:none;margin:0;">
