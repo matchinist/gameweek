@@ -742,7 +742,7 @@ const COMP_FILTER = (new URLSearchParams(location.search).get('comp')||'').split
 let COMP_FILTER_INVALID = false; // set true if a comp filter was given but matched nothing real
 
 // ── DATA LOAD ─────────────────────────────────────────────────────────────────
-let COMPS=[], EVENTS={}, EVENTS_RAW={}, EVENT_GAMEWEEK={}, EVENT_TOURNAMENT={};
+let COMPS=[], EVENTS={}, EVENTS_RAW={}, EVENT_GAMEWEEK={}, EVENT_TOURNAMENT={}, EVENT_TOURNAMENT_ID={};
 
 function shortPitchName(name){
   if(!name) return '';
@@ -756,7 +756,7 @@ function fmtKickoff(dt){
 }
 
 async function buildCompsFromRealData(){
-  COMPS=[]; EVENTS={}; EVENTS_RAW={}; EVENT_GAMEWEEK={}; EVENT_TOURNAMENT={};
+  COMPS=[]; EVENTS={}; EVENTS_RAW={}; EVENT_GAMEWEEK={}; EVENT_TOURNAMENT={}; EVENT_TOURNAMENT_ID={};
   try{
     const [
       {data:teams},
@@ -796,6 +796,11 @@ async function buildCompsFromRealData(){
           (r.eventIds||[]).forEach(eid=>{
             EVENT_GAMEWEEK[eid]=r.label;
             EVENT_TOURNAMENT[eid]=t.name;
+            // An event can be linked into more than one tournament's rounds
+            // (e.g. the same fixture reused across a league and a cup round
+            // grouping) — track every tournament it belongs to, not just
+            // whichever one happens to be processed last in this loop.
+            (EVENT_TOURNAMENT_ID[eid]=EVENT_TOURNAMENT_ID[eid]||[]).push(t.id);
             eventSeasonKey[eid]=seasonKey;
           });
         });
@@ -822,7 +827,18 @@ async function buildCompsFromRealData(){
       let cRounds;
       if(c.mode==='lineup' && c.lineup_config?.teamId){
         const lTeamId = c.lineup_config.teamId;
-        const teamEvents = (evRows||[]).filter(ev=>ev.home_id===lTeamId||ev.away_id===lTeamId);
+        let teamEvents = (evRows||[]).filter(ev=>ev.home_id===lTeamId||ev.away_id===lTeamId);
+
+        // Optional: only fixtures from tournament(s) the admin picked for
+        // this competition (e.g. league only, not cup) — an event counts
+        // as a match if it belongs to ANY of the selected tournaments,
+        // since one fixture can be linked into more than one. Empty/unset
+        // selection keeps the original behaviour: every fixture found for
+        // the team, across every tournament.
+        const lTournamentIds = c.lineup_config.tournamentIds;
+        if(Array.isArray(lTournamentIds) && lTournamentIds.length){
+          teamEvents = teamEvents.filter(ev=>(EVENT_TOURNAMENT_ID[ev.id]||[]).some(tid=>lTournamentIds.includes(tid)));
+        }
 
         // Group THIS team's events by season (events with no round assignment
         // form their own "unassigned" group), then score each group by how
