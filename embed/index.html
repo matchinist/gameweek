@@ -1421,7 +1421,7 @@ function computeCurrentRoundIdx(comp){
     // the "current" index all the way to the end, showing every round as
     // current-or-past even when the season hadn't started. Unknown means we
     // can't confirm it's passed, so treat it as not-yet (+Infinity) instead.
-    const startTime = i===0 ? -Infinity : (lastKo[i-1]!=null ? lastKo[i-1] + 4*3600*1000 : Infinity);
+    const startTime = i===0 ? -Infinity : (lastKo[i-1]!=null ? lastKo[i-1] + 3*3600*1000 : Infinity);
     if(now >= startTime) idx = i; else break;
   }
   return Math.min(idx, rounds.length-1);
@@ -1429,7 +1429,7 @@ function computeCurrentRoundIdx(comp){
 function getDefaultRoundIdx(comp){
   // Rounds can never overlap (a 6-hour gap between them is enforced when
   // they're created), so "which round is current" is always well-defined
-  // purely from kickoff times — 4 hours after the previous round's last
+  // purely from kickoff times — 3 hours after the previous round's last
   // event kicks off, the next one becomes current. This applies the same
   // way to every mode now, not just Lineup Predictor: the stored round
   // status is a separate, admin-facing concept that can drift out of sync
