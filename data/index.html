@@ -289,6 +289,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
                   <option value="">All Teams</option>
                 </select>
               </div>
+              <div id="players-upload-area" style="display:none;margin-bottom:16px;"></div>
+              <div id="players-import-preview"></div>
               <div id="players-grid" style="display:flex;flex-direction:column;gap:6px;"></div>
             </div>
           </div>
@@ -379,6 +381,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
             <option value="FWD">Forward</option>
           </select>
         </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Height (cm) <span style="font-weight:400;color:var(--text-3);">— optional</span></label>
+        <input class="form-input" type="number" id="cp-height" min="100" max="230" placeholder="e.g. 180" style="max-width:120px;">
       </div>
       <div class="form-group">
         <label class="form-label">Total Games at Club (until 2026/27)</label>
@@ -1116,7 +1122,7 @@ async function loadPlayers(){
 }
 
 // ── COUNTRIES (for nationality dropdown) ───────────────────────────────────
-const COUNTRIES=['Afghanistan','Albania','Algeria','Argentina','Armenia','Australia','Austria','Azerbaijan','Belgium','Benin','Bolivia','Bosnia and Herzegovina','Brazil','Bulgaria','Cameroon','Canada','Chile','China','Colombia','Costa Rica','Croatia','Cuba','Czech Republic','Denmark','Ecuador','Egypt','England','Estonia','Finland','France','Gabon','Georgia','Germany','Ghana','Greece','Guinea','Honduras','Hungary','Iceland','India','Iran','Iraq','Ireland','Israel','Italy','Ivory Coast','Jamaica','Japan','Jordan','Kenya','South Korea','Kosovo','Latvia','Lebanon','Libya','Lithuania','Luxembourg','Mali','Mexico','Montenegro','Morocco','Netherlands','New Zealand','Nigeria','North Macedonia','Northern Ireland','Norway','Panama','Paraguay','Peru','Poland','Portugal','Qatar','Republic of Ireland','Romania','Russia','Saudi Arabia','Scotland','Senegal','Serbia','Slovakia','Slovenia','South Africa','Spain','Sweden','Switzerland','Syria','Tunisia','Turkey','Ukraine','United Arab Emirates','United States','Uruguay','Uzbekistan','Venezuela','Vietnam','Wales','Zambia'];
+const COUNTRIES=['Afghanistan','Albania','Algeria','Argentina','Armenia','Australia','Austria','Azerbaijan','Belgium','Benin','Bolivia','Bosnia and Herzegovina','Brazil','Bulgaria','Cameroon','Canada','Chile','China','Colombia','Costa Rica','Croatia','Cuba','Czech Republic','Denmark','Ecuador','Egypt','England','Estonia','Finland','France','Gabon','Georgia','Germany','Ghana','Greece','Guinea','Guinea-Bissau','Honduras','Hungary','Iceland','India','Iran','Iraq','Ireland','Israel','Italy','Ivory Coast','Jamaica','Japan','Jordan','Kenya','South Korea','Kosovo','Latvia','Lebanon','Libya','Lithuania','Luxembourg','Mali','Mexico','Montenegro','Morocco','Netherlands','New Zealand','Nigeria','North Macedonia','Northern Ireland','Norway','Panama','Paraguay','Peru','Poland','Portugal','Qatar','Republic of Ireland','Romania','Russia','Saudi Arabia','Scotland','Senegal','Serbia','Slovakia','Slovenia','South Africa','Spain','Sweden','Switzerland','Syria','Tunisia','Turkey','Ukraine','United Arab Emirates','United States','Uruguay','Uzbekistan','Venezuela','Vietnam','Wales','Zambia'];
 
 function renderPlayers(){
   document.getElementById('nav-players-count').textContent=players.length;
@@ -1126,6 +1132,7 @@ function renderPlayers(){
     filter.innerHTML='<option value="">All Teams</option>'+S.teams.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
   }
   const teamFilter=filter.value;
+  renderPlayersUploadArea(teamFilter);
   const filtered=teamFilter?players.filter(p=>p.team_id===teamFilter):players;
   const el=document.getElementById('players-grid');
   
@@ -1176,6 +1183,7 @@ function editPlayer(id){
   document.getElementById('cp-nationality').value = p.nationality||'';
   document.getElementById('cp-number').value = p.jersey_number??'';
   document.getElementById('cp-position').value = p.position||'MID';
+  document.getElementById('cp-height').value = p.height_cm??'';
   document.getElementById('cp-total-games').value = p.total_games??'';
   document.getElementById('cp-photo-url').value = p.photo_url||'';
   document.getElementById('cp-photo').value = '';
@@ -1191,6 +1199,7 @@ function resetPlayerForm(){
   document.getElementById('cp-nationality').value='';
   document.getElementById('cp-number').value='';
   document.getElementById('cp-position').value='MID';
+  document.getElementById('cp-height').value='';
   document.getElementById('cp-total-games').value='';
   document.getElementById('cp-photo').value='';
   document.getElementById('cp-photo-url').value='';
@@ -1206,6 +1215,8 @@ async function createPlayer(){
   const nationality=document.getElementById('cp-nationality').value||null;
   const jersey_number=document.getElementById('cp-number').value?parseInt(document.getElementById('cp-number').value):null;
   const position=document.getElementById('cp-position').value||null;
+  const heightInput=document.getElementById('cp-height').value;
+  const height_cm=heightInput!==''?parseInt(heightInput):null;
   const totalGamesInput=document.getElementById('cp-total-games').value;
   const total_games=totalGamesInput!==''?parseInt(totalGamesInput):null;
   let photo_url=document.getElementById('cp-photo-url').value.trim()||null;
@@ -1234,7 +1245,7 @@ async function createPlayer(){
   }
 
   if(isEditing){
-    const {data,error}=await supa.from('gw_dm_players').update({team_id,full_name,birthday,nationality,photo_url,jersey_number,position,total_games}).eq('id',editingPlayerId).select().single();
+    const {data,error}=await supa.from('gw_dm_players').update({team_id,full_name,birthday,nationality,photo_url,jersey_number,position,total_games,height_cm}).eq('id',editingPlayerId).select().single();
     if(error){toast('Failed: '+error.message);return;}
     const idx=players.findIndex(p=>p.id===editingPlayerId);
     if(idx>=0) players[idx]=data;
@@ -1247,7 +1258,7 @@ async function createPlayer(){
     return;
   }
 
-  const {data,error}=await supa.from('gw_dm_players').insert({team_id,full_name,birthday,nationality,photo_url,jersey_number,position,total_games}).select().single();
+  const {data,error}=await supa.from('gw_dm_players').insert({team_id,full_name,birthday,nationality,photo_url,jersey_number,position,total_games,height_cm}).select().single();
   if(error){toast('Failed: '+error.message);return;}
   
   players.push(data);
@@ -1265,6 +1276,215 @@ async function deletePlayer(id){
   players=players.filter(p=>p.id!==id);
   renderPlayers();
   toast('Player deleted');
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Squad import from Excel/CSV (Player_Template.xlsx format)
+// ─────────────────────────────────────────────────────────────────────────
+
+const FIFA_TO_COUNTRY = {
+  AFG:'Afghanistan', ALB:'Albania', ALG:'Algeria', ARG:'Argentina', ARM:'Armenia',
+  AUS:'Australia', AUT:'Austria', AZE:'Azerbaijan', BEL:'Belgium', BEN:'Benin',
+  BOL:'Bolivia', BIH:'Bosnia and Herzegovina', BRA:'Brazil', BUL:'Bulgaria',
+  CMR:'Cameroon', CAN:'Canada', CHI:'Chile', CHN:'China', COL:'Colombia',
+  CRC:'Costa Rica', CRO:'Croatia', CUB:'Cuba', CZE:'Czech Republic', DEN:'Denmark',
+  ECU:'Ecuador', EGY:'Egypt', ENG:'England', EST:'Estonia', FIN:'Finland',
+  FRA:'France', GAB:'Gabon', GEO:'Georgia', GER:'Germany', GHA:'Ghana',
+  GRE:'Greece', GUI:'Guinea', GNB:'Guinea-Bissau', GBS:'Guinea-Bissau',
+  HON:'Honduras', HUN:'Hungary', ISL:'Iceland', IND:'India', IRN:'Iran',
+  IRQ:'Iraq', IRL:'Ireland', ISR:'Israel', ITA:'Italy', CIV:'Ivory Coast',
+  JAM:'Jamaica', JPN:'Japan', JOR:'Jordan', KEN:'Kenya', KOR:'South Korea',
+  KVX:'Kosovo', LVA:'Latvia', LIB:'Lebanon', LBY:'Libya', LTU:'Lithuania',
+  LUX:'Luxembourg', MLI:'Mali', MEX:'Mexico', MNE:'Montenegro', MAR:'Morocco',
+  NED:'Netherlands', NZL:'New Zealand', NGA:'Nigeria', NGR:'Nigeria',
+  MKD:'North Macedonia', NIR:'Northern Ireland', NOR:'Norway', PAN:'Panama',
+  PAR:'Paraguay', PER:'Peru', POL:'Poland', POR:'Portugal', QAT:'Qatar',
+  ROU:'Romania', RUS:'Russia', KSA:'Saudi Arabia', SCO:'Scotland', SEN:'Senegal',
+  SRB:'Serbia', SVK:'Slovakia', SVN:'Slovenia', RSA:'South Africa', ESP:'Spain',
+  SWE:'Sweden', SUI:'Switzerland', SYR:'Syria', TUN:'Tunisia', TUR:'Turkey',
+  UKR:'Ukraine', UAE:'United Arab Emirates', USA:'United States', URU:'Uruguay',
+  UZB:'Uzbekistan', VEN:'Venezuela', VIE:'Vietnam', WAL:'Wales', ZAM:'Zambia',
+};
+const POSITION_LABEL_TO_CODE = [
+  [/goal/i, 'GK'], [/defen/i, 'DEF'], [/mid/i, 'MID'], [/forward|striker|attack/i, 'FWD'],
+];
+function positionCodeFromLabel(label){
+  const hit = POSITION_LABEL_TO_CODE.find(([re])=>re.test(label));
+  return hit ? hit[1] : null;
+}
+function parseHeightCell(v){
+  if(v===null||v===undefined||v==='') return null;
+  const s = String(v).trim();
+  if(s==='-'||s==='') return null;
+  const m = s.match(/(\d+)/);
+  return m ? parseInt(m[1],10) : null;
+}
+function parseDobCell(v){
+  if(!v) return null;
+  if(v instanceof Date && !isNaN(v)) return v.toISOString().slice(0,10);
+  const d = new Date(String(v).trim());
+  return isNaN(d) ? null : d.toISOString().slice(0,10);
+}
+function parseNationalityCell(v){
+  if(!v) return { value:null, raw:null };
+  const code = String(v).trim().toUpperCase();
+  return { value: FIFA_TO_COUNTRY[code]||null, raw: code };
+}
+
+// Handles the divider-row convention the template uses: a row with an empty
+// jersey-number cell but a filled name cell is a position-group label
+// ("Midfielders"), not a player — every row after it belongs to that
+// position until the next one. The header row's own "name" column doubles
+// as the label for the very first group, since the template doesn't repeat
+// it as its own row.
+function parsePlayerSheet(sheetRows){
+  if(!sheetRows.length) return { players: [], unmappedNationalities: [] };
+  const header = sheetRows[0];
+  let currentPosition = positionCodeFromLabel(String(header[1]||''));
+  const rows = []; const unmapped = new Set();
+  for(let i=1; i<sheetRows.length; i++){
+    const [jerseyRaw, name, natRaw, heightRaw, dobRaw] = sheetRows[i];
+    const jerseyBlank = jerseyRaw===''||jerseyRaw===null||jerseyRaw===undefined;
+    if(jerseyBlank && name){
+      const code = positionCodeFromLabel(String(name));
+      if(code) currentPosition = code;
+      continue;
+    }
+    if(!name) continue;
+    const nat = parseNationalityCell(natRaw);
+    if(natRaw && !nat.value) unmapped.add(nat.raw);
+    rows.push({
+      jersey_number: (jerseyRaw!==''&&jerseyRaw!==null&&jerseyRaw!==undefined) ? parseInt(jerseyRaw,10) : null,
+      full_name: String(name).trim(),
+      nationality: nat.value,
+      height_cm: parseHeightCell(heightRaw),
+      birthday: parseDobCell(dobRaw),
+      position: currentPosition,
+    });
+  }
+  return { players: rows, unmappedNationalities: [...unmapped] };
+}
+
+function renderPlayersUploadArea(teamId){
+  const el = document.getElementById('players-upload-area');
+  if(!teamId){ el.style.display='none'; el.innerHTML=''; return; }
+  const team = getTeam(teamId);
+  el.style.display='block';
+  el.innerHTML = `<div class="card" style="background:var(--bg);">
+    <div class="card-body" style="padding:14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:12.5px;font-weight:600;color:var(--text);">Upload squad for ${team?team.name:'this team'}</div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:2px;">Columns: Jersey Number, Name, Nationality, Height, Date of Birth — with position group rows (e.g. "Midfielders") between sections.</div>
+      </div>
+      <label class="btn btn-ghost btn-sm" style="cursor:pointer;">Upload Excel file
+        <input type="file" accept=".xlsx,.xls,.csv" style="display:none;" onchange="handlePlayerFileUpload(this.files[0],'${teamId}');this.value='';">
+      </label>
+      <a href="#" onclick="downloadPlayerTemplate();return false;" style="font-size:11px;color:var(--accent);text-decoration:none;">Download template ↓</a>
+    </div>
+  </div>`;
+}
+
+let playerImportPreviewState = null;
+
+function handlePlayerFileUpload(file, teamId){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    try{
+      const wb = XLSX.read(e.target.result, {type:'array', codepage:65001, cellDates:true});
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const sheetRows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:'', blankrows:false});
+      const parsed = parsePlayerSheet(sheetRows);
+      if(!parsed.players.length){ toast('Couldn\'t find any players in that file — check the columns match the template'); return; }
+      playerImportPreviewState = { teamId, players: parsed.players, unmapped: parsed.unmappedNationalities };
+      renderPlayerImportPreview();
+    }catch(err){
+      console.error('Player import failed:', err);
+      toast('Couldn\'t read that file — make sure it\'s a valid Excel or CSV file');
+    }
+  };
+  reader.onerror = ()=>toast('Couldn\'t read that file');
+  reader.readAsArrayBuffer(file);
+}
+
+function renderPlayerImportPreview(){
+  const st = playerImportPreviewState;
+  const el = document.getElementById('players-import-preview');
+  if(!st){ el.innerHTML=''; return; }
+  const team = getTeam(st.teamId);
+  const byPos = {};
+  st.players.forEach(p=>{ byPos[p.position||'—']=(byPos[p.position||'—']||0)+1; });
+  const posSummary = Object.entries(byPos).map(([k,v])=>`${v} ${k}`).join(' · ');
+  el.innerHTML = `<div class="card" style="margin-bottom:16px;">
+    <div class="card-header">
+      <span class="card-title">Preview — ${st.players.length} players for ${team?team.name:''}</span>
+      <span style="font-size:11px;color:var(--text-3);">${posSummary}</span>
+    </div>
+    ${st.unmapped.length ? `<div class="card-body" style="border-bottom:1px solid var(--border);padding:10px 16px;background:var(--amber-light,#FEF3C7);">
+      <span style="font-size:11.5px;color:var(--text-2);">Nationality code(s) not recognized and left blank — fix individually after import: <strong>${st.unmapped.join(', ')}</strong></span>
+    </div>` : ''}
+    <div class="card-body" style="padding:0;max-height:320px;overflow-y:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+        <thead><tr style="border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--white);">
+          <th style="text-align:left;padding:6px 10px;font-size:10px;color:var(--text-3);">#</th>
+          <th style="text-align:left;padding:6px 10px;font-size:10px;color:var(--text-3);">Name</th>
+          <th style="text-align:left;padding:6px 10px;font-size:10px;color:var(--text-3);">Pos</th>
+          <th style="text-align:left;padding:6px 10px;font-size:10px;color:var(--text-3);">Nationality</th>
+          <th style="text-align:left;padding:6px 10px;font-size:10px;color:var(--text-3);">Height</th>
+          <th style="text-align:left;padding:6px 10px;font-size:10px;color:var(--text-3);">DOB</th>
+        </tr></thead>
+        <tbody>
+          ${st.players.map(p=>`<tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:5px 10px;color:var(--text-3);">${p.jersey_number??'—'}</td>
+            <td style="padding:5px 10px;font-weight:600;">${p.full_name}</td>
+            <td style="padding:5px 10px;">${p.position||'—'}</td>
+            <td style="padding:5px 10px;${!p.nationality?'color:var(--red);':''}">${p.nationality||'unmapped'}</td>
+            <td style="padding:5px 10px;">${p.height_cm?p.height_cm+' cm':'—'}</td>
+            <td style="padding:5px 10px;">${p.birthday||'—'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="card-body" style="display:flex;gap:8px;border-top:1px solid var(--border);">
+      <button class="btn btn-primary btn-sm" onclick="confirmPlayerImport()">Import ${st.players.length} Players</button>
+      <button class="btn btn-outline btn-sm" onclick="playerImportPreviewState=null;renderPlayerImportPreview();">Cancel</button>
+    </div>
+  </div>`;
+}
+
+async function confirmPlayerImport(){
+  const st = playerImportPreviewState;
+  if(!st) return;
+  const rows = st.players.map(p=>({
+    team_id: st.teamId, full_name: p.full_name, birthday: p.birthday,
+    nationality: p.nationality, jersey_number: p.jersey_number, position: p.position,
+    height_cm: p.height_cm, photo_url: null, total_games: null,
+  }));
+  const {data, error} = await supa.from('gw_dm_players').insert(rows).select();
+  if(error){ toast('Import failed: '+error.message); console.error('player import insert:',error); return; }
+  players = players.concat(data);
+  playerImportPreviewState = null;
+  renderPlayerImportPreview();
+  renderPlayers();
+  toast(`${data.length} players imported`);
+}
+
+function downloadPlayerTemplate(){
+  const aoa = [
+    ['Jersey Numbers','Forwards','Nationality','Height','Date of Birth'],
+    [9,'Example Striker','ENG','180 cm','1998-05-14'],
+    ['','Midfielders','',''  ,''],
+    [8,'Example Midfielder','ESP','176 cm','2000-02-03'],
+    ['','Defenders','',''  ,''],
+    [4,'Example Defender','GER','188 cm','1997-11-20'],
+    ['','Goalkeepers','',''  ,''],
+    [1,'Example Goalkeeper','BRA','193 cm','1995-07-09'],
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{wch:14},{wch:22},{wch:12},{wch:10},{wch:14}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Sheet2');
+  XLSX.writeFile(wb, 'gameweek-player-template.xlsx');
 }
 
 function navTo(page,tournamentId){
