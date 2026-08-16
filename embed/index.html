@@ -124,6 +124,12 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .lb-pane{padding:14px 16px;}
 .deadline-banner{display:flex;align-items:center;gap:8px;background:var(--accent-light);border:1px solid var(--border);border-radius:10px;padding:11px 16px;margin-bottom:24px;font-size:13.5px;font-weight:600;color:var(--accent);}
 .control-band{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(20,20,40,0.03);margin:0 0 18px;}
+.control-band-title{margin:0 0 3px;font-size:22px;font-weight:800;letter-spacing:-0.3px;color:var(--text);}
+@media(min-width:780px){ .control-band-title{font-size:26px;} }
+.explainer-pills{display:flex;gap:8px;flex-wrap:wrap;}
+.explainer-pill{flex:1;min-width:88px;background:var(--bg);border-radius:10px;padding:8px 12px;}
+.explainer-pill-value{font-size:13px;font-weight:800;color:var(--accent);white-space:nowrap;}
+.explainer-pill-label{font-size:11px;color:var(--text-2);margin-top:1px;}
 .control-band-select{height:32px;padding:0 10px;border:1px solid var(--border);background:var(--bg);border-radius:8px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--text);cursor:pointer;max-width:170px;}
 .control-band-countdown{display:flex;align-items:center;gap:11px;margin-top:12px;background:var(--accent-light);border:1px solid var(--border);border-radius:10px;padding:10px 13px;}
 .control-band-countdown-icon{width:30px;height:30px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
@@ -538,6 +544,9 @@ const I18N = {
     explainerBettingNoMarkets:'Predict multiple markets per match — points awarded per correct pick, 0 for a wrong one.',
     explainerRanking:'Earn {per} for each team ranked in the correct position, plus a {bonus} bonus for a perfect ranking.',
     explainerLineup:'Pick the starting XI for {team}. Earn <strong style="color:var(--accent);">10 pts</strong> for each correct player, plus a <strong style="color:var(--accent);">30 pt</strong> bonus if all 11 are correct — and answer 3 bonus questions for <strong style="color:var(--accent);">30 pts</strong> each.',
+    pillExactScore:'Exact score', pillRightResult:'Right result', pillTotalGoals:'Total goals',
+    pillCorrectPosition:'Correct position', pillPerfectRanking:'Perfect ranking',
+    pillCorrectPlayer:'Correct player', pillPerfectXI:'Perfect XI', pillBonusQuestion:'Bonus question',
     form:'Form', bonusFirstGoal:'First Goal', bonusBestPlayer:'Best Player', bonusFirstSubOut:'First Sub-Off',
     bonusPickPrompt:'Select player', bonusRequiredToast:'Answer all 3 bonus questions before saving',
     bonusQFirstGoal:'First Goal Scorer', bonusQBestPlayer:'Best Player (MVP)', bonusQFirstSubOut:'First Player Substituted Off',
@@ -588,6 +597,9 @@ const I18N = {
     explainerBettingNoMarkets:'Her maç için birden fazla marketi tahmin edin — her doğru tahmin puan kazandırır, yanlış tahmin 0 puan kazandırır.',
     explainerRanking:'Doğru sıradaki her takım için {per}, artı mükemmel sıralama için {bonus} bonus kazanın.',
     explainerLineup:'{team} için ilk 11\u0027i seçin. Her doğru oyuncu için <strong style="color:var(--accent);">10 pts</strong>, 11 oyuncunun tamamı doğruysa <strong style="color:var(--accent);">30 pt</strong> bonus kazanın — ayrıca 3 bonus sorusuna doğru cevap başına <strong style="color:var(--accent);">30 pts</strong> kazanın.',
+    pillExactScore:'Kesin skor', pillRightResult:'Doğru sonuç', pillTotalGoals:'Toplam gol',
+    pillCorrectPosition:'Doğru sıra', pillPerfectRanking:'Mükemmel sıralama',
+    pillCorrectPlayer:'Doğru oyuncu', pillPerfectXI:'Mükemmel 11', pillBonusQuestion:'Bonus soru',
     form:'Diziliş', bonusFirstGoal:'İlk Gol', bonusBestPlayer:'En İyi Oyuncu', bonusFirstSubOut:'İlk Değişen',
     bonusPickPrompt:'Oyuncu seçin', bonusRequiredToast:'Kaydetmeden önce 3 bonus sorusunu da cevaplayın',
     bonusQFirstGoal:'İlk Golü Atan Oyuncu', bonusQBestPlayer:'En İyi Oyuncu (MVP)', bonusQFirstSubOut:'İlk Değişen Oyuncu',
@@ -603,7 +615,7 @@ const I18N = {
     competitionNotFound:'Yarışma bulunamadı', signOut:'Çıkış yap',
     savePredictionsBtn:'Tahminleri Kaydet ({n}/{total})', allPredictionsSaved:'✓ Tüm tahminler kaydedildi',
     eventsLock:'Maçlar kilitleniyor', locksBeforeKickoff:'Başlangıçtan 30 dk önce',
-    modeTitleScore:'Kesin skoru tahmin et', modeTitleBetting:'Marketleri tahmin et', modeTitleRanking:'Takımları xG\'ye göre sırala', modeTitleLineup:'İlk 11\'i seç', modeTitleRoulette:'Skor matrisini çevir',
+    modeTitleScore:'Kesin skoru tahmin et', modeTitleBetting:'Marketleri tahmin et', modeTitleRanking:'Takımları xG\'ye göre sırala', modeTitleLineup:'Kadroyu Tahmin Et', modeTitleRoulette:'Skor matrisini çevir',
   },
   de: {
     predictions:'Tipps', leaderboard:'Rangliste', builder:'Builder', rules:'Regeln',
@@ -638,6 +650,9 @@ const I18N = {
     explainerBettingNoMarkets:'Tippe mehrere Märkte pro Spiel — Punkte je richtigem Tipp, 0 bei einem falschen.',
     explainerRanking:'Erhalte {per} für jedes Team auf der richtigen Position, plus einen Bonus von {bonus} für eine perfekte Rangfolge.',
     explainerLineup:'Stelle die Startelf von {team} auf. Erhalte <strong style="color:var(--accent);">10 Pkt.</strong> für jeden richtigen Spieler, plus einen <strong style="color:var(--accent);">30 Pkt.</strong> Bonus für die perfekte Elf.',
+    pillExactScore:'Exaktes Ergebnis', pillRightResult:'Richtiges Ergebnis', pillTotalGoals:'Gesamttore',
+    pillCorrectPosition:'Richtige Position', pillPerfectRanking:'Perfekte Rangfolge',
+    pillCorrectPlayer:'Richtiger Spieler', pillPerfectXI:'Perfekte Elf', pillBonusQuestion:'Bonusfrage',
     form:'Formation', bonusFirstGoal:'Erstes Tor', bonusBestPlayer:'Bester Spieler', bonusFirstSubOut:'Erste Auswechslung',
     bonusPickPrompt:'Spieler auswählen', bonusRequiredToast:'Beantworte alle 3 Bonusfragen vor dem Speichern',
     bonusQFirstGoal:'Erster Torschütze', bonusQBestPlayer:'Bester Spieler (MVP)', bonusQFirstSubOut:'Zuerst ausgewechselter Spieler',
@@ -948,6 +963,9 @@ async function buildCompsFromRealData(){
         COMPS = filtered;
       }
     }
+    // Alphabetical by name — a predictable, stable order regardless of
+    // which order competitions happened to be created in.
+    COMPS.sort((a,b)=>a.name.localeCompare(b.name));
     console.log('Loaded:',{comps:COMPS.length,events:Object.keys(EVENTS).length,client:CLIENT_PARAM});
   }catch(err){ console.error('buildCompsFromRealData:',err); }
 }
@@ -1441,12 +1459,50 @@ function getModeExplainer(comp){
   }
   return '';
 }
+function pillValue(n){ return `${n} ${n===1?'pt':'pts'}`; } // "pts"/"pt" stays English across all languages, matching the existing convention in the prose explainers
+function explainerPillsData(comp){
+  if(comp.mode==='score'){
+    const s=comp.scoring||{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1};
+    return [
+      {value:pillValue(s.exactScore), label:t('pillExactScore')},
+      {value:pillValue(s.homeGoals), label:t('pillRightResult')},
+      {value:pillValue(s.totalGoals), label:t('pillTotalGoals')},
+    ];
+  }
+  if(comp.mode==='betting'){
+    return (comp.markets||[]).map(m=>({value:pillValue(m.points), label:marketLabel(m)}));
+  }
+  if(comp.mode==='ranking'){
+    const per=comp.rankingConfig?.pointsPerCorrect||2, bonus=comp.rankingConfig?.perfectBonus||5;
+    return [
+      {value:pillValue(per), label:t('pillCorrectPosition')},
+      {value:pillValue(bonus), label:t('pillPerfectRanking')},
+    ];
+  }
+  if(comp.mode==='lineup'){
+    return [
+      {value:pillValue(10), label:t('pillCorrectPlayer')},
+      {value:pillValue(30), label:t('pillPerfectXI')},
+      {value:pillValue(30), label:t('pillBonusQuestion')},
+    ];
+  }
+  return [];
+}
+function renderExplainerPills(comp){
+  const pills = explainerPillsData(comp);
+  if(!pills.length) return `<p style="margin:0;font-size:12px;line-height:1.45;color:var(--text-2);">${getModeExplainer(comp)}</p>`;
+  return `<div class="explainer-pills">${pills.map(p=>`
+    <div class="explainer-pill">
+      <div class="explainer-pill-value">${p.value}</div>
+      <div class="explainer-pill-label">${p.label}</div>
+    </div>`).join('')}</div>`;
+}
 function controlBandOpen(comp, roundOptionsHtml, tabsHtml, tabsMobileHtml, selectOnchange){
   const title = modeTitle(comp.mode) || comp.name;
   return `<div class="control-band">
     <div style="margin-bottom:12px;">
-      <h1 style="margin:0 0 3px;font-size:16px;font-weight:800;letter-spacing:-0.3px;color:var(--text);">${title}</h1>
-      <p style="margin:0;font-size:12px;line-height:1.45;color:var(--text-2);">${getModeExplainer(comp)}</p>
+      <h1 class="control-band-title">${title}</h1>
+      ${renderExplainerPills(comp)}
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
       <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
