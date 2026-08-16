@@ -3522,7 +3522,11 @@ async function uploadCampaignLogo(file){
   if(!file) return;
   try{
     const ext = file.name.split('.').pop();
-    const path = 'campaign-logos/'+CLIENT_KEY+'_'+Date.now()+'.'+ext;
+    // Storage bucket policy only allows writes under 'logos/' (the same
+    // folder the operator's own branding logo already uses successfully) —
+    // a different top-level folder here would fail with a row-level
+    // security violation on upload.
+    const path = 'logos/campaign_'+CLIENT_KEY+'_'+Date.now()+'.'+ext;
     const {error:upErr} = await supa.storage.from('player-photos').upload(path, file, {contentType:file.type});
     if(upErr){ toast('Upload failed: '+upErr.message); console.error('campaign logo upload:',upErr); return; }
     const {data:urlData} = supa.storage.from('player-photos').getPublicUrl(path);
