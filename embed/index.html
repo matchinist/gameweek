@@ -89,7 +89,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
   .predict-subtabs-mobile{display:flex !important;width:100%;box-sizing:border-box;padding:3px;background:var(--accent-light);border-radius:11px;margin-top:10px;}
   .predict-subtabs-mobile .ps-tab{flex:1;height:34px;padding:0 4px;border-radius:8px;font-size:13px;}
   .predict-subtabs-mobile .ps-tab.active{background:var(--white);color:var(--text);box-shadow:0 1px 3px rgba(18,24,40,0.12);font-weight:700;}
-  .control-band-select{height:40px;border-radius:10px;background:var(--white);font-size:13.5px;max-width:none;flex:1;min-width:0;}
+  .control-band-select{height:32px;border-radius:10px;background:var(--white);font-size:13.5px;max-width:none;flex:1;min-width:0;}
   .rules-btn{height:40px;padding:0 16px;border-radius:10px;font-size:13.5px;}
   .events-list{grid-template-columns:1fr;padding:10px 0;}
   .event-card-top{padding:0;}
@@ -124,8 +124,18 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .lb-pane{padding:14px 16px;}
 .deadline-banner{display:flex;align-items:center;gap:8px;background:var(--accent-light);border:1px solid var(--border);border-radius:10px;padding:11px 16px;margin-bottom:24px;font-size:13.5px;font-weight:600;color:var(--accent);}
 .control-band{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(20,20,40,0.03);margin:0 0 18px;}
-.control-band-title{margin:0 0 10px;font-size:22px;font-weight:800;letter-spacing:-0.3px;color:var(--text);padding-left:12px;}
+.control-band-title{margin:0 0 10px;font-size:22px;font-weight:800;letter-spacing:-0.3px;color:var(--text);padding-left:10px;}
 @media(min-width:780px){ .control-band-title{font-size:26px;} }
+.ps-tab-mobile-toggle{display:none;height:32px;padding:0 16px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--on-accent,#fff);background:var(--accent);border:none;border-radius:8px;cursor:pointer;white-space:nowrap;}
+@media(max-width:779px){
+  /* Scoped to the control-band specifically — a separate .round-bar
+     component elsewhere in this file also uses the bare .predict-subtabs
+     class with its own (different, 480px) breakpoint; a blanket rule here
+     would hide that component's tabs too, in the 480-779px range, with
+     nothing there to replace them. */
+  .control-band .predict-subtabs{display:none;}
+  .control-band .ps-tab-mobile-toggle{display:inline-flex;align-items:center;justify-content:center;}
+}
 .explainer-pills{display:flex;gap:8px;flex-wrap:wrap;}
 .explainer-pill{flex:1;min-width:88px;background:var(--bg);border-radius:10px;padding:8px 12px;}
 .explainer-pill-value{font-size:13px;font-weight:800;color:var(--accent);white-space:nowrap;}
@@ -1499,10 +1509,18 @@ function renderExplainerPills(comp){
 }
 function controlBandOpen(comp, roundOptionsHtml, tabsHtml, tabsMobileHtml, selectOnchange){
   const title = modeTitle(comp.mode) || comp.name;
+  // Same predictions-vs-leaderboard toggle as the desktop two-tab pill,
+  // just collapsed into a single button on mobile that shows the tab
+  // you'd switch TO rather than the one you're currently on — saves the
+  // horizontal space two side-by-side tabs would need in the same row as
+  // the round dropdown.
+  const currentTabLabel = comp.mode==='lineup' ? t('builder') : t('predictions');
+  const mobileToggleTarget = predictSubTab==='predictions' ? 'leaderboard' : 'predictions';
+  const mobileToggleLabel = predictSubTab==='predictions' ? t('leaderboard') : currentTabLabel;
   return `<div class="control-band">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
       <h1 class="control-band-title">${title}</h1>
-      <button class="rules-btn" onclick="showRules('${comp.mode}')" style="margin-top:1px;">${t('rules')}</button>
+      <button class="rules-btn" onclick="showRules('${comp.mode}')">${t('rules')}</button>
     </div>
     <div style="margin-bottom:12px;">
       ${renderExplainerPills(comp)}
@@ -1510,8 +1528,8 @@ function controlBandOpen(comp, roundOptionsHtml, tabsHtml, tabsMobileHtml, selec
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
       <select class="round-select control-band-select" onchange="${selectOnchange||'changeRound(this.value)'}">${roundOptionsHtml}</select>
       <div class="predict-subtabs">${tabsHtml}</div>
-    </div>
-    <div class="predict-subtabs-mobile">${tabsHtml}</div>`;
+      <button class="ps-tab-mobile-toggle" onclick="switchPredictSubTab('${mobileToggleTarget}')">${mobileToggleLabel}</button>
+    </div>`;
 }
 function controlBandCountdown(iconOrEmoji, label, valueHtml, rightHtml){
   return `<div class="control-band-countdown">
