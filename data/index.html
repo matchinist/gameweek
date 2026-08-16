@@ -831,26 +831,34 @@ function parseStandingsPaste(raw){
   return { zones, rows };
 }
 
-// Matches a short paste name ("Köln", "M'gladbach", "HSV") against the
-// tournament's actual team pool ("1. FC Köln", "Borussia Mönchengladbach").
-const STANDINGS_PREFIX_TOKENS = new Set(['1','FC','SV','SC','RB','TSG','VfB','VfL','FSV','SGE','SpVgg','TuS','TSV','MSV']);
-const STANDINGS_ALIASES = { 'mgladbach':'monchengladbach', 'gladbach':'monchengladbach', 'hsv':'hamburger' };
-function standingsNormalize(s){
-  return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()
+// Matches a short/abbreviated team name ("Köln", "M'gladbach", "Besiktas")
+// against a team pool's full names ("1. FC Köln", "Borussia Mönchengladbach",
+// "Beşiktaş"). Shared by the standings, fixture, and any future importer
+// that needs to reconcile external team names against this app's own pool.
+const TEAM_NAME_PREFIX_TOKENS = new Set(['1','FC','SV','SC','RB','TSG','VfB','VfL','FSV','SGE','SpVgg','TuS','TSV','MSV']);
+const TEAM_NAME_ALIASES = { 'mgladbach':'monchengladbach', 'gladbach':'monchengladbach', 'hsv':'hamburger' };
+function teamNameNormalize(s){
+  return (s||'')
+    // Turkish dotted/dotless I aren't accented Latin letters — Unicode NFD
+    // doesn't decompose them, so left alone they survive as non-ASCII and
+    // get stripped as if they were punctuation, splitting words in two
+    // ("Kasımpaşa" -> "kas mpasa"). Fold them to plain "i" before NFD runs.
+    .replace(/İ/g,'i').replace(/ı/g,'i')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()
     .replace(/['’]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
 }
-function standingsCoreOf(fullName){
-  const tokens = standingsNormalize(fullName).split(' ').filter(Boolean);
-  const core = tokens.filter(t=>!STANDINGS_PREFIX_TOKENS.has(t.toUpperCase()) && !/^\d+$/.test(t));
-  return core.length ? core.join(' ') : standingsNormalize(fullName);
+function teamNameCoreOf(fullName){
+  const tokens = teamNameNormalize(fullName).split(' ').filter(Boolean);
+  const core = tokens.filter(t=>!TEAM_NAME_PREFIX_TOKENS.has(t.toUpperCase()) && !/^\d+$/.test(t));
+  return core.length ? core.join(' ') : teamNameNormalize(fullName);
 }
-function matchStandingsTeam(shortName, teams){
-  const normShort = standingsNormalize(shortName);
-  const aliasTarget = STANDINGS_ALIASES[normShort];
+function matchTeamByName(shortName, teams){
+  const normShort = teamNameNormalize(shortName);
+  const aliasTarget = TEAM_NAME_ALIASES[normShort];
   let best = null;
   for(const team of teams){
-    const core = standingsCoreOf(team.name);
-    const fullNorm = standingsNormalize(team.name);
+    const core = teamNameCoreOf(team.name);
+    const fullNorm = teamNameNormalize(team.name);
     let score = 0;
     if(aliasTarget && core.includes(aliasTarget)) score = 100;
     else if(core === normShort) score = 95;
@@ -888,7 +896,7 @@ function previewStandingsPaste(){
 // only one code path downstream of "here are some rows and zones".
 function applyStandingsParseResult(parsed, poolTeams){
   const rows = parsed.rows.map(r=>{
-    const m = matchStandingsTeam(r.name, poolTeams);
+    const m = matchTeamByName(r.name, poolTeams);
     return { ...r, teamId: m ? m.id : null, matchedName: m ? m.name : null, matchScore: m ? m.score : 0 };
   });
   standingsPreviewState = { zones: parsed.zones, rows };
@@ -1092,6 +1100,204 @@ function renderStandingsTable(standings){
     </div>`;
   }
   return html;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Fixture list import (Match Number / Round Number / Date / Home Team /
+// Away Team / Result) — builds brand-new rounds + events, never edits or
+// removes anything already in the season.
+// ─────────────────────────────────────────────────────────────────────────
+
+const FIXTURE_HEADER_ALIASES = {
+  matchNumber: ['match number','match','#'],
+  roundNumber: ['round number','round','matchday','week'],
+  date: ['date','kickoff','date utc'],
+  homeTeam: ['home team','home'],
+  awayTeam: ['away team','away'],
+  result: ['result','score'],
+};
+function findFixtureColumnIndex(headerRow, aliases){
+  const normalized = headerRow.map(h=>String(h||'').trim().toLowerCase());
+  for(const alias of aliases){
+    const idx = normalized.indexOf(alias);
+    if(idx>=0) return idx;
+  }
+  return -1;
+}
+// Excel stores dates as days since 1899-12-30 (the extra day accounts for
+// Excel's intentional 1900-leap-year bug — every spreadsheet library uses
+// this exact offset, not 1900-01-01). Used when a Date column is formatted
+// as plain "General" rather than an actual date format, which stops
+// SheetJS from auto-converting it to a JS Date for us.
+const EXCEL_EPOCH_MS = Date.UTC(1899, 11, 30);
+function excelSerialToDate(v){
+  if(v instanceof Date && !isNaN(v)) return v;
+  if(typeof v === 'string' && v.trim()){
+    const parsed = new Date(v.trim().replace(' ','T'));
+    if(!isNaN(parsed)) return parsed;
+  }
+  if(v===''||v===null||v===undefined) return null; // Number('') is 0, not NaN — guard explicitly
+  const n = Number(v);
+  if(isNaN(n)) return null;
+  return new Date(EXCEL_EPOCH_MS + n*86400000);
+}
+function parseFixtureResultCell(v){
+  if(v===null||v===undefined) return null;
+  const s = String(v).trim();
+  if(!s || s.toLowerCase()==='nan') return null;
+  const m = s.match(/(\d+)\s*-\s*(\d+)/);
+  return m ? { h:+m[1], a:+m[2] } : null;
+}
+function parseFixtureSheet(sheetRows, poolTeams){
+  if(!sheetRows.length) return { rounds: [], unmatchedTeamNames: [], matchCount: 0 };
+  const header = sheetRows[0];
+  const col = {
+    matchNumber: findFixtureColumnIndex(header, FIXTURE_HEADER_ALIASES.matchNumber),
+    roundNumber: findFixtureColumnIndex(header, FIXTURE_HEADER_ALIASES.roundNumber),
+    date: findFixtureColumnIndex(header, FIXTURE_HEADER_ALIASES.date),
+    homeTeam: findFixtureColumnIndex(header, FIXTURE_HEADER_ALIASES.homeTeam),
+    awayTeam: findFixtureColumnIndex(header, FIXTURE_HEADER_ALIASES.awayTeam),
+    result: findFixtureColumnIndex(header, FIXTURE_HEADER_ALIASES.result),
+  };
+  if(col.roundNumber<0 || col.homeTeam<0 || col.awayTeam<0){
+    return { rounds: [], unmatchedTeamNames: [], matchCount: 0, error: 'missing-columns' };
+  }
+  const unmatched = new Set();
+  const byRound = new Map();
+  for(let i=1;i<sheetRows.length;i++){
+    const row = sheetRows[i];
+    const homeName = String(row[col.homeTeam]||'').trim();
+    const awayName = String(row[col.awayTeam]||'').trim();
+    if(!homeName || !awayName) continue;
+    const roundNumber = parseInt(row[col.roundNumber],10);
+    if(!roundNumber) continue;
+    const matchNumber = col.matchNumber>=0 ? (parseInt(row[col.matchNumber],10)||0) : i;
+    const kickoffDate = col.date>=0 ? excelSerialToDate(row[col.date]) : null;
+    const result = col.result>=0 ? parseFixtureResultCell(row[col.result]) : null;
+    const homeMatch = matchTeamByName(homeName, poolTeams);
+    const awayMatch = matchTeamByName(awayName, poolTeams);
+    if(!homeMatch) unmatched.add(homeName);
+    if(!awayMatch) unmatched.add(awayName);
+    if(!byRound.has(roundNumber)) byRound.set(roundNumber, []);
+    byRound.get(roundNumber).push({
+      matchNumber, homeName, awayName,
+      homeTeamId: homeMatch?homeMatch.id:null, awayTeamId: awayMatch?awayMatch.id:null,
+      kickoff: kickoffDate ? kickoffDate.toISOString() : null,
+      result, status: result ? 'completed' : 'upcoming',
+    });
+  }
+  const rounds = [...byRound.keys()].sort((a,b)=>a-b).map(roundNumber=>({
+    roundNumber,
+    matches: byRound.get(roundNumber).sort((a,b)=>a.matchNumber-b.matchNumber),
+  }));
+  const matchCount = rounds.reduce((sum,r)=>sum+r.matches.length,0);
+  return { rounds, unmatchedTeamNames: [...unmatched], matchCount };
+}
+
+let fixtureImportPreviewState = null;
+
+function handleFixtureFileUpload(file){
+  if(!file) return;
+  const season = getSeasonData(S.activeTournamentId, S.activeSeason);
+  const poolTeams = season.teamIds.map(id=>getTeam(id)).filter(Boolean);
+  if(!poolTeams.length){ toast('Assign teams to this tournament\'s Teams tab first'); return; }
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    try{
+      const wb = XLSX.read(e.target.result, {type:'array', codepage:65001, cellDates:true});
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const sheetRows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:'', blankrows:false});
+      const parsed = parseFixtureSheet(sheetRows, poolTeams);
+      if(parsed.error==='missing-columns'){ toast('Couldn\'t find Round Number / Home Team / Away Team columns — check the template'); return; }
+      if(!parsed.matchCount){ toast('Couldn\'t find any fixtures in that file — check the format'); return; }
+      fixtureImportPreviewState = { rounds: parsed.rounds, unmatchedTeamNames: parsed.unmatchedTeamNames, matchCount: parsed.matchCount };
+      renderFixtureImportPreview();
+    }catch(err){
+      console.error('Fixture import failed:', err);
+      toast('Couldn\'t read that file — make sure it\'s a valid Excel or CSV file');
+    }
+  };
+  reader.onerror = ()=>toast('Couldn\'t read that file');
+  reader.readAsArrayBuffer(file);
+}
+
+function renderFixtureImportPreview(){
+  const st = fixtureImportPreviewState;
+  const el = document.getElementById('fixture-import-preview');
+  if(!el) return;
+  if(!st){ el.innerHTML=''; return; }
+  const blocked = st.unmatchedTeamNames.length>0;
+  el.innerHTML = `<div class="card" style="margin-bottom:16px;">
+    <div class="card-header">
+      <span class="card-title">Preview — ${st.matchCount} matches across ${st.rounds.length} rounds</span>
+      <span style="font-size:11px;color:${blocked?'var(--red)':'var(--green)'};">${blocked?'Fix unmatched teams first':'All teams matched'}</span>
+    </div>
+    ${blocked ? `<div class="card-body" style="border-bottom:1px solid var(--border);padding:10px 16px;background:var(--amber-light,#FEF3C7);">
+      <span style="font-size:11.5px;color:var(--text-2);">These team names in the file don't match any team assigned to this tournament — assign them on the Teams tab (or fix the spelling there) first, then re-upload: <strong>${st.unmatchedTeamNames.join(', ')}</strong></span>
+    </div>` : ''}
+    <div class="card-body" style="padding:0;max-height:280px;overflow-y:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+        <thead><tr style="border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--white);">
+          <th style="text-align:left;padding:6px 10px;font-size:10px;color:var(--text-3);">Round</th>
+          <th style="text-align:left;padding:6px 10px;font-size:10px;color:var(--text-3);">Matches</th>
+          <th style="text-align:left;padding:6px 10px;font-size:10px;color:var(--text-3);">First kickoff</th>
+        </tr></thead>
+        <tbody>
+          ${st.rounds.map(r=>{
+            const firstKickoff = r.matches.find(m=>m.kickoff)?.kickoff;
+            return `<tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:5px 10px;font-weight:600;">Round ${r.roundNumber}</td>
+              <td style="padding:5px 10px;color:var(--text-3);">${r.matches.length}</td>
+              <td style="padding:5px 10px;color:var(--text-3);">${firstKickoff?fmtKickoff(firstKickoff):'—'}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="card-body" style="display:flex;gap:8px;border-top:1px solid var(--border);">
+      <button class="btn btn-primary btn-sm" ${blocked?'disabled':''} onclick="confirmFixtureImport()">Import ${st.matchCount} Matches as ${st.rounds.length} New Rounds</button>
+      <button class="btn btn-outline btn-sm" onclick="fixtureImportPreviewState=null;renderFixtureImportPreview();">Cancel</button>
+    </div>
+  </div>`;
+}
+
+async function confirmFixtureImport(){
+  const st = fixtureImportPreviewState;
+  if(!st || st.unmatchedTeamNames.length) return;
+  const season = getSeasonData(S.activeTournamentId, S.activeSeason);
+  st.rounds.forEach(r=>{
+    const roundId = 'r'+uid();
+    const eventIds = r.matches.map(m=>{
+      const eid = 'ev'+uid();
+      S.events[eid] = {
+        homeId: m.homeTeamId, awayId: m.awayTeamId,
+        kickoff: m.kickoff||'', result: m.result, status: m.status, line: 2.5,
+      };
+      return eid;
+    });
+    season.rounds.push({ id: roundId, label: 'Round '+r.roundNumber, deadline: '', eventIds });
+  });
+  fixtureImportPreviewState = null;
+  const ok = await save();
+  if(ok){
+    renderTournamentView();
+    switchTTab('rounds');
+    toast(`${st.matchCount} matches imported as ${st.rounds.length} rounds`);
+  }
+}
+
+function downloadFixtureTemplate(){
+  const aoa = [
+    ['Match Number','Round Number','Date','Location','Home Team','Away Team','Result'],
+    [1,1,'2026-08-15 19:00','Example Stadium','Example Team A','Example Team B','2 - 1'],
+    [2,1,'2026-08-16 19:00','','Example Team C','Example Team D',''],
+    [3,2,'2026-08-22 19:00','','Example Team B','Example Team C',''],
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{wch:12},{wch:12},{wch:16},{wch:18},{wch:18},{wch:18},{wch:10}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Fixture');
+  XLSX.writeFile(wb, 'gameweek-fixture-template.xlsx');
 }
 
 async function resetClientData(){
@@ -1932,6 +2138,20 @@ function renderTournamentView(){
   </div>`;
 
   html+=`<div id="ttab-content-rounds" style="display:none;">`;
+  html+=`<div class="card" style="margin-bottom:16px;">
+    <div class="card-header">
+      <span class="card-title">Upload Fixtures</span>
+      <span style="font-size:11px;color:var(--text-3);">Adds new rounds — never touches existing ones</span>
+    </div>
+    <div class="card-body" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:220px;font-size:12px;color:var(--text-2);">Columns: Match Number, Round Number, Date, Location, Home Team, Away Team, Result. Upload a full season's fixture list in one go.</div>
+      <label class="btn btn-ghost btn-sm" style="cursor:pointer;">Upload Excel file
+        <input type="file" accept=".xlsx,.xls,.csv" style="display:none;" onchange="handleFixtureFileUpload(this.files[0]);this.value='';">
+      </label>
+      <a href="#" onclick="downloadFixtureTemplate();return false;" style="font-size:11px;color:var(--accent);text-decoration:none;">Download template ↓</a>
+    </div>
+  </div>
+  <div id="fixture-import-preview"></div>`;
   if(season.rounds.length===0){
     html+=`<div class="generate-box">
       <div class="generate-box-text"><div class="generate-box-title">Generate Round Shells</div><div class="generate-box-sub">Creates empty rounds instantly. Fill in events and dates as the fixture list is released.</div></div>
