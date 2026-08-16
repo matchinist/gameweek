@@ -3520,12 +3520,19 @@ function openCreateCampaignModal(campaignId){
 
 async function uploadCampaignLogo(file){
   if(!file) return;
+  // The storage policy for this bucket only allows writes from the
+  // 'authenticated' role (any path — it's not folder-restricted). If the
+  // session has expired or hasn't attached to this request yet, Supabase
+  // rejects the write as a row-level security violation. Checking for a
+  // live session first turns that into a clear message instead of a
+  // cryptic RLS error.
+  const {data:sessionData} = await supa.auth.getSession();
+  if(!sessionData?.session){
+    toast('Your session has expired — please log out and back in, then try uploading again');
+    return;
+  }
   try{
     const ext = file.name.split('.').pop();
-    // Storage bucket policy only allows writes under 'logos/' (the same
-    // folder the operator's own branding logo already uses successfully) —
-    // a different top-level folder here would fail with a row-level
-    // security violation on upload.
     const path = 'logos/campaign_'+CLIENT_KEY+'_'+Date.now()+'.'+ext;
     const {error:upErr} = await supa.storage.from('player-photos').upload(path, file, {contentType:file.type});
     if(upErr){ toast('Upload failed: '+upErr.message); console.error('campaign logo upload:',upErr); return; }
