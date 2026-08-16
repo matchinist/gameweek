@@ -124,7 +124,7 @@ body{height:100%;overflow:hidden;margin:0;padding:0;font-family:var(--sans);back
 .lb-pane{padding:14px 16px;}
 .deadline-banner{display:flex;align-items:center;gap:8px;background:var(--accent-light);border:1px solid var(--border);border-radius:10px;padding:11px 16px;margin-bottom:24px;font-size:13.5px;font-weight:600;color:var(--accent);}
 .control-band{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(20,20,40,0.03);margin:0 0 18px;}
-.control-band-title{margin:0 0 3px;font-size:22px;font-weight:800;letter-spacing:-0.3px;color:var(--text);}
+.control-band-title{margin:0 0 10px;font-size:22px;font-weight:800;letter-spacing:-0.3px;color:var(--text);padding-left:12px;}
 @media(min-width:780px){ .control-band-title{font-size:26px;} }
 .explainer-pills{display:flex;gap:8px;flex-wrap:wrap;}
 .explainer-pill{flex:1;min-width:88px;background:var(--bg);border-radius:10px;padding:8px 12px;}
@@ -615,7 +615,7 @@ const I18N = {
     competitionNotFound:'Yarışma bulunamadı', signOut:'Çıkış yap',
     savePredictionsBtn:'Tahminleri Kaydet ({n}/{total})', allPredictionsSaved:'✓ Tüm tahminler kaydedildi',
     eventsLock:'Maçlar kilitleniyor', locksBeforeKickoff:'Başlangıçtan 30 dk önce',
-    modeTitleScore:'Kesin skoru tahmin et', modeTitleBetting:'Marketleri tahmin et', modeTitleRanking:'Takımları xG\'ye göre sırala', modeTitleLineup:'Kadroyu Tahmin Et', modeTitleRoulette:'Skor matrisini çevir',
+    modeTitleScore:'Kesin skoru tahmin et', modeTitleBetting:'Marketleri tahmin et', modeTitleRanking:'Takımları xG\'ye göre sırala', modeTitleLineup:'İlk 11\'i Tahmin Et', modeTitleRoulette:'Skor matrisini çevir',
   },
   de: {
     predictions:'Tipps', leaderboard:'Rangliste', builder:'Builder', rules:'Regeln',
@@ -1500,15 +1500,15 @@ function renderExplainerPills(comp){
 function controlBandOpen(comp, roundOptionsHtml, tabsHtml, tabsMobileHtml, selectOnchange){
   const title = modeTitle(comp.mode) || comp.name;
   return `<div class="control-band">
-    <div style="margin-bottom:12px;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
       <h1 class="control-band-title">${title}</h1>
+      <button class="rules-btn" onclick="showRules('${comp.mode}')" style="margin-top:1px;">${t('rules')}</button>
+    </div>
+    <div style="margin-bottom:12px;">
       ${renderExplainerPills(comp)}
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-      <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
-        <select class="round-select control-band-select" onchange="${selectOnchange||'changeRound(this.value)'}">${roundOptionsHtml}</select>
-        <button class="rules-btn" onclick="showRules('${comp.mode}')">${t('rules')}</button>
-      </div>
+      <select class="round-select control-band-select" onchange="${selectOnchange||'changeRound(this.value)'}">${roundOptionsHtml}</select>
       <div class="predict-subtabs">${tabsHtml}</div>
     </div>
     <div class="predict-subtabs-mobile">${tabsHtml}</div>`;
@@ -2162,8 +2162,10 @@ function renderLineupPredictor(comp){
       ${bonusBoxHTML('firstSubOut', t('bonusFirstSubOut'), bonus.firstSubOut)}
     </div>`;
 
-  const countdownInner = (isOpen && lineupLockAt) ? controlBandCountdown('⏱',t('roundLocksIn'),'<span id="countdown-text">Calculating...</span>', '') : '';
-  if(isOpen && lineupLockAt) setTimeout(()=>startCountdown(lineupLockAt,()=>renderPredict()),50);
+  // Lock timing (3 hours before kickoff) is explained once in the Rules
+  // popup rather than as a live countdown here — keeps the header focused
+  // on what needs a decision right now (formation, picks) instead of a
+  // ticking clock competing for attention.
 
   // Only the current gameweek and past ones are selectable — a gameweek only
   // becomes "current" 4 hours after the previous one's last kickoff, matching
@@ -2181,7 +2183,6 @@ function renderLineupPredictor(comp){
            <option value="predictions"${predictSubTab==='predictions'?' selected':''}>${t('builder')}</option>
            <option value="leaderboard"${predictSubTab==='leaderboard'?' selected':''}>${t('leaderboard')}</option>
          </select>`)}
-        ${countdownInner}
       </div>
 
       <div class="lineup-layout">
@@ -4697,7 +4698,7 @@ const RULES_HTML = {
 </div>`,
     lineup:`<h3 style="margin-bottom:12px;">Lineup Predictor Rules</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
-<div><strong style="color:var(--text);">How to play:</strong> Pick the starting XI (11 players) for the team's next fixture, in any formation (4-2-3-1, 4-3-3, 4-4-2 or 3-4-2-1). Locks 2 hours before kickoff.</div>
+<div><strong style="color:var(--text);">How to play:</strong> Pick the starting XI (11 players) for the team's next fixture, in any formation (4-2-3-1, 4-3-3, 4-4-2 or 3-4-2-1). Locks 3 hours before kickoff.</div>
 <div><strong style="color:var(--text);">Points:</strong></div>
 <div style="padding-left:12px;">
 • Each correct player in your lineup — <strong style="color:var(--green);">+10 pts</strong><br>
@@ -4748,7 +4749,7 @@ const RULES_HTML = {
 </div>`,
     lineup:`<h3 style="margin-bottom:12px;">Kadro Tahmini Kuralları</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
-<div><strong style="color:var(--text);">Nasıl oynanır:</strong> Takımın bir sonraki maçı için ilk 11'i seçin, dilediğiniz diziliş ile (4-2-3-1, 4-3-3, 4-4-2 veya 3-4-2-1). Maç başlangıcından 2 saat önce kilitlenir.</div>
+<div><strong style="color:var(--text);">Nasıl oynanır:</strong> Takımın bir sonraki maçı için ilk 11'i seçin, dilediğiniz diziliş ile (4-2-3-1, 4-3-3, 4-4-2 veya 3-4-2-1). Maç başlangıcından 3 saat önce kilitlenir.</div>
 <div><strong style="color:var(--text);">Puanlar:</strong></div>
 <div style="padding-left:12px;">
 • Kadronuzdaki her doğru oyuncu — <strong style="color:var(--green);">+10 pts</strong><br>
@@ -4799,7 +4800,7 @@ const RULES_HTML = {
 </div>`,
     lineup:`<h3 style="margin-bottom:12px;">Startelf-Tipp-Regeln</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
-<div><strong style="color:var(--text);">Spielweise:</strong> Wähle die Startelf (11 Spieler) für das nächste Spiel des Teams, in beliebiger Formation (4-2-3-1, 4-3-3, 4-4-2 oder 3-4-2-1). Sperrt 2 Stunden vor Anpfiff.</div>
+<div><strong style="color:var(--text);">Spielweise:</strong> Wähle die Startelf (11 Spieler) für das nächste Spiel des Teams, in beliebiger Formation (4-2-3-1, 4-3-3, 4-4-2 oder 3-4-2-1). Sperrt 3 Stunden vor Anpfiff.</div>
 <div><strong style="color:var(--text);">Punkte:</strong></div>
 <div style="padding-left:12px;">
 • Jeder richtige Spieler in deiner Aufstellung — <strong style="color:var(--green);">+10 Pkt.</strong><br>
