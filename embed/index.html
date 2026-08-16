@@ -559,6 +559,7 @@ const I18N = {
     pillExactScore:'Exact score', pillRightResult:'Right result', pillTotalGoals:'Total goals',
     pillCorrectPosition:'Correct position', pillPerfectRanking:'Perfect ranking',
     pillCorrectPlayer:'Correct player', pillPerfectXI:'Perfect XI', pillBonusQuestion:'Bonus question',
+    ptsUnitPlural:'pts', ptsUnitSingular:'pt',
     form:'Form', bonusFirstGoal:'First Goal', bonusBestPlayer:'Best Player', bonusFirstSubOut:'First Sub-Off',
     bonusPickPrompt:'Select player', bonusRequiredToast:'Answer all 3 bonus questions before saving',
     bonusQFirstGoal:'First Goal Scorer', bonusQBestPlayer:'Best Player (MVP)', bonusQFirstSubOut:'First Player Substituted Off',
@@ -605,13 +606,14 @@ const I18N = {
     mkt1x2:'Maç Sonucu', mktOu25:'2.5 Alt / Üst', mktBtts:'Karşılıklı Gol Var',
     explainerScore:'Tam isabetli skor için {exact}, doğru sonuç için {home}, doğru toplam gol için {total} kazanın.',
     ptsForMarket:'{market} için {pts}',
-    explainerBetting:'{parts} kazanın. Bir markette yanlış tahmin o market için <strong style="color:var(--accent);">0 pts</strong> kazandırır.',
+    explainerBetting:'{parts} kazanın. Bir markette yanlış tahmin o market için <strong style="color:var(--accent);">0 Puan</strong> kazandırır.',
     explainerBettingNoMarkets:'Her maç için birden fazla marketi tahmin edin — her doğru tahmin puan kazandırır, yanlış tahmin 0 puan kazandırır.',
     explainerRanking:'Doğru sıradaki her takım için {per}, artı mükemmel sıralama için {bonus} bonus kazanın.',
-    explainerLineup:'{team} için ilk 11\u0027i seçin. Her doğru oyuncu için <strong style="color:var(--accent);">10 pts</strong>, 11 oyuncunun tamamı doğruysa <strong style="color:var(--accent);">30 pt</strong> bonus kazanın — ayrıca 3 bonus sorusuna doğru cevap başına <strong style="color:var(--accent);">30 pts</strong> kazanın.',
+    explainerLineup:'{team} için ilk 11\u0027i seçin. Her doğru oyuncu için <strong style="color:var(--accent);">10 Puan</strong>, 11 oyuncunun tamamı doğruysa <strong style="color:var(--accent);">30 Puan</strong> bonus kazanın — ayrıca 3 bonus sorusuna doğru cevap başına <strong style="color:var(--accent);">30 Puan</strong> kazanın.',
     pillExactScore:'Kesin skor', pillRightResult:'Doğru sonuç', pillTotalGoals:'Toplam gol',
     pillCorrectPosition:'Doğru sıra', pillPerfectRanking:'Mükemmel sıralama',
     pillCorrectPlayer:'Doğru oyuncu', pillPerfectXI:'Mükemmel 11', pillBonusQuestion:'Bonus soru',
+    ptsUnitPlural:'Puan', ptsUnitSingular:'Puan',
     form:'Diziliş', bonusFirstGoal:'İlk Gol', bonusBestPlayer:'En İyi Oyuncu', bonusFirstSubOut:'İlk Değişen',
     bonusPickPrompt:'Oyuncu seçin', bonusRequiredToast:'Kaydetmeden önce 3 bonus sorusunu da cevaplayın',
     bonusQFirstGoal:'İlk Golü Atan Oyuncu', bonusQBestPlayer:'En İyi Oyuncu (MVP)', bonusQFirstSubOut:'İlk Değişen Oyuncu',
@@ -665,6 +667,7 @@ const I18N = {
     pillExactScore:'Exaktes Ergebnis', pillRightResult:'Richtiges Ergebnis', pillTotalGoals:'Gesamttore',
     pillCorrectPosition:'Richtige Position', pillPerfectRanking:'Perfekte Rangfolge',
     pillCorrectPlayer:'Richtiger Spieler', pillPerfectXI:'Perfekte Elf', pillBonusQuestion:'Bonusfrage',
+    ptsUnitPlural:'Pkt.', ptsUnitSingular:'Pkt.',
     form:'Formation', bonusFirstGoal:'Erstes Tor', bonusBestPlayer:'Bester Spieler', bonusFirstSubOut:'Erste Auswechslung',
     bonusPickPrompt:'Spieler auswählen', bonusRequiredToast:'Beantworte alle 3 Bonusfragen vor dem Speichern',
     bonusQFirstGoal:'Erster Torschütze', bonusQBestPlayer:'Bester Spieler (MVP)', bonusQFirstSubOut:'Zuerst ausgewechselter Spieler',
@@ -1447,22 +1450,22 @@ function getModeExplainer(comp){
   if(comp.mode==='score'){
     const s=comp.scoring||{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1};
     const txt = t('explainerScore',{
-      exact:`<strong style="color:var(--accent);">${s.exactScore} pts</strong>`,
-      home:`<strong style="color:var(--accent);">${s.homeGoals} pts</strong>`,
-      total:`<strong style="color:var(--accent);">${s.totalGoals} pt</strong>`,
+      exact:`<strong style="color:var(--accent);">${pillValue(s.exactScore)}</strong>`,
+      home:`<strong style="color:var(--accent);">${pillValue(s.homeGoals)}</strong>`,
+      total:`<strong style="color:var(--accent);">${pillValue(s.totalGoals)}</strong>`,
     });
     // Sports scored in sets shouldn't read "goals" in the explainer.
     return s.unit && s.unit!=='goals' ? txt.replace(/goals/gi, s.unit).replace(/gol/gi, s.unit) : txt;
   }
   if(comp.mode==='betting'){
-    const parts=(comp.markets||[]).map(m=>t('ptsForMarket',{pts:`<strong style="color:var(--accent);">${m.points} pts</strong>`,market:marketLabel(m)}));
+    const parts=(comp.markets||[]).map(m=>t('ptsForMarket',{pts:`<strong style="color:var(--accent);">${pillValue(m.points)}</strong>`,market:marketLabel(m)}));
     return parts.length ? t('explainerBetting',{parts:parts.join(', ')}) : t('explainerBettingNoMarkets');
   }
   if(comp.mode==='ranking'){
     const per=comp.rankingConfig?.pointsPerCorrect||2, bonus=comp.rankingConfig?.perfectBonus||5;
     return t('explainerRanking',{
-      per:`<strong style="color:var(--accent);">${per} pts</strong>`,
-      bonus:`<strong style="color:var(--accent);">${bonus} pt</strong>`,
+      per:`<strong style="color:var(--accent);">${pillValue(per)}</strong>`,
+      bonus:`<strong style="color:var(--accent);">${pillValue(bonus)}</strong>`,
     });
   }
   if(comp.mode==='lineup'){
@@ -1471,7 +1474,7 @@ function getModeExplainer(comp){
   }
   return '';
 }
-function pillValue(n){ return `${n} ${n===1?'pt':'pts'}`; } // "pts"/"pt" stays English across all languages, matching the existing convention in the prose explainers
+function pillValue(n){ return `${n} ${n===1?t('ptsUnitSingular'):t('ptsUnitPlural')}`; }
 function explainerPillsData(comp){
   if(comp.mode==='score'){
     const s=comp.scoring||{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1};
@@ -2134,7 +2137,9 @@ function renderLineupPredictor(comp){
           <span class="ev-name" style="text-align:right;">${ev.home}</span>
           ${teamBadge(ev.homeLogo, ev.home)}
         </div>
-        <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:var(--text-3);">vs</span>
+        ${ev.res && ev.res.h!=null && ev.res.a!=null
+          ? `<span style="font-family:'DM Mono',monospace;font-size:16px;font-weight:800;color:var(--text);white-space:nowrap;">${ev.res.h} – ${ev.res.a}</span>`
+          : `<span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:var(--text-3);">vs</span>`}
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
           ${teamBadge(ev.awayLogo, ev.away)}
           <span class="ev-name">${ev.away}</span>
@@ -4740,10 +4745,10 @@ const RULES_HTML = {
 <div><strong style="color:var(--text);">Nasıl oynanır:</strong> Son tahmin süresi dolmadan önce her maçın tam sonucunu tahmin edin.</div>
 <div><strong style="color:var(--text);">Puanlar:</strong></div>
 <div style="padding-left:12px;">
-• Skor tam isabet — <strong style="color:var(--green);">+5 pts</strong><br>
-• Sadece ev sahibi gol sayısı doğru — <strong>+2 pts</strong><br>
-• Sadece deplasman gol sayısı doğru — <strong>+2 pts</strong><br>
-• Sadece toplam gol sayısı doğru — <strong>+1 pt</strong>
+• Skor tam isabet — <strong style="color:var(--green);">+5 Puan</strong><br>
+• Sadece ev sahibi gol sayısı doğru — <strong>+2 Puan</strong><br>
+• Sadece deplasman gol sayısı doğru — <strong>+2 Puan</strong><br>
+• Sadece toplam gol sayısı doğru — <strong>+1 Puan</strong>
 </div>
 <div><strong style="color:var(--text);">Lider Tablosu:</strong> Oyuncular toplam puana göre sıralanır. En yüksek puan kazanır.</div>
 </div>`,
@@ -4752,8 +4757,8 @@ const RULES_HTML = {
 <div><strong style="color:var(--text);">Nasıl oynanır:</strong> Seçilen takımları o gameweek için beklenen gol (xG) değerine göre en yüksekten en düşüğe sıralayın.</div>
 <div><strong style="color:var(--text);">Puanlar:</strong></div>
 <div style="padding-left:12px;">
-• Her doğru sıradaki takım — <strong style="color:var(--green);">+2 pts</strong><br>
-• Tüm takımlar tam doğru sırada — <strong style="color:var(--green);">+5 bonus pts</strong>
+• Her doğru sıradaki takım — <strong style="color:var(--green);">+2 Puan</strong><br>
+• Tüm takımlar tam doğru sırada — <strong style="color:var(--green);">+5 bonus Puan</strong>
 </div>
 <div><strong style="color:var(--text);">İpucu:</strong> Hangi takımların evinde oynadığını, son form durumlarını ve rakiplerinin kalitesini düşünün.</div>
 </div>`,
@@ -4766,17 +4771,17 @@ const RULES_HTML = {
 • 2.5 Alt / Üst — 3 veya daha fazla gol olacak mı?<br>
 • Karşılıklı Gol Var — İki takım da gol atacak mı?
 </div>
-<div><strong style="color:var(--text);">Puanlar:</strong> Her marketin kendi puan değeri vardır, yarışma operatörü tarafından belirlenir. Bir markette yanlış tahmin o market için <strong>0 pts</strong> kazandırır — diğerleri etkilenmez.</div>
+<div><strong style="color:var(--text);">Puanlar:</strong> Her marketin kendi puan değeri vardır, yarışma operatörü tarafından belirlenir. Bir markette yanlış tahmin o market için <strong>0 Puan</strong> kazandırır — diğerleri etkilenmez.</div>
 </div>`,
     lineup:`<h3 style="margin-bottom:12px;">Kadro Tahmini Kuralları</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
 <div><strong style="color:var(--text);">Nasıl oynanır:</strong> Takımın bir sonraki maçı için ilk 11'i seçin, dilediğiniz diziliş ile (4-2-3-1, 4-3-3, 4-4-2 veya 3-4-2-1). Maç başlangıcından 3 saat önce kilitlenir.</div>
 <div><strong style="color:var(--text);">Puanlar:</strong></div>
 <div style="padding-left:12px;">
-• Kadronuzdaki her doğru oyuncu — <strong style="color:var(--green);">+10 pts</strong><br>
-• Tüm 11 oyuncu doğru — <strong style="color:var(--green);">+30 bonus pts</strong>
+• Kadronuzdaki her doğru oyuncu — <strong style="color:var(--green);">+10 Puan</strong><br>
+• Tüm 11 oyuncu doğru — <strong style="color:var(--green);">+30 bonus Puan</strong>
 </div>
-<div><strong style="color:var(--text);">Bonus sorular:</strong> Kadronuzu kaydetmeden önce 3 sorunun tamamını cevaplamalısınız. Her biri doğruysa <strong style="color:var(--green);">+30 pts</strong> kazandırır ve yalnızca maç bitmiş olarak işaretlendiğinde sonuçlanır.</div>
+<div><strong style="color:var(--text);">Bonus sorular:</strong> Kadronuzu kaydetmeden önce 3 sorunun tamamını cevaplamalısınız. Her biri doğruysa <strong style="color:var(--green);">+30 Puan</strong> kazandırır ve yalnızca maç bitmiş olarak işaretlendiğinde sonuçlanır.</div>
 <div style="padding-left:12px;">
 • İlk Gol — maçta ilk golü kim atar<br>
 • En İyi Oyuncu — Sahanın Yıldızı, resmi Sofascore maç reytingine göre belirlenir<br>
