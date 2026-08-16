@@ -267,6 +267,13 @@ tbody tr:hover td{background:var(--bg);}
   </div>
 
   <div class="sidebar-section">
+    <div class="sidebar-section-label">Monetization</div>
+    <button class="nav-item" onclick="nav('monetization')">
+      <span class="ni-icon">💰</span> Campaigns
+    </button>
+  </div>
+
+  <div class="sidebar-section">
     <div class="sidebar-section-label">Account</div>
     <button class="nav-item" onclick="nav('billing')">
       <span class="ni-icon">💳</span> Usage & Billing
@@ -654,6 +661,18 @@ tbody tr:hover td{background:var(--bg);}
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- ── MONETIZATION ── -->
+    <div class="view" id="view-monetization">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Monetization</div>
+          <div class="page-sub" style="font-size:15px;">Sponsor branding on your widgets — a "Sponsored by" banner that pins to the top.</div>
+        </div>
+        <button class="btn btn-primary" onclick="openCreateCampaignModal()">+ Add Campaign</button>
+      </div>
+      <div id="campaigns-list"></div>
     </div>
 
     <!-- ── SETTINGS ── -->
@@ -1349,6 +1368,50 @@ tbody tr:hover td{background:var(--bg);}
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-create-campaign">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <div class="modal-title" id="campaign-modal-title">Add Campaign</div>
+      <button class="modal-close" onclick="closeModal('modal-create-campaign')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="campaign-id" />
+      <div class="form-group">
+        <label class="form-label">Campaign Type</label>
+        <select class="form-select" id="campaign-type">
+          <option value="widget_sponsorship">Sponsorship for Widgets</option>
+        </select>
+        <div class="form-hint">More campaign types coming later — this is the only one for now.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Brand Name</label>
+        <input class="form-input" id="campaign-brand-name" placeholder="e.g. Nordbank" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Logo</label>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div id="campaign-logo-preview" style="width:48px;height:48px;border-radius:10px;background:var(--sidebar-2);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;border:1px solid var(--border);">
+            <span style="font-size:10px;color:var(--text-3);text-align:center;">No logo</span>
+          </div>
+          <div>
+            <input type="file" id="campaign-logo-file" accept="image/*" style="font-size:12px;" onchange="uploadCampaignLogo(this.files[0])">
+            <div class="form-hint">Square image works best — shown as a small badge next to "Sponsored by".</div>
+          </div>
+        </div>
+        <input type="hidden" id="campaign-logo-url" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Widgets to Sponsor</label>
+        <div id="campaign-widget-checkboxes" style="display:flex;flex-direction:column;gap:8px;margin-top:6px;"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-create-campaign')">Cancel</button>
+      <button class="btn btn-primary" id="campaign-save-btn" onclick="saveCampaign()">Add Campaign</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <!-- ══ JS ══ -->
@@ -1375,7 +1438,8 @@ const state = {
   eventFilter: '',
   competitions: [],
   events: [],
-  domains: []
+  domains: [],
+  campaigns: [],
 };
 
 // DM data loaded into memory so round modal stays synchronous
@@ -1515,7 +1579,7 @@ function nav(view, subLabel){
   });
 
   // breadcrumb
-  const labels = {dashboard:'Dashboard','comp-detail':'Competitions','competitions':'Competitions',embed:'Embed & Integration',settings:'Settings',branding:'Customisation',billing:'Usage & Billing',widgets:'Widgets',users:'Users'};
+  const labels = {dashboard:'Dashboard','comp-detail':'Competitions','competitions':'Competitions',embed:'Embed & Integration',settings:'Settings',branding:'Customisation',billing:'Usage & Billing',widgets:'Widgets',users:'Users',monetization:'Monetization'};
   let bc = '';
   if(view==='comp-detail' && subLabel){
     bc = `<span>Competitions</span><span class="sep">/</span><span class="current">${subLabel}</span>`;
@@ -1533,6 +1597,7 @@ function nav(view, subLabel){
     // session — refresh first so the tournament dropdowns are accurate.
     refreshDMState().then(()=>{ renderWidgetsInfo(); renderTopScorersWidgetInfo(); renderStandingsWidgetInfo(); });
   }
+  if(view==='monetization') loadCampaigns();
   if(view==='users'){
     const clearSearch = ()=>{
       const el = document.getElementById('users-search');
@@ -3383,6 +3448,133 @@ function copyStandingsEmbed(){
   const qs = tournamentId ? `client=${CLIENT_KEY}&tournament=${tournamentId}` : `client=${CLIENT_KEY}`;
   const code = `<iframe src="https://www.gameweek.cloud/widgets/standings?${qs}" width="100%" height="680" frameborder="0" style="border-radius:10px;"></iframe>`;
   navigator.clipboard.writeText(code).then(()=>toast('Copied to clipboard'));
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Monetization — widget sponsorship campaigns
+// ─────────────────────────────────────────────────────────────────────────
+
+const CAMPAIGN_WIDGET_OPTIONS = [
+  { key:'squad-analytics', label:'Squad Analytics' },
+  { key:'top-scorers', label:'Top Scorers' },
+  { key:'standings', label:'Standings' },
+];
+const CAMPAIGN_TYPE_LABELS = { widget_sponsorship: 'Sponsorship for Widgets' };
+
+async function loadCampaigns(){
+  const {data, error} = await supa.from('gw_campaigns').select('*').eq('client_key',CLIENT_KEY).order('created_at',{ascending:false});
+  if(error){ console.error('loadCampaigns:',error); toast('Couldn\'t load campaigns: '+error.message); return; }
+  state.campaigns = data||[];
+  renderCampaignsList();
+}
+
+function renderCampaignsList(){
+  const el = document.getElementById('campaigns-list');
+  if(!el) return;
+  if(!state.campaigns.length){
+    el.innerHTML = `<div class="empty" style="padding:60px 20px;"><div class="empty-icon">💰</div><div class="empty-title">No campaigns yet</div><div class="empty-sub">Add a sponsorship campaign to show a "Sponsored by" banner on your widgets.</div></div>`;
+    return;
+  }
+  el.innerHTML = state.campaigns.map(c=>{
+    const widgetLabels = (c.widget_keys||[]).map(k=>CAMPAIGN_WIDGET_OPTIONS.find(w=>w.key===k)?.label||k);
+    const isActive = c.status==='active';
+    return `<div class="card" style="margin-bottom:12px;">
+      <div class="card-body" style="display:flex;align-items:center;gap:14px;">
+        <div style="width:44px;height:44px;border-radius:10px;background:var(--sidebar-2);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;border:1px solid var(--border);">
+          ${c.logo_url ? `<img src="${c.logo_url}" style="width:100%;height:100%;object-fit:cover;">` : `<span style="font-size:16px;color:var(--text-3);">🏷</span>`}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:14px;font-weight:700;color:var(--text);">${c.brand_name}</div>
+          <div style="font-size:12px;color:var(--text-3);margin-top:2px;">${CAMPAIGN_TYPE_LABELS[c.type]||c.type} · ${widgetLabels.length?widgetLabels.join(', '):'No widgets selected'}</div>
+        </div>
+        <span style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;background:${isActive?'var(--green-light,#DCFCE7)':'var(--sidebar-2)'};color:${isActive?'var(--green,#16A34A)':'var(--text-3)'};">${isActive?'Active':'Paused'}</span>
+        <button class="btn btn-ghost btn-sm" onclick="toggleCampaignStatus('${c.id}')">${isActive?'Pause':'Resume'}</button>
+        <button class="btn btn-ghost btn-sm" onclick="openCreateCampaignModal('${c.id}')">Edit</button>
+        <button onclick="deleteCampaign('${c.id}')" style="background:none;border:none;cursor:pointer;color:var(--text-3);font-size:14px;padding:4px;" title="Delete">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openCreateCampaignModal(campaignId){
+  const editing = campaignId ? state.campaigns.find(c=>c.id===campaignId) : null;
+  document.getElementById('campaign-id').value = editing ? editing.id : '';
+  document.getElementById('campaign-modal-title').textContent = editing ? 'Edit Campaign' : 'Add Campaign';
+  document.getElementById('campaign-save-btn').textContent = editing ? 'Save Changes' : 'Add Campaign';
+  document.getElementById('campaign-type').value = editing?.type || 'widget_sponsorship';
+  document.getElementById('campaign-brand-name').value = editing?.brand_name || '';
+  document.getElementById('campaign-logo-url').value = editing?.logo_url || '';
+  const preview = document.getElementById('campaign-logo-preview');
+  preview.innerHTML = editing?.logo_url
+    ? `<img src="${editing.logo_url}" style="width:100%;height:100%;object-fit:cover;">`
+    : `<span style="font-size:10px;color:var(--text-3);text-align:center;">No logo</span>`;
+  document.getElementById('campaign-logo-file').value = '';
+  const selectedKeys = new Set(editing?.widget_keys||[]);
+  document.getElementById('campaign-widget-checkboxes').innerHTML = CAMPAIGN_WIDGET_OPTIONS.map(w=>`
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);cursor:pointer;">
+      <input type="checkbox" value="${w.key}" ${selectedKeys.has(w.key)?'checked':''} style="width:15px;height:15px;">
+      ${w.label}
+    </label>`).join('');
+  openModal('modal-create-campaign');
+}
+
+async function uploadCampaignLogo(file){
+  if(!file) return;
+  try{
+    const ext = file.name.split('.').pop();
+    const path = 'campaign-logos/'+CLIENT_KEY+'_'+Date.now()+'.'+ext;
+    const {error:upErr} = await supa.storage.from('player-photos').upload(path, file, {contentType:file.type});
+    if(upErr){ toast('Upload failed: '+upErr.message); console.error('campaign logo upload:',upErr); return; }
+    const {data:urlData} = supa.storage.from('player-photos').getPublicUrl(path);
+    const logoUrl = urlData?.publicUrl;
+    if(!logoUrl){ toast('Upload failed: could not get file URL'); return; }
+    document.getElementById('campaign-logo-url').value = logoUrl;
+    document.getElementById('campaign-logo-preview').innerHTML = `<img src="${logoUrl}" style="width:100%;height:100%;object-fit:cover;">`;
+  }catch(e){ toast('Logo upload error'); console.error(e); }
+}
+
+async function saveCampaign(){
+  const id = document.getElementById('campaign-id').value;
+  const type = document.getElementById('campaign-type').value;
+  const brand_name = document.getElementById('campaign-brand-name').value.trim();
+  const logo_url = document.getElementById('campaign-logo-url').value || null;
+  const widget_keys = [...document.querySelectorAll('#campaign-widget-checkboxes input:checked')].map(el=>el.value);
+  if(!brand_name){ toast('Enter a brand name'); return; }
+  if(!widget_keys.length){ toast('Select at least one widget to sponsor'); return; }
+
+  if(id){
+    const {error} = await supa.from('gw_campaigns').update({type,brand_name,logo_url,widget_keys}).eq('id',id);
+    if(error){ toast('Save failed: '+error.message); console.error('campaign update:',error); return; }
+    toast('Campaign updated');
+  } else {
+    const {error} = await supa.from('gw_campaigns').insert({
+      id: 'camp'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+      client_key: CLIENT_KEY, type, brand_name, logo_url, widget_keys, status:'active',
+    });
+    if(error){ toast('Save failed: '+error.message); console.error('campaign insert:',error); return; }
+    toast('Campaign added');
+  }
+  closeModal('modal-create-campaign');
+  loadCampaigns();
+}
+
+async function toggleCampaignStatus(id){
+  const c = state.campaigns.find(x=>x.id===id);
+  if(!c) return;
+  const newStatus = c.status==='active' ? 'paused' : 'active';
+  const {error} = await supa.from('gw_campaigns').update({status:newStatus}).eq('id',id);
+  if(error){ toast('Failed: '+error.message); return; }
+  c.status = newStatus;
+  renderCampaignsList();
+}
+
+async function deleteCampaign(id){
+  if(!confirm('Delete this campaign? The sponsor banner will stop showing immediately.')) return;
+  const {error} = await supa.from('gw_campaigns').delete().eq('id',id);
+  if(error){ toast('Delete failed: '+error.message); return; }
+  state.campaigns = state.campaigns.filter(c=>c.id!==id);
+  renderCampaignsList();
+  toast('Campaign deleted');
 }
 
 async function saveDomains(){
