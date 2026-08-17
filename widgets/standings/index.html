@@ -124,6 +124,27 @@ if(CLIENT){
   }catch(e){}
 }
 
+// The cache above is only a fast pre-paint for browsers that happen to
+// already have it (e.g. from visiting the main prediction widget earlier)
+// — it is NOT a reliable source on its own. A real visitor loading this
+// as a third-party iframe on the client's own site typically never has
+// that cache at all (browsers increasingly partition/block third-party
+// iframe storage by default), so the widget must always fetch the actual
+// theme from Supabase too, the same way the main widget does — this is
+// what makes the correct colors show up for real site visitors, not just
+// in a browser that's already visited gameweek.cloud directly.
+async function fetchOperatorTheme(){
+  if(!CLIENT || CLIENT==='demo') return null;
+  try{
+    const {data:op} = await supa.from('gw_operators').select('accent_color,bg_color,surface_color,text_color').eq('client_key',CLIENT).maybeSingle();
+    if(op){ try{ localStorage.setItem('gw_theme_'+CLIENT, JSON.stringify(op)); }catch(e){} }
+    return op||null;
+  }catch(e){
+    console.error('operator theme fetch failed:', e);
+    return null;
+  }
+}
+
 // Zone colours cycle through a fixed, readable palette in the order zones
 // first appear (top of table down) — European spots green-ish, relegation
 // red-ish, everything else neutral, matching the convention every football
@@ -172,11 +193,13 @@ async function boot(){
     return;
   }
 
-  const [{data:tRow, error:tErr}, {data:teamRows}, sponsor] = await Promise.all([
+  const [{data:tRow, error:tErr}, {data:teamRows}, sponsor, opResult] = await Promise.all([
     supa.from('gw_dm_tournaments').select('id,name,country,seasons').eq('id', TOURNAMENT_ID).maybeSingle(),
     supa.from('gw_dm_teams').select('id,name,logo').limit(10000),
     fetchActiveSponsor(),
+    fetchOperatorTheme(),
   ]);
+  if(opResult) applyTheme(opResult);
 
   if(tErr || !tRow){
     el.innerHTML = `<div class="w-error">Couldn't load this tournament.</div>`;
