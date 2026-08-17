@@ -133,6 +133,35 @@ if(CLIENT){
 // theme from Supabase too, the same way the main widget does — this is
 // what makes the correct colors show up for real site visitors, not just
 // in a browser that's already visited gameweek.cloud directly.
+// ── Language ──────────────────────────────────────────────────────────────
+// Column headers translate fully. Zone labels (Champions League, Europa
+// League, Relegation, etc.) are free text the admin typed when pasting
+// standings data, so there's no guaranteed way to translate arbitrary
+// custom text — instead this recognises the common, standard football
+// qualification/relegation zone names by keyword and swaps in the correct
+// translation for those; anything unrecognised (a custom zone name) is
+// shown exactly as the admin typed it rather than guessed at.
+let LANG = 'en';
+const I18N = {
+  en: { team:'Team', p:'P', w:'W', d:'D', l:'L', gd:'GD', pts:'Pts' },
+  tr: { team:'Takım', p:'O', w:'G', d:'B', l:'M', gd:'AVG', pts:'Puan' },
+  de: { team:'Team', p:'Sp', w:'S', d:'U', l:'N', gd:'TD', pts:'Pkt.' },
+};
+function t(key){ return (I18N[LANG]||I18N.en)[key] || key; }
+
+const ZONE_LABEL_TRANSLATIONS = [
+  [/champions?\s*league/i, {en:'Champions League', tr:'Şampiyonlar Ligi', de:'Champions League'}],
+  [/europa\s*league/i, {en:'Europa League', tr:'Avrupa Ligi', de:'Europa League'}],
+  [/conference\s*league/i, {en:'Conference League', tr:'Konferans Ligi', de:'Conference League'}],
+  [/relegat.*play[\s-]?off/i, {en:'Relegation Playoffs', tr:'Küme Düşme Play-off', de:'Abstiegs-Playoffs'}],
+  [/relegat/i, {en:'Relegation', tr:'Küme Düşme', de:'Abstieg'}],
+  [/play[\s-]?off/i, {en:'Playoffs', tr:'Play-off', de:'Playoffs'}],
+];
+function translateZoneLabel(label){
+  const hit = ZONE_LABEL_TRANSLATIONS.find(([re])=>re.test(label));
+  return hit ? (hit[1][LANG]||hit[1].en) : label; // unrecognised custom label — show as typed
+}
+
 async function fetchOperatorTheme(){
   if(!CLIENT || CLIENT==='demo') return null;
   try{
@@ -142,6 +171,16 @@ async function fetchOperatorTheme(){
   }catch(e){
     console.error('operator theme fetch failed:', e);
     return null;
+  }
+}
+
+async function fetchOperatorLanguage(){
+  if(!CLIENT || CLIENT==='demo') return 'en';
+  try{
+    const {data:op} = await supa.from('gw_operators').select('language').eq('client_key',CLIENT).maybeSingle();
+    return (op && I18N[op.language]) ? op.language : 'en';
+  }catch(e){
+    return 'en';
   }
 }
 
@@ -193,13 +232,15 @@ async function boot(){
     return;
   }
 
-  const [{data:tRow, error:tErr}, {data:teamRows}, sponsor, opResult] = await Promise.all([
+  const [{data:tRow, error:tErr}, {data:teamRows}, sponsor, opResult, langResult] = await Promise.all([
     supa.from('gw_dm_tournaments').select('id,name,country,seasons').eq('id', TOURNAMENT_ID).maybeSingle(),
     supa.from('gw_dm_teams').select('id,name,logo').limit(10000),
     fetchActiveSponsor(),
     fetchOperatorTheme(),
+    fetchOperatorLanguage(),
   ]);
   if(opResult) applyTheme(opResult);
+  LANG = langResult || 'en';
 
   if(tErr || !tRow){
     el.innerHTML = `<div class="w-error">Couldn't load this tournament.</div>`;
@@ -231,13 +272,13 @@ async function boot(){
   <table>
     <thead><tr>
       <th class="col-rank">#</th>
-      <th class="col-team">Team</th>
-      <th class="col-p">P</th>
-      <th class="col-w">W</th>
-      <th class="col-d">D</th>
-      <th class="col-l">L</th>
-      <th>GD</th>
-      <th>Pts</th>
+      <th class="col-team">${t('team')}</th>
+      <th class="col-p">${t('p')}</th>
+      <th class="col-w">${t('w')}</th>
+      <th class="col-d">${t('d')}</th>
+      <th class="col-l">${t('l')}</th>
+      <th>${t('gd')}</th>
+      <th>${t('pts')}</th>
     </tr></thead>
     <tbody>`;
 
@@ -264,7 +305,7 @@ async function boot(){
   if(standings.zones && standings.zones.length){
     html += `<div class="w-legend">`;
     standings.zones.forEach(z=>{
-      html += `<div class="legend-item"><span class="legend-swatch" style="background:${zoneColor[z.id]}"></span>${escapeHtml(z.label)}</div>`;
+      html += `<div class="legend-item"><span class="legend-swatch" style="background:${zoneColor[z.id]}"></span>${escapeHtml(translateZoneLabel(z.label))}</div>`;
     });
     html += `</div>`;
   }
