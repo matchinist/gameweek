@@ -198,7 +198,7 @@ async function boot(){
   (teamRows||[]).forEach(t=>{ teamsById[t.id]=t; });
 
   const zoneColor = {};
-  (standings.zones||[]).forEach((z,i)=>{ zoneColor[z.id] = ZONE_PALETTE[i % ZONE_PALETTE.length]; });
+  (standings.zones||[]).forEach((z,i)=>{ zoneColor[z.id] = z.color || ZONE_PALETTE[i % ZONE_PALETTE.length]; });
 
   const rows = [...standings.rows].sort((a,b)=>a.rank-b.rank);
 

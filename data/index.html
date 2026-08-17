@@ -785,6 +785,29 @@ function stripMarkdownLink(line){
 function isStandingsStatToken(s){
   return /^-?\d+$/.test(s) || /^\d+:\d+$/.test(s);
 }
+
+// Suggests a color for a standings zone based on its own name — the same
+// convention football fans already recognise from any broadcast or table
+// (blue/indigo for top continental spots, green for the next tier down,
+// amber for playoffs, red for relegation) — rather than tying it to any
+// one client's brand colour. Tournaments and their standings are shared,
+// global data (the same table can be embedded by several different
+// clients at once), so a color sourced from "the client's" branding
+// wouldn't actually make sense here — there isn't one single client to
+// derive it from. Admin can still override any zone's color manually.
+const ZONE_COLOR_KEYWORDS = [
+  [/champions?\s*league|ucl/i, '#4F46E5'],
+  [/europa|conference/i, '#16A34A'],
+  [/relegat/i, '#DC2626'],
+  [/play[\s-]?off/i, '#D97706'],
+];
+const ZONE_COLOR_FALLBACKS = ['#4F46E5','#16A34A','#0EA5E9','#D97706','#DC2626','#8B5CF6'];
+function suggestZoneColor(label, fallbackIndex){
+  const hit = ZONE_COLOR_KEYWORDS.find(([re])=>re.test(label));
+  if(hit) return hit[1];
+  return ZONE_COLOR_FALLBACKS[fallbackIndex % ZONE_COLOR_FALLBACKS.length];
+}
+
 function parseStandingsPaste(raw){
   // A real copy from an HTML table (e.g. selecting Sofascore's table and
   // Ctrl+C) typically joins the cells WITHIN a row with tabs — or runs of
@@ -822,7 +845,7 @@ function parseStandingsPaste(raw){
       const label = line;
       if(!currentZone || zones[zones.length-1].label !== label){
         currentZone = 'zone'+(zoneOrder++);
-        zones.push({ id: currentZone, label });
+        zones.push({ id: currentZone, label, color: suggestZoneColor(label, zoneOrder-1) });
       }
       i++; continue;
     }
@@ -927,7 +950,7 @@ function parseStandingsSheet(sheetRows){
       if(zoneLabel !== currentZoneLabel){
         currentZoneId = 'zone'+(zoneOrder++);
         currentZoneLabel = zoneLabel;
-        zones.push({ id: currentZoneId, label: zoneLabel });
+        zones.push({ id: currentZoneId, label: zoneLabel, color: suggestZoneColor(zoneLabel, zoneOrder-1) });
       }
     } else {
       currentZoneId = null; currentZoneLabel = null;
@@ -984,7 +1007,20 @@ function renderStandingsPreview(poolTeams){
   const el = document.getElementById('standings-preview');
   if(!st){ el.innerHTML=''; return; }
   const unmatchedCount = st.rows.filter(r=>!r.teamId || r.matchScore<75).length;
-  let html = `<div class="card">
+  let html = '';
+  if(st.zones && st.zones.length){
+    html += `<div class="card" style="margin-bottom:12px;">
+      <div class="card-header"><span class="card-title">Zone colours</span><span style="font-size:11px;color:var(--text-3);">Suggested from each zone's name — override any of them</span></div>
+      <div class="card-body" style="display:flex;flex-wrap:wrap;gap:14px;">
+        ${st.zones.map(z=>`
+          <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text);cursor:pointer;">
+            <input type="color" value="${z.color||'#4F46E5'}" onchange="updateZonePreviewColor('${z.id}', this.value)" style="width:28px;height:28px;padding:0;border:1px solid var(--border);border-radius:6px;cursor:pointer;">
+            ${z.label}
+          </label>`).join('')}
+      </div>
+    </div>`;
+  }
+  html += `<div class="card">
     <div class="card-header">
       <span class="card-title">Preview — ${st.rows.length} teams</span>
       <span style="font-size:11px;color:${unmatchedCount?'var(--red)':'var(--green)'};">${unmatchedCount ? unmatchedCount+' need review' : 'All matched'}</span>
@@ -1018,6 +1054,12 @@ function renderStandingsPreview(poolTeams){
     </div>
   </div>`;
   el.innerHTML = html;
+}
+
+function updateZonePreviewColor(zoneId, color){
+  if(!standingsPreviewState) return;
+  const zone = standingsPreviewState.zones.find(z=>z.id===zoneId);
+  if(zone) zone.color = color;
 }
 
 function overrideStandingsMatch(rowIndex, teamId){
@@ -1061,9 +1103,9 @@ function clearStandings(){
 }
 
 function renderStandingsTable(standings){
-  const zoneColors = ['var(--accent)','var(--green)','#0EA5E9','var(--amber)','var(--red)','#8B5CF6'];
+  const zoneColorFallbacks = ['#4F46E5','#16A34A','#0EA5E9','#D97706','#DC2626','#8B5CF6'];
   const zoneColor = {};
-  (standings.zones||[]).forEach((z,i)=>{ zoneColor[z.id] = zoneColors[i % zoneColors.length]; });
+  (standings.zones||[]).forEach((z,i)=>{ zoneColor[z.id] = z.color || zoneColorFallbacks[i % zoneColorFallbacks.length]; });
   const rows = [...standings.rows].sort((a,b)=>a.rank-b.rank);
   let html = `<table style="width:100%;border-collapse:collapse;font-size:12.5px;">
     <thead><tr style="border-bottom:1px solid var(--border);">
@@ -1095,11 +1137,24 @@ function renderStandingsTable(standings){
   });
   html += `</tbody></table>`;
   if(standings.zones && standings.zones.length){
-    html += `<div style="display:flex;flex-wrap:wrap;gap:10px 14px;margin-top:10px;">
-      ${standings.zones.map(z=>`<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2);"><span style="width:8px;height:8px;border-radius:2px;background:${zoneColor[z.id]};"></span>${z.label}</div>`).join('')}
+    html += `<div style="display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:12px;">
+      ${standings.zones.map(z=>`
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-2);cursor:pointer;">
+          <input type="color" value="${zoneColor[z.id]}" onchange="updateSavedZoneColor('${z.id}', this.value)" style="width:18px;height:18px;padding:0;border:1px solid var(--border);border-radius:4px;cursor:pointer;">
+          ${z.label}
+        </label>`).join('')}
     </div>`;
   }
   return html;
+}
+
+async function updateSavedZoneColor(zoneId, color){
+  const season = getSeasonData(S.activeTournamentId, S.activeSeason);
+  const zone = season.standings?.zones?.find(z=>z.id===zoneId);
+  if(!zone) return;
+  zone.color = color;
+  const ok = await save();
+  if(ok) toast('Zone colour updated');
 }
 
 // ─────────────────────────────────────────────────────────────────────────
