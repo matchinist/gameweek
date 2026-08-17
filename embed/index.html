@@ -2096,7 +2096,12 @@ function renderLineupPredictor(comp){
     if(player){
       const isResulted = !isOpen && actual;
       const isCorrect = isResulted && actual.includes(player.id);
-      const ringColor = isResulted ? (isCorrect ? '#22c55e' : 'rgba(220,38,38,0.7)') : '#fff';
+      // Showing the real confirmed lineup as a fallback (no picks of the
+      // viewer's own to grade) isn't a "correct/incorrect" prediction
+      // result — every player shown here is by definition one who
+      // actually started, so a green ring would misleadingly imply the
+      // viewer predicted something they never actually picked.
+      const ringColor = (isResulted && !showingRealLineup) ? (isCorrect ? '#22c55e' : 'rgba(220,38,38,0.7)') : '#fff';
       const flagUrl = flagImgUrl(player.nationality);
       const fallback = player.no!=null && player.no!=='' ? player.no : '';
       const dim = (isResulted && !isCorrect) ? 'opacity:0.55;' : '';
@@ -2123,9 +2128,31 @@ function renderLineupPredictor(comp){
 
   const LAYOUT_V = FORMATION_LAYOUTS[fmt];
 
+  // Completed match, viewer has no picks of their own (not logged in, or
+  // logged in but never predicted this round) — show the real confirmed
+  // lineup instead of 11 empty "+" placeholders. Data Manager only records
+  // WHO started, not which exact tactical slot each player occupied, so
+  // this places real players into the correct POSITION GROUP (a real
+  // keeper in the GK slot, real defenders in the DEF slots, etc.) rather
+  // than claiming exact left/right precision it doesn't actually have.
+  const showingRealLineup = !isOpen && actual && pickCount===0;
+  let realBySlot = null;
+  if(showingRealLineup){
+    const squad = squadFor(comp);
+    const byPos = {GK:[...squad.GK], DEF:[...squad.DEF], MID:[...squad.MID], FWD:[...squad.FWD]};
+    Object.keys(byPos).forEach(pos=>{ byPos[pos] = byPos[pos].filter(p=>actual.includes(p.id)); });
+    const posCursor = {GK:0, DEF:0, MID:0, FWD:0};
+    realBySlot = {};
+    LAYOUT_V.forEach((s,i)=>{
+      const pool = byPos[s.pos]||[];
+      const player = pool[posCursor[s.pos]];
+      if(player){ realBySlot[i]=player.id; posCursor[s.pos]++; }
+    });
+  }
+
   const positions = LAYOUT_V.map((s,i)=>({si:i, pos:s.pos, x:s.x, y:s.y}));
   const pitchSlots = positions.map(({si, pos, x, y}) => {
-    const pid = picks[si];
+    const pid = picks[si] || (realBySlot ? realBySlot[si] : null);
     const player = pid ? [...squadFor(comp).GK,...squadFor(comp).DEF,...squadFor(comp).MID,...squadFor(comp).FWD].find(p=>p.id===pid) : null;
     return slotHTML({si, player, pos}, x, y);
   });
@@ -2180,7 +2207,9 @@ function renderLineupPredictor(comp){
         <span style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;">${t('form')}</span>
         ${formationCtl}
       </div>
-      <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:800;padding:4px 11px;border-radius:999px;background:${totalPts>0?'var(--green-light)':'var(--bg)'};color:${totalPts>0?'var(--green)':'var(--text-3)'};">${totalPts>0?'\u2713 +':''}${totalPts} pts</span>
+      ${showingRealLineup
+        ? `<span style="font-size:10px;font-weight:700;color:var(--text-3);background:var(--bg);padding:4px 11px;border-radius:999px;">${LANG==='tr'?'Onaylanan Kadro':LANG==='de'?'Bestätigte Aufstellung':'Confirmed Lineup'}</span>`
+        : `<span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:800;padding:4px 11px;border-radius:999px;background:${totalPts>0?'var(--green-light)':'var(--bg)'};color:${totalPts>0?'var(--green)':'var(--text-3)'};">${totalPts>0?'\u2713 +':''}${totalPts} pts</span>`}
     </div>
     <div style="display:flex;gap:8px;padding:10px 16px 4px;">
       ${bonusBoxHTML('firstGoal', t('bonusFirstGoal'), bonus.firstGoal)}
