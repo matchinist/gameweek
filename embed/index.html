@@ -235,8 +235,8 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .lb-num{font-family:var(--mono);font-size:11px;color:var(--text-2);text-align:right;}
 
 .leagues-btn-row{display:flex;gap:10px;padding:0 16px 16px;}
-.leagues-btn-create{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;height:44px;border-radius:12px;background:var(--accent);color:var(--on-accent,#fff);font-weight:800;font-size:14px;border:none;cursor:pointer;}
-.leagues-btn-join{flex:1;display:flex;align-items:center;justify-content:center;height:44px;border-radius:12px;background:var(--white);color:var(--accent);font-weight:800;font-size:14px;border:1px solid var(--border);cursor:pointer;}
+.leagues-btn-create{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;padding:0 16px;border-radius:10px;background:var(--accent);color:var(--on-accent,#fff);font-weight:700;font-size:13px;border:none;cursor:pointer;white-space:nowrap;}
+.leagues-btn-join{display:inline-flex;align-items:center;justify-content:center;height:38px;padding:0 16px;border-radius:10px;background:var(--white);color:var(--accent);font-weight:700;font-size:13px;border:1px solid var(--border);cursor:pointer;white-space:nowrap;}
 .leagues-section-label{font-size:11px;font-weight:800;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:0 16px 10px;}
 .leagues-list{display:flex;flex-direction:column;gap:8px;padding:0 16px 16px;}
 .league-row{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--border);border-radius:14px;background:var(--white);cursor:pointer;text-align:left;width:100%;font-family:inherit;}
@@ -545,7 +545,7 @@ const CLIENT_PARAM = new URLSearchParams(location.search).get('client') || 'demo
 let LANG = 'en';
 const I18N = {
   en: {
-    predictions:'Predictions', leaderboard:'Leaderboard', builder:'Builder', rules:'Rules',
+    predictions:'Predictions', leaderboard:'Leagues', builder:'Builder', rules:'Rules',
     generalLeague:'General', createLeague:'Create League', joinLeague:'Join League', yourLeagues:'Your Leagues',
     openToEveryone:'Open to everyone', privateLeague:'Private league', participants:'participants', yourPosition:'Your position',
     leagueName:'League name', leagueCode:'League code', copyCode:'Copy code', codeCopied:'Copied!', leaveLeague:'Leave league',
@@ -605,7 +605,7 @@ const I18N = {
     modeTitleScore:'Predict the exact score', modeTitleBetting:'Predict the markets', modeTitleRanking:'Rank the teams by xG', modeTitleLineup:'Pick the starting XI', modeTitleRoulette:'Spin the score matrix',
   },
   tr: {
-    predictions:'Tahminler', leaderboard:'Lider Tablosu', builder:'Kadro Kur', rules:'Kurallar',
+    predictions:'Tahminler', leaderboard:'Ligler', builder:'Kadro Kur', rules:'Kurallar',
     generalLeague:'Genel', createLeague:'Lig Oluştur', joinLeague:'Lige Katıl', yourLeagues:'Liglerin',
     openToEveryone:'Herkese açık', privateLeague:'Özel lig', participants:'katılımcı', yourPosition:'Sıralaman',
     leagueName:'Lig adı', leagueCode:'Lig kodu', copyCode:'Kodu kopyala', codeCopied:'Kopyalandı!', leaveLeague:'Ligden ayrıl',
@@ -665,7 +665,7 @@ const I18N = {
     modeTitleScore:'Kesin skoru tahmin et', modeTitleBetting:'Sonuçları Tahmin Et', modeTitleRanking:'Takımları xG\'ye göre sırala', modeTitleLineup:'İlk 11\'i Tahmin Et', modeTitleRoulette:'Skor matrisini çevir',
   },
   de: {
-    predictions:'Tipps', leaderboard:'Rangliste', builder:'Builder', rules:'Regeln',
+    predictions:'Tipps', leaderboard:'Ligen', builder:'Builder', rules:'Regeln',
     generalLeague:'Allgemein', createLeague:'Liga erstellen', joinLeague:'Liga beitreten', yourLeagues:'Deine Ligen',
     openToEveryone:'Für alle offen', privateLeague:'Private Liga', participants:'Teilnehmer', yourPosition:'Deine Platzierung',
     leagueName:'Liganame', leagueCode:'Liga-Code', copyCode:'Code kopieren', codeCopied:'Kopiert!', leaveLeague:'Liga verlassen',
@@ -4473,15 +4473,21 @@ async function renderLeaguesListScreen(comp, target){
 function selectLeague(league){
   leagueSelection[currentCompIdx]=league.id;
   selectedLeagueInfo[currentCompIdx]=league;
+  // renderPredict() already dispatches to the correct loader internally
+  // (loadAndRenderLineupLeaderboard vs loadAndRenderLeaderboard, based on
+  // comp.mode) whenever predictSubTab==='leaderboard' — calling either
+  // loader again here was both redundant (a duplicate fetch/render race)
+  // and, for lineup competitions specifically, outright wrong (it always
+  // called the non-lineup loader, which no-ops silently since #lb-content
+  // doesn't exist in the lineup DOM — no hard error, but never the
+  // intended path).
   renderPredict();
-  if(predictSubTab==='leaderboard') loadAndRenderLeaderboard(COMPS[currentCompIdx]);
 }
 
 function backToLeagues(){
   delete leagueSelection[currentCompIdx];
   delete selectedLeagueInfo[currentCompIdx];
   renderPredict();
-  if(predictSubTab==='leaderboard') loadAndRenderLeaderboard(COMPS[currentCompIdx]);
 }
 
 function copyLeagueCode(code){

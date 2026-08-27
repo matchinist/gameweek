@@ -254,8 +254,8 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .lb-num{font-family:var(--mono);font-size:11px;color:var(--text-2);text-align:center;}
 
 .leagues-btn-row{display:flex;gap:10px;padding:0 16px 16px;}
-.leagues-btn-create{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;height:44px;border-radius:12px;background:var(--accent);color:var(--on-accent,#fff);font-weight:800;font-size:14px;border:none;cursor:pointer;}
-.leagues-btn-join{flex:1;display:flex;align-items:center;justify-content:center;height:44px;border-radius:12px;background:var(--white);color:var(--accent);font-weight:800;font-size:14px;border:1px solid var(--border);cursor:pointer;}
+.leagues-btn-create{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;padding:0 16px;border-radius:10px;background:var(--accent);color:var(--on-accent,#fff);font-weight:700;font-size:13px;border:none;cursor:pointer;white-space:nowrap;}
+.leagues-btn-join{display:inline-flex;align-items:center;justify-content:center;height:38px;padding:0 16px;border-radius:10px;background:var(--white);color:var(--accent);font-weight:700;font-size:13px;border:1px solid var(--border);cursor:pointer;white-space:nowrap;}
 .leagues-section-label{font-size:11px;font-weight:800;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:0 16px 10px;}
 .leagues-list{display:flex;flex-direction:column;gap:8px;padding:0 16px 16px;}
 .league-row{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--border);border-radius:14px;background:var(--white);cursor:pointer;text-align:left;width:100%;font-family:inherit;}
@@ -864,7 +864,7 @@ function controlBandOpen(comp, roundOptionsHtml, tabsHtml, tabsMobileHtml, selec
   // the list), rather than approximating the look with a styled button.
   const mobileTabSelectHtml = `<select class="control-band-select ps-tab-mobile-toggle" onchange="switchPredictSubTab(this.value)">
     <option value="predictions" ${predictSubTab==='predictions'?'selected':''}>${currentTabLabel}</option>
-    <option value="leaderboard" ${predictSubTab==='leaderboard'?'selected':''}>Leaderboard</option>
+    <option value="leaderboard" ${predictSubTab==='leaderboard'?'selected':''}>Leagues</option>
   </select>`;
   return `<div class="control-band">
     <div class="control-band-title-row">
@@ -1179,7 +1179,7 @@ function renderMatchupsPane(comp){
   const pts = correct * cfg.pointsPerCorrect + (resolved && correct === resolved ? cfg.perfectBonus : 0);
   const made = Object.keys(picks).length;
 
-  const tabs = `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Match Ups</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`;
+  const tabs = `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Match Ups</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leagues</button>`;
   const roundSelect = comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('');
 
   let html = controlBandOpen(comp, roundSelect, tabs, tabs) + '</div>';
@@ -1546,8 +1546,8 @@ function renderLineupPredictor(comp){
     <div style="padding:0 0 30px;">
       ${controlBandOpen(comp, roundSelect,
         `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Builder</button>
-         <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`,
-        `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`)}
+         <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leagues</button>`,
+        `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leagues</button>`)}
         ${countdownInner}
       </div>
 
@@ -1974,8 +1974,8 @@ function renderPredictionsPane(comp){
   let html=controlBandOpen(comp,
     comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join(''),
     `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button>
-     <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`,
-    `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`);
+     <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leagues</button>`,
+    `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leagues</button>`);
 
   if(comp.mode==='lms'&&eliminatedAtIdx>=0){
     // Eliminated — shows immediately rather than waiting for the whole round
@@ -2779,10 +2779,10 @@ function renderRouletteLeaderboardShell(comp){
     ${roundBarRules('roulette')}
     <div class="predict-subtabs">
       <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button>
-      <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
+      <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leagues</button>
     </div>
     <div class="predict-subtabs-mobile">
-      <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
+      <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leagues</button>
     </div>
   </div>`;
   if(leagueSelection[currentCompIdx]===undefined){
@@ -2821,10 +2821,10 @@ function renderRouletteHTML(){
       ${roundBarRules('roulette')}
       <div class="predict-subtabs">
         <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button>
-        <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
+        <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leagues</button>
       </div>
       <div class="predict-subtabs-mobile">
-        <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
+        <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leagues</button>
       </div>
     </div>
     <div class="deadline-banner" id="countdown-banner">⏱ &nbsp;Bets lock in <span id="countdown-text">Calculating...</span></div>
@@ -3132,8 +3132,8 @@ function renderLineupLeaderboardShell(comp){
   const roundSelect = `<option value="overall"${isOverall?' selected':''}>Overall</option>${roundOptions}`;
   let html=controlBandOpen(comp, roundSelect,
     `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Builder</button>
-     <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`,
-    `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`,
+     <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leagues</button>`,
+    `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leagues</button>`,
     'changeLBSelection(this.value)');
   html+='</div>';
   if(leagueSelection[currentCompIdx]===undefined){
@@ -3919,8 +3919,8 @@ function renderLeaderboardPane(comp){
   let html=controlBandOpen(comp,
     `${comp.rounds.map((r,i)=>`<option value="${i}" ${(!isOverall&&sel===i)?'selected':''}>${r.label}${r.status==='open'?' (Current)':''}</option>`).join('')}<option value="overall" ${isOverall?'selected':''}>Overall</option>`,
     `<button class="ps-tab" onclick="switchPredictSubTab('predictions')">Predictions</button>
-     <button class="ps-tab active" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`,
-    `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`,
+     <button class="ps-tab active" onclick="switchPredictSubTab('leaderboard')">Leagues</button>`,
+    `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leagues</button>`,
     'changeLBSelection(this.value)');
   html+='</div>';
 
@@ -4275,7 +4275,7 @@ function showRules(mode){
 • Away team goals correct only — <strong>+2 pts</strong><br>
 • Total goals correct only — <strong>+1 pt</strong>
 </div>
-<div><strong style="color:var(--text);">Leaderboard:</strong> Players are ranked by total points. Highest score wins.</div>
+<div><strong style="color:var(--text);">Leagues:</strong> Players are ranked by total points. Highest score wins.</div>
 </div>`,
     lms:`<h3 style="margin-bottom:12px;">Last Man Standing Rules</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
@@ -4294,7 +4294,7 @@ function showRules(mode){
 </div>
 <div><strong style="color:var(--text);">Margin ranges:</strong> 1, 2-3, 4-6, or 7+ runs.</div>
 <div>The two markets score independently \u2014 you can land the margin even if you called the wrong team.</div>
-<div><strong style="color:var(--text);">Leaderboard:</strong> Players are ranked by total points across the series.</div>
+<div><strong style="color:var(--text);">Leagues:</strong> Players are ranked by total points across the series.</div>
 </div>`,
     matchups:`<h3 style="margin-bottom:12px;">Match Ups Rules</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
@@ -4317,7 +4317,7 @@ function showRules(mode){
 </div>
 <div><strong style="color:var(--text);">Margin ranges:</strong> 1-5, 6-10, 11-20, or 20+ points.</div>
 <div>The two markets score independently \u2014 you can land the margin even if you called the wrong team, though getting both is where the points are.</div>
-<div><strong style="color:var(--text);">Leaderboard:</strong> Players are ranked by total points across the week.</div>
+<div><strong style="color:var(--text);">Leagues:</strong> Players are ranked by total points across the week.</div>
 </div>`,
     fantasy:`<h3 style="margin-bottom:12px;">CS2 Simple Fantasy Rules</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
@@ -4373,7 +4373,7 @@ function showRules(mode){
 • Best Player — Man of the Match, decided by the official Sofascore match rating<br>
 • First Sub-Off — who's the first player substituted out
 </div>
-<div><strong style="color:var(--text);">Leaderboard:</strong> Players are ranked by total points across all correctly predicted lineups.</div>
+<div><strong style="color:var(--text);">Leagues:</strong> Players are ranked by total points across all correctly predicted lineups.</div>
 </div>`,
   };
   const content=rules[mode]||'';
