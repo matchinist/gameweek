@@ -146,16 +146,17 @@ const I18N = {
   en: { team:'Team', p:'P', w:'W', d:'D', l:'L', gd:'GD', pts:'Pts' },
   tr: { team:'Takım', p:'O', w:'G', d:'B', l:'M', gd:'AVG', pts:'Puan' },
   de: { team:'Team', p:'Sp', w:'S', d:'U', l:'N', gd:'TD', pts:'Pkt.' },
+  pt: { team:'Equipa', p:'J', w:'V', d:'E', l:'D', gd:'SG', pts:'Pts' },
 };
 function t(key){ return (I18N[LANG]||I18N.en)[key] || key; }
 
 const ZONE_LABEL_TRANSLATIONS = [
-  [/champions?\s*league/i, {en:'Champions League', tr:'Şampiyonlar Ligi', de:'Champions League'}],
-  [/europa\s*league/i, {en:'Europa League', tr:'Avrupa Ligi', de:'Europa League'}],
-  [/conference\s*league/i, {en:'Conference League', tr:'Konferans Ligi', de:'Conference League'}],
-  [/relegat.*play[\s-]?off/i, {en:'Relegation Playoffs', tr:'Küme Düşme Play-off', de:'Abstiegs-Playoffs'}],
-  [/relegat/i, {en:'Relegation', tr:'Küme Düşme', de:'Abstieg'}],
-  [/play[\s-]?off/i, {en:'Playoffs', tr:'Play-off', de:'Playoffs'}],
+  [/champions?\s*league/i, {en:'Champions League', tr:'Şampiyonlar Ligi', de:'Champions League', pt:'Liga dos Campeões'}],
+  [/europa\s*league/i, {en:'Europa League', tr:'Avrupa Ligi', de:'Europa League', pt:'Liga Europa'}],
+  [/conference\s*league/i, {en:'Conference League', tr:'Konferans Ligi', de:'Conference League', pt:'Liga Conferência'}],
+  [/relegat.*play[\s-]?off/i, {en:'Relegation Playoffs', tr:'Küme Düşme Play-off', de:'Abstiegs-Playoffs', pt:'Play-off de Despromoção'}],
+  [/relegat/i, {en:'Relegation', tr:'Küme Düşme', de:'Abstieg', pt:'Despromoção'}],
+  [/play[\s-]?off/i, {en:'Playoffs', tr:'Play-off', de:'Playoffs', pt:'Play-off'}],
 ];
 function translateZoneLabel(label){
   const hit = ZONE_LABEL_TRANSLATIONS.find(([re])=>re.test(label));
