@@ -252,6 +252,26 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .ph-pill.win{background:var(--green-light);color:var(--green);}
 .ph-pill.lose{background:var(--red-light);color:var(--red);}
 .lb-num{font-family:var(--mono);font-size:11px;color:var(--text-2);text-align:center;}
+
+.leagues-btn-row{display:flex;gap:10px;padding:0 16px 16px;}
+.leagues-btn-create{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;height:44px;border-radius:12px;background:var(--accent);color:var(--on-accent,#fff);font-weight:800;font-size:14px;border:none;cursor:pointer;}
+.leagues-btn-join{flex:1;display:flex;align-items:center;justify-content:center;height:44px;border-radius:12px;background:var(--white);color:var(--accent);font-weight:800;font-size:14px;border:1px solid var(--border);cursor:pointer;}
+.leagues-section-label{font-size:11px;font-weight:800;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;padding:0 16px 10px;}
+.leagues-list{display:flex;flex-direction:column;gap:8px;padding:0 16px 16px;}
+.league-row{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--border);border-radius:14px;background:var(--white);cursor:pointer;text-align:left;width:100%;font-family:inherit;}
+.league-row:hover{border-color:var(--accent);}
+.league-icon{width:44px;height:44px;border-radius:12px;background:var(--accent-light);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;flex-shrink:0;}
+.league-row-name{font-size:16px;font-weight:800;color:var(--text);}
+.league-row-sub{font-size:12.5px;color:var(--text-3);margin-top:2px;}
+.league-row-position{text-align:right;flex-shrink:0;}
+.league-row-position-label{font-size:9.5px;font-weight:800;color:var(--text-3);text-transform:uppercase;letter-spacing:0.4px;}
+.league-row-position-value{font-size:14px;font-weight:800;color:var(--accent);margin-top:2px;}
+.league-row-chevron{color:var(--text-3);flex-shrink:0;margin-left:4px;}
+.league-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);}
+.league-header-back{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--text);background:none;border:none;cursor:pointer;padding:0;}
+.league-header-actions{display:flex;align-items:center;gap:8px;}
+.league-header-btn{display:flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--border);background:var(--white);color:var(--text);font-size:12px;font-weight:700;cursor:pointer;}
+.league-header-btn.leave{color:var(--red);border-color:var(--red);}
 .alive-tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;}
 .alive-tag.alive{background:var(--green-light);color:var(--green);}
 .alive-tag.out{background:var(--red-light);color:var(--red);}
@@ -2764,8 +2784,12 @@ function renderRouletteLeaderboardShell(comp){
     <div class="predict-subtabs-mobile">
       <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>
     </div>
-  </div>
-  <div style="padding:16px;">`;
+  </div>`;
+  if(leagueSelection[currentCompIdx]===undefined){
+    return html + renderLeaguesListScreenDemo(comp);
+  }
+  html += leagueSubHeaderHtmlDemo();
+  html += '<div style="padding:16px;">';
   html+='<div style="background:#fff;border:1px solid oklch(0.92 0.004 260);border-radius:16px;overflow:hidden;">';
   ROULETTE_LB.forEach((row,i)=>{
     const isMe=row.u==='demo_user';
@@ -3112,6 +3136,10 @@ function renderLineupLeaderboardShell(comp){
     `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`,
     'changeLBSelection(this.value)');
   html+='</div>';
+  if(leagueSelection[currentCompIdx]===undefined){
+    return html + renderLeaguesListScreenDemo(comp);
+  }
+  html += leagueSubHeaderHtmlDemo();
   // Demo has one meaningfully "resolved" gameweek (rl1) worth of data — both
   // the weekly and Overall views show that same total, same as the real
   // product would once only one gameweek has been played.
@@ -3738,6 +3766,142 @@ function tsSetPosLo(val){ tsState = {...tsState, posLo:parseInt(val,10)}; render
 function tsSetPosHi(val){ tsState = {...tsState, posHi:parseInt(val,10)}; renderPredict(); }
 function tsSetPositions(a,b){ tsState = {...tsState, posLo:a, posHi:b}; renderPredict(); }
 
+// ── LEAGUES (demo — in-memory only, resets on reload) ──────────────────────
+let leagueSelection = {}, selectedLeagueInfoDemo = {};
+let demoPrivateLeagues = [
+  { id:'demo-office', name:'Office Predictions', code:'OFF24X', count:24, myRank:3 },
+  { id:'demo-fans', name:'Süper Fans', code:'FANS99', count:156, myRank:12 },
+];
+function demoGeneralLeagueData(comp){
+  const cData = LB_DATA[comp.id];
+  const overallKey = comp.variantKey ? ('overall:'+comp.variantKey) : 'overall';
+  const rows = (cData?.[overallKey] || cData?.[comp.rounds?.[0]?.id] || []);
+  const count = rows.length || 128;
+  return { count, myRank: Math.min(2, count) };
+}
+function getMyLeaguesForDemo(comp){
+  const general = { id:'general', name:'General', isGeneral:true, code:null, ...demoGeneralLeagueData(comp) };
+  return [general, ...demoPrivateLeagues];
+}
+function renderLeaguesListScreenDemo(comp){
+  const leagues = getMyLeaguesForDemo(comp);
+  return `
+    <div class="leagues-btn-row">
+      <button class="leagues-btn-create" onclick="openCreateLeagueModalDemo()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Create League
+      </button>
+      <button class="leagues-btn-join" onclick="openJoinLeagueModalDemo()">Join League</button>
+    </div>
+    <div class="leagues-section-label">Your Leagues</div>
+    <div class="leagues-list">
+      ${leagues.map(lg=>`
+        <button class="league-row" onclick='selectLeagueDemo(${JSON.stringify(lg).replace(/'/g,"&#39;")})'>
+          <div class="league-icon">${(lg.name||'?').trim().charAt(0).toUpperCase()}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="league-row-name">${lg.name}</div>
+            <div class="league-row-sub">${lg.isGeneral?'Open to everyone':'Private league'} · ${lg.count} participants</div>
+          </div>
+          <div class="league-row-position">
+            <div class="league-row-position-label">Your position</div>
+            <div class="league-row-position-value">${ordinal(lg.myRank)} of ${lg.count}</div>
+          </div>
+          <svg class="league-row-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>`).join('')}
+    </div>`;
+}
+function leagueSubHeaderHtmlDemo(){
+  const league = selectedLeagueInfoDemo[currentCompIdx];
+  if(!league) return '';
+  return `<div class="league-header">
+    <button class="league-header-back" onclick="backToLeaguesDemo()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      ${league.name}
+    </button>
+    ${!league.isGeneral ? `<div class="league-header-actions">
+      <button class="league-header-btn" onclick="copyLeagueCodeDemo('${league.code}')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        Copy code
+      </button>
+      <button class="league-header-btn leave" onclick="leaveLeagueDemo('${league.id}')" title="Leave league">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+      </button>
+    </div>` : ''}
+  </div>`;
+}
+function selectLeagueDemo(league){
+  leagueSelection[currentCompIdx]=league.id;
+  selectedLeagueInfoDemo[currentCompIdx]=league;
+  renderPredict();
+}
+function backToLeaguesDemo(){
+  delete leagueSelection[currentCompIdx];
+  delete selectedLeagueInfoDemo[currentCompIdx];
+  renderPredict();
+}
+function copyLeagueCodeDemo(code){
+  navigator.clipboard.writeText(code).then(()=>toast('Copied!'));
+}
+function leagueModalHtmlDemo(mode){
+  const isCreate = mode==='create';
+  return `<div class="ph-overlay" onmousedown="leagueModalMouseDownTarget=event.target" onclick="if(event.target===this&&leagueModalMouseDownTarget===this)closeLeagueModalDemo()">
+    <div class="ph-modal" style="max-width:340px;">
+      <div style="font-size:17px;font-weight:800;margin-bottom:4px;color:var(--text);">${isCreate?'Create League':'Join League'}</div>
+      <div style="font-size:12px;color:var(--text-3);margin-bottom:14px;">${isCreate?'League name':'League code'}</div>
+      <input id="league-modal-input" type="text" placeholder="${isCreate?'e.g. Office Predictions':'Enter code'}" maxlength="${isCreate?40:12}" style="width:100%;height:42px;padding:0 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:16px;box-sizing:border-box;background:var(--white);color:var(--text);" onkeydown="if(event.key==='Enter')submit${isCreate?'CreateLeagueDemo':'JoinLeagueDemo'}()">
+      <div style="display:flex;gap:8px;">
+        <button onclick="closeLeagueModalDemo()" style="flex:1;height:42px;border-radius:8px;border:1px solid var(--border);background:var(--white);color:var(--text);font-weight:700;cursor:pointer;">Cancel</button>
+        <button onclick="submit${isCreate?'CreateLeagueDemo':'JoinLeagueDemo'}()" style="flex:1;height:42px;border-radius:8px;border:none;background:var(--accent);color:var(--on-accent,#fff);font-weight:700;cursor:pointer;">${isCreate?'Create':'Join'}</button>
+      </div>
+    </div>
+  </div>`;
+}
+let leagueModalMouseDownTarget=null;
+function openCreateLeagueModalDemo(){
+  let wrap=document.getElementById('league-modal-wrap');
+  if(!wrap){ wrap=document.createElement('div'); wrap.id='league-modal-wrap'; document.body.appendChild(wrap); }
+  wrap.innerHTML=leagueModalHtmlDemo('create');
+  setTimeout(()=>document.getElementById('league-modal-input')?.focus(),50);
+}
+function openJoinLeagueModalDemo(){
+  let wrap=document.getElementById('league-modal-wrap');
+  if(!wrap){ wrap=document.createElement('div'); wrap.id='league-modal-wrap'; document.body.appendChild(wrap); }
+  wrap.innerHTML=leagueModalHtmlDemo('join');
+  setTimeout(()=>document.getElementById('league-modal-input')?.focus(),50);
+}
+function closeLeagueModalDemo(){
+  const wrap=document.getElementById('league-modal-wrap');
+  if(wrap) wrap.innerHTML='';
+}
+function submitCreateLeagueDemo(){
+  const input=document.getElementById('league-modal-input');
+  const name=(input?.value||'').trim();
+  if(!name){ toast('Enter a league name'); return; }
+  const id='demo-'+Date.now().toString(36);
+  const code=Math.random().toString(36).slice(2,8).toUpperCase();
+  demoPrivateLeagues.push({ id, name, code, count:1, myRank:1 });
+  closeLeagueModalDemo();
+  toast('League created!');
+  renderPredict();
+}
+function submitJoinLeagueDemo(){
+  const input=document.getElementById('league-modal-input');
+  const code=(input?.value||'').trim().toUpperCase();
+  if(!code){ toast('Enter a code'); return; }
+  // Demo accepts any non-empty code — no real invite system to validate against.
+  const id='demo-joined-'+Date.now().toString(36);
+  demoPrivateLeagues.push({ id, name:'Joined League', code, count:9, myRank:4 });
+  closeLeagueModalDemo();
+  toast('Joined the league!');
+  renderPredict();
+}
+function leaveLeagueDemo(leagueId){
+  if(!confirm('Leave this league? You can rejoin later with the invite code.')) return;
+  demoPrivateLeagues = demoPrivateLeagues.filter(lg=>lg.id!==leagueId);
+  toast('You left the league');
+  backToLeaguesDemo();
+}
+
 function renderLeaderboardPane(comp){
   if(comp.mode==='lineup') return renderLineupPredictor(comp);
   if(comp.mode==='roulette'){
@@ -3759,6 +3923,11 @@ function renderLeaderboardPane(comp){
     `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">Predictions</button><button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">Leaderboard</button>`,
     'changeLBSelection(this.value)');
   html+='</div>';
+
+  if(leagueSelection[currentCompIdx]===undefined){
+    return html + renderLeaguesListScreenDemo(comp);
+  }
+  html += leagueSubHeaderHtmlDemo();
 
   const cData=LB_DATA[comp.id];
   const overallKey = comp.variantKey ? ('overall:'+comp.variantKey) : 'overall';
