@@ -2423,7 +2423,7 @@ async function computeLineupOverallTotals(comp){
   const currentIdx = computeCurrentRoundIdx(comp);
   const maxIdx = currentIdx!=null ? currentIdx : 0;
   const rounds = comp.rounds.slice(0, maxIdx+1);
-  if(!rounds.length) return {totals:{}};
+  if(!rounds.length) return {totals:{}, rounds};
 
   const {data:allPreds,error} = await supa.from('gw_predictions')
     .select('username,player_id,prediction,round_id')
@@ -2431,7 +2431,7 @@ async function computeLineupOverallTotals(comp){
     .eq('competition_id',comp.id)
     .in('round_id', rounds.map(r=>r.id));
   if(error) throw error;
-  if(!allPreds || !allPreds.length) return {totals:{}};
+  if(!allPreds || !allPreds.length) return {totals:{}, rounds};
 
   const teamId = comp.lineupConfig?.teamId;
   const unwrap = (v)=> (v && typeof v==='object' && 'value' in v) ? v.value : v;
@@ -4740,14 +4740,14 @@ async function computeOverallTotals(comp){
   // compute accurate per-league standings from the exact same source of
   // truth, without a second, divergent implementation of the scoring rules.
   const rounds = comp.rounds||[];
-  if(!rounds.length) return {totals:{}, overallHist:null, allPreds:[]};
+  if(!rounds.length) return {totals:{}, overallHist:null, allPreds:[], rounds};
   const {data:allPreds,error}=await supa.from('gw_predictions')
     .select('username,player_id,event_id,round_id,prediction')
     .eq('client_key',CLIENT_PARAM)
     .eq('competition_id',comp.id)
     .in('round_id', rounds.map(r=>r.id));
   if(error) throw error;
-  if(!allPreds || !allPreds.length) return {totals:{}, overallHist:null, allPreds:[]};
+  if(!allPreds || !allPreds.length) return {totals:{}, overallHist:null, allPreds:[], rounds};
 
   let overallHist=null;
   const unwrap=v=>(v&&typeof v==='object'&&'value'in v)?v.value:v;
@@ -4808,12 +4808,12 @@ async function computeOverallTotals(comp){
       totals[uname].pts+=pts; totals[uname].correct+=correct; totals[uname].total+=teams.length;
     });
   }
-  return {totals, overallHist, allPreds};
+  return {totals, overallHist, allPreds, rounds};
 }
 
 async function loadAndRenderLeaderboardOverall(comp, target, leagueMembers){
   try{
-    const {totals: totalsRaw, overallHist} = await computeOverallTotals(comp);
+    const {totals: totalsRaw, overallHist, rounds} = await computeOverallTotals(comp);
     const totals = leagueMembers ? Object.fromEntries(Object.entries(totalsRaw).filter(([u])=>leagueMembers.has(u))) : totalsRaw;
     if(!Object.keys(totals).length){
       const noRounds = !(comp.rounds||[]).length;
