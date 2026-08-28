@@ -166,7 +166,7 @@ function translateZoneLabel(label){
 async function fetchOperatorTheme(){
   if(!CLIENT || CLIENT==='demo') return null;
   try{
-    const {data:op} = await supa.from('gw_operators').select('accent_color,bg_color,surface_color,text_color').eq('client_key',CLIENT).maybeSingle();
+    const {data:op} = await supa.from('gw_operators_public').select('accent_color,bg_color,surface_color,text_color').eq('client_key',CLIENT).maybeSingle();
     if(op){ try{ localStorage.setItem('gw_theme_'+CLIENT, JSON.stringify(op)); }catch(e){} }
     return op||null;
   }catch(e){
@@ -178,7 +178,7 @@ async function fetchOperatorTheme(){
 async function fetchOperatorLanguage(){
   if(!CLIENT || CLIENT==='demo') return 'en';
   try{
-    const {data:op} = await supa.from('gw_operators').select('language').eq('client_key',CLIENT).maybeSingle();
+    const {data:op} = await supa.from('gw_operators_public').select('language').eq('client_key',CLIENT).maybeSingle();
     return (op && I18N[op.language]) ? op.language : 'en';
   }catch(e){
     return 'en';

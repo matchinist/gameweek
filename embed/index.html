@@ -967,7 +967,7 @@ async function buildCompsFromRealData(){
       supa.from('gw_competitions').select('*').eq('client_key',CLIENT_PARAM),
       supa.from('gw_rounds').select('*').eq('client_key',CLIENT_PARAM).order('sort_order'),
       supa.from('gw_dm_tournaments').select('id,name,seasons'),
-      (async()=>{ try{ return await supa.from('gw_operators').select('language').eq('client_key',CLIENT_PARAM).maybeSingle(); }catch(e){ return {data:null}; } })(),
+      (async()=>{ try{ return await supa.from('gw_operators_public').select('language').eq('client_key',CLIENT_PARAM).maybeSingle(); }catch(e){ return {data:null}; } })(),
     ]);
     LANG = (opRow && I18N[opRow.language]) ? opRow.language : 'en';
     applyTranslations();
@@ -5420,7 +5420,7 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
 
     if(CLIENT_PARAM&&CLIENT_PARAM!=='demo'){
       try{
-        const {data:op} = await supa.from('gw_operators').select('company_name,logo_url,accent_color,bg_color,surface_color,text_color').eq('client_key',CLIENT_PARAM).single();
+        const {data:op} = await supa.from('gw_operators_public').select('company_name,logo_url,accent_color,bg_color,surface_color,text_color').eq('client_key',CLIENT_PARAM).single();
         if(op){
           document.getElementById('hdr-operator-badge').textContent='· '+op.company_name;
           if(op.logo_url){
