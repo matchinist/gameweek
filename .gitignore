@@ -1,0 +1,5 @@
+.claude/
+.serena/
+.remember/
+node_modules/
+_site/

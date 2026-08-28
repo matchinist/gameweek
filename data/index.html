@@ -2927,7 +2927,6 @@ async function bootDataManager(){
   }catch(e){ console.error('Session restore error:', e); }
 
   if(!session){ showDMLogin(); return; }
-  console.log('GW DM: Session restored for', session.user.email);
 
   // Check if this auth user is a platform admin — retry once
   let admin = null;
