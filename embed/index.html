@@ -496,7 +496,7 @@ function gwReadableText(text, surface){
         <button class="auth-btn" id="btn-do-login" onclick="doLogin()">Sign in →</button>
               </div>
       <div id="form-register" style="display:none;">
-        <div class="form-group"><label class="form-label" id="lbl-reg-username">Username</label><input class="form-input" id="reg-username" placeholder="choose a username" autocomplete="username" /></div>
+        <div class="form-group"><label class="form-label" id="lbl-reg-username">Username</label><input class="form-input" id="reg-username" placeholder="choose a username" autocomplete="username" maxlength="24" /></div>
         <div class="form-group"><label class="form-label" id="lbl-reg-email">Email</label><input class="form-input" type="email" id="reg-email" placeholder="your@email.com" autocomplete="email" /></div>
         <div class="form-group"><label class="form-label" id="lbl-reg-password">Password</label><input class="form-input" type="password" id="reg-password" placeholder="min 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()" /></div>
         <div class="form-group" style="display:flex;align-items:flex-start;gap:8px;margin-bottom:14px;">
@@ -628,7 +628,7 @@ const I18N = {
     predictionSaved:'Prediction saved', couldNotSave:'Could not save — check your connection and try again',
     lineupSaved:'Lineup Saved', rankingSaved:'Ranking saved',
     errFillAllFields:'Please fill in all fields', errUsernameChars:'Username can only contain letters, numbers, and underscores',
-    errUsernameShort:'Username must be at least 3 characters', errUsernameTaken:'That username is already taken',
+    errUsernameShort:'Username must be at least 3 characters', errUsernameLong:'Username must be 24 characters or fewer', errUsernameTaken:'That username is already taken',
     errInvalidEmail:'Please enter a valid email address', errWeakPassword:'Password must be at least 6 characters',
     errAccountExists:'An account with this email already exists — try signing in instead',
     errWrongCredentials:'Incorrect email or password', errRateLimit:'Too many attempts — please wait a moment and try again',
@@ -688,7 +688,7 @@ const I18N = {
     predictionSaved:'Tahmin kaydedildi', couldNotSave:'Kaydedilemedi — bağlantınızı kontrol edip tekrar deneyin',
     lineupSaved:'Kadro Kaydedildi', rankingSaved:'Sıralama kaydedildi',
     errFillAllFields:'Lütfen tüm alanları doldurun', errUsernameChars:'Kullanıcı adı yalnızca harf, rakam ve alt çizgi içerebilir',
-    errUsernameShort:'Kullanıcı adı en az 3 karakter olmalı', errUsernameTaken:'Bu kullanıcı adı zaten alınmış',
+    errUsernameShort:'Kullanıcı adı en az 3 karakter olmalı', errUsernameLong:'Kullanıcı adı en fazla 24 karakter olabilir', errUsernameTaken:'Bu kullanıcı adı zaten alınmış',
     errInvalidEmail:'Lütfen geçerli bir e-posta adresi girin', errWeakPassword:'Şifre en az 6 karakter olmalı',
     errAccountExists:'Bu e-posta ile zaten bir hesap var — giriş yapmayı deneyin',
     errWrongCredentials:'E-posta veya şifre hatalı', errRateLimit:'Çok fazla deneme yapıldı — lütfen biraz bekleyip tekrar deneyin',
@@ -748,7 +748,7 @@ const I18N = {
     predictionSaved:'Tipp gespeichert', couldNotSave:'Speichern fehlgeschlagen — prüfe deine Verbindung und versuche es erneut',
     lineupSaved:'Aufstellung gespeichert', rankingSaved:'Rangfolge gespeichert',
     errFillAllFields:'Bitte fülle alle Felder aus', errUsernameChars:'Der Benutzername darf nur Buchstaben, Zahlen und Unterstriche enthalten',
-    errUsernameShort:'Der Benutzername muss mindestens 3 Zeichen lang sein', errUsernameTaken:'Dieser Benutzername ist bereits vergeben',
+    errUsernameShort:'Der Benutzername muss mindestens 3 Zeichen lang sein', errUsernameLong:'Der Benutzername darf höchstens 24 Zeichen lang sein', errUsernameTaken:'Dieser Benutzername ist bereits vergeben',
     errInvalidEmail:'Bitte gib eine gültige E-Mail-Adresse ein', errWeakPassword:'Das Passwort muss mindestens 6 Zeichen lang sein',
     errAccountExists:'Mit dieser E-Mail existiert bereits ein Konto — versuche es mit Anmelden',
     errWrongCredentials:'E-Mail oder Passwort ist falsch', errRateLimit:'Zu viele Versuche — bitte warte einen Moment und versuche es erneut',
@@ -808,7 +808,7 @@ const I18N = {
     predictionSaved:'Palpite guardado', couldNotSave:'Não foi possível guardar — verifique a sua ligação e tente novamente',
     lineupSaved:'Onze Guardado', rankingSaved:'Classificação guardada',
     errFillAllFields:'Por favor preencha todos os campos', errUsernameChars:'O nome de utilizador só pode conter letras, números e underscores',
-    errUsernameShort:'O nome de utilizador deve ter pelo menos 3 caracteres', errUsernameTaken:'Esse nome de utilizador já está em uso',
+    errUsernameShort:'O nome de utilizador deve ter pelo menos 3 caracteres', errUsernameLong:'O nome de utilizador deve ter no máximo 24 caracteres', errUsernameTaken:'Esse nome de utilizador já está em uso',
     errInvalidEmail:'Por favor insira um endereço de email válido', errWeakPassword:'A palavra-passe deve ter pelo menos 6 caracteres',
     errAccountExists:'Já existe uma conta com este email — tente iniciar sessão',
     errWrongCredentials:'Email ou palavra-passe incorretos', errRateLimit:'Demasiadas tentativas — aguarde um momento e tente novamente',
@@ -1250,6 +1250,7 @@ async function doRegister(){
   if(!username||!email||!password){ showAuthError(t('errFillAllFields')); return; }
   if(!/^[a-zA-Z0-9_]+$/.test(username)){ showAuthError(t('errUsernameChars')); return; }
   if(username.length<3){ showAuthError(t('errUsernameShort')); return; }
+  if(username.length>24){ showAuthError(t('errUsernameLong')); return; } // matches the DB check constraint (Phase 0.5)
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showAuthError(t('errInvalidEmail')); return; }
   if(password.length<6){ showAuthError(t('errWeakPassword')); return; }
   if(!agreedTerms){ showAuthError(t('errMustAgreeTerms')); return; }
@@ -1496,9 +1497,10 @@ async function ensureSsoPlayer(session, identity){
   if(base.length<3) base='player';
   base=base.slice(0,24);
   for(let attempt=0;attempt<6;attempt++){
-    const username = attempt===0 ? base
-      : attempt<5 ? base+'_'+(attempt+1)
-      : base+'_'+Math.floor(1000+Math.random()*9000);
+    // Trim the base so base+suffix never exceeds the 24-char DB check
+    // constraint — otherwise a dedup suffix would make the insert fail.
+    const suffix = attempt===0 ? '' : attempt<5 ? '_'+(attempt+1) : '_'+Math.floor(1000+Math.random()*9000);
+    const username = base.slice(0,24-suffix.length)+suffix;
     const {data:taken} = await supa.from('gw_players').select('id')
       .eq('client_key',CLIENT_PARAM).eq('username',username).single();
     if(taken) continue;
