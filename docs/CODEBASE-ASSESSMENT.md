@@ -703,7 +703,7 @@ It would misrepresent this codebase to list only its problems. Several things he
 | H-2 | 🟠 | Every pageview downloads the whole platform's events + teams; O(n·m) scan | `embed:815-826,858-860` | Verified |
 | H-3 | 🟠 | Domain allowlist collected but never enforced | `admin:3639`; 0 refs in `embed` | Verified |
 | H-4 | 🟠 | Admin result modal is dead and would throw; `state.events` never populated | `admin:1445,1507,1922,1938` | Verified |
-| H-5 | 🟠 | Stripe paywall uses a test-mode publishable key | `admin:994` | Verified |
+| H-5 | 🟠 | Stripe paywall uses a test-mode publishable key | `admin:994` | Confirmed intentional by the owner 2026-08-28 (billing not live yet) — closed, revisit when charging starts |
 | H-6 | 🟠 | All predictions world-readable before kick-off | `migration:101` | Inferred |
 | H-7 | 🟠 | Players can change their own `client_key` and `username` | `migration:92` | Inferred |
 | M-1 | 🟡 | No tests, linting, types, or CI gate; push-to-prod with no rollback | `.github/workflows/deploy.yml` | Verified |
