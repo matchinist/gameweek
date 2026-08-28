@@ -1,0 +1,184 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Gameweek SSO — local test harness</title>
+<style>
+  body{font-family:system-ui,sans-serif;margin:0;background:#f4f5f7;color:#1a1a1a;}
+  .bar{background:#141b2d;color:#fff;padding:16px 24px;}
+  .bar h1{margin:0;font-size:16px;}
+  .bar p{margin:4px 0 0;font-size:12px;color:#9aa4bf;}
+  .panel{max-width:820px;margin:20px auto;padding:0 20px;}
+  .warn{background:#fff4e5;border:1px solid #ffcf99;color:#8a4b00;font-size:12px;padding:10px 14px;border-radius:8px;margin-bottom:16px;}
+  .card{background:#fff;border:1px solid #e3e5e9;border-radius:12px;padding:18px;margin-bottom:18px;}
+  label{display:block;font-size:12px;font-weight:600;margin:10px 0 4px;}
+  .hint{font-size:11px;color:#6b7280;font-weight:400;margin:-2px 0 4px;}
+  input{width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid #cfd2d8;border-radius:7px;font-size:13px;font-family:ui-monospace,monospace;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
+  button{padding:10px 18px;border:0;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;}
+  .primary{background:#2a6df4;color:#fff;}
+  .ghost{background:#eef1f6;color:#1a1a1a;}
+  .sig{margin-top:10px;font-size:11px;color:#666;word-break:break-all;font-family:ui-monospace,monospace;}
+  .status{margin-top:10px;font-size:12px;color:#0a7d3f;font-weight:600;}
+  .status.err{color:#b42318;}
+  #game iframe{display:block;width:100%;height:660px;border:1px solid #e3e5e9;border-radius:12px;background:#fff;}
+</style>
+</head>
+<body>
+  <div class="bar">
+    <h1>Fake operator site — Gameweek SSO test</h1>
+    <p>Stands in for the operator's site. The game below signs this user in automatically, the same way a real host page would.</p>
+  </div>
+  <div class="panel">
+    <div class="warn">
+      <strong>Local test tool only.</strong> This computes the signature in the browser so you can try SSO without a real
+      store. Never deploy a page that exposes your SSO secret — in production the signature is computed server-side.
+    </div>
+
+    <div class="card">
+      <label>Gameweek origin</label>
+      <input id="origin" value="https://www.gameweek.cloud">
+
+      <label>client_key (the operator you enabled SSO for)</label>
+      <input id="client" value="leaguefooty_s478zw">
+
+      <label>SSO secret (from the admin SSO card → "Show")</label>
+      <input id="secret" value="0382c233a6a4bbd697bb9ff43f7cbfc8119acf1bc15b77f2">
+
+      <label>Test user id</label>
+      <div class="hint">This is the identity. The <em>same id always maps to the same game account</em> — that's the whole point of SSO. To test a <em>different</em> player, change the id (or hit "New random user"). Changing only the name or email keeps the same account.</div>
+      <input id="uid" value="test-42">
+
+      <label>Test user email</label>
+      <input id="email" value="sso.tester@example.com">
+
+      <label>Test user name</label>
+      <input id="name" value="SSO Tester">
+
+      <div class="row">
+        <button class="primary" onclick="mount()">Load game as this user →</button>
+        <button class="ghost" onclick="randomUser()">🎲 New random user</button>
+      </div>
+      <div class="status" id="status"></div>
+      <div class="sig" id="sigout"></div>
+    </div>
+
+    <!-- The game iframe mounts here -->
+    <div id="game"></div>
+  </div>
+
+<script>
+// ── Pure-JS HMAC-SHA256 (verified against Node's crypto) ───────────────────
+// Used instead of crypto.subtle so the harness works no matter how you serve
+// it — crypto.subtle only exists in a secure context (https, or http on
+// localhost/127.0.0.1), and you're serving this over a plain-http IP.
+function sha256Bytes(bytes){
+  const K = new Uint32Array([
+    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+  let h0=0x6a09e667,h1=0xbb67ae85,h2=0x3c6ef372,h3=0xa54ff53a,h4=0x510e527f,h5=0x9b05688c,h6=0x1f83d9ab,h7=0x5be0cd19;
+  const l=bytes.length, bitLen=l*8, withOne=l+1;
+  const k=(56-(withOne%64)+64)%64, total=withOne+k+8;
+  const m=new Uint8Array(total); m.set(bytes); m[l]=0x80;
+  const dv=new DataView(m.buffer);
+  dv.setUint32(total-4, bitLen>>>0, false);
+  dv.setUint32(total-8, Math.floor(bitLen/0x100000000)>>>0, false);
+  const w=new Uint32Array(64), rotr=(x,n)=>(x>>>n)|(x<<(32-n));
+  for(let off=0; off<total; off+=64){
+    for(let i=0;i<16;i++) w[i]=dv.getUint32(off+i*4,false);
+    for(let i=16;i<64;i++){
+      const s0=rotr(w[i-15],7)^rotr(w[i-15],18)^(w[i-15]>>>3);
+      const s1=rotr(w[i-2],17)^rotr(w[i-2],19)^(w[i-2]>>>10);
+      w[i]=(w[i-16]+s0+w[i-7]+s1)>>>0;
+    }
+    let a=h0,b=h1,c=h2,d=h3,e=h4,f=h5,g=h6,h=h7;
+    for(let i=0;i<64;i++){
+      const S1=rotr(e,6)^rotr(e,11)^rotr(e,25);
+      const ch=(e&f)^((~e)&g);
+      const t1=(h+S1+ch+K[i]+w[i])>>>0;
+      const S0=rotr(a,2)^rotr(a,13)^rotr(a,22);
+      const maj=(a&b)^(a&c)^(b&c);
+      const t2=(S0+maj)>>>0;
+      h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;
+    }
+    h0=(h0+a)>>>0;h1=(h1+b)>>>0;h2=(h2+c)>>>0;h3=(h3+d)>>>0;h4=(h4+e)>>>0;h5=(h5+f)>>>0;h6=(h6+g)>>>0;h7=(h7+h)>>>0;
+  }
+  const out=new Uint8Array(32), odv=new DataView(out.buffer);
+  [h0,h1,h2,h3,h4,h5,h6,h7].forEach((hh,i)=>odv.setUint32(i*4,hh>>>0,false));
+  return out;
+}
+function hmacHex(secret, message){
+  const enc=new TextEncoder(); let key=enc.encode(secret); const block=64;
+  if(key.length>block) key=sha256Bytes(key);
+  if(key.length<block){ const kk=new Uint8Array(block); kk.set(key); key=kk; }
+  const oKey=new Uint8Array(block), iKey=new Uint8Array(block);
+  for(let i=0;i<block;i++){ oKey[i]=key[i]^0x5c; iKey[i]=key[i]^0x36; }
+  const msg=enc.encode(message);
+  const inner=new Uint8Array(block+msg.length); inner.set(iKey); inner.set(msg,block);
+  const innerHash=sha256Bytes(inner);
+  const outer=new Uint8Array(block+32); outer.set(oKey); outer.set(innerHash,block);
+  return Array.from(sha256Bytes(outer)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// ── Mount the game ─────────────────────────────────────────────────────────
+// We build the iframe and post the SSO identity ourselves — the same thing
+// embed.js does on a real page. Doing it here (instead of re-injecting
+// embed.js) means every click cleanly replaces the iframe, so switching
+// users actually re-runs the sign-in. embed.js is a singleton that ignores a
+// second inclusion, which is why re-clicking previously showed nothing.
+function status(msg, isErr){
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status' + (isErr ? ' err' : '');
+}
+
+function mount(){
+  const origin = document.getElementById('origin').value.trim().replace(/\/$/,'');
+  const client = document.getElementById('client').value.trim();
+  const secret = document.getElementById('secret').value.trim();
+  const id     = document.getElementById('uid').value.trim();
+  const email  = document.getElementById('email').value.trim();
+  const name   = document.getElementById('name').value.trim();
+
+  if(!secret || /PASTE|YOUR_/.test(secret)){ status('⚠ Paste your SSO secret first.', true); return; }
+  if(!id){ status('⚠ Enter a test user id.', true); return; }
+
+  // Must match the Edge Function exactly: hex HMAC-SHA256 over `id + ":" + email`.
+  const sig = hmacHex(secret, id + ':' + email);
+  document.getElementById('sigout').textContent = 'signature: ' + sig;
+
+  const host = document.getElementById('game');
+  host.innerHTML = '';                              // fully replace any prior iframe
+  const iframe = document.createElement('iframe');
+  // Classic (fixed-height) embed — simplest to drive in a test page; the SSO
+  // mechanism (postMessage identity + server-side verify) is identical to the
+  // seamless embed operators use in production.
+  iframe.src = origin + '/embed?client=' + encodeURIComponent(client);
+  iframe.addEventListener('load', function(){
+    try{ iframe.contentWindow.postMessage({__gameweek:true, type:'sso', id:id, email:email, name:name, sig:sig}, origin); }catch(e){}
+  });
+  host.appendChild(iframe);
+
+  status('Loaded for id="'+id+'". The game header should show this user signed in (no "Sign in" button). '
+    + 'Same id → same account on every load; different id → different account.');
+}
+
+function randomUser(){
+  const r = Math.random().toString(36).slice(2,7);
+  document.getElementById('uid').value = 'test-' + r;
+  document.getElementById('email').value = 'sso.' + r + '@example.com';
+  document.getElementById('name').value = 'Tester ' + r.toUpperCase();
+  mount();
+}
+
+// Auto-mount on load with the prefilled values.
+window.addEventListener('load', mount);
+</script>
+</body>
+</html>
