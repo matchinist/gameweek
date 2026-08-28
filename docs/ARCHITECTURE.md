@@ -1,6 +1,8 @@
 # Gameweek — Architecture
 
-Diagrams of the system **as it exists today**, at commit `f25d78a`. Nothing here is aspirational — every edge was traced from the committed source, and the tables each surface touches were derived by enumerating its Supabase calls.
+Diagrams of the system as traced at commit `f25d78a` (2026-08-27). Nothing here is aspirational — every edge was traced from the committed source, and the tables each surface touches were derived by enumerating its Supabase calls.
+
+**Updated 2026-08-28:** §11 is an addendum covering everything that changed after the baseline (SSO Edge Function, seamless embed, private leagues, RLS PII fix, Portuguese). The diagrams in §1–§10 still describe the baseline; where a statement is no longer true, it links to §11.
 
 Companion document: [CODEBASE-ASSESSMENT.md](./CODEBASE-ASSESSMENT.md).
 
@@ -8,7 +10,7 @@ Companion document: [CODEBASE-ASSESSMENT.md](./CODEBASE-ASSESSMENT.md).
 
 ## 1. System context
 
-There is no application server. Twenty-four static HTML files are served from GitHub Pages; each one opens its own connection to Supabase from the browser using the public anon key.
+There is (almost — see [§11.1](#111-the-first-server-side-component-sso)) no application server. The static HTML pages are served from GitHub Pages; each one opens its own connection to Supabase from the browser using the public anon key.
 
 ```mermaid
 flowchart TB
@@ -512,4 +514,54 @@ Widgets take `client`, and `standings` additionally accepts `tournament` and `se
 
 ---
 
-*Traced from the repository at `f25d78a`. Table access was derived by enumerating `supa.from(...)` calls per file; RLS behaviour is inferred from `supabase-migration.sql`, which is known to be out of date.*
+---
+
+## 11. Addendum — changes since `f25d78a` (as of `a06b055`, 2026-08-28)
+
+Thirteen commits landed after the baseline. Four of them change the architecture materially.
+
+### 11.1 The first server-side component: SSO
+
+`supabase/functions/sso-login/index.ts` is a Supabase Edge Function — the repository's first and only trusted server-side code. It verifies an HMAC-SHA256 signature made with the operator's `sso_secret` and mints a real Supabase session for a **synthetic** auth user (`sso-…@sso.gameweek.cloud`), so players already signed in on the operator's site (e.g. Shopify) enter the game without registering. Deployed manually (`supabase functions deploy sso-login`), not by the Pages workflow.
+
+Full design: [SSO.md](./SSO.md). Two structural consequences:
+
+- The sentence "there is no server" in §1 is no longer strictly true — and the Edge Function pattern is now *proven* in this codebase, which matters for the target architecture.
+- SSO couples the product to Supabase GoTrue specifically (synthetic users, `generateLink` + `verifyOtp`). Any future auth migration must re-implement this flow.
+
+### 11.2 Seamless script embed
+
+`embed.js` (repo root) is a loader operators paste instead of a fixed-height iframe. It injects `/embed?…&inline=1`, receives content-height reports by `postMessage`, streams the visible viewport band back (`--gw-vt`/`--gw-vh` pin overlays), and forwards the SSO identity. The postMessage protocol (`height`, `scroll-top`, `viewport`, `sso`) is now a **public integration contract** — operators embed this script once and never update it, so it must stay backwards-compatible.
+
+### 11.3 RLS lockdown of PII (applied and verified in production)
+
+The assessment's C-3 (player emails world-readable) was confirmed live — and worse: `gw_operators` also leaked `email` and Stripe IDs to the anon key. Fixed 2026-08-28 and verified in production:
+
+- `gw_operators_public` — a security-definer view exposing only branding columns (+ `domains` for the SSO origin check). The embed and standings widget now read branding from it.
+- Base tables `gw_operators` / `gw_players` locked to owner + platform admins; all anon access revoked.
+- `supabase-migration.sql` updated to match; standalone idempotent version in `supabase-rls-pii-fix.sql` (parts a/b for zero-downtime order).
+- New unique index `gw_players(client_key, username)` closes the username TOCTOU race.
+
+§8's trust-boundary picture improves accordingly: identity *data* is now protected. The game-integrity gaps (deadline, scoring, world-readable predictions, globally-writable `gw_dm_*`) are unchanged.
+
+### 11.4 Private leagues — two new tables, no committed RLS
+
+Players can create/join/leave private leagues (`4b0aad9`), client-wide across modes:
+
+| Table | Columns (from code) | Concern |
+|---|---|---|
+| `gw_leagues` | `id`, `client_key`, `name`, `code`, `created_by` (username) | Created ad hoc in the SQL editor — **no RLS definition exists in the repo** |
+| `gw_league_members` | `league_id`, `username` | Membership keyed on **username**, not `player_id` — inherits every fragility §5.3 of the assessment describes |
+
+League names are escaped on render (`escapeHtmlLineup`) — the new code has better XSS hygiene than the leaderboard path it sits next to.
+
+### 11.5 Smaller changes
+
+- **Portuguese** (`pt`) added — four languages now, not three.
+- Admin: tournament picker + automated round creation (copies rounds from the Data Manager); rounds that haven't started yet are blocked from predictions.
+- **New publicly served files** (deploy uploads the whole repo): `sso-test.html`, `supabase-sso.sql`, `supabase-rls-pii-fix.sql` (+ `.part-a`/`.part-b`). The assessment's M-2 (policy roadmap served to attackers) now covers five SQL files and a test harness.
+- File sizes at `a06b055`: `embed` 5,747 lines (was 5,066), `demo` 4,458, `admin` 4,287, `data` 3,059. The duplicate function definitions (H-1) are still present, now at `embed:3116`/`:4201`, `:3417`/`:4463`, `:3431`/`:4477`.
+
+---
+
+*Traced from the repository at `f25d78a`; addendum §11 reflects `a06b055` (2026-08-28). Table access was derived by enumerating `supa.from(...)` calls per file; RLS behaviour is inferred from `supabase-migration.sql` plus the applied `supabase-rls-pii-fix.sql`, and for `gw_operators`/`gw_players` was verified against production. Line numbers in §1–§10 refer to the baseline commit.*

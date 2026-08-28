@@ -1,0 +1,73 @@
+| schemaname | tablename          | policyname                                   | permissive | roles           | cmd    | qual                                                                                                                                        | with_check                                                                                                                 |
+| ---------- | ------------------ | -------------------------------------------- | ---------- | --------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| public     | gw_admins          | admins_read_own                              | PERMISSIVE | {public}        | SELECT | true                                                                                                                                        | null                                                                                                                       |
+| public     | gw_campaigns       | campaigns_read                               | PERMISSIVE | {public}        | SELECT | true                                                                                                                                        | null                                                                                                                       |
+| public     | gw_campaigns       | campaigns_write_own                          | PERMISSIVE | {public}        | ALL    | (auth.uid() = ( SELECT gw_operators.auth_id
+   FROM gw_operators
+  WHERE (gw_operators.client_key = gw_campaigns.client_key)
+ LIMIT 1))     | null                                                                                                                       |
+| public     | gw_client_coverage | coverage_admin_all                           | PERMISSIVE | {public}        | ALL    | (EXISTS ( SELECT 1
+   FROM gw_admins
+  WHERE (gw_admins.auth_id = auth.uid())))                                                             | null                                                                                                                       |
+| public     | gw_client_coverage | coverage_own_read                            | PERMISSIVE | {public}        | SELECT | (client_key = ( SELECT gw_operators.client_key
+   FROM gw_operators
+  WHERE (gw_operators.auth_id = auth.uid())))                           | null                                                                                                                       |
+| public     | gw_competitions    | comps_read                                   | PERMISSIVE | {public}        | SELECT | true                                                                                                                                        | null                                                                                                                       |
+| public     | gw_competitions    | comps_write_own                              | PERMISSIVE | {public}        | ALL    | (auth.uid() = ( SELECT gw_operators.auth_id
+   FROM gw_operators
+  WHERE (gw_operators.client_key = gw_competitions.client_key)
+ LIMIT 1))  | null                                                                                                                       |
+| public     | gw_dm_events       | dm_events_read                               | PERMISSIVE | {public}        | SELECT | true                                                                                                                                        | null                                                                                                                       |
+| public     | gw_dm_events       | dm_events_write                              | PERMISSIVE | {public}        | ALL    | (EXISTS ( SELECT 1
+   FROM gw_admins
+  WHERE (gw_admins.auth_id = auth.uid())))                                                             | null                                                                                                                       |
+| public     | gw_dm_players      | dm_players_all                               | PERMISSIVE | {public}        | ALL    | true                                                                                                                                        | true                                                                                                                       |
+| public     | gw_dm_teams        | dm_teams_read                                | PERMISSIVE | {public}        | SELECT | true                                                                                                                                        | null                                                                                                                       |
+| public     | gw_dm_teams        | dm_teams_write                               | PERMISSIVE | {public}        | ALL    | (EXISTS ( SELECT 1
+   FROM gw_admins
+  WHERE (gw_admins.auth_id = auth.uid())))                                                             | null                                                                                                                       |
+| public     | gw_dm_tournaments  | dm_tournaments_read                          | PERMISSIVE | {public}        | SELECT | true                                                                                                                                        | null                                                                                                                       |
+| public     | gw_dm_tournaments  | dm_tournaments_write                         | PERMISSIVE | {public}        | ALL    | (EXISTS ( SELECT 1
+   FROM gw_admins
+  WHERE (gw_admins.auth_id = auth.uid())))                                                             | null                                                                                                                       |
+| public     | gw_league_members  | league_members_read                          | PERMISSIVE | {public}        | SELECT | true                                                                                                                                        | null                                                                                                                       |
+| public     | gw_league_members  | league_members_write                         | PERMISSIVE | {public}        | ALL    | true                                                                                                                                        | null                                                                                                                       |
+| public     | gw_leagues         | leagues_read                                 | PERMISSIVE | {public}        | SELECT | true                                                                                                                                        | null                                                                                                                       |
+| public     | gw_leagues         | leagues_write                                | PERMISSIVE | {public}        | ALL    | true                                                                                                                                        | null                                                                                                                       |
+| public     | gw_operators       | operators_insert                             | PERMISSIVE | {authenticated} | INSERT | null                                                                                                                                        | (auth.uid() = auth_id)                                                                                                     |
+| public     | gw_operators       | operators_read_admin                         | PERMISSIVE | {authenticated} | SELECT | (EXISTS ( SELECT 1
+   FROM gw_admins a
+  WHERE (a.auth_id = auth.uid())))                                                                   | null                                                                                                                       |
+| public     | gw_operators       | operators_read_own                           | PERMISSIVE | {authenticated} | SELECT | (auth.uid() = auth_id)                                                                                                                      | null                                                                                                                       |
+| public     | gw_operators       | operators_update_admin                       | PERMISSIVE | {authenticated} | UPDATE | (EXISTS ( SELECT 1
+   FROM gw_admins a
+  WHERE (a.auth_id = auth.uid())))                                                                   | (EXISTS ( SELECT 1
+   FROM gw_admins a
+  WHERE (a.auth_id = auth.uid())))                                                  |
+| public     | gw_operators       | operators_update_own                         | PERMISSIVE | {authenticated} | UPDATE | (auth.uid() = auth_id)                                                                                                                      | (auth.uid() = auth_id)                                                                                                     |
+| public     | gw_players         | players_insert                               | PERMISSIVE | {authenticated} | INSERT | null                                                                                                                                        | (auth.uid() = auth_id)                                                                                                     |
+| public     | gw_players         | players_read_operator                        | PERMISSIVE | {authenticated} | SELECT | (client_key IN ( SELECT gw_operators.client_key
+   FROM gw_operators
+  WHERE (gw_operators.auth_id = auth.uid())))                          | null                                                                                                                       |
+| public     | gw_players         | players_read_own                             | PERMISSIVE | {authenticated} | SELECT | (auth.uid() = auth_id)                                                                                                                      | null                                                                                                                       |
+| public     | gw_players         | players_update_own                           | PERMISSIVE | {authenticated} | UPDATE | (auth.uid() = auth_id)                                                                                                                      | (auth.uid() = auth_id)                                                                                                     |
+| public     | gw_predictions     | predictions_read                             | PERMISSIVE | {public}        | SELECT | true                                                                                                                                        | null                                                                                                                       |
+| public     | gw_predictions     | predictions_update_own                       | PERMISSIVE | {public}        | UPDATE | (auth.uid() = ( SELECT gw_players.auth_id
+   FROM gw_players
+  WHERE (gw_players.id = gw_predictions.player_id)
+ LIMIT 1))                  | null                                                                                                                       |
+| public     | gw_predictions     | predictions_write_own                        | PERMISSIVE | {public}        | INSERT | null                                                                                                                                        | (auth.uid() = ( SELECT gw_players.auth_id
+   FROM gw_players
+  WHERE (gw_players.id = gw_predictions.player_id)
+ LIMIT 1)) |
+| public     | gw_rounds          | rounds_read                                  | PERMISSIVE | {public}        | SELECT | true                                                                                                                                        | null                                                                                                                       |
+| public     | gw_rounds          | rounds_write_own                             | PERMISSIVE | {public}        | ALL    | (auth.uid() = ( SELECT gw_operators.auth_id
+   FROM gw_operators
+  WHERE (gw_operators.client_key = gw_rounds.client_key)
+ LIMIT 1))        | null                                                                                                                       |
+| public     | gw_subscriptions   | subscriptions_read_own                       | PERMISSIVE | {public}        | SELECT | (auth.uid() = ( SELECT gw_operators.auth_id
+   FROM gw_operators
+  WHERE (gw_operators.client_key = gw_subscriptions.client_key)
+ LIMIT 1)) | null                                                                                                                       |
+| storage    | objects            | Allow authenticated uploads to player-photos | PERMISSIVE | {authenticated} | INSERT | null                                                                                                                                        | (bucket_id = 'player-photos'::text)                                                                                        |
+| storage    | objects            | Allow public read of player-photos           | PERMISSIVE | {public}        | SELECT | (bucket_id = 'player-photos'::text)                                                                                                         | null                                                                                                                       |
