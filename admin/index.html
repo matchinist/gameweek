@@ -403,8 +403,17 @@ tbody tr:hover td{background:var(--bg);}
           <div class="card" style="margin-bottom:14px;">
             <div class="card-header"><span class="card-title">Your Embed Code</span></div>
             <div class="card-body">
-              <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">Paste this snippet into any page on your site. The widget loads your competitions automatically.</p>
-              <div class="embed-box" id="embed-code-box">
+              <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">Paste a snippet into any page on your site. The widget loads your competitions automatically.</p>
+              <div style="display:flex;gap:6px;margin-bottom:10px;">
+                <button class="btn btn-primary btn-sm" id="embed-mode-btn-script" onclick="setEmbedMode('script')">Seamless script</button>
+                <button class="btn btn-outline btn-sm" id="embed-mode-btn-iframe" onclick="setEmbedMode('iframe')">iframe</button>
+              </div>
+              <div class="embed-box" id="embed-code-box-script">
+&lt;div data-gameweek <span style="color:#FCD34D" id="embed-script-attrs">data-client="..."</span>&gt;&lt;/div&gt;<br>
+&lt;script async src="https://www.gameweek.cloud/embed.js"&gt;&lt;/script&gt;
+                <button class="btn btn-outline btn-sm embed-copy-btn" onclick="copyEmbed()" style="font-family:var(--mono);font-size:10px;background:var(--sidebar-2);border-color:var(--sidebar-border);color:#9CA3AF;" id="copy-btn-script">Copy</button>
+              </div>
+              <div class="embed-box" id="embed-code-box" style="display:none;">
 &lt;iframe
   src="https://www.gameweek.cloud/embed?<span style="color:#FCD34D" id="embed-query-string">client=...</span>"
   width="100%"
@@ -414,6 +423,7 @@ tbody tr:hover td{background:var(--bg);}
 &gt;&lt;/iframe&gt;
                 <button class="btn btn-outline btn-sm embed-copy-btn" onclick="copyEmbed()" style="font-family:var(--mono);font-size:10px;background:var(--sidebar-2);border-color:var(--sidebar-border);color:#9CA3AF;" id="copy-btn">Copy</button>
               </div>
+              <p style="font-size:11px;color:var(--text-3);margin-top:10px;" id="embed-mode-note">Recommended. The game sizes itself to its content and scrolls with your page — no fixed height, no inner scrollbar, it just becomes part of the page.</p>
               <p style="font-size:11px;color:var(--text-3);margin-top:10px;">Your client key: <span style="font-family:var(--mono);color:var(--text)" id="embed-client-key-label">...</span></p>
               <p style="font-size:11px;color:var(--text-3);margin-top:4px;">Domain not live yet? <a href="#" id="embed-test-link" target="_blank" style="color:var(--accent);text-decoration:none;">Test your live embed →</a></p>
             </div>
@@ -455,7 +465,7 @@ tbody tr:hover td{background:var(--bg);}
                   <div style="width:22px;height:22px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:700;color:white;flex-shrink:0;">2</div>
                   <div>
                     <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px;">Copy the snippet</div>
-                    <div style="font-size:11px;color:var(--text-3);">Paste the iframe code into your CMS, HTML, or template.</div>
+                    <div style="font-size:11px;color:var(--text-3);">Paste the embed code (script or iframe) into your CMS, HTML, or template.</div>
                   </div>
                 </div>
                 <div style="display:flex;gap:10px;align-items:flex-start;">
@@ -3347,8 +3357,34 @@ function buildEmbedQueryString(){
   return qs;
 }
 
+let embedMode = 'script'; // 'script' (seamless loader) or 'iframe' (classic fixed-height)
+
+function embedScriptAttrs(){
+  let attrs = `data-client="${CLIENT_KEY}"`;
+  if(embedFilterComps && embedFilterComps.length){
+    attrs += ` data-comp="${embedFilterComps.join(',')}"`;
+  }
+  return attrs;
+}
+
+function setEmbedMode(mode){
+  embedMode = mode;
+  const isScript = mode==='script';
+  document.getElementById('embed-code-box-script').style.display = isScript?'':'none';
+  document.getElementById('embed-code-box').style.display = isScript?'none':'';
+  document.getElementById('embed-mode-btn-script').className = isScript?'btn btn-primary btn-sm':'btn btn-outline btn-sm';
+  document.getElementById('embed-mode-btn-iframe').className = isScript?'btn btn-outline btn-sm':'btn btn-primary btn-sm';
+  document.getElementById('embed-mode-note').textContent = isScript
+    ? 'Recommended. The game sizes itself to its content and scrolls with your page — no fixed height, no inner scrollbar, it just becomes part of the page.'
+    : 'Classic fixed-height iframe (620px, scrolls internally). Use it if your CMS strips <script> tags.';
+}
+
 function copyEmbed(){
-  const code = `<iframe src="https://www.gameweek.cloud/embed?${buildEmbedQueryString()}" width="100%" height="620" frameborder="0" style="border-radius:10px;"></iframe>`;
+  // The closing script tag must be split so this page's own HTML parser
+  // doesn't read it as the end of the admin script block.
+  const code = embedMode==='script'
+    ? `<div data-gameweek ${embedScriptAttrs()}></div>\n<script async src="https://www.gameweek.cloud/embed.js"></scr`+`ipt>`
+    : `<iframe src="https://www.gameweek.cloud/embed?${buildEmbedQueryString()}" width="100%" height="620" frameborder="0" style="border-radius:10px;"></iframe>`;
   navigator.clipboard.writeText(code).then(()=>toast('Copied to clipboard'));
 }
 
@@ -3365,6 +3401,8 @@ function renderDomains(){
 function updateEmbedCodeDisplay(){
   const qsEl = document.getElementById('embed-query-string');
   if(qsEl) qsEl.textContent = buildEmbedQueryString();
+  const attrsEl = document.getElementById('embed-script-attrs');
+  if(attrsEl) attrsEl.textContent = embedScriptAttrs();
   const testLink = document.getElementById('embed-test-link');
   if(testLink) testLink.href = `https://www.gameweek.cloud/embed?${buildEmbedQueryString()}`;
 }

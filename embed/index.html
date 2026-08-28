@@ -354,6 +354,36 @@ table.lb-table{width:100%;border-collapse:collapse;}
 .rank-item.drag-over{background:var(--accent-light) !important;border:2px solid var(--accent) !important;}
 #toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--text);color:white;font-family:var(--mono);font-size:11px;padding:9px 18px;border-radius:6px;z-index:999;transition:transform 0.25s ease,opacity 0.25s ease;pointer-events:none;white-space:nowrap;opacity:0;}
 #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+
+/* ── Inline (seamless script-embed) mode ──────────────────────────────────
+   Activated by ?inline=1, applied pre-paint in <head>. Used by /embed.js,
+   which operators paste instead of a fixed-height iframe. The app gives up
+   its fixed-viewport shell: the document grows to its natural content
+   height, embed.js keeps the iframe the same height, and the HOST page does
+   all the scrolling — so the game reads as part of the page, with no inner
+   scrollbar.
+   Overlays can't use the iframe viewport for positioning here (it spans the
+   whole, possibly very tall, widget), so they're pinned to the visible band
+   the parent loader reports via --gw-vt (top) / --gw-vh (height). The
+   defaults (0 / 100vh) make every rule a no-op until the first viewport
+   message arrives — and in classic iframe mode, where these rules never
+   apply anyway. !important is needed where the overlay geometry is set via
+   inline style (element.style.cssText / generated markup). */
+html.gw-inline,html.gw-inline body{height:auto;overflow:visible;}
+/* Host page shows through the gutters beside the 860px app column. */
+html.gw-inline body{background:transparent;}
+html.gw-inline .app{position:static;height:auto;}
+html.gw-inline .scroll-area{flex:none;overflow:visible;}
+html.gw-inline .auth-modal-overlay,
+html.gw-inline .ph-overlay,
+html.gw-inline .lineup-picker-overlay,
+html.gw-inline .gw-modal-overlay{top:var(--gw-vt,0px)!important;height:var(--gw-vh,100vh)!important;bottom:auto!important;}
+/* Modal/sheet max-heights are expressed in vh, which now means "the whole
+   widget" — cap them to the visible band instead. */
+html.gw-inline .ph-modal{max-height:calc(var(--gw-vh,100vh)*0.82);}
+html.gw-inline .lineup-picker-overlay>div{max-height:calc(var(--gw-vh,100vh)*0.7)!important;}
+html.gw-inline .gw-modal-overlay>div:last-child{max-height:calc(var(--gw-vh,100vh)*0.8)!important;}
+html.gw-inline #toast{bottom:auto;top:calc(var(--gw-vt,0px) + var(--gw-vh,100vh) - 110px);}
 </style>
 <script>
 // Most content sits on the card surface, not the page background. If an
@@ -429,6 +459,18 @@ function gwReadableText(text, surface){
       root.setProperty('--text-2', txt+'B3');
       root.setProperty('--text-3', txt+'80');
       root.setProperty('--border', txt+'26');
+    }
+  }catch(e){}
+})();
+</script>
+<script>
+// Seamless script-embed mode (?inline=1, injected by /embed.js). The class
+// must land on <html> before first paint so the layout never flashes the
+// fixed-viewport shell — same reasoning as the theme preload above.
+(function(){
+  try{
+    if(new URLSearchParams(location.search).get('inline')==='1'){
+      document.documentElement.classList.add('gw-inline');
     }
   }catch(e){}
 })();
@@ -1423,6 +1465,13 @@ function goTab(tab){
   document.getElementById('tab-'+tab)?.classList.add('active');
   document.getElementById('comp-tabs-wrap').style.display=(tab==='predict'&&!compTabsHidden)?'block':'none';
   document.getElementById('scroll-area').scrollTop=0;
+  // Inline mode: the host page scrolls, not .scroll-area, so ask the loader
+  // to bring the widget top back into view instead. Gated on a real user
+  // gesture so the initial goTab('predict') on boot can never yank the host
+  // page's scroll position.
+  if(document.documentElement.classList.contains('gw-inline') && navigator.userActivation?.hasBeenActive){
+    try{ parent.postMessage({__gameweek:true,type:'scroll-top'},'*'); }catch(e){}
+  }
   if(tab==='predict') renderPredict();
   if(tab==='profile') renderProfile();
 }
@@ -5246,6 +5295,7 @@ function showRules(mode){
   };
   const content=rules[mode]||'';
   const overlay=document.createElement('div');
+  overlay.className='gw-modal-overlay'; // hook for inline-mode viewport pinning
   overlay.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
   overlay.innerHTML=`<div onclick="this.parentElement.remove()" style="position:absolute;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(2px);"></div><div style="position:relative;background:var(--white);border-radius:14px;max-width:400px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-height:80vh;overflow-y:auto;"><button onclick="this.closest('[style*=fixed]').remove()" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-3);">×</button>${content}</div>`;
   document.body.appendChild(overlay);
@@ -5432,6 +5482,60 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
       updateHeaderUser(); renderCompTabs(); goTab('predict');
     }
   }
+})();
+</script>
+<script>
+// ── Inline (seamless script-embed) mode runtime ──────────────────────────
+// Counterpart of /embed.js in the parent page. Two jobs:
+//  1. Report the document's natural height so the loader can keep the
+//     iframe exactly content-sized (no inner scrollbar).
+//  2. Receive the "visible band" (which slice of the iframe is currently on
+//     the host's screen) and expose it as --gw-vt/--gw-vh, which the
+//     .gw-inline CSS uses to pin overlays, sheets, and toasts somewhere the
+//     user can actually see them.
+(function(){
+  if(!document.documentElement.classList.contains('gw-inline')) return;
+  var root = document.documentElement;
+  var lastH = 0;
+  function reportHeight(){
+    // scrollHeight of <html> is the full flowed content height now that
+    // .gw-inline releases the height:100%/overflow:hidden shell.
+    var h = Math.ceil(root.scrollHeight);
+    if(!h || h===lastH) return;
+    lastH = h;
+    // targetOrigin '*' is deliberate: the host is an arbitrary operator
+    // domain we can't know here, and a height in px is not sensitive.
+    try{ parent.postMessage({__gameweek:true,type:'height',height:h},'*'); }catch(e){}
+  }
+  // ResizeObserver on <body> is the fast path: it catches everything that
+  // changes flowed height (data rendering in, images/fonts, tab switches).
+  // But Chromium freezes RO and rAF delivery for cross-origin iframes that
+  // are scrolled out of view — exactly where this widget often sits while
+  // the host page loads around it — so RO alone leaves the iframe stuck at
+  // its pre-content height until the user reaches it. The MutationObserver
+  // and slow interval below keep reports flowing while render-throttled:
+  // DOM observers and timers still run, and scrollHeight still computes on
+  // demand. reportHeight only posts on change, so the interval is idle-cheap.
+  if(window.ResizeObserver) new ResizeObserver(reportHeight).observe(document.body);
+  var moDebounce = null;
+  new MutationObserver(function(){
+    clearTimeout(moDebounce);
+    moDebounce = setTimeout(reportHeight, 60);
+  }).observe(document.body, {childList:true, subtree:true, attributes:true});
+  setInterval(reportHeight, 600);
+  window.addEventListener('load', reportHeight);
+  reportHeight();
+
+  window.addEventListener('message', function(e){
+    var d = e.data;
+    if(!d || d.__gameweek!==true || d.type!=='viewport') return;
+    // The values only drive overlay CSS, but they come from the embedding
+    // page, so validate and clamp rather than trust them.
+    var top = Number(d.top), h = Number(d.height);
+    if(!isFinite(top) || !isFinite(h) || h<=0) return;
+    root.style.setProperty('--gw-vt', Math.max(0, Math.min(top, 1e6))+'px');
+    root.style.setProperty('--gw-vh', Math.max(120, Math.min(h, 1e6))+'px');
+  });
 })();
 </script>
 </body>
