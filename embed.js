@@ -9,6 +9,15 @@
  *   data-comp="12,15"      only these competitions (same as the iframe's comp=)
  *   data-min-height="480"  height reserved before the first content measurement
  *
+ * Optional SSO attributes — sign the game's players in with the account they
+ * already have on the host site (rendered server-side per logged-in user,
+ * e.g. from Shopify Liquid; see the SSO card in the admin's Embed page):
+ *   data-sso-id="1234"          the user's id on the host site
+ *   data-sso-email="a@b.com"    their email (also part of the signature)
+ *   data-sso-name="Alex"        display name for first-visit account creation
+ *   data-sso-sig="..."          hex HMAC-SHA256 of "id:email" with the
+ *                               operator's sso_secret — verified server-side
+ *
  * It still uses an iframe under the hood (the game keeps its own origin,
  * auth session, and styles), but the clunky parts are removed: the iframe is
  * borderless, transparent, and continuously sized to its content, so the
@@ -20,6 +29,11 @@
  *   parent → iframe  {__gameweek:true, type:'viewport', top, height}
  *                    the slice of the iframe currently visible on screen, in
  *                    iframe coordinates — the app pins its overlays to it.
+ *   parent → iframe  {__gameweek:true, type:'sso', id, email, name, sig}
+ *                    the host-site identity above, sent once per iframe load.
+ *                    The app checks this message's origin against the
+ *                    operator's allowed domains, so SSO only works when the
+ *                    loader runs on the operator's own (registered) site.
  */
 (function(){
   'use strict';
@@ -56,9 +70,30 @@
     iframe.style.cssText = 'display:block;width:100%;border:0;background:transparent;min-height:'+((minH>0?minH:480))+'px;';
     container.appendChild(iframe);
 
+    // Host-site SSO identity, forwarded into the app once per load. Sent via
+    // postMessage rather than the URL so the signature never lands in server
+    // logs or referrer headers. The 'load' event fires only after the app's
+    // end-of-body scripts have registered their message listener, so a single
+    // send is enough.
+    var sso = null;
+    var ssoId = container.getAttribute('data-sso-id');
+    if(ssoId){
+      sso = {
+        __gameweek:true, type:'sso', id:ssoId,
+        email:container.getAttribute('data-sso-email')||'',
+        name:container.getAttribute('data-sso-name')||'',
+        sig:container.getAttribute('data-sso-sig')||''
+      };
+    }
+
     var entry = {iframe:iframe, sized:false};
     frames.push(entry);
-    iframe.addEventListener('load', pushViewports);
+    iframe.addEventListener('load', function(){
+      if(sso){
+        try{ iframe.contentWindow.postMessage(sso, ORIGIN); }catch(e){}
+      }
+      pushViewports();
+    });
   }
 
   // Tell each widget which slice of it is on screen right now. Overlays

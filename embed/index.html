@@ -580,6 +580,20 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const supa = supabase.createClient(SUPA_URL, SUPA_KEY, {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'gw-player'}});
 
 const CLIENT_PARAM = new URLSearchParams(location.search).get('client') || 'demo';
+
+// ── HOST-PAGE SSO IDENTITY ────────────────────────────────────────────────
+// The user already signed in on the operator's site (e.g. their Shopify
+// customer). It arrives ONLY as an 'sso' postMessage from /embed.js running
+// on the operator's page (listener further down) — never from the URL.
+// Deliberately not accepted from query params: the signature is a long-lived
+// bearer credential, and a URL transport would (a) leak it into server/CDN
+// logs, browser history and referrers, and (b) let anyone craft a shareable
+// link or a cross-site iframe that silently signs a victim into the
+// signature-holder's account (login CSRF). The Edge Function still verifies
+// the signature server-side; this holds it until then.
+let ssoIdentity = null;
+let ssoOrigin = null;        // origin of the page that posted ssoIdentity
+let operatorDomains = [];    // allowed host domains, loaded with operator theme
 // ── i18n ──────────────────────────────────────────────────────────────────
 // Pre-written translations for fixed UI text only — team names, prize text,
 // round labels, and anything else the operator typed in stay exactly as
@@ -1358,9 +1372,181 @@ async function loginPlayer(player){
 }
 
 async function doLogout(){
+  // An explicit sign-out must stick for the rest of this page load — without
+  // this, SSO would immediately log the player straight back in. On the next
+  // page load SSO applies again, which is the intended "signed in for as long
+  // as you're signed into the host site" behaviour; someone who wants a
+  // different account signs in manually, and manual sessions win over SSO.
+  ssoSuppressed=true;
   await supa.auth.signOut();
   currentPlayer=null; preds={};
   updateHeaderUser(); goTab('predict');
+}
+
+// ── HOST-PAGE SSO SIGN-IN ─────────────────────────────────────────────────────
+// Silent sign-in with the identity the host site vouches for (ssoIdentity,
+// parsed near CLIENT_PARAM). The sso-login Edge Function checks the HMAC
+// signature against the operator's sso_secret and answers with a one-shot
+// magic-link token_hash; verifyOtp turns that into a real Supabase session —
+// required because RLS is keyed to auth.uid(), and what makes the same host
+// user resolve to the same player on every device. Browsers that wipe
+// third-party iframe storage stop being a problem: every page load simply
+// re-authenticates silently instead of asking the player to sign in again.
+let ssoInitDone=false;   // init() finished restoring any stored session
+let ssoBusy=false;       // a verification roundtrip is in flight
+let ssoHandled=false;    // current identity already processed this page load
+let ssoSuppressed=false; // player explicitly signed out — stop auto-login
+
+// SSO auth users carry their origin in user_metadata (set by the Edge
+// Function at creation). Matching on that — rather than re-deriving the
+// synthetic email — keeps the namespacing scheme in exactly one place.
+function isSsoSessionForClient(user){
+  return user?.user_metadata?.sso_client === CLIENT_PARAM;
+}
+function isSsoSessionFor(user, identity){
+  return isSsoSessionForClient(user) && String(user.user_metadata.sso_external_id) === String(identity.id);
+}
+
+async function maybeSsoLogin(){
+  if(!ssoIdentity || !ssoInitDone || ssoBusy || ssoSuppressed || ssoHandled) return;
+  const identity = ssoIdentity;
+  if(!identity.id || !identity.sig) return;
+  // Only act on an identity vouched for by the operator's own site (see
+  // ssoOriginAllowed). Rejecting it here — before any session change — is
+  // what stops a captured signature replayed from an attacker-controlled
+  // page from switching the current viewer's account.
+  if(!ssoOriginAllowed(ssoOrigin)){
+    ssoHandled=true;
+    console.warn('[Gameweek] SSO identity ignored — '+ssoOrigin+' is not an allowed domain for this client.');
+    return;
+  }
+  ssoBusy=true;
+  try{
+    const {data:{session}} = await supa.auth.getSession();
+    if(session){
+      if(isSsoSessionFor(session.user, identity)){
+        // Already signed in as this exact host user. currentPlayer can still
+        // be unset if the stored session survived but init raced the identity
+        // message — finish the profile load in that case.
+        ssoHandled=true;
+        if(!currentPlayer) await finishSsoLogin(session, identity);
+        return;
+      }
+      const sessionClient = session.user?.user_metadata?.sso_client;
+      if(!sessionClient){
+        // A genuine manual (email+password) login — no sso_client metadata.
+        // A manual login always wins over the host identity.
+        ssoHandled=true;
+        return;
+      }
+      // An SSO session that isn't this exact host user: either a different
+      // user on the same client, or a leftover session for a *different*
+      // client (the auth storageKey is shared across every client= value).
+      // Both should yield to the freshly vouched-for identity — the stale
+      // one must not stick, or the visitor appears logged out with no way
+      // back. (The same-client / same-user case already returned above.)
+      await supa.auth.signOut();
+      currentPlayer=null; preds={};
+    }
+    const {data, error} = await supa.functions.invoke('sso-login', {body:{
+      client:CLIENT_PARAM, id:String(identity.id),
+      email:identity.email||'', name:identity.name||'', sig:identity.sig
+    }});
+    if(error || !data?.token_hash) throw (error || new Error('no token returned'));
+    const {data:verified, error:verifyErr} = await supa.auth.verifyOtp({type:'email', token_hash:data.token_hash});
+    if(verifyErr || !verified?.session) throw (verifyErr || new Error('token verification failed'));
+    ssoHandled=true;
+    await finishSsoLogin(verified.session, identity);
+  }catch(e){
+    // SSO failing must never break the embed — fall back to the normal
+    // sign-in UI and leave a trace for the operator's console.
+    ssoHandled=true;
+    console.warn('[Gameweek] SSO sign-in failed:', e?.message||e);
+  }finally{
+    ssoBusy=false;
+  }
+}
+
+async function finishSsoLogin(session, identity){
+  const player = await ensureSsoPlayer(session, identity);
+  // loginPlayer also persists any predictions typed while logged out, so a
+  // late-arriving identity message doesn't lose a guest's picks.
+  if(player) await loginPlayer(player);
+}
+
+async function ensureSsoPlayer(session, identity){
+  const {data:existing} = await supa.from('gw_players').select('*')
+    .eq('auth_id',session.user.id).eq('client_key',CLIENT_PARAM).single();
+  if(existing) return existing;
+  // First visit: create the player row. Username comes from the host-provided
+  // name, cleaned to the charset manual registration enforces and deduped
+  // with a suffix when taken. The row stores the player's REAL email (the
+  // auth user's is a synthetic @sso.gameweek.cloud address) so the operator's
+  // Users list keeps showing addresses they can actually contact.
+  // The email later lands in profile-view markup, so hold host-provided
+  // values to the same shape manual registration enforces before storing.
+  const safeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identity.email||'') ? identity.email : null;
+  let base=(identity.name||'').replace(/[^a-zA-Z0-9_]/g,'');
+  if(base.length<3) base=(identity.email||'').split('@')[0].replace(/[^a-zA-Z0-9_]/g,'');
+  if(base.length<3) base='player';
+  base=base.slice(0,24);
+  for(let attempt=0;attempt<6;attempt++){
+    const username = attempt===0 ? base
+      : attempt<5 ? base+'_'+(attempt+1)
+      : base+'_'+Math.floor(1000+Math.random()*9000);
+    const {data:taken} = await supa.from('gw_players').select('id')
+      .eq('client_key',CLIENT_PARAM).eq('username',username).single();
+    if(taken) continue;
+    const {data:player, error} = await supa.from('gw_players')
+      .insert({auth_id:session.user.id, client_key:CLIENT_PARAM, username, email:safeEmail})
+      .select().single();
+    if(player) return player;
+    // A duplicate here means we lost a race on the username — try the next
+    // suffix. Anything else won't get better by retrying.
+    if(error && !(error.message||'').toLowerCase().includes('duplicate')) break;
+  }
+  console.warn('[Gameweek] SSO could not create a player profile');
+  return null;
+}
+
+// Identity arrives from the parent page — /embed.js posts it after mount. The
+// sender's origin is captured and checked against the operator's allowed
+// domains before we act on it (in maybeSsoLogin, once those have loaded). A
+// valid signature is necessary but not sufficient: on its own it would let
+// anyone who can read their own rendered signature embed this loader on a
+// page they control and force visitors into their account, so we additionally
+// require the message to come from the operator's real site — the only place
+// that legitimately renders the *current viewer's* identity.
+window.addEventListener('message', (e)=>{
+  const d=e.data;
+  if(!d || d.__gameweek!==true || d.type!=='sso' || !d.id || !d.sig) return;
+  ssoIdentity={id:String(d.id), email:String(d.email||''), name:String(d.name||''), sig:String(d.sig)};
+  ssoOrigin=e.origin;
+  ssoHandled=false; // a fresh identity (e.g. SPA re-mount) gets a fresh attempt
+  maybeSsoLogin();
+});
+
+// Is `origin` one of the operator's configured embed domains? Domains are
+// stored as free text (bare hostnames, or occasionally a full URL), so match
+// leniently on hostname, allowing subdomains. When the operator has set no
+// domains we can't gate — SSO still works, but log a warning, because that
+// leaves the login-CSRF vector above open on this client until they lock it
+// down in the admin's Allowed Domains.
+function ssoOriginAllowed(origin){
+  if(!origin) return false;
+  let host;
+  try{ host=new URL(origin).hostname.toLowerCase(); }catch(e){ return false; }
+  if(!operatorDomains.length){
+    console.warn('[Gameweek] SSO: no allowed domains configured — accepting identity from '+origin+'. Add your site under Allowed Domains to restrict this.');
+    return true;
+  }
+  return operatorDomains.some(raw=>{
+    let d=String(raw||'').trim().toLowerCase();
+    if(!d) return false;
+    try{ if(d.includes('://')) d=new URL(d).hostname; }catch(e){}
+    d=d.replace(/^\*\./,'').replace(/\/.*$/,''); // strip wildcard + any path
+    return host===d || host.endsWith('.'+d);
+  });
 }
 
 // ── PREDICTIONS ───────────────────────────────────────────────────────────────
@@ -5420,6 +5606,15 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
 
     if(CLIENT_PARAM&&CLIENT_PARAM!=='demo'){
       try{
+        // `domains` is fetched separately, not folded into this select: the
+        // column is added by supabase-sso.sql, and pushing this frontend
+        // before that migration runs would otherwise 400 the whole branding
+        // fetch and leave every operator unthemed. Its own failure is
+        // swallowed (SSO just stays un-gated until the migration lands).
+        try{
+          const {data:dm} = await supa.from('gw_operators_public').select('domains').eq('client_key',CLIENT_PARAM).single();
+          if(Array.isArray(dm?.domains)) operatorDomains = dm.domains;
+        }catch(e){}
         const {data:op} = await supa.from('gw_operators_public').select('company_name,logo_url,accent_color,bg_color,surface_color,text_color').eq('client_key',CLIENT_PARAM).single();
         if(op){
           document.getElementById('hdr-operator-badge').textContent='· '+op.company_name;
@@ -5480,6 +5675,16 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
       </div>`;
     } else {
       updateHeaderUser(); renderCompTabs(); goTab('predict');
+    }
+    // Host-page SSO runs after the stored session (if any) is restored and
+    // the first render is on screen — the verification roundtrip must not
+    // delay first paint. When the identity arrives later via postMessage,
+    // the message listener re-invokes maybeSsoLogin itself. The invalid-comp
+    // error screen replaces the app DOM, so signing in there would only
+    // crash the post-login render.
+    if(!COMP_FILTER_INVALID){
+      ssoInitDone=true;
+      maybeSsoLogin();
     }
   }
 })();

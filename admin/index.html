@@ -447,6 +447,39 @@ tbody tr:hover td{background:var(--bg);}
               <div style="display:flex;flex-wrap:wrap;gap:8px;" id="domain-list"></div>
             </div>
           </div>
+
+          <div class="card" style="margin-top:14px;">
+            <div class="card-header">
+              <span class="card-title">Single Sign-On</span>
+              <span class="badge badge-gray" id="sso-status-badge">○ Off</span>
+            </div>
+            <div class="card-body">
+              <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">Sign players in with the account they already have on your site — no separate registration, no repeated logins. Your page passes each logged-in user's id, email and name together with a signature computed from the secret below; we verify the signature server-side before signing anyone in.</p>
+              <div id="sso-off-block">
+                <button class="btn btn-primary btn-sm" onclick="enableSso()">Enable SSO</button>
+              </div>
+              <div id="sso-on-block" style="display:none;">
+                <div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:4px;">Your SSO secret</div>
+                <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;">
+                  <input readonly type="password" id="sso-secret-input" style="flex:1;min-width:0;font-family:var(--mono);font-size:11px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg);color:var(--text);" />
+                  <button class="btn btn-outline btn-sm" id="sso-reveal-btn" onclick="toggleSsoSecretVisible()">Show</button>
+                  <button class="btn btn-outline btn-sm" onclick="copySsoSecret()">Copy</button>
+                </div>
+                <p style="font-size:11px;color:var(--text-3);margin-bottom:14px;">Keep the secret in server-rendered template code only — never in anything a visitor can view-source. Anyone holding it can sign your players in.</p>
+                <div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:4px;">Shopify snippet</div>
+                <p style="font-size:11px;color:var(--text-3);margin-bottom:8px;">Shopify's Liquid computes the signature natively (<span style="font-family:var(--mono);">hmac_sha256</span>) — no app needed, this replaces your embed snippet as-is:</p>
+                <!-- white-space:pre renders every text node literally, so the box must
+                     contain exactly the button (absolute, out of flow) and the span. -->
+                <div class="embed-box" style="white-space:pre;overflow-x:auto;"><button class="btn btn-outline btn-sm embed-copy-btn" onclick="copySsoSnippet()" style="font-family:var(--mono);font-size:10px;background:var(--sidebar-2);border-color:var(--sidebar-border);color:#9CA3AF;">Copy</button><span id="sso-snippet-pre"></span></div>
+                <p style="font-size:11px;color:var(--text-3);margin-top:10px;">On any other platform, render the same four <span style="font-family:var(--mono);">data-sso-*</span> attributes server-side, from your logged-in user, on the seamless script embed. The signature is the hex HMAC-SHA256 of <span style="font-family:var(--mono);">id + ":" + email</span> using your secret, computed on your server — never in code a visitor can view.</p>
+                <p style="font-size:11px;color:var(--text-3);margin-top:8px;">SSO needs the <strong>seamless script embed</strong> (above), not the classic iframe, and requires at least one entry under <strong>Allowed Domains</strong> — sign-in is only accepted from those domains, which is what stops a copied signature being replayed from another site.</p>
+                <div style="display:flex;gap:6px;margin-top:12px;">
+                  <button class="btn btn-outline btn-sm" onclick="regenerateSsoSecret()">Regenerate secret</button>
+                  <button class="btn btn-outline btn-sm" onclick="disableSso()">Disable</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div>
@@ -3388,6 +3421,96 @@ function copyEmbed(){
   navigator.clipboard.writeText(code).then(()=>toast('Copied to clipboard'));
 }
 
+// ── SINGLE SIGN-ON ────────────────────────────────────────────────────────────
+// Host-page SSO: the operator's site signs each logged-in user's identity
+// with sso_secret, and the sso-login Edge Function verifies it before the
+// embed signs the player in (see supabase-sso.sql for the full picture).
+// The secret lives on gw_operators, readable only through the operator's own
+// RLS-protected row — the anon-facing gw_operators_public view can't see it.
+
+function ssoLiquidSnippet(){
+  const secret = currentOperator?.sso_secret || 'YOUR_SSO_SECRET';
+  // The closing script tag is split so this page's own HTML parser doesn't
+  // read it as the end of the admin script block (same as copyEmbed).
+  return `{% if customer %}
+<div data-gameweek data-client="${CLIENT_KEY}"
+     data-sso-id="{{ customer.id }}"
+     data-sso-email="{{ customer.email }}"
+     data-sso-name="{{ customer.first_name }}"
+     data-sso-sig="{{ customer.id | append: ':' | append: customer.email | hmac_sha256: '${secret}' }}"></div>
+{% else %}
+<div data-gameweek data-client="${CLIENT_KEY}"></div>
+{% endif %}
+<script async src="https://www.gameweek.cloud/embed.js"></scr`+`ipt>`;
+}
+
+function renderSsoCard(){
+  const badge = document.getElementById('sso-status-badge');
+  if(!badge) return;
+  const on = !!(currentOperator && currentOperator.sso_enabled && currentOperator.sso_secret);
+  badge.className = on ? 'badge badge-green' : 'badge badge-gray';
+  badge.textContent = on ? '● Active' : '○ Off';
+  document.getElementById('sso-off-block').style.display = on ? 'none' : '';
+  document.getElementById('sso-on-block').style.display = on ? '' : 'none';
+  if(on){
+    const input = document.getElementById('sso-secret-input');
+    input.value = currentOperator.sso_secret;
+    input.type = 'password';
+    document.getElementById('sso-reveal-btn').textContent = 'Show';
+    document.getElementById('sso-snippet-pre').textContent = ssoLiquidSnippet();
+  }
+}
+
+function newSsoSecret(){
+  const bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function saveSso(fields){
+  const {error} = await supa.from('gw_operators').update(fields).eq('auth_id',currentOperator.auth_id);
+  if(error){
+    console.error('SSO save:', error);
+    toast('Could not save SSO settings');
+    return false;
+  }
+  Object.assign(currentOperator, fields);
+  renderSsoCard();
+  return true;
+}
+
+async function enableSso(){
+  // Re-enabling keeps the previous secret so snippets already deployed on
+  // the operator's site keep working without an update.
+  const secret = currentOperator.sso_secret || newSsoSecret();
+  if(await saveSso({sso_enabled:true, sso_secret:secret})) toast('SSO enabled');
+}
+
+async function disableSso(){
+  if(!confirm('Disable SSO? Players arriving from your site will have to sign in manually again.')) return;
+  if(await saveSso({sso_enabled:false})) toast('SSO disabled');
+}
+
+async function regenerateSsoSecret(){
+  if(!confirm('Regenerate the secret? Snippets still using the old secret stop signing players in until you update them.')) return;
+  if(await saveSso({sso_secret:newSsoSecret()})) toast('New secret generated — update the snippet on your site');
+}
+
+function toggleSsoSecretVisible(){
+  const input = document.getElementById('sso-secret-input');
+  const isHidden = input.type === 'password';
+  input.type = isHidden ? 'text' : 'password';
+  document.getElementById('sso-reveal-btn').textContent = isHidden ? 'Hide' : 'Show';
+}
+
+function copySsoSecret(){
+  navigator.clipboard.writeText(currentOperator?.sso_secret||'').then(()=>toast('Secret copied'));
+}
+
+function copySsoSnippet(){
+  navigator.clipboard.writeText(ssoLiquidSnippet()).then(()=>toast('Snippet copied'));
+}
+
 function renderDomains(){
   const el = document.getElementById('domain-list');
   if(!el) return;
@@ -3448,6 +3571,7 @@ function renderEmbedInfo(){
   embedFilterComps = null; // reset to "All" whenever this page is opened fresh
   renderEmbedCompFilter();
   renderDomains();
+  renderSsoCard();
 }
 
 function getCoveredTournaments(){

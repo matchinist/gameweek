@@ -29,6 +29,7 @@ Gameweek is built for sports media companies, betting affiliate sites, fan commu
 - Setup typically takes under a day from sign-up to a live embed.
 - The platform is fully white-label: no Gameweek branding is shown to end users unless the operator chooses to.
 - Works as an embed on any website (WordPress, custom CMS, static sites, etc.).
+- Single sign-on: players already logged in on the operator's site (e.g. Shopify customers) are signed into the game automatically — the host page passes a server-signed identity, so there is no separate registration and no repeated logins. On Shopify this works from theme code alone (Liquid's built-in hmac_sha256), with no app to install.
 
 ## Links
 
