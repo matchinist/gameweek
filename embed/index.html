@@ -2144,7 +2144,14 @@ function renderLineupPredictor(comp){
   const kickoffMs = ev.kickoffRaw ? new Date(ev.kickoffRaw).getTime() : null;
   const lineupLockAt = kickoffMs!=null ? kickoffMs - 3*3600*1000 : null;
   const timeLocked = lineupLockAt!=null && Date.now() >= lineupLockAt;
-  const isOpen = round.status==='open' && !timeLocked;
+  // Every gameweek is now listed in the dropdown (not just current and past
+  // ones), so a round with no result/lineup yet — which defaults to
+  // status:'open' when it's created — needs to be explicitly excluded here
+  // if it's actually a future gameweek that hasn't started, not just one
+  // still awaiting its result.
+  const maxRoundIdx = (()=>{ const c = computeCurrentRoundIdx(comp); return c!=null ? c : comp.rounds.length-1; })();
+  const isFutureRound = ri > maxRoundIdx;
+  const isOpen = round.status==='open' && !timeLocked && !isFutureRound;
   const picks = lineupPicks[round.id]||{};
   const fmt = getLineupFmt(round.id);
   const slots = getLineupSlots(fmt);
@@ -2299,12 +2306,11 @@ function renderLineupPredictor(comp){
   // on what needs a decision right now (formation, picks) instead of a
   // ticking clock competing for attention.
 
-  // Only the current gameweek and past ones are selectable — a gameweek only
-  // becomes "current" 4 hours after the previous one's last kickoff, matching
-  // computeCurrentRoundIdx used elsewhere for this same rule.
-  const currentIdx = computeCurrentRoundIdx(comp);
-  const maxIdx = currentIdx!=null ? currentIdx : 0; // if kickoff data can't be parsed at all, show just the earliest round rather than silently falling back to "show everything"
-  const roundSelect = comp.rounds.slice(0, maxIdx+1).map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('');
+  // All created gameweeks are listed — future ones are viewable, just not
+  // predictable yet (isOpen already accounts for that above). The default
+  // selection still lands on the current gameweek via getDefaultRoundIdx,
+  // this only controls which ones a player can browse to manually.
+  const roundSelect = comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('');
 
   return `
     <div style="padding:0 0 30px;">
@@ -3963,12 +3969,18 @@ function renderPredictionsPane(comp){
   if(!comp.rounds.length) return `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">${t('noRoundsYet')}</div></div>`;
   const round=comp.rounds[ri]; if(!round) return '';
   let events=(round.eventIds||[]).map(id=>({id,...EVENTS[id],tournament:EVENT_TOURNAMENT[id]||(round.tournamentNames||[])[0]||''})).filter(e=>e.home);
+  // Every created round is now listed in the dropdown (not just current and
+  // past ones), so a round with no results yet — which reads as "open" by
+  // the check below — needs to be explicitly excluded if it's actually a
+  // future round that hasn't started, not just one still awaiting results.
+  const maxRoundIdx = (()=>{ const c = computeCurrentRoundIdx(comp); return c!=null ? c : comp.rounds.length-1; })();
+  const isFutureRound = ri > maxRoundIdx;
   // Score/Betting/Ranking rounds don't have a manual lock step — open/completed
   // is purely a function of whether every one of the round's events has a
   // result yet, so it can never get stuck out of sync with the actual events.
-  const isOpen = ['score','betting','ranking'].includes(comp.mode)
+  const isOpen = (['score','betting','ranking'].includes(comp.mode)
     ? !(events.length && events.every(ev=>ev.res!=null))
-    : round.status==='open';
+    : round.status==='open') && !isFutureRound;
 
   let nextScoreLock=null;
   if(comp.mode==='score'){
@@ -4047,12 +4059,12 @@ function renderPredictionsPane(comp){
   const predCount = events.filter(ev=>{const p=preds[ev.id];return p&&p.h!==undefined&&p.a!==undefined;}).length;
   const bettingSetCount = events.filter(ev=>{const p=preds[ev.id];return p&&typeof p==='object'&&Object.keys(p).length>0;}).length;
 
-  // Don't reveal a future round in the dropdown until the current one is
-  // over — same 4-hours-after-last-kickoff rule used everywhere else to
-  // decide what "current" means, so this can't drift out of sync with it.
-  const maxRoundIdx = (()=>{ const c = computeCurrentRoundIdx(comp); return c!=null ? c : comp.rounds.length-1; })();
+  // All created rounds are listed — future ones are viewable, just not
+  // predictable yet (isOpen already accounts for that above). The default
+  // selection still lands on the current round via getDefaultRoundIdx,
+  // this only controls which rounds a player can browse to manually.
   let html=controlBandOpen(comp,
-    comp.rounds.slice(0, maxRoundIdx+1).map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join(''),
+    comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join(''),
     `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">${t('predictions')}</button>
      <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">${t('leaderboard')}</button>`,
     `<select onchange="switchPredictSubTab(this.value)">
