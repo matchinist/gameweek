@@ -2756,6 +2756,12 @@ function initDragSort(){
 let rlRemaining=100, rlStakes={}, rlMeta={};
 let rlExpandedEventId=null;
 let RL_STATE={}; // eventId -> {remaining, stakes}
+// Same escape helper as embed/ — demo data is hardcoded, but the leaderboard
+// row markup is kept in sync with embed/ so the sink stays escaped in both.
+function escapeHtmlLineup(s){
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 const RL_BUDGET=100, RL_STEP=10, RL_CELL=92, RL_GAP=8, RL_PITCH=RL_CELL+RL_GAP;
 const RL_HOME=['0','1','2','3+'], RL_AWAY=['0','1','2','3+'];
 function rlNumVal(v){return v==='3+'?3:parseInt(v);}
@@ -2796,7 +2802,7 @@ function renderRouletteLeaderboardShell(comp){
     html+=`<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;${i>0?'border-top:1px solid oklch(0.95 0.004 260);':''}${isMe?'background:oklch(0.97 0.01 275);':''}">
       <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:oklch(0.5 0.01 260);min-width:22px;">${i+1}</span>
       <div style="flex:1;">
-        <div style="font-size:14px;font-weight:${isMe?'700':'600'};color:oklch(0.2 0.01 260);">${row.u}${isMe?' 👤':''}</div>
+        <div style="font-size:14px;font-weight:${isMe?'700':'600'};color:oklch(0.2 0.01 260);">${escapeHtmlLineup(row.u)}${isMe?' 👤':''}</div>
       </div>
       <span style="font-family:'DM Mono',monospace;font-size:16px;font-weight:800;color:oklch(0.42 0.12 275);">${row.winnings} coins</span>
     </div>`;
@@ -4257,7 +4263,7 @@ function buildLBTable(title,sub,rows,cellFn,colHeader,prizes,extraCellFn,extraCo
     }
     const extraCell = hasExtra ? extraCellFn(row).replace('<td ','<td class="lb-col-extra" ') : '';
     const extra2Cell = hasExtra2 ? extra2CellFn(row).replace('<td ','<td class="lb-col-extra2" ') : '';
-    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank" style="color:${rankColor};">${row.rank}</td><td><div style="display:flex;align-items:center;gap:8px;min-width:0;"><span class="lb-uname ${isMe?'me':''}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row.u}</span>${isMe?'<span style="flex-shrink:0;margin-left:2px;font-size:9px;font-weight:800;color:var(--accent);background:var(--accent-light);padding:2px 6px;border-radius:5px;letter-spacing:0.3px;">YOU</span>':''}</div></td>${cellFn(row)}${extraCell}${extra2Cell}${prizeCell}</tr>`;
+    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank" style="color:${rankColor};">${row.rank}</td><td><div style="display:flex;align-items:center;gap:8px;min-width:0;"><span class="lb-uname ${isMe?'me':''}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlLineup(row.u)}</span>${isMe?'<span style="flex-shrink:0;margin-left:2px;font-size:9px;font-weight:800;color:var(--accent);background:var(--accent-light);padding:2px 6px;border-radius:5px;letter-spacing:0.3px;">YOU</span>':''}</div></td>${cellFn(row)}${extraCell}${extra2Cell}${prizeCell}</tr>`;
   });
   html+='</tbody></table></div>';return html;
 }
