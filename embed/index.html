@@ -1534,16 +1534,16 @@ window.addEventListener('message', (e)=>{
 // Is `origin` one of the operator's configured embed domains? Domains are
 // stored as free text (bare hostnames, or occasionally a full URL), so match
 // leniently on hostname, allowing subdomains. When the operator has set no
-// domains we can't gate — SSO still works, but log a warning, because that
-// leaves the login-CSRF vector above open on this client until they lock it
-// down in the admin's Allowed Domains.
+// domains we FAIL CLOSED: accepting any origin would leave the login-CSRF
+// vector above open on this client, so SSO stays inert until at least one
+// Allowed Domain is configured in the admin.
 function ssoOriginAllowed(origin){
   if(!origin) return false;
   let host;
   try{ host=new URL(origin).hostname.toLowerCase(); }catch(e){ return false; }
   if(!operatorDomains.length){
-    console.warn('[Gameweek] SSO: no allowed domains configured — accepting identity from '+origin+'. Add your site under Allowed Domains to restrict this.');
-    return true;
+    console.warn('[Gameweek] SSO: no Allowed Domains configured — rejecting identity from '+origin+'. Add your site under Allowed Domains in the admin to enable SSO.');
+    return false;
   }
   return operatorDomains.some(raw=>{
     let d=String(raw||'').trim().toLowerCase();
