@@ -275,10 +275,11 @@ a page they control and forcing visitors into their account. The identity is
 never read from the URL, so it also can't leak into logs/history or be put in a
 shareable link.
 
-> ⚠️ **Current behaviour:** if an operator has SSO enabled but **no** Allowed
-> Domains configured, the origin check *falls open* (accepts any origin, with a
-> console warning) rather than failing closed. Treat Allowed Domains as required
-> for SSO to be safe. Hardening this to fail closed is recommended — see §10.
+**The origin check fails closed.** If an operator has SSO enabled but **no**
+Allowed Domains configured, the embed rejects the identity (with a console
+warning naming the fix) instead of accepting any origin. At least one Allowed
+Domain is therefore a hard requirement for SSO to function — the admin UI's
+"requires an Allowed Domain" is enforced by code.
 
 **Other properties**
 
@@ -411,6 +412,7 @@ frame's DOM.
 | `403 sso_not_enabled` | The `client_key` isn't SSO-enabled, or you're pointing at the wrong operator. Enable it, or use the enabled operator's key. |
 | `401 bad_signature` | The secret used to sign ≠ the operator's secret, or the message wasn't exactly `id:email` lowercase-hex. |
 | Console: `SSO identity ignored — … not an allowed domain` | The page's origin isn't under Allowed Domains. Add it. |
+| Console: `SSO: no Allowed Domains configured — rejecting identity` | SSO is enabled but the domain list is empty; the origin check fails closed. Add the embedding site under Allowed Domains. |
 | `500 server_error` | Usually the SQL migration hasn't run (columns missing). Run `supabase-sso.sql`. |
 | Nothing happens / no sign-in | Not using the script embed and not posting the identity yourself; or the signature is in the URL (unsupported) instead of `postMessage`. |
 | Secret visible in View Source | The signature was computed client-side. Move it server-side and **Regenerate** the secret. |
@@ -418,10 +420,6 @@ frame's DOM.
 
 ## 10. Known limitations
 
-- **Origin check falls open with no Allowed Domains.** If SSO is enabled but no
-  domains are configured, the embed warns and accepts any origin instead of
-  failing closed. Recommended hardening: reject SSO when the domain list is
-  empty, so the admin's "requires an Allowed Domain" is enforced by code.
 - **No signature expiry / nonce.** Revocation is via secret rotation only. A
   short-lived nonce would tighten replay resistance further but adds server
   state.

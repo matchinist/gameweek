@@ -3,6 +3,16 @@
 **Repository:** `matchinist/gameweek` · **Branch:** `main` @ `f25d78a` · **Date:** 2026-08-27
 **Scope:** all 24 tracked files (~1.1 MB of HTML/JS/CSS, 467 commits, 2026-06-16 → 2026-08-18)
 
+> **Status update (2026-08-28, `a06b055`)** — this is a point-in-time assessment; the body below is unchanged. Since the baseline:
+>
+> - **Closed:** C-3 (player emails) — fixed via RLS lockdown + `gw_operators_public` view, **verified against production**. The live leak was actually wider than assessed: `gw_operators.email` and Stripe IDs also leaked to the anon key; both closed. The username TOCTOU race (§5.1) is closed by a unique index on `gw_players(client_key, username)`.
+> - **Partially closed:** C-5 — operator/player policies are now committed and current; `gw_admins`, `gw_dm_players`, `gw_client_coverage`, `gw_campaigns`, `gw_billing_current` still have no policy in the repo. H-7 — usernames can no longer collide, but `players_update_own` still restricts no columns and `client_key` is still mutable.
+> - **Still open:** C-1 (cheatable predictions), C-2 (globally writable `gw_dm_*`), C-4 (XSS — `${row.u}` now at `embed:5288`), H-1 (duplicate functions, now `embed:3116`/`:4201` etc.), H-2, H-6, M-8 (unpinned `supabase-js@2`, no SRI), L-2 (session emails still logged at `admin:4171`, `data:2930`).
+> - **New since baseline:** private leagues (`gw_leagues`, `gw_league_members`) — created ad hoc, **no RLS in the repo**, membership keyed on username (§5.3 applies); `sso-test.html` and four more `.sql` files are now publicly served (M-2 got wider); host-page SSO adds the first server-side component (see [SSO.md](./SSO.md)) and one deliberate fail-open (origin check with an empty domain list).
+> - Portuguese added — i18n counts in §12 now cover 4 languages.
+>
+> Current state and delta detail: [ARCHITECTURE.md §11](./ARCHITECTURE.md#11-addendum--changes-since-f25d78a-as-of-a06b055-2026-08-28).
+
 ---
 
 ## 1. Executive summary
@@ -693,7 +703,7 @@ It would misrepresent this codebase to list only its problems. Several things he
 | H-2 | 🟠 | Every pageview downloads the whole platform's events + teams; O(n·m) scan | `embed:815-826,858-860` | Verified |
 | H-3 | 🟠 | Domain allowlist collected but never enforced | `admin:3639`; 0 refs in `embed` | Verified |
 | H-4 | 🟠 | Admin result modal is dead and would throw; `state.events` never populated | `admin:1445,1507,1922,1938` | Verified |
-| H-5 | 🟠 | Stripe paywall uses a test-mode publishable key | `admin:994` | Verified |
+| H-5 | 🟠 | Stripe paywall uses a test-mode publishable key | `admin:994` | Confirmed intentional by the owner 2026-08-28 (billing not live yet) — closed, revisit when charging starts |
 | H-6 | 🟠 | All predictions world-readable before kick-off | `migration:101` | Inferred |
 | H-7 | 🟠 | Players can change their own `client_key` and `username` | `migration:92` | Inferred |
 | M-1 | 🟡 | No tests, linting, types, or CI gate; push-to-prod with no rollback | `.github/workflows/deploy.yml` | Verified |

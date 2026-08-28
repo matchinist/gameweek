@@ -1494,7 +1494,7 @@ tbody tr:hover td{background:var(--bg);}
 <div id="toast"></div>
 
 <!-- ══ JS ══ -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.js" integrity="sha384-ysv13JVP3fufiEXfjML9OdCa/rRbMJvUBOWyor82wfuK8INNZAvmbxHgKIHi+oqz" crossorigin="anonymous"></script>
 <script>
 // ── SUPABASE ──────────────────────────────────────────────────────────────
 const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
@@ -1569,10 +1569,6 @@ async function saveAdminState(){
   }
 }
 
-// ── DM HELPERS (read from in-memory dmState) ──────────────────────────────
-function getDMTournaments(){ const all=dmState.tournaments||[]; return coverageState.tournamentIds ? all.filter(t=>coverageState.tournamentIds.has(t.id)) : all; }
-function getDMEvents(){ return dmState.events||{}; }
-function getDMTeams(){ const all=dmState.teams||[]; return coverageState.teamIds ? all.filter(t=>coverageState.teamIds.has(t.id)) : all; }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
 const modeLabel = {lms:'Last Man Standing', score:'Score Predictor', betting:'Betting Markets', ranking:'Ranking', lineup:'Lineup Predictor', roulette:'Soccer Roulette'};
@@ -4168,7 +4164,6 @@ function initOperatorChrome(){
     showAdminLogin();
     return;
   }
-  console.log('GW: Session restored for', session.user.email);
 
   // Load operator profile — try auth_id first, fall back to id
   let op = null;

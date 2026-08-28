@@ -18,9 +18,28 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      # Deploy an allowlist, not the repo: only intended-public files are
+      # staged into _site/. Anything not listed here (SQL migration files,
+      # docs/, CLAUDE.md, sso-test.html, supabase/ sources, dotfiles) is
+      # never uploaded, so it cannot be served from www.gameweek.cloud.
+      - name: Stage public files into _site/
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          # App + marketing directories
+          for d in embed admin data demo widgets welcome reset reset-password \
+                   contact privacy terms pricingtest cs2fantasy; do
+            cp -r "$d" "_site/$d"
+          done
+          # Root files
+          for f in index.html embed.js robots.txt sitemap.xml favicon.png \
+                   og-image.png CNAME llms.txt; do
+            cp "$f" "_site/$f"
+          done
+          echo "Staged files:" && find _site -type f | sort
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '_site'
       - id: deployment
         uses: actions/deploy-pages@v4

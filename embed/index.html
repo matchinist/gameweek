@@ -496,7 +496,7 @@ function gwReadableText(text, surface){
         <button class="auth-btn" id="btn-do-login" onclick="doLogin()">Sign in →</button>
               </div>
       <div id="form-register" style="display:none;">
-        <div class="form-group"><label class="form-label" id="lbl-reg-username">Username</label><input class="form-input" id="reg-username" placeholder="choose a username" autocomplete="username" /></div>
+        <div class="form-group"><label class="form-label" id="lbl-reg-username">Username</label><input class="form-input" id="reg-username" placeholder="choose a username" autocomplete="username" maxlength="24" /></div>
         <div class="form-group"><label class="form-label" id="lbl-reg-email">Email</label><input class="form-input" type="email" id="reg-email" placeholder="your@email.com" autocomplete="email" /></div>
         <div class="form-group"><label class="form-label" id="lbl-reg-password">Password</label><input class="form-input" type="password" id="reg-password" placeholder="min 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()" /></div>
         <div class="form-group" style="display:flex;align-items:flex-start;gap:8px;margin-bottom:14px;">
@@ -542,8 +542,13 @@ function gwReadableText(text, surface){
             var authLogo = document.getElementById('auth-modal-logo');
             var badge = document.getElementById('hdr-operator-badge');
             var badgeHtml = badge ? badge.outerHTML : '';
-            if(hdrLogo) hdrLogo.innerHTML = '<img src="'+t.logo_url+'" alt="'+(t.company_name||'Logo')+'" style="height:40px;max-width:220px;object-fit:contain;vertical-align:middle;">'+badgeHtml;
-            if(authLogo) authLogo.innerHTML = '<img src="'+t.logo_url+'" alt="'+(t.company_name||'Logo')+'" style="height:46px;max-width:240px;object-fit:contain;">';
+            // Local escaper: this block runs pre-paint, before the main
+            // script (and its escape helper) exists, and must stay
+            // dependency-free. Operator-controlled values still can't be
+            // trusted here — they come from localStorage.
+            var esc = function(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
+            if(hdrLogo) hdrLogo.innerHTML = '<img src="'+esc(t.logo_url)+'" alt="'+esc(t.company_name||'Logo')+'" style="height:40px;max-width:220px;object-fit:contain;vertical-align:middle;">'+badgeHtml;
+            if(authLogo) authLogo.innerHTML = '<img src="'+esc(t.logo_url)+'" alt="'+esc(t.company_name||'Logo')+'" style="height:46px;max-width:240px;object-fit:contain;">';
           }catch(e){}
         })();
         </script>
@@ -572,7 +577,7 @@ function gwReadableText(text, surface){
 
 <div id="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.js" integrity="sha384-ysv13JVP3fufiEXfjML9OdCa/rRbMJvUBOWyor82wfuK8INNZAvmbxHgKIHi+oqz" crossorigin="anonymous"></script>
 <script>
 // ── SUPABASE CLIENT ───────────────────────────────────────────────────────────
 const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
@@ -623,7 +628,7 @@ const I18N = {
     predictionSaved:'Prediction saved', couldNotSave:'Could not save — check your connection and try again',
     lineupSaved:'Lineup Saved', rankingSaved:'Ranking saved',
     errFillAllFields:'Please fill in all fields', errUsernameChars:'Username can only contain letters, numbers, and underscores',
-    errUsernameShort:'Username must be at least 3 characters', errUsernameTaken:'That username is already taken',
+    errUsernameShort:'Username must be at least 3 characters', errUsernameLong:'Username must be 24 characters or fewer', errUsernameTaken:'That username is already taken',
     errInvalidEmail:'Please enter a valid email address', errWeakPassword:'Password must be at least 6 characters',
     errAccountExists:'An account with this email already exists — try signing in instead',
     errWrongCredentials:'Incorrect email or password', errRateLimit:'Too many attempts — please wait a moment and try again',
@@ -683,7 +688,7 @@ const I18N = {
     predictionSaved:'Tahmin kaydedildi', couldNotSave:'Kaydedilemedi — bağlantınızı kontrol edip tekrar deneyin',
     lineupSaved:'Kadro Kaydedildi', rankingSaved:'Sıralama kaydedildi',
     errFillAllFields:'Lütfen tüm alanları doldurun', errUsernameChars:'Kullanıcı adı yalnızca harf, rakam ve alt çizgi içerebilir',
-    errUsernameShort:'Kullanıcı adı en az 3 karakter olmalı', errUsernameTaken:'Bu kullanıcı adı zaten alınmış',
+    errUsernameShort:'Kullanıcı adı en az 3 karakter olmalı', errUsernameLong:'Kullanıcı adı en fazla 24 karakter olabilir', errUsernameTaken:'Bu kullanıcı adı zaten alınmış',
     errInvalidEmail:'Lütfen geçerli bir e-posta adresi girin', errWeakPassword:'Şifre en az 6 karakter olmalı',
     errAccountExists:'Bu e-posta ile zaten bir hesap var — giriş yapmayı deneyin',
     errWrongCredentials:'E-posta veya şifre hatalı', errRateLimit:'Çok fazla deneme yapıldı — lütfen biraz bekleyip tekrar deneyin',
@@ -743,7 +748,7 @@ const I18N = {
     predictionSaved:'Tipp gespeichert', couldNotSave:'Speichern fehlgeschlagen — prüfe deine Verbindung und versuche es erneut',
     lineupSaved:'Aufstellung gespeichert', rankingSaved:'Rangfolge gespeichert',
     errFillAllFields:'Bitte fülle alle Felder aus', errUsernameChars:'Der Benutzername darf nur Buchstaben, Zahlen und Unterstriche enthalten',
-    errUsernameShort:'Der Benutzername muss mindestens 3 Zeichen lang sein', errUsernameTaken:'Dieser Benutzername ist bereits vergeben',
+    errUsernameShort:'Der Benutzername muss mindestens 3 Zeichen lang sein', errUsernameLong:'Der Benutzername darf höchstens 24 Zeichen lang sein', errUsernameTaken:'Dieser Benutzername ist bereits vergeben',
     errInvalidEmail:'Bitte gib eine gültige E-Mail-Adresse ein', errWeakPassword:'Das Passwort muss mindestens 6 Zeichen lang sein',
     errAccountExists:'Mit dieser E-Mail existiert bereits ein Konto — versuche es mit Anmelden',
     errWrongCredentials:'E-Mail oder Passwort ist falsch', errRateLimit:'Zu viele Versuche — bitte warte einen Moment und versuche es erneut',
@@ -803,7 +808,7 @@ const I18N = {
     predictionSaved:'Palpite guardado', couldNotSave:'Não foi possível guardar — verifique a sua ligação e tente novamente',
     lineupSaved:'Onze Guardado', rankingSaved:'Classificação guardada',
     errFillAllFields:'Por favor preencha todos os campos', errUsernameChars:'O nome de utilizador só pode conter letras, números e underscores',
-    errUsernameShort:'O nome de utilizador deve ter pelo menos 3 caracteres', errUsernameTaken:'Esse nome de utilizador já está em uso',
+    errUsernameShort:'O nome de utilizador deve ter pelo menos 3 caracteres', errUsernameLong:'O nome de utilizador deve ter no máximo 24 caracteres', errUsernameTaken:'Esse nome de utilizador já está em uso',
     errInvalidEmail:'Por favor insira um endereço de email válido', errWeakPassword:'A palavra-passe deve ter pelo menos 6 caracteres',
     errAccountExists:'Já existe uma conta com este email — tente iniciar sessão',
     errWrongCredentials:'Email ou palavra-passe incorretos', errRateLimit:'Demasiadas tentativas — aguarde um momento e tente novamente',
@@ -1245,6 +1250,7 @@ async function doRegister(){
   if(!username||!email||!password){ showAuthError(t('errFillAllFields')); return; }
   if(!/^[a-zA-Z0-9_]+$/.test(username)){ showAuthError(t('errUsernameChars')); return; }
   if(username.length<3){ showAuthError(t('errUsernameShort')); return; }
+  if(username.length>24){ showAuthError(t('errUsernameLong')); return; } // matches the DB check constraint (Phase 0.5)
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ showAuthError(t('errInvalidEmail')); return; }
   if(password.length<6){ showAuthError(t('errWeakPassword')); return; }
   if(!agreedTerms){ showAuthError(t('errMustAgreeTerms')); return; }
@@ -1491,9 +1497,10 @@ async function ensureSsoPlayer(session, identity){
   if(base.length<3) base='player';
   base=base.slice(0,24);
   for(let attempt=0;attempt<6;attempt++){
-    const username = attempt===0 ? base
-      : attempt<5 ? base+'_'+(attempt+1)
-      : base+'_'+Math.floor(1000+Math.random()*9000);
+    // Trim the base so base+suffix never exceeds the 24-char DB check
+    // constraint — otherwise a dedup suffix would make the insert fail.
+    const suffix = attempt===0 ? '' : attempt<5 ? '_'+(attempt+1) : '_'+Math.floor(1000+Math.random()*9000);
+    const username = base.slice(0,24-suffix.length)+suffix;
     const {data:taken} = await supa.from('gw_players').select('id')
       .eq('client_key',CLIENT_PARAM).eq('username',username).single();
     if(taken) continue;
@@ -1529,16 +1536,16 @@ window.addEventListener('message', (e)=>{
 // Is `origin` one of the operator's configured embed domains? Domains are
 // stored as free text (bare hostnames, or occasionally a full URL), so match
 // leniently on hostname, allowing subdomains. When the operator has set no
-// domains we can't gate — SSO still works, but log a warning, because that
-// leaves the login-CSRF vector above open on this client until they lock it
-// down in the admin's Allowed Domains.
+// domains we FAIL CLOSED: accepting any origin would leave the login-CSRF
+// vector above open on this client, so SSO stays inert until at least one
+// Allowed Domain is configured in the admin.
 function ssoOriginAllowed(origin){
   if(!origin) return false;
   let host;
   try{ host=new URL(origin).hostname.toLowerCase(); }catch(e){ return false; }
   if(!operatorDomains.length){
-    console.warn('[Gameweek] SSO: no allowed domains configured — accepting identity from '+origin+'. Add your site under Allowed Domains to restrict this.');
-    return true;
+    console.warn('[Gameweek] SSO: no Allowed Domains configured — rejecting identity from '+origin+'. Add your site under Allowed Domains in the admin to enable SSO.');
+    return false;
   }
   return operatorDomains.some(raw=>{
     let d=String(raw||'').trim().toLowerCase();
@@ -2052,7 +2059,9 @@ function renderLineupStatsTable(comp){
   return html;
 }
 function escapeHtmlLineup(s){
-  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // Also escapes quotes so the same helper is safe inside attribute values
+  // (src/alt/data-*), not just text nodes.
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 // Caps the player-stats card's height to match the pitch card's own
@@ -3112,281 +3121,6 @@ function saveLineup(roundId){
   renderPredict();
 }
 
-// Fake leaderboard for lineup
-function renderPredictionsPane(comp){
-  if(comp.mode==='lineup') return renderLineupPredictor(comp);
-  const ri=selectedRound[currentCompIdx];
-  const round=comp.rounds[ri];if(!round)return'';
-  if(comp.mode==='lineup') return renderLineupPredictor(comp);
-  if(comp.mode==='roulette'){
-    setTimeout(()=>initRouletteBoard(),50);
-    return renderRouletteHTML();
-  }
-  const isOpen=round.status==='open';
-  let events=(round.eventIds||[]).map(id=>({id,...EVENTS[id]})).filter(e=>e.home);
-  let eliminatedAtIdx=-1;
-  if(comp.mode==='lms'&&!isOpen){
-    for(let i=0;i<events.length;i++){
-      const p=preds[events[i].id];
-      if(events[i].res&&p){const actual=events[i].res.h>events[i].res.a?'H':events[i].res.h<events[i].res.a?'A':'D';if(p!==actual){eliminatedAtIdx=i;break;}}
-    }
-  }
-
-  // Combined bar: [round dropdown] [status] ... [Predictions|Leaderboard]
-  let html=`<div class="round-bar">
-    <select class="round-select" onchange="changeRound(this.value)">${comp.rounds.map((r,i)=>`<option value="${i}"${i===ri?' selected':''}>${r.label}</option>`).join('')}</select>
-    
-    <div class="predict-subtabs">
-      <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">${t('predictions')}</button>
-      <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">${t('leaderboard')}</button>
-    </div>
-    <div class="predict-subtabs-mobile">
-      <button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">${t('predictions')}</button>
-      <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">${t('leaderboard')}</button>
-    </div>
-  </div>`;
-
-  if(isOpen&&round.deadline){
-    html+=`<div class="deadline-banner" id="countdown-banner">⏱ &nbsp;<span id="countdown-text">Calculating...</span> until predictions lock</div>`;
-    setTimeout(()=>startCountdown(round.deadline),50);
-  }
-  if(!isOpen&&comp.mode==='lms'){
-    let userAlive=true;
-    events.filter(ev=>ev.res).forEach(ev=>{
-      if(!userAlive)return;
-      const p=preds[ev.id];
-      if(!p){userAlive=false;return;}
-      const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
-      if(p!==actual)userAlive=false;
-    });
-    const statusHtml=events.some(ev=>ev.res)?(userAlive?'<span style="color:var(--green);font-weight:700;"> · ✓ You survived!</span>':'<span style="color:var(--red);font-weight:700;"> · ✗ You failed!</span>'):'';
-    html+=`<div class="deadline-banner" style="background:var(--bg);color:var(--text-2);">🔒 ${t('predictionsLocked')}${statusHtml}</div>`;
-  }
-  if(!isOpen&&comp.mode==='lms'){
-    let userStatus='';
-    const resultedEvs=events.filter(ev=>ev.res);
-    if(resultedEvs.length){
-      let alive=true;
-      for(const ev of resultedEvs){
-        const p=preds[ev.id];
-        if(!p){alive=false;break;}
-        const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
-        if(p!==actual){alive=false;break;}
-      }
-      userStatus=alive?'<span style="color:var(--green);font-weight:700;"> · ✓ You survived!</span>':'<span style="color:var(--red);font-weight:700;"> · ✗ You failed!</span>';
-    }
-    html+=`<div class="deadline-banner" style="background:var(--bg);color:var(--text-2);">🔒 ${t('predictionsLocked')}${userStatus}</div>`;
-  }
-
-  // ── FANTASY MODE ──────────────────────────────────────────────────────────
-  if(comp.mode==='fantasy'&&comp.fantasyData){
-    const fd=comp.fantasyData;
-    const allPlayers={};
-    fd.teams.forEach(t=>t.players.forEach(p=>{allPlayers[p.id]={...p,team:t.name,teamLogo:t.logo};}));
-    const roster=(fd.userRoster||[]).map(pid=>allPlayers[pid]).filter(Boolean);
-    const totalKills=roster.reduce((s,p)=>s+p.kills,0);
-    const totalSpent=roster.reduce((s,p)=>s+p.price,0);
-    const budget=comp.fantasyConfig?.budget||50000;
-
-    // Roster section
-    html+=`<div style="padding:0 8px 12px;">`;
-    html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px 10px;">
-      <div><span style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text-3);">BUDGET</span>
-        <span style="font-family:var(--mono);font-size:13px;font-weight:800;color:${totalSpent<=budget?'var(--green)':'var(--red)'};margin-left:6px;">$${(budget-totalSpent).toLocaleString()} left</span></div>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <span style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text-3);">TOTAL KILLS</span>
-        <span style="font-family:var(--mono);font-size:22px;font-weight:900;color:var(--accent);">${totalKills}</span>
-      </div>
-    </div>`;
-
-    // Player cards
-    html+=`<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">`;
-    roster.forEach(p=>{
-      html+=`<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--white);border-radius:10px;border:1px solid var(--border);">
-        <span style="font-size:18px;">${p.teamLogo}</span>
-        <div style="flex:1;min-width:0;">
-          <div style="font-family:var(--mono);font-size:13px;font-weight:800;color:var(--text);">${p.name}</div>
-          <div style="font-size:10px;color:var(--text-3);">${p.team} · $${p.price.toLocaleString()}</div>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-family:var(--mono);font-size:18px;font-weight:900;color:var(--text);">${p.kills}</div>
-          <div style="font-size:9px;color:var(--text-3);">kills</div>
-        </div>
-      </div>`;
-    });
-    html+=`</div>`;
-
-    // Matches section
-    html+=`<div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text-3);padding:4px 8px 8px;">MATCHES</div>`;
-    fd.matches.forEach(m=>{
-      const isDone=m.status==='completed';
-      html+=`<div style="background:var(--white);border-radius:10px;border:1px solid var(--border);margin-bottom:8px;overflow:hidden;">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;${isDone?'':'opacity:0.5;'}">
-          <div style="flex:1;text-align:center;">
-            <div style="font-family:var(--mono);font-size:12px;font-weight:800;color:var(--text);">${m.team1}</div>
-          </div>
-          <div style="padding:0 12px;text-align:center;">
-            <div style="font-size:9px;color:var(--text-3);margin-bottom:2px;">${m.stage}</div>
-            <div style="font-family:var(--mono);font-size:16px;font-weight:900;color:${isDone?'var(--text)':'var(--text-3)'};">${m.score}</div>
-          </div>
-          <div style="flex:1;text-align:center;">
-            <div style="font-family:var(--mono);font-size:12px;font-weight:800;color:var(--text);">${m.team2}</div>
-          </div>
-        </div>`;
-      if(isDone&&m.maps.length){
-        html+=`<div style="border-top:1px solid var(--border);padding:8px 12px;background:var(--bg);">`;
-        html+=`<div style="display:flex;gap:8px;margin-bottom:6px;">${m.maps.map(mp=>`<span style="font-family:var(--mono);font-size:10px;color:var(--text-2);background:var(--white);padding:2px 8px;border-radius:4px;border:1px solid var(--border);">${mp.name} ${mp.score}</span>`).join('')}</div>`;
-        if(m.topFrags.length){
-          html+=`<div style="font-size:10px;color:var(--text-3);margin-bottom:4px;">Top performers</div>`;
-          html+=`<div style="display:flex;gap:6px;flex-wrap:wrap;">`;
-          m.topFrags.forEach(f=>{
-            const isInRoster=fd.userRoster.some(pid=>{const pp=allPlayers[pid];return pp&&pp.name===f.name;});
-            html+=`<span style="font-family:var(--mono);font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px;${isInRoster?'background:var(--accent-light);color:var(--accent);border:1px solid var(--accent);':'background:var(--bg);color:var(--text-2);border:1px solid var(--border);'}">${f.name} ${f.kills}K</span>`;
-          });
-          html+=`</div>`;
-        }
-        html+=`</div>`;
-      }
-      html+=`</div>`;
-    });
-
-    html+=`</div>`;
-    return html;
-  }
-
-  // ── RANKING MODE ────────────────────────────────────────────────────────
-  if(comp.mode==='ranking'&&round.rankingTeams){
-    const teams=round.rankingTeams;
-    const predKey=round.id+'_ranking';
-    const isCompleted=round.status==='completed';
-    let userOrder=preds[predKey]||null;
-    if(!userOrder){
-      userOrder=teams.map(t=>t.id);
-      preds[predKey]=userOrder;
-    }
-
-    // Get actual order for completed rounds
-    let actualOrder=null;
-    if(isCompleted){
-      actualOrder=[...teams].sort((a,b)=>(b.actualXG||0)-(a.actualXG||0)).map(t=>t.id);
-    }
-
-    const teamMap={};teams.forEach(t=>{teamMap[t.id]=t;});
-
-    // Calculate points for completed
-    let totalPts=0,correctCount=0;
-    if(actualOrder){
-      userOrder.forEach((tid,i)=>{if(tid===actualOrder[i])correctCount++;});
-      totalPts=correctCount*(comp.rankingConfig?.pointsPerCorrect||2);
-      if(correctCount===teams.length)totalPts+=(comp.rankingConfig?.perfectBonus||5);
-    }
-
-    html+=`<div style="padding:0 8px 12px;">`;
-    if(isCompleted&&actualOrder){
-      html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 8px 12px;">
-        <span style="font-size:13px;font-weight:700;color:var(--text);">Your prediction vs Actual (${comp.rankingConfig?.metric||'xG'})</span>
-        <span style="font-family:var(--mono);font-size:14px;font-weight:800;color:${correctCount===teams.length?'var(--green)':'var(--accent)'};">${totalPts} pts</span>
-      </div>`;
-      // Show results comparison
-      userOrder.forEach((tid,i)=>{
-        const t=teamMap[tid];const actualIdx=actualOrder.indexOf(tid);
-        const isCorrect=tid===actualOrder[i];
-        const actualT=teamMap[actualOrder[i]];
-        html+=`<div style="display:flex;align-items:center;gap:8px;padding:8px;margin-bottom:4px;background:${isCorrect?'var(--green-light)':'var(--bg)'};border-radius:8px;border:1px solid ${isCorrect?'var(--green)':'var(--border)'};">
-          <span style="font-family:var(--mono);font-size:12px;font-weight:800;color:${isCorrect?'var(--green)':'var(--text-3)'};width:20px;text-align:center;">#${i+1}</span>
-          <div class="ev-badge" style="width:24px;height:24px;font-size:7px;">${t.logo?'<img src="'+t.logo+'" alt="'+t.name+'">':t.name.slice(0,3).toUpperCase()}</div>
-          <div style="flex:1;min-width:0;">
-            <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
-            <div style="font-size:11px;color:var(--text-2);font-weight:600;">${t.opponent}</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-family:var(--mono);font-size:13px;font-weight:800;color:var(--text);">${t.actualXG?.toFixed(1)||'—'}</div>
-            <div style="font-size:9px;color:var(--text-3);">xG</div>
-          </div>
-          <span style="font-size:14px;">${isCorrect?'✓':'✗'}</span>
-        </div>`;
-      });
-      if(correctCount===teams.length) html+=`<div style="text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--green);padding:8px;">🎯 Perfect ranking! +${comp.rankingConfig?.perfectBonus||5} bonus pts</div>`;
-    } else if(isOpen && !(round.deadline && new Date(round.deadline).getTime()<=Date.now())){
-            html+=`<div id="ranking-list" data-roundid="${round.id}">`;
-      userOrder.forEach((tid,i)=>{
-        const t=teamMap[tid];
-        html+=`<div class="rank-item" data-tid="${tid}" draggable="true" style="display:flex;align-items:center;gap:6px;padding:8px;margin-bottom:4px;background:var(--white);border-radius:8px;border:1px solid var(--border);cursor:grab;user-select:none;touch-action:none;-webkit-user-select:none;">
-          <span style="font-size:14px;color:var(--text-3);cursor:grab;flex-shrink:0;">☰</span>
-          <span style="font-family:var(--mono);font-size:12px;font-weight:800;color:var(--accent);width:20px;text-align:center;">#${i+1}</span>
-          <div class="ev-badge" style="width:24px;height:24px;font-size:7px;">${t.logo?'<img src="'+t.logo+'" alt="'+t.name+'">':t.name.slice(0,3).toUpperCase()}</div>
-          <div style="flex:1;min-width:0;">
-            <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
-            <div style="font-size:11px;color:var(--text-2);font-weight:600;">${t.opponent}</div>
-          </div>
-        </div>`;
-      });
-      html+='</div>';
-      setTimeout(()=>initDragSort(),50);
-      html+=`<button class="submit-preds-btn" onclick="toast('✓ '+t('rankingSaved'))">${t('saveRanking')}</button>`;
-    } else {
-      html+=`<div style="padding:8px 8px 12px;font-size:12px;color:var(--text-3);font-weight:600;">🔒 ${t('predictionsLocked')}</div>`;
-      userOrder.forEach((tid,i)=>{
-        const t=teamMap[tid];
-        html+=`<div style="display:flex;align-items:center;gap:6px;padding:8px;margin-bottom:4px;background:var(--bg);border-radius:8px;border:1px solid var(--border);opacity:0.7;">
-          <span style="font-family:var(--mono);font-size:12px;font-weight:800;color:var(--text-3);width:20px;text-align:center;">#${i+1}</span>
-          <div class="ev-badge" style="width:24px;height:24px;font-size:7px;">${t.logo?'<img src="'+t.logo+'" alt="'+t.name+'">':t.name.slice(0,3).toUpperCase()}</div>
-          <div style="flex:1;min-width:0;">
-            <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
-            <div style="font-size:11px;color:var(--text-2);font-weight:600;">${t.opponent}</div>
-          </div>
-        </div>`;
-      });
-    }
-    html+='</div>';
-    return html;
-  }
-
-  // LMS summary bars above events
-  if(comp.mode==='lms'&&events.length){
-    const total=125;
-    const fakeSurvived=[97,78];
-    let survived=total;
-    events.forEach((ev,i)=>{if(ev.res){survived=fakeSurvived[i]||survived;ev._survivorCount=survived;}});
-    const currentSurvived=events.some(e=>e.res)?survived:total;
-    const pct=Math.round(currentSurvived/total*100);
-    html+=`<div style="padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--border);">
-      <div style="display:flex;gap:12px;align-items:center;margin-bottom:6px;">
-        <div style="display:flex;align-items:center;gap:5px;"><span style="font-family:var(--mono);font-size:20px;font-weight:800;color:var(--text);">${total}</span><span style="font-size:10px;color:var(--text-3);font-weight:600;">JOINED</span></div>
-        <div style="display:flex;align-items:center;gap:5px;"><span style="font-family:var(--mono);font-size:20px;font-weight:800;color:${currentSurvived<total?'var(--red)':'var(--green)'};">${events.some(e=>e.res)?currentSurvived:'—'}</span><span style="font-size:10px;color:var(--text-3);font-weight:600;">SURVIVING</span></div>
-      </div>
-      <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${pct>60?'var(--green)':pct>30?'var(--amber)':'var(--red)'};border-radius:3px;transition:width 0.4s;"></div></div>
-    </div>`;
-  }
-
-  // Sort events by kickoff for LMS
-  if(comp.mode==='lms') events.sort((a,b)=>(a.sortKey||a.kickoff||'').localeCompare(b.sortKey||b.kickoff||''));
-
-  html+='<div class="events-list">';
-  if(!events.length){
-    html+= `<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">${t('noEventsYet')}</div></div>`;
-  } else {
-    let lmsBlocked=false;
-    events.forEach((ev,i)=>{
-      const isEliminated=eliminatedAtIdx>=0&&i>eliminatedAtIdx;
-      const isEliminationPoint=i===eliminatedAtIdx;
-      if(comp.mode==='lms'&&isEliminated) lmsBlocked=true;
-      const effectiveOpen=comp.mode==='lms'?(isOpen&&!lmsBlocked):isOpen;
-      html+=`<div style="opacity:${isEliminated?'0.4':'1'};">${renderEventCard(ev,comp,effectiveOpen)}</div>`;
-    });
-  }
-  html+='</div>';
-
-  // Progress bar + save button for ALL modes
-  if(isOpen&&events.length){
-    const openEvents=events.filter(ev=>!ev.res&&!ev.locked);
-    const predCount=openEvents.filter(ev=>{const p=preds[ev.id];if(!p)return false;if(comp.mode==='score')return p.h!==undefined&&p.a!==undefined;if(comp.mode==='betting')return typeof p==='object'&&Object.keys(p).length>0;return!!p;}).length;
-    if(openEvents.length){
-      html+=`<button class="submit-preds-btn${predsDirty?'':' disabled'}" onclick="submitPreds()">${predCount===openEvents.length?t('allPredictionsSaved'):t('savePredictionsBtn',{n:predCount,total:openEvents.length})}</button>`;
-    }
-  }
-  return html;
-}
 
 const TEAM_COLORS={
     'Arsenal':'oklch(0.5 0.17 25)','Chelsea':'oklch(0.45 0.15 255)',
@@ -3413,185 +3147,6 @@ function teamBadge(logo,name){
   const style=`background:${bg};`;
   if(logo)return`<div class="ev-badge"><img src="${logo}" alt="${name}" style="width:38px;height:38px;object-fit:contain;filter:drop-shadow(0 0 1px rgba(255,255,255,0.55)) drop-shadow(0 0 3px rgba(255,255,255,0.35));"></div>`;
   return`<div class="ev-badge">${abbr}</div>`;
-}
-function scorePoints(pred,res,scoring){
-  if(!pred||!res||res.h==null||res.a==null)return[0,''];
-  const s=scoring||{exactScore:5,homeGoals:2,awayGoals:2,totalGoals:1};
-  // Unit comes from the competition's sport ('sets' for volleyball/tennis),
-  // so the breakdown doesn't say "goals" on a volleyball match.
-  const u=s.unit||'goals';
-  const eH=parseInt(pred.h)==res.h,eA=parseInt(pred.a)==res.a;
-  if(eH&&eA)return[s.exactScore,'Exact score correct'];
-  if(eH)return[s.homeGoals,'Home team '+u+' correct'];
-  if(eA)return[s.awayGoals,'Away team '+u+' correct'];
-  if((parseInt(pred.h)+parseInt(pred.a))==(res.h+res.a))return[s.totalGoals,'Total '+u+' correct'];
-  return[0,'No points scored'];
-}
-
-function renderEventCard(ev,comp,isRoundOpen){
-  const pred=preds[ev.id]??null;
-  const hasRes=!!ev.res;
-  const isLocked=(()=>{const ko=parseKickoffMs(ev.kickoffRaw||ev.kickoff);return ko!=null?(Date.now()>=ko-30*60*1000):(ev.locked||false);})();
-  // Event is "open for input" only if: round is open AND event has no result AND not locked
-  const canPredict=isRoundOpen&&!hasRes&&!isLocked;
-  const hasPred=comp.mode==='score'?(pred&&pred.h!==undefined&&pred.a!==undefined):comp.mode==='betting'?(pred&&typeof pred==='object'&&Object.keys(pred).length>0):(pred!==null&&pred!==undefined);
-
-  let correct=null,earnedPts=null,pointsBreakdown='',bettingMarketDetails=null;
-  if(hasRes&&hasPred){
-    if(comp.mode==='lms'){const actual=ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';correct=pred===actual;}
-    else if(comp.mode==='score'){[earnedPts,pointsBreakdown]=scorePoints(pred,ev.res,comp.scoring);correct=earnedPts>0;}
-    else if(comp.mode==='betting'&&typeof pred==='object'){
-      earnedPts=0;
-      bettingMarketDetails=[];
-      (comp.markets||[]).forEach(mkt=>{
-        const pick=pred[mkt.type]||null;
-        let actualM=null;
-        if(mkt.type==='1x2') actualM = ev.res.h>ev.res.a?'H':ev.res.h<ev.res.a?'A':'D';
-        else if(mkt.type==='ou25') actualM = (ev.res.h+ev.res.a)>2.5?'O':'U';
-        else if(mkt.type==='btts') actualM = (ev.res.h>0&&ev.res.a>0)?'Y':'N';
-        else actualM = marketActual(mkt, ev.res);
-        const isRight = !!pick && pick===actualM;
-        const pts = isRight ? (mkt.points||0) : 0;
-        if(isRight) earnedPts+=pts;
-        bettingMarketDetails.push({mkt,pick,pts,isRight});
-      });
-      correct=earnedPts>0;
-    }
-  }
-
-  let cls='event-card';
-  if(canPredict&&hasPred&&comp.mode!=='lms'&&comp.mode!=='betting'&&comp.mode!=='score')cls+=' predicted';
-  if(!canPredict)cls+=' locked-pred';
-
-  const hv=(pred&&pred.h!==undefined)?pred.h:'';
-  const av=(pred&&pred.a!==undefined)?pred.a:'';
-
-  // Middle section (score inputs, result, or locked pick)
-  let midSection;
-  if(comp.mode==='score'&&canPredict&&comp.scoring?.scoreOptions){
-    // Set-based sports (volleyball, tennis): only a handful of final scores
-    // are possible, so the pick happens in the buttons below rather than
-    // in free-entry boxes.
-    midSection = (hv!==''&&av!=='') ? `<div class="ev-score">${hv}\u2013${av}</div>` : '<div class="ev-vs">vs</div>';
-  } else if(comp.mode==='score'&&canPredict){
-    midSection=`<div class="score-inline-mid"><input class="score-num-inline${hv!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${hv}" id="sh-${ev.id}" oninput="pickScore('${ev.id}','h',this.value)"><span class="score-inline-dash">\u2013</span><input class="score-num-inline${av!==''?' has':''}" type="number" min="0" max="20" placeholder="0" value="${av}" id="sa-${ev.id}" oninput="pickScore('${ev.id}','a',this.value)"></div>`;
-  } else if(hasRes){
-    midSection = comp.mode==='betting'
-      ? `<div class="ev-score">${ev.res.h}<span style="font-size:11px;font-weight:400;color:var(--text-3);">-</span>${ev.res.a}</div>`
-      : `<div class="ev-score">${ev.res.h}\u2013${ev.res.a}</div>`;
-  } else if(comp.mode==='score'&&hasPred&&!hasRes){
-    midSection=`<div class="ev-score">${pred.h??'-'}\u2013${pred.a??'-'}</div>`;
-  } else {
-    midSection='<div class="ev-vs">vs</div>';
-  }
-
-  let html=`<div class="${cls}" data-evid="${ev.id}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${ev.tournament||comp.name}</span><span class="event-kickoff">${ev.kickoff||''}</span></div><div class="event-teams"><div style="display:flex;align-items:center;gap:8px;min-width:0;">${teamBadge(ev.homeLogo,ev.home)}<span class="ev-name">${ev.home}</span></div>${midSection}<div style="display:flex;align-items:center;gap:8px;justify-content:flex-end;min-width:0;"><span class="ev-name" style="text-align:right;">${ev.away}</span>${teamBadge(ev.awayLogo,ev.away)}</div></div></div><div class="pred-area">`;
-
-  if(canPredict){
-    // Open for prediction
-    if(comp.mode==='lms'){
-      html+=`<div class="btns-1x2"><button class="btn-1x2${pred==='H'?' selected home':''}" data-val="H" onclick="pick('${ev.id}','H')">${t('homeWin')}</button><button class="btn-1x2${pred==='D'?' selected draw':''}" data-val="D" onclick="pick('${ev.id}','D')">${t('draw')}</button><button class="btn-1x2${pred==='A'?' selected away':''}" data-val="A" onclick="pick('${ev.id}','A')">${t('away')}</button></div>`;
-    } else if(comp.mode==='score'&&comp.scoring?.scoreOptions){
-      html+='<div class="btns-1x2" style="flex-wrap:wrap;">'+comp.scoring.scoreOptions.map(function(o){
-        var sel=(pred&&parseInt(pred.h)===o[0]&&parseInt(pred.a)===o[1])?' selected home':'';
-        return '<button class="btn-1x2'+sel+'" style="flex:1 1 30%;min-width:64px;" onclick="pickSetScore(\''+ev.id+'\','+o[0]+','+o[1]+')">'+o[0]+'\u2013'+o[1]+'</button>';
-      }).join('')+'</div>';
-    } else if(comp.mode==='score'){
-      html+='<div style="font-size:11px;color:var(--text-3);text-align:center;padding:2px 0;">Enter scores above \u2191</div>';
-    } else if(comp.mode==='betting'){
-      const markets=comp.markets||[];const mpred=(pred&&typeof pred==='object')?pred:{};
-      html+='<div style="display:flex;flex-direction:column;gap:8px;">';
-      markets.forEach(mkt=>{
-        html+=`<div><div class="pred-label" style="margin-bottom:5px;font-size:13px;font-weight:600;color:var(--text-2);">${marketLabel(mkt)}</div>`;
-        const isLocked=(()=>{const ko=parseKickoffMs(ev.kickoffRaw||ev.kickoff);return ko!=null?(Date.now()>=ko-30*60*1000):(ev.locked||false);})();
-        const dis=isLocked?'disabled style="pointer-events:none;opacity:0.7;"':'';
-        if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${mpred['1x2']==='H'?' selected home':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','H')"`}>${t('homeWin')}</button><button class="btn-1x2${mpred['1x2']==='D'?' selected draw':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','D')"`}>${t('draw')}</button><button class="btn-1x2${mpred['1x2']==='A'?' selected away':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','1x2','A')"`}>${t('away')}</button></div>`;
-        else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['ou25']==='O'?' selected':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','ou25','O')"`}>${t('over')}</button><button class="btn-ou under${mpred['ou25']==='U'?' selected':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','ou25','U')"`}>${t('under')}</button></div>`;
-        else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['btts']==='Y'?' selected':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','btts','Y')"`}>${t('yes')}</button><button class="btn-ou under${mpred['btts']==='N'?' selected':''}" ${isLocked?'disabled':`onclick="pickMarket('${ev.id}','btts','N')"`}>${t('no')}</button></div>`;
-        else html+=marketButtonsHTML(mkt,ev,mpred[mkt.type],!isLocked);
-        html+='</div>';
-      });
-      html+='</div>';
-    }
-  } else if(hasPred){
-    // Locked — show pick and optionally points
-    let pl='';
-    if(comp.mode==='lms')pl=pred==='H'?ev.home+' ('+t('homeWin')+')':pred==='D'?t('draw'):ev.away+' ('+t('away')+')';
-    else if(comp.mode==='score')pl=(pred.h??'-')+' \u2013 '+(pred.a??'-');
-    else if(comp.mode==='betting'&&typeof pred==='object'){
-      if(!hasRes){
-        const mpred=pred; const markets=comp.markets||[];
-        html+='<div style="display:flex;flex-direction:column;gap:10px;">';
-        markets.forEach(mkt=>{
-          html+=`<div><div class="pred-label" style="margin-bottom:5px;font-size:13px;font-weight:600;color:var(--text-2);">${marketLabel(mkt)}</div>`;
-          if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${mpred['1x2']==='H'?' selected home':''}" disabled>${t('homeWin')}</button><button class="btn-1x2${mpred['1x2']==='D'?' selected draw':''}" disabled>${t('draw')}</button><button class="btn-1x2${mpred['1x2']==='A'?' selected away':''}" disabled>${t('away')}</button></div>`;
-          else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['ou25']==='O'?' selected':''}" disabled>${t('over')}</button><button class="btn-ou under${mpred['ou25']==='U'?' selected':''}" disabled>${t('under')}</button></div>`;
-          else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${mpred['btts']==='Y'?' selected':''}" disabled>${t('yes')}</button><button class="btn-ou under${mpred['btts']==='N'?' selected':''}" disabled>${t('no')}</button></div>`;
-          else html+=marketButtonsHTML(mkt,ev,mpred[mkt.type],false);
-          html+='</div>';
-        });
-        html+='<div style="font-size:11px;color:var(--text-3);margin-top:4px;">⏳ Awaiting result</div>';
-        html+='</div></div></div>'; return html;
-      }
-      pl=Object.entries(pred).map(([k,v])=>k.toUpperCase()+': '+v).join(' · ');
-    }
-
-    if(hasRes&&comp.mode==='betting'&&bettingMarketDetails){
-      html+='<div style="display:flex;flex-direction:column;gap:8px;">';
-      bettingMarketDetails.forEach(({mkt,pick,pts,isRight})=>{
-        html+=`<div><div style="margin-bottom:5px;font-size:13px;font-weight:600;color:var(--text-2);display:flex;justify-content:space-between;align-items:center;"><span>${marketLabel(mkt)}</span><span class="pred-correct ${isRight?'yes':'no'}">+${pts} pts</span></div>`;
-        if(mkt.type==='1x2')html+=`<div class="btns-1x2"><button class="btn-1x2${pick==='H'?' selected home':''}" disabled>${t('homeWin')}</button><button class="btn-1x2${pick==='D'?' selected draw':''}" disabled>${t('draw')}</button><button class="btn-1x2${pick==='A'?' selected away':''}" disabled>${t('away')}</button></div>`;
-        else if(mkt.type==='ou25')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='O'?' selected':''}" disabled>${t('over')}</button><button class="btn-ou under${pick==='U'?' selected':''}" disabled>${t('under')}</button></div>`;
-        else if(mkt.type==='btts')html+=`<div class="btns-ou"><button class="btn-ou over${pick==='Y'?' selected':''}" disabled>${t('yes')}</button><button class="btn-ou under${pick==='N'?' selected':''}" disabled>${t('no')}</button></div>`;
-        else html+=marketButtonsHTML(mkt,ev,pick,false);
-        html+='</div>';
-      });
-      html+=`<div style="display:flex;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--border);"><span class="pred-correct ${earnedPts>0?'yes':'no'}">${t('total')}: ${earnedPts>0?'+':''}${earnedPts} pts</span></div>`;
-      html+='</div>';
-    } else if(hasRes&&comp.mode==='score'&&earnedPts!=null){
-      html+=`<div class="pred-result-row"><div class="pred-made">${t('yourPick')}: <strong>${pl}</strong></div><span class="pred-correct ${earnedPts>0?'yes':'no'}">${earnedPts>0?'+'+earnedPts+' pts':'✗ 0 pts'}</span></div>`;
-      if(pointsBreakdown)html+=`<div style="font-size:12px;color:${earnedPts>0?'var(--green)':'var(--text-3)'};margin-top:4px;font-weight:600;">${earnedPts>0?'\u2713 ':'\u2717 '}${pointsBreakdown}</div>`;
-    } else if(hasRes&&correct!=null){
-      html+=`<div class="pred-result-row"><div class="pred-made">${t('yourPick')}: <strong>${pl}</strong></div><span class="pred-correct ${correct?'yes':'no'}">${correct?'\u2713 '+t('correct'):'\u2717 '+t('wrong')}</span></div>`;
-      if(comp.mode==='lms'&&ev._survivorCount!==undefined){
-        html+=`<div style="text-align:left;font-family:var(--sans);font-size:11px;font-weight:700;color:var(--text-2);margin-top:6px;">${ev._survivorCount} survived</div>`;
-      }
-    } else {
-      if(comp.mode==='betting'&&typeof pred==='object'){
-        var mpred2=pred;
-        html+='<div style="display:flex;flex-direction:column;gap:8px;">';
-        (comp.markets||[]).forEach(function(mkt){
-          html+='<div><div style="margin-bottom:5px;font-size:13px;font-weight:600;color:var(--text-2);">'+marketLabel(mkt)+'</div>';
-          var h=mpred2['1x2'],o=mpred2['ou25'],b=mpred2['btts'];
-          if(mkt.type==='1x2')html+='<div class="btns-1x2">'
-            +'<button class="btn-1x2'+(h==='H'?' selected home':'')+'" disabled>'+t('homeWin')+'</button>'
-            +'<button class="btn-1x2'+(h==='D'?' selected draw':'')+'" disabled>'+t('draw')+'</button>'
-            +'<button class="btn-1x2'+(h==='A'?' selected away':'')+'" disabled>'+t('away')+'</button>'
-            +'</div>';
-          else if(mkt.type==='ou25')html+='<div class="btns-ou">'
-            +'<button class="btn-ou over'+(o==='O'?' selected':'')+'" disabled>'+t('over')+'</button>'
-            +'<button class="btn-ou under'+(o==='U'?' selected':'')+'" disabled>'+t('under')+'</button>'
-            +'</div>';
-          else if(mkt.type==='btts')html+='<div class="btns-ou">'
-            +'<button class="btn-ou over'+(b==='Y'?' selected':'')+'" disabled>'+t('yes')+'</button>'
-            +'<button class="btn-ou under'+(b==='N'?' selected':'')+'" disabled>'+t('no')+'</button>'
-            +'</div>';
-          else html+=marketButtonsHTML(mkt,ev,mpred2?mpred2[mkt.type]:null,false);
-          html+='</div>';
-        });
-        html+='<div style="font-size:11px;color:var(--text-3);margin-top:4px;">⏳ Awaiting result</div>';
-        html+='</div>';
-      } else {
-        html+=`<div><div class="pred-made">${t('yourPick')}: <strong>${pl}</strong></div><div style="margin-top:4px;"><span style="font-size:11px;color:var(--amber);font-weight:600;">⏳ Awaiting result</span></div></div>`;
-      }
-    }
-  } else {
-    if(currentPlayer) html+=`<div style="font-size:12px;color:var(--text-3);">${t('noPredictionMade')}</div>`;
-    if(comp.mode==='lms'&&hasRes&&ev._survivorCount!==undefined){
-      html+=`<div style="text-align:left;font-family:var(--sans);font-size:11px;font-weight:700;color:var(--text-2);margin-top:6px;">${ev._survivorCount} survived</div>`;
-    }
-  }
-  html+='</div></div>';return html;
 }
 
 // ── COUNTDOWN ──────────────────────────────────────────────────────────────
@@ -4733,11 +4288,11 @@ function leagueSubHeaderHtml(){
       ${escapeHtmlLineup(league.name)}
     </button>
     ${!league.isGeneral ? `<div class="league-header-actions">
-      <button class="league-header-btn" onclick="copyLeagueCode('${league.code}')">
+      <button class="league-header-btn" onclick="copyLeagueCode(this.dataset.code)" data-code="${escapeHtmlLineup(league.code)}">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
         ${t('copyCode')}
       </button>
-      <button class="league-header-btn leave" onclick="leaveLeague('${league.id}')" title="${t('leaveLeague')}">
+      <button class="league-header-btn leave" onclick="leaveLeague(this.dataset.id)" data-id="${escapeHtmlLineup(league.id)}" title="${t('leaveLeague')}">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
       </button>
     </div>` : ''}
@@ -4760,7 +4315,7 @@ async function renderLeaguesListScreen(comp, target){
       <div class="leagues-section-label">${t('yourLeagues')}</div>
       <div class="leagues-list">
         ${leagues.map(lg=>`
-          <button class="league-row" onclick='selectLeague(${JSON.stringify(lg).replace(/'/g,"&#39;")})'>
+          <button class="league-row" onclick='selectLeague(${JSON.stringify(lg).replace(/&/g,"&amp;").replace(/'/g,"&#39;")})'>
             <div class="league-icon">${escapeHtmlLineup((lg.name||'?').trim().charAt(0).toUpperCase())}</div>
             <div style="flex:1;min-width:0;">
               <div class="league-row-name">${escapeHtmlLineup(lg.name)}</div>
@@ -5285,7 +4840,7 @@ function buildLBTable(title,sub,rows,cellFn,colHeader,prizes,extraCellFn,extraCo
     const extraCell = hasExtra ? extraCellFn(row).replace('<td ','<td class="lb-col-extra" ') : '';
     const extra2Cell = hasExtra2 ? extra2CellFn(row).replace('<td ','<td class="lb-col-extra2" ') : '';
     const youTag = isMe?`<span style="flex-shrink:0;margin-left:2px;font-size:9px;font-weight:800;color:var(--accent);background:var(--accent-light);padding:2px 6px;border-radius:5px;letter-spacing:0.3px;">${t('you')}</span>`:'';
-    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank" style="color:${rankColor};">${row.rank}</td><td><div style="display:flex;align-items:center;gap:8px;min-width:0;"><span class="lb-uname ${isMe?'me':''}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row.u}</span>${youTag}</div></td>${cellFn(row)}${extraCell}${extra2Cell}${prizeCell}</tr>`;
+    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank" style="color:${rankColor};">${row.rank}</td><td><div style="display:flex;align-items:center;gap:8px;min-width:0;"><span class="lb-uname ${isMe?'me':''}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlLineup(row.u)}</span>${youTag}</div></td>${cellFn(row)}${extraCell}${extra2Cell}${prizeCell}</tr>`;
   });
   html+=`</tbody></table></div>`; return html;
 }
@@ -5558,7 +5113,7 @@ async function renderProfile(){
 
   document.getElementById('profile-content').innerHTML=`
     <div style="padding:10px 16px 0;"><button onclick="goTab('predict')" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--accent);font-weight:700;font-family:var(--mono);">← Back to predictions</button></div>
-    <div class="profile-header"><div class="profile-av">${ini}</div><div class="profile-name">${currentPlayer.username}</div><div class="profile-joined">Joined ${joined}</div></div>
+    <div class="profile-header"><div class="profile-av">${escapeHtmlLineup(ini)}</div><div class="profile-name">${escapeHtmlLineup(currentPlayer.username)}</div><div class="profile-joined">Joined ${joined}</div></div>
     <div class="profile-stats">
       <div class="profile-stat"><div class="ps-val">${totalPreds}</div><div class="ps-label">${t('totalPredictions')}</div></div>
       <div class="profile-stat"><div class="ps-val">${hitRate}%</div><div class="ps-label">${t('hitRate')}</div></div>
@@ -5569,8 +5124,8 @@ async function renderProfile(){
     <div class="profile-section">
       <div class="profile-section-title">${t('account')}</div>
       <div style="font-size:12px;color:var(--text-2);margin-bottom:14px;">
-        <div>Username: <strong>${currentPlayer.username}</strong></div>
-        ${currentPlayer.email?`<div>Email: <strong>${currentPlayer.email}</strong></div>`:''}
+        <div>Username: <strong>${escapeHtmlLineup(currentPlayer.username)}</strong></div>
+        ${currentPlayer.email?`<div>Email: <strong>${escapeHtmlLineup(currentPlayer.email)}</strong></div>`:''}
       </div>
       <button class="logout-btn" onclick="doLogout()">${t('signOut')}</button>
     </div>`;
@@ -5620,9 +5175,9 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
           document.getElementById('hdr-operator-badge').textContent='· '+op.company_name;
           if(op.logo_url){
             const logoEl = document.getElementById('hdr-logo');
-            if(logoEl) logoEl.innerHTML = `<img src="${op.logo_url}" alt="${op.company_name||'Logo'}" style="height:40px;max-width:220px;object-fit:contain;vertical-align:middle;">`;
+            if(logoEl) logoEl.innerHTML = `<img src="${escapeHtmlLineup(op.logo_url)}" alt="${escapeHtmlLineup(op.company_name||'Logo')}" style="height:40px;max-width:220px;object-fit:contain;vertical-align:middle;">`;
             const authLogoEl = document.getElementById('auth-modal-logo');
-            if(authLogoEl) authLogoEl.innerHTML = `<img src="${op.logo_url}" alt="${op.company_name||'Logo'}" style="height:46px;max-width:240px;object-fit:contain;">`;
+            if(authLogoEl) authLogoEl.innerHTML = `<img src="${escapeHtmlLineup(op.logo_url)}" alt="${escapeHtmlLineup(op.company_name||'Logo')}" style="height:46px;max-width:240px;object-fit:contain;">`;
           }
           // Operator-level widget theme, set in the admin's Branding page.
           // Only 4 colours are configured directly (accent, page bg, card
