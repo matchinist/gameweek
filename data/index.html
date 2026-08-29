@@ -753,7 +753,7 @@ async function save(){
     }
     const evArr = Object.entries(S.events).map(([id,ev])=>({
       id, home_id:ev.homeId, away_id:ev.awayId,
-      kickoff:ev.kickoff||'', result:ev.result||null,
+      kickoff:ev.kickoff||'', kickoff_at:ev.kickoffAt||null, result:ev.result||null,
       status:ev.status||'upcoming', line:ev.line||2.5,
       lineup:ev.lineup||null, scorers:ev.scorers||null
     }));
@@ -1326,7 +1326,10 @@ async function confirmFixtureImport(){
       const eid = 'ev'+uid();
       S.events[eid] = {
         homeId: m.homeTeamId, awayId: m.awayTeamId,
-        kickoff: m.kickoff||'', result: m.result, status: m.status, line: 2.5,
+        // Import kickoffs are already ISO UTC instants (excelSerialToDate
+        // → toISOString), so kickoff_at mirrors the text field directly.
+        kickoff: m.kickoff||'', kickoffAt: m.kickoff||null,
+        result: m.result, status: m.status, line: 2.5,
       };
       return eid;
     });
@@ -2453,7 +2456,9 @@ function addEventToRound(roundId){
     if(!isNaN(parsed.getTime())) kickoff=parsed.toISOString();
   }
   const eid='ev'+uid();
-  S.events[eid]={homeId,awayId,kickoff,result:null,status:'upcoming',line:2.5};
+  // kickoff is already a frozen UTC instant here, so kickoff_at is the same
+  // value — both fields are written until 1.7 retires the text column.
+  S.events[eid]={homeId,awayId,kickoff,kickoffAt:kickoff||null,result:null,status:'upcoming',line:2.5};
   const season=getSeasonData(S.activeTournamentId,S.activeSeason);
   const r=season.rounds.find(x=>x.id===roundId);
   if(r){
@@ -2757,7 +2762,7 @@ async function saveResultTab(){
   ev.status=status;
   if(kickoff){
     const parsed=new Date(kickoff);
-    if(!isNaN(parsed.getTime())) ev.kickoff=parsed.toISOString();
+    if(!isNaN(parsed.getTime())){ ev.kickoff=parsed.toISOString(); ev.kickoffAt=ev.kickoff; }
   }
   const hmvp=document.getElementById('score-modal-hmvp')?.value||'';
   const amvp=document.getElementById('score-modal-amvp')?.value||'';
@@ -2779,6 +2784,7 @@ async function saveResultTab(){
   const ok = await saveEventFields(eid, {
     status: ev.status,
     kickoff: ev.kickoff||'',
+    kickoff_at: ev.kickoffAt||null,
     result: ev.result||null
   }); // only touches Result-tab fields — a schema issue with lineup/scorers
       // (owned by other tabs) can never block this save.
@@ -3041,7 +3047,10 @@ async function loadDMData(){
   S.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,sport:t.sport||'football',color:t.color,seasons:t.seasons||{}}));
   const evMap={};
   (events||[]).forEach(e=>{
-    evMap[e.id]={homeId:e.home_id,awayId:e.away_id,kickoff:e.kickoff,result:e.result,status:e.status,line:e.line||2.5,lineup:e.lineup||null,scorers:e.scorers||null};
+    // kickoffAt rides along so an untouched event re-upserted by the bulk
+    // save keeps its backfilled kickoff_at instead of clobbering it — it is
+    // only recomputed when the operator actually edits the kickoff.
+    evMap[e.id]={homeId:e.home_id,awayId:e.away_id,kickoff:e.kickoff,kickoffAt:e.kickoff_at||null,result:e.result,status:e.status,line:e.line||2.5,lineup:e.lineup||null,scorers:e.scorers||null};
   });
   S.events=evMap;
 

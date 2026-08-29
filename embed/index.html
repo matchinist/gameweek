@@ -1024,7 +1024,9 @@ async function buildCompsFromRealData(){
         home: home?.name||ev.home_id, away: away?.name||ev.away_id,
         homeLogo: home?.logo||'', awayLogo: away?.logo||'',
         homeId: ev.home_id, awayId: ev.away_id,
-        kickoff: fmtKickoff(ev.kickoff), kickoffRaw: ev.kickoff||null, res: hasResult?ev.result:null,
+        // kickoff_at (timestamptz, Phase 1.2) is the preferred instant; the
+        // legacy text column is the fallback until 1.7 verifies parity.
+        kickoff: fmtKickoff(ev.kickoff_at||ev.kickoff), kickoffRaw: ev.kickoff_at||ev.kickoff||null, res: hasResult?ev.result:null,
         lineup: ev.lineup||null, scorers: ev.scorers||null, status: ev.status||'upcoming'
       };
       EVENTS_RAW[ev.id] = hasResult?ev.result:null;
@@ -1105,7 +1107,7 @@ async function buildCompsFromRealData(){
               label,
               status: (hasResult||hasLineup)?'completed':'open',
               eventId: ev.id,
-              kickoffRaw: ev.kickoff||null,
+              kickoffRaw: ev.kickoff_at||ev.kickoff||null,
             };
           });
       } else {
