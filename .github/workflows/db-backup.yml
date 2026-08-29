@@ -1,0 +1,49 @@
+name: Weekly database backup
+# Phase 1.9 — the hand-typed global sports DB is irreplaceable labour.
+# Dumps the whole Supabase Postgres weekly and keeps 90 days of encrypted-at-
+# rest artifacts on GitHub (off-Supabase). Artifacts on a public repo are
+# downloadable only by collaborators. Restore drill: download the artifact,
+# then `pg_restore -d <local db> --no-owner backup.dump` (see docs/RUNBOOK.md).
+#
+# Requires the repository secret SUPABASE_DB_URL — the full Postgres
+# connection string from the Supabase dashboard (Settings → Database →
+# Connection string, URI, port 5432). Set it with:
+#   gh secret set SUPABASE_DB_URL
+on:
+  schedule:
+    - cron: '20 3 * * 1'   # Mondays 03:20 UTC — never during weekend matchdays
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump database
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "SUPABASE_DB_URL secret is not set" >&2; exit 1
+          fi
+          # Postgres 17 client to match the server major version
+          sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add - 2>/dev/null
+          sudo apt-get -qq update && sudo apt-get -qq install -y postgresql-client-17 >/dev/null
+          /usr/lib/postgresql/17/bin/pg_dump "$SUPABASE_DB_URL" \
+            --format=custom --no-owner --no-privileges \
+            --file="gameweek-$(date -u +%Y%m%d).dump"
+          # Integrity: the archive must list and contain the core tables
+          /usr/lib/postgresql/17/bin/pg_restore --list "gameweek-$(date -u +%Y%m%d).dump" > toc.txt
+          for t in gw_dm_teams gw_dm_events gw_players gw_predictions gw_operators; do
+            grep -q "TABLE DATA public $t" toc.txt || { echo "MISSING $t in dump" >&2; exit 1; }
+          done
+          ls -lh *.dump
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.run_id }}
+          path: '*.dump'
+          retention-days: 90
+          if-no-files-found: error
