@@ -5,9 +5,12 @@ name: Weekly database backup
 # downloadable only by collaborators. Restore drill: download the artifact,
 # then `pg_restore -d <local db> --no-owner backup.dump` (see docs/RUNBOOK.md).
 #
-# Requires the repository secret SUPABASE_DB_URL — the full Postgres
-# connection string from the Supabase dashboard (Settings → Database →
-# Connection string, URI, port 5432). Set it with:
+# Requires the repository secret SUPABASE_DB_URL — the SESSION POOLER
+# connection string from the dashboard's "Connect" button (top bar):
+#   postgresql://postgres.<ref>:<password>@aws-1-<region>.pooler.supabase.com:5432/postgres
+# Session pooler, not "Direct connection": the direct host is IPv6-only and
+# GitHub runners have no IPv6. Not the transaction pooler (:6543) either —
+# that mode doesn't suit pg_dump. Set it with:
 #   gh secret set SUPABASE_DB_URL
 on:
   schedule:

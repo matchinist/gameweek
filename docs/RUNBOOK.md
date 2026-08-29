@@ -9,9 +9,18 @@ a GitHub Actions artifact for 90 days. Artifacts on this public repo are
 downloadable by collaborators only. This is the off-Supabase copy; Supabase's
 own scheduled backups (dashboard → Database → Backups) are the first line.
 
-**Prerequisite (one-time):** set the repository secret with the full
-connection string from the dashboard (Settings → Database → Connection
-string, URI, port 5432):
+**Prerequisite (one-time):** set the repository secret with the **Session
+pooler** connection string from the dashboard's **"Connect" button** (top bar
+of the project page) → Connection String tab:
+
+```
+postgresql://postgres.<ref>:<password>@aws-1-<region>.pooler.supabase.com:5432/postgres
+```
+
+Session pooler specifically: the "Direct connection" host is IPv6-only (no
+IPv4 add-on) and GitHub Actions runners have no IPv6; the transaction pooler
+(port 6543) doesn't suit `pg_dump`. The database password can be reset under
+Settings → Database → Database password if unknown.
 
 ```bash
 gh secret set SUPABASE_DB_URL
