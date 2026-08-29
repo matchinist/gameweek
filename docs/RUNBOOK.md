@@ -57,8 +57,14 @@ docker exec gw-restore psql -U postgres -c \
 docker stop gw-restore
 ```
 
+A drill into vanilla Postgres reports rc=1 with warnings for platform-owned
+objects a bare server lacks (the `authenticated`/`anon` roles behind some
+policies, `supabase_vault`, the index-advisor extensions). That is expected —
+verify the row counts, which are the point. A real restore into a fresh
+Supabase project has all of those and completes fully.
+
 Drill log:
 
 | Date | Dump size | Restore runtime | Notes |
 |---|---|---|---|
-| _pending first run_ | | | |
+| 2026-08-29 | 442 KB | ~1 s | run 33279619278; all app tables complete (230 teams, 2,254 events, 771 squad players, 20 tournaments, 47 players, 145 predictions, 3 leagues); spot-checked the evening's newest prediction present; 71 warnings, all platform objects (roles/vault/advisor extensions), zero data errors |
