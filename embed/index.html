@@ -4237,7 +4237,7 @@ async function fetchLeagueMemberUsernames(leagueId){
 async function fetchMyLeaguesData(comp){
   const [{totals}, myMemberships] = await Promise.all([
     comp.mode==='lineup' ? computeLineupOverallTotals(comp).then(r=>({totals: Object.fromEntries(Object.entries(r.totals).map(([u,pts])=>[u,{pts}]))})) : computeOverallTotals(comp),
-    currentPlayer ? supa.from('gw_league_members').select('league_id, gw_leagues(id,name,code,client_key)').eq('username', currentPlayer.username) : Promise.resolve({data:[]}),
+    currentPlayer ? supa.from('gw_league_members').select('league_id, gw_leagues(id,name,code,client_key)').eq('player_id', currentPlayer.id) : Promise.resolve({data:[]}),
   ]);
   const rankOf = (usernames)=>{
     const rows = Object.entries(totals)
@@ -4402,7 +4402,8 @@ async function submitCreateLeague(){
   const id=genLeagueId(), code=genLeagueCode();
   const {error}=await supa.from('gw_leagues').insert({id, client_key:CLIENT_PARAM, name, code, created_by:currentPlayer.username});
   if(error){ toast('Could not create league'); console.error('createLeague:',error); return; }
-  const {error:memberErr}=await supa.from('gw_league_members').insert({league_id:id, username:currentPlayer.username});
+  // Membership is keyed by player_id (Phase 1.8); username rides along for display.
+  const {error:memberErr}=await supa.from('gw_league_members').insert({league_id:id, username:currentPlayer.username, player_id:currentPlayer.id});
   if(memberErr){ console.error('createLeague member insert:',memberErr); }
   closeLeagueModal();
   toast(t('leagueCreated'));
@@ -4418,9 +4419,9 @@ async function submitJoinLeague(){
   if(!currentPlayer) return;
   const {data:league,error}=await supa.from('gw_leagues').select('id,name').eq('client_key',CLIENT_PARAM).eq('code',code).maybeSingle();
   if(error || !league){ toast(t('invalidCode')); return; }
-  const {data:existing}=await supa.from('gw_league_members').select('username').eq('league_id',league.id).eq('username',currentPlayer.username).maybeSingle();
+  const {data:existing}=await supa.from('gw_league_members').select('username').eq('league_id',league.id).eq('player_id',currentPlayer.id).maybeSingle();
   if(existing){ closeLeagueModal(); toast(t('leagueJoined')); const comp=COMPS[currentCompIdx]; const target=document.getElementById('lb-content'); if(target&&comp) await renderLeaguesListScreen(comp,target); return; }
-  const {error:joinErr}=await supa.from('gw_league_members').insert({league_id:league.id, username:currentPlayer.username});
+  const {error:joinErr}=await supa.from('gw_league_members').insert({league_id:league.id, username:currentPlayer.username, player_id:currentPlayer.id});
   if(joinErr){ toast('Could not join league'); console.error('joinLeague:',joinErr); return; }
   closeLeagueModal();
   toast(t('leagueJoined'));
@@ -4432,7 +4433,7 @@ async function submitJoinLeague(){
 async function leaveLeague(leagueId){
   if(!currentPlayer) return;
   if(!confirm(t('confirmLeaveLeague'))) return;
-  const {error}=await supa.from('gw_league_members').delete().eq('league_id',leagueId).eq('username',currentPlayer.username);
+  const {error}=await supa.from('gw_league_members').delete().eq('league_id',leagueId).eq('player_id',currentPlayer.id);
   if(error){ toast('Could not leave league'); console.error('leaveLeague:',error); return; }
   toast(t('leftLeague'));
   backToLeagues();
