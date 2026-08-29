@@ -17,9 +17,15 @@ CONTAINER=gw-identity-test-pg
 
 shopt -s nullglob
 ALL=("$MIGRATIONS_DIR"/*.sql)
-LAST="${ALL[${#ALL[@]}-1]}"
-if [[ "$LAST" != *identity* ]]; then
-  echo "FAIL: newest migration is not the identity-hardening one (got $(basename "$LAST"))" >&2
+# Split the chain around the identity migration: seed legacy-shaped data
+# BEFORE it so the backfill is exercised, then apply it and everything after.
+BEFORE=(); FROM=(); seen_identity=0
+for f in "${ALL[@]}"; do
+  if [[ "$f" == *identity* ]]; then seen_identity=1; fi
+  if [ $seen_identity -eq 1 ]; then FROM+=("$f"); else BEFORE+=("$f"); fi
+done
+if [ $seen_identity -eq 0 ]; then
+  echo "FAIL: no identity-hardening migration found" >&2
   exit 1
 fi
 
@@ -59,8 +65,7 @@ SQL
 
 # Apply everything EXCEPT the identity migration, then seed legacy data,
 # then apply the identity migration — proving the backfill on real-shaped rows.
-for f in "${ALL[@]}"; do
-  [ "$f" = "$LAST" ] && continue
+for f in "${BEFORE[@]}"; do
   docker cp "$f" "$CONTAINER:/tmp/mig.sql" >/dev/null
   docker exec "$CONTAINER" psql -q -U postgres -v ON_ERROR_STOP=1 -f /tmp/mig.sql >/dev/null
 done
@@ -80,8 +85,10 @@ insert into gw_league_members (league_id, username) values
   ('lgA','ghost_no_player');
 SQL
 
-docker cp "$LAST" "$CONTAINER:/tmp/identity.sql" >/dev/null
-docker exec "$CONTAINER" psql -q -U postgres -v ON_ERROR_STOP=1 -f /tmp/identity.sql >/dev/null
+for f in "${FROM[@]}"; do
+  docker cp "$f" "$CONTAINER:/tmp/identity.sql" >/dev/null
+  docker exec "$CONTAINER" psql -q -U postgres -v ON_ERROR_STOP=1 -f /tmp/identity.sql >/dev/null
+done
 
 FAILED=0
 ALICE=00000000-0000-0000-0000-0000000000a1
