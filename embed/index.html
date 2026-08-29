@@ -1329,10 +1329,13 @@ async function loginPlayer(player){
           const belongsToRound = (round.eventIds&&round.eventIds.includes(eventId)) || eventId===round.id || eventId===(round.id+'_ranking');
           if(!belongsToRound) continue;
           const stored=(typeof prediction==='string'||typeof prediction==='number')?{value:prediction}:prediction;
-          await supa.from('gw_predictions').upsert({
-            client_key:CLIENT_PARAM, player_id:player.id, username:player.username,
-            competition_id:comp.id, round_id:round.id, event_id:eventId, prediction:stored
-          },{onConflict:'player_id,competition_id,event_id'});
+          // Same RPC as savePred() — a pred typed while logged out that has
+          // since locked is dropped here by the DB, which is correct.
+          const {error:flushErr} = await supa.rpc('save_prediction', {
+            p_client_key:CLIENT_PARAM, p_competition_id:comp.id,
+            p_round_id:round.id, p_event_id:eventId, p_prediction:stored
+          });
+          if(flushErr) console.error('flush pred after login:', flushErr.message);
         }
       }
     }
@@ -1620,12 +1623,20 @@ async function savePred(eventId, prediction){
   if(!round) return false;
   const stored = (typeof prediction==='string'||typeof prediction==='number')
     ? {value:prediction} : prediction;
-  const {error} = await supa.from('gw_predictions').upsert({
-    client_key:CLIENT_PARAM, player_id:currentPlayer.id,
-    username:currentPlayer.username, competition_id:comp.id,
-    round_id:round.id, event_id:eventId, prediction:stored
-  },{onConflict:'player_id,competition_id,event_id'});
-  if(error){ console.error('savePred:',error.message); return false; }
+  // Writes go through the save_prediction() RPC (Phase 1.4): the 30-minute
+  // deadline is enforced by database time inside the function, and username/
+  // player_id are resolved server-side from the session — a stale tab, an
+  // altered clock, or a devtools call can no longer write a late or spoofed
+  // prediction. Direct table writes get revoked in 1.5.
+  const {error} = await supa.rpc('save_prediction', {
+    p_client_key:CLIENT_PARAM, p_competition_id:comp.id,
+    p_round_id:round.id, p_event_id:eventId, p_prediction:stored
+  });
+  if(error){
+    console.error('savePred:',error.message);
+    if((error.message||'').includes('locked')) toast('🔒 '+t('predictionsLocked'));
+    return false;
+  }
   return true;
 }
 
