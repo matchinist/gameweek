@@ -1731,28 +1731,12 @@ function renderTournamentLabels(comp){
 function parseKickoffMs(s){
   if(!s) return null;
   if(/\d{4}-\d{2}-\d{2}[T ]/.test(s)){ const t=new Date(s.replace(' ','T')).getTime(); return isNaN(t)?null:t; }
-  const m = s.replace('\u00b7','').match(/(\d{1,2})\s+([A-Za-z]{3})\s+(\d{1,2}):(\d{2})/);
-  if(m){
-    const day=parseInt(m[1]), monStr=m[2], hh=parseInt(m[3]), mm=parseInt(m[4]);
-    const months={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
-    const mon = months[monStr]; if(mon==null) return null;
-    // This string has no year (e.g. a display-formatted fallback), so infer one:
-    // try the current year first, and if that lands more than ~90 days in the
-    // past, assume it actually means next year's occurrence. A hardcoded year
-    // here previously caused any far-future event without a proper ISO kickoff
-    // to be silently treated as already past and locked.
-    // A kickoff being parsed here is, by definition, meant to represent an
-    // upcoming fixture (used to compute a future lock time) — so if the
-    // current-year interpretation already falls in the past at all, this
-    // almost certainly means next year's occurrence, not a stale one.
-    const now = new Date();
-    let year = now.getFullYear();
-    let d = new Date(Date.UTC(year, mon, day, hh, mm));
-    if(d.getTime() < now.getTime()){
-      d = new Date(Date.UTC(year+1, mon, day, hh, mm));
-    }
-    return d.getTime();
-  }
+  // The "D Mon HH:MM" display-string fallback (year inference) is gone
+  // (Phase 1.7): every stored kickoff now arrives as kickoff_at or ISO text —
+  // the 2026-08 census found zero rows in that format, and the parity gate
+  // (scripts/kickoff-backfill/parity-check.mjs) proved removal cannot flip
+  // any lock or round boundary. demo/ keeps its own copy on purpose: its
+  // hardcoded data uses the display format.
   const t = new Date(s).getTime();
   return isNaN(t)?null:t;
 }
