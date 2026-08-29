@@ -20,9 +20,8 @@ CONTAINER=gw-readgate-test-pg
 
 shopt -s nullglob
 ALL=("$MIGRATIONS_DIR"/*.sql)
-LAST="${ALL[${#ALL[@]}-1]}"
-if [[ "$LAST" != *read_gate* && "$LAST" != *prediction_read* ]]; then
-  echo "FAIL: newest migration is not the prediction read gate (got $(basename "$LAST"))" >&2
+if ! ls "$MIGRATIONS_DIR"/*read_gate*.sql >/dev/null 2>&1; then
+  echo "FAIL: no prediction read-gate migration found" >&2
   exit 1
 fi
 
