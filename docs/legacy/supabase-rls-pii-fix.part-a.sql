@@ -1,3 +1,9 @@
+-- ============================================================================
+-- LEGACY - DO NOT RUN. Already applied to the live database; its effects are
+-- captured in the committed baseline supabase/migrations/20260829220021_remote_schema.sql.
+-- Kept for history only. All new schema changes are Supabase CLI migrations.
+-- ============================================================================
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- GAMEWEEK — RLS PII fix
 -- Stops the public anon key from reading operator/player secrets.

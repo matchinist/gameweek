@@ -1,4 +1,10 @@
 -- ============================================================================
+-- LEGACY - DO NOT RUN. Already applied to the live database; its effects are
+-- captured in the committed baseline supabase/migrations/20260829220021_remote_schema.sql.
+-- Kept for history only. All new schema changes are Supabase CLI migrations.
+-- ============================================================================
+
+-- ============================================================================
 -- Phase 0 — Contain (REARCHITECTURE-PHASES.md tasks 0.2, 0.3, 0.5)
 -- Run in the Supabase SQL editor, section by section, top to bottom.
 -- Each section is independently revertible (rollback noted at the end of it).

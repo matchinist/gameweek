@@ -1,3 +1,9 @@
+-- ============================================================================
+-- LEGACY - DO NOT RUN. Already applied to the live database; its effects are
+-- captured in the committed baseline supabase/migrations/20260829220021_remote_schema.sql.
+-- Kept for history only. All new schema changes are Supabase CLI migrations.
+-- ============================================================================
+
 -- ═══════════════════════════════════════════════════════════════════════════
 -- HOST-PAGE SSO ("connect the game to the account players already have")
 -- Run manually in the Supabase SQL editor, like supabase-migration.sql.

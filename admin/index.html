@@ -3420,7 +3420,7 @@ function copyEmbed(){
 // ── SINGLE SIGN-ON ────────────────────────────────────────────────────────────
 // Host-page SSO: the operator's site signs each logged-in user's identity
 // with sso_secret, and the sso-login Edge Function verifies it before the
-// embed signs the player in (see supabase-sso.sql for the full picture).
+// embed signs the player in (see docs/legacy/supabase-sso.sql for the full picture).
 // The secret lives on gw_operators, readable only through the operator's own
 // RLS-protected row — the anon-facing gw_operators_public view can't see it.
 

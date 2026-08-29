@@ -5162,7 +5162,8 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
     if(CLIENT_PARAM&&CLIENT_PARAM!=='demo'){
       try{
         // `domains` is fetched separately, not folded into this select: the
-        // column is added by supabase-sso.sql, and pushing this frontend
+        // column is added by the SSO migration (docs/legacy/supabase-sso.sql,
+        // now in the migrations baseline), and pushing this frontend
         // before that migration runs would otherwise 400 the whole branding
         // fetch and leave every operator unthemed. Its own failure is
         // swallowed (SSO just stays un-gated until the migration lands).

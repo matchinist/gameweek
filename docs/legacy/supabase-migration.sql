@@ -1,3 +1,10 @@
+-- ============================================================================
+-- LEGACY - DO NOT RUN. THIS FILE TRUNCATES TABLES - running it against live
+-- would DESTROY production data. The real schema lives in the committed
+-- baseline supabase/migrations/20260829220021_remote_schema.sql; all new
+-- schema changes are Supabase CLI migrations. Kept for history only.
+-- ============================================================================
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- GAMEWEEK — Supabase Auth Migration
 -- Run in Supabase SQL Editor in one go

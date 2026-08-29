@@ -245,7 +245,7 @@ Key points:
 | Path | Role |
 |---|---|
 | `supabase/functions/sso-login/index.ts` | The Edge Function (verifies the signature, mints the session). |
-| `supabase-sso.sql` | Adds `gw_operators.sso_enabled` / `sso_secret`, re-creates `gw_operators_public` with `domains`, adds the username unique index. |
+| `docs/legacy/supabase-sso.sql` | (applied; kept for history) Added `gw_operators.sso_enabled` / `sso_secret`, re-created `gw_operators_public` with `domains`, added the username unique index. Now captured in the `supabase/migrations/` baseline. |
 | `embed.js` | Reads `data-sso-*`, posts the identity into the iframe on load. |
 | `embed/index.html` | Receives the identity, origin-checks it, calls the function, verifies the token, creates/loads the player. |
 | `admin/index.html` | The Single Sign-On admin card (enable, secret, snippet, domains). |
@@ -370,7 +370,8 @@ Two manual steps, both independent of the (auto-deploying) static frontend. SSO
 is opt-in per operator, so pushing the frontend first is safe — it degrades to
 normal manual login until these are done.
 
-1. **Run the SQL.** Paste `supabase-sso.sql` into the Supabase SQL editor and
+1. **Run the SQL.** *(Done on live — kept for a from-scratch rebuild, where the
+   `supabase/migrations/` baseline covers it.)* Paste `docs/legacy/supabase-sso.sql` into the Supabase SQL editor and
    run it. It adds the columns, re-creates `gw_operators_public` with `domains`,
    and adds the `(client_key, username)` unique index.
    - The unique index errors only if duplicate usernames already exist for a
@@ -413,7 +414,7 @@ frame's DOM.
 | `401 bad_signature` | The secret used to sign ≠ the operator's secret, or the message wasn't exactly `id:email` lowercase-hex. |
 | Console: `SSO identity ignored — … not an allowed domain` | The page's origin isn't under Allowed Domains. Add it. |
 | Console: `SSO: no Allowed Domains configured — rejecting identity` | SSO is enabled but the domain list is empty; the origin check fails closed. Add the embedding site under Allowed Domains. |
-| `500 server_error` | Usually the SQL migration hasn't run (columns missing). Run `supabase-sso.sql`. |
+| `500 server_error` | Usually the SQL migration hasn't run (columns missing). The columns are in the `supabase/migrations/` baseline (originally `docs/legacy/supabase-sso.sql`). |
 | Nothing happens / no sign-in | Not using the script embed and not posting the identity yourself; or the signature is in the URL (unsupported) instead of `postMessage`. |
 | Secret visible in View Source | The signature was computed client-side. Move it server-side and **Regenerate** the secret. |
 | `406` on `gw_players` `select=*...single()` | Expected — it's the "no existing player" / "username free" check returning zero rows. Not an error. |
