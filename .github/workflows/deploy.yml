@@ -55,5 +55,8 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          pnpm exec wrangler pages project create gameweek --production-branch=main || echo "project create failed or already exists — continuing"
-          pnpm exec wrangler pages deploy _site --project-name=gameweek --branch=main --commit-dirty=true
+          # Create-if-missing via the REST API (wrangler hides the error body).
+          curl -s -X POST "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json" \
+            -d '{"name":"gameweek-cloud","production_branch":"main"}' | head -c 600; echo
+          pnpm exec wrangler pages deploy _site --project-name=gameweek-cloud --branch=main --commit-dirty=true

@@ -44,4 +44,4 @@ jobs:
           BRANCH: ${{ github.head_ref || github.ref_name }}
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "no CF secrets — skipping preview"; exit 0; fi
-          pnpm exec wrangler pages deploy _site --project-name=gameweek --branch="$BRANCH" --commit-dirty=true
+          pnpm exec wrangler pages deploy _site --project-name=gameweek-cloud --branch="$BRANCH" --commit-dirty=true
