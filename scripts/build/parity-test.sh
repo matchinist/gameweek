@@ -32,6 +32,7 @@ pair widgets/standings/index.html         apps/widgets/standings/index.html
 pair widgets/top-scorers/index.html       apps/widgets/top-scorers/index.html
 pair widgets/squad-analytics/index.html   apps/widgets/squad-analytics/index.html
 pair index.html                           apps/marketing/index.html
+pair 404.html                             apps/marketing/404.html
 for p in contact privacy terms pricingtest cs2fantasy welcome reset reset-password; do
   pair "$p/index.html" "apps/marketing/$p/index.html"
 done
@@ -47,7 +48,7 @@ LEAKS=$(cd _site && find . -type f \
   ! -path './widgets/*' ! -path './contact/*' ! -path './privacy/*' ! -path './terms/*' \
   ! -path './pricingtest/*' ! -path './cs2fantasy/*' ! -path './welcome/*' \
   ! -path './reset/*' ! -path './reset-password/*' \
-  ! -name index.html ! -name embed.js ! -name robots.txt ! -name sitemap.xml \
+  ! -name index.html ! -name 404.html ! -name embed.js ! -name robots.txt ! -name sitemap.xml \
   ! -name favicon.png ! -name og-image.png ! -name CNAME ! -name llms.txt ! -name _headers | sort)
 if [ -n "$LEAKS" ]; then echo "FAIL  unexpected files in _site:"; echo "$LEAKS" | head; FAILED=1
 else echo "PASS  no non-allowlisted files in _site"; fi
