@@ -6,9 +6,11 @@
   "scripts": {
     "build": "pnpm --recursive --filter './apps/*' run build && node scripts/build/assemble-site.mjs",
     "test": "vitest run && node --test scripts/kickoff-backfill/*.test.mjs && scripts/build/parity-test.sh",
-    "test:unit": "vitest run"
+    "test:unit": "vitest run",
+    "test:contract": "cd tests/embed-contract && playwright test --config playwright.config.js"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@types/node": "^26.4.0",
     "@vitest/coverage-v8": "^4.1.11",
     "acorn": "^8.18.0",

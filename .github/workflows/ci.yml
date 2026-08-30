@@ -28,3 +28,7 @@ jobs:
         run: node scripts/build/ci-checks.mjs
       - name: Build and verify _site
         run: scripts/build/parity-test.sh
+      - name: Install Playwright chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Embed-contract tests (classic render, inline handshake, SSO origin gate)
+        run: pnpm run test:contract

@@ -1692,6 +1692,15 @@ function renderCompTabs(){
   const el=document.getElementById('comp-tabs');
   const wrap=document.getElementById('comp-tabs-wrap');
   const scopeEl=document.getElementById('comp-scope-text');
+  // Zero competitions (a fresh operator, or none active): hide the switcher
+  // and let renderPredict show its "no competitions yet" empty state. This
+  // used to crash on COMPS[currentCompIdx].color, which aborted init before
+  // ssoInitDone — silently disabling host-page SSO for exactly the operators
+  // most likely to be mid-onboarding.
+  if(!COMPS.length){
+    if(wrap) wrap.style.display='none';
+    return;
+  }
   // A comp= filter that narrows things to exactly one competition means the
   // embed is meant to show just that competition on its own — no switcher.
   compTabsHidden = COMP_FILTER.length>0 && COMPS.length===1;
