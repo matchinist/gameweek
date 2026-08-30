@@ -1,3 +1,8 @@
+// @ts-nocheck — RETIRED scaffolding, kept for history. Its input
+// (demo/index.html, the fork) was deleted when 2.5 landed; the generated
+// apps/embed/public/demo-data.js is now the canonical source and is edited
+// directly. This script can no longer run.
+//
 // Phase 2.5 — generates apps/embed/demo-data.js from the demo fork's data.
 //
 // One-time extraction: while demo/index.html still exists, its hand-written
