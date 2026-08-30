@@ -18,25 +18,18 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      # Deploy an allowlist, not the repo: only intended-public files are
-      # staged into _site/. Anything not listed here (SQL migration files,
-      # docs/, CLAUDE.md, sso-test.html, supabase/ sources, dotfiles) is
-      # never uploaded, so it cannot be served from www.gameweek.cloud.
-      - name: Stage public files into _site/
-        run: |
-          set -euo pipefail
-          mkdir -p _site
-          # App + marketing directories
-          for d in embed admin data demo widgets welcome reset reset-password \
-                   contact privacy terms pricingtest cs2fantasy; do
-            cp -r "$d" "_site/$d"
-          done
-          # Root files
-          for f in index.html embed.js robots.txt sitemap.xml favicon.png \
-                   og-image.png CNAME llms.txt; do
-            cp "$f" "_site/$f"
-          done
-          echo "Staged files:" && find _site -type f | sort
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Build all apps and assemble _site/ (scripts/build/assemble-site.mjs IS
+      # the deploy allowlist from Phase 0.6 — a file ships only by being
+      # listed there), then the parity gate verifies the output shape and
+      # that nothing non-allowlisted leaked before anything is uploaded.
+      - name: Build and verify _site
+        run: scripts/build/parity-test.sh
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

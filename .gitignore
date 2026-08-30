@@ -5,3 +5,4 @@ node_modules/
 _site/
 supabase/.temp/
 supabase/.branches/
+dist/

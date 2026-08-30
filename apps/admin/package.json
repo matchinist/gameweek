@@ -1,0 +1,6 @@
+{
+  "name": "@gameweek/admin",
+  "private": true,
+  "type": "module",
+  "scripts": { "build": "vite build", "dev": "vite" }
+}

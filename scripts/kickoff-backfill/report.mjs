@@ -53,7 +53,7 @@ async function main() {
   // The anon key is public by design (RLS is the boundary); read it from the
   // embed page so this script has no config of its own.
   const { readFileSync } = await import('node:fs');
-  const anonKey = readFileSync(new URL('../../embed/index.html', import.meta.url), 'utf8')
+  const anonKey = readFileSync(new URL('../../apps/embed/index.html', import.meta.url), 'utf8')
     .match(/eyJ[A-Za-z0-9_.-]+/)[0];
 
   const rows = await fetchAllEvents(anonKey);

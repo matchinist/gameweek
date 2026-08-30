@@ -55,7 +55,7 @@ async function fetchAll(anonKey) {
   }
 }
 
-const anonKey = readFileSync(new URL('../../embed/index.html', import.meta.url), 'utf8')
+const anonKey = readFileSync(new URL('../../apps/embed/index.html', import.meta.url), 'utf8')
   .match(/eyJ[A-Za-z0-9_.-]+/)[0];
 const rows = await fetchAll(anonKey);
 const now = Date.now();

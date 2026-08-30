@@ -1,5 +1,0 @@
-- generic [ref=e5]:
-  - generic [ref=e6]: gameweek
-  - generic [ref=e7] [cursor=pointer]:
-    - generic [ref=e8]: "?"
-    - generic [ref=e9]: Sign in
