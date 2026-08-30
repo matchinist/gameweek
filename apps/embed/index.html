@@ -600,9 +600,14 @@ if(window.Sentry){
 // ── SUPABASE CLIENT ───────────────────────────────────────────────────────────
 const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
-const supa = supabase.createClient(SUPA_URL, SUPA_KEY, {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'gw-player'}});
+let supa = supabase.createClient(SUPA_URL, SUPA_KEY, {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'gw-player'}});
 
 const CLIENT_PARAM = new URLSearchParams(location.search).get('client') || 'demo';
+// Demo mode (Phase 2.5): client=demo swaps `supa` for an in-memory mock of
+// the same interface, loaded on demand in init() — the demo is this very app
+// with a bundled dataset, and NEVER touches the real backend. Real clients
+// load zero extra bytes.
+const IS_DEMO = CLIENT_PARAM === 'demo';
 
 // ── HOST-PAGE SSO IDENTITY ────────────────────────────────────────────────
 // The user already signed in on the operator's site (e.g. their Shopify
@@ -5162,6 +5167,17 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
 // ── INIT ──────────────────────────────────────────────────────────────────────
 (async()=>{
   try{
+    if(IS_DEMO){
+      // Load the demo dataset + mock client. If the script fails to load,
+      // `supa` stays real and the page degrades to the old empty-demo state.
+      await new Promise(res=>{
+        const s=document.createElement('script');
+        s.src='/embed/demo-data.js';
+        s.onload=res; s.onerror=res;
+        document.head.appendChild(s);
+      });
+      if(window.GW_DEMO) supa = GW_DEMO.createClient();
+    }
     // Wait for Supabase to fully restore session from storage
     const session = await new Promise(resolve => {
       const {data:{subscription}} = supa.auth.onAuthStateChange((event, sess) => {

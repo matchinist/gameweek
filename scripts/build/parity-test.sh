@@ -26,6 +26,7 @@ pair() { # <url-path-in-_site> <source-file>
 
 # apps
 pair embed/index.html                     apps/embed/index.html
+pair embed/demo-data.js                   apps/embed/public/demo-data.js
 pair admin/index.html                     apps/admin/index.html
 pair data/index.html                      apps/data/index.html
 pair widgets/standings/index.html         apps/widgets/standings/index.html
@@ -36,8 +37,7 @@ pair 404.html                             apps/marketing/404.html
 for p in contact privacy terms pricingtest cs2fantasy welcome reset reset-password; do
   pair "$p/index.html" "apps/marketing/$p/index.html"
 done
-# statics + the demo fork (still a plain copy until 2.5)
-pair demo/index.html demo/index.html
+pair demo/index.html                      apps/marketing/demo/index.html
 for f in embed.js robots.txt sitemap.xml favicon.png og-image.png CNAME llms.txt _headers; do
   pair "$f" "$f"
 done

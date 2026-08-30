@@ -25,8 +25,6 @@ for (const [from, to] of Object.entries(appDist)) {
   cpSync(src, join(site, to), { recursive: true });
 }
 
-// The demo fork is still a plain static directory until 2.5 retires it.
-cpSync(join(root, 'demo'), join(site, 'demo'), { recursive: true });
 
 // Root static allowlist.
 for (const f of ['embed.js', 'robots.txt', 'sitemap.xml', 'favicon.png', 'og-image.png', 'CNAME', 'llms.txt', '_headers']) {

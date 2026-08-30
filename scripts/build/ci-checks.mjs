@@ -21,7 +21,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const APP_PAGES = [
   'apps/embed/index.html', 'apps/admin/index.html', 'apps/data/index.html',
   'apps/widgets/standings/index.html', 'apps/widgets/top-scorers/index.html',
-  'apps/widgets/squad-analytics/index.html', 'demo/index.html',
+  'apps/widgets/squad-analytics/index.html', 'apps/marketing/demo/index.html',
 ];
 
 // Known user- or operator-controlled strings that must never be interpolated
