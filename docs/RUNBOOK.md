@@ -81,9 +81,15 @@ Deployments → ⋯ menu on any previous deployment → *Rollback to this
 deployment*. Instant, no rebuild. From the CLI:
 `pnpm exec wrangler pages deployment list --project-name=gameweek-cloud`.
 
-**Cutover plan (pending):** zone `gameweek.cloud` added to Cloudflare, then
-nameservers switched at Namecheap (verify the Google MX + TXT records
-imported first — email breaks otherwise); once the zone is active, attach
-`www.gameweek.cloud` as a custom domain on the project and point the `www`
-CNAME at `gameweek-cloud.pages.dev`. GitHub Pages stays warm; reverting is
-one CNAME change back to `matchinist.github.io`.
+**Cutover: DONE 2026-08-30.** Zone on Cloudflare (Google MX + TXT verified
+imported — email unaffected); `www.gameweek.cloud` attached as the project's
+custom domain, CNAME flipped by Cloudflare. Verified: security headers on
+`www`, zero GitHub/Fastly fingerprints, all public paths 200, real 404s
+(a `404.html` is required or Pages soft-200s the homepage on unknown paths),
+embed E2E with live data, and a locked-event prediction correctly rejected by
+the DB through the new origin. Apex still points at GitHub Pages IPs, which
+301-redirect to www — works; tidy later.
+
+**Rollback of the cutover:** Cloudflare DNS → edit the `www` CNAME back to
+`matchinist.github.io`. The GitHub Pages deploy still runs on every push and
+the CNAME file still ships, so GitHub stays warm indefinitely.
