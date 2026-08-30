@@ -17,8 +17,10 @@ jobs:
           set -euo pipefail
           fail=0
           check() { # url, expected marker
-            body=$(curl -sS --max-time 20 "$1") || { echo "FAIL fetch $1"; fail=1; return; }
-            echo "$body" | grep -q "$2" || { echo "FAIL marker '$2' missing at $1"; fail=1; return; }
+            code=$(curl -sS --compressed --max-time 20 -o /tmp/body -w '%{http_code}' "$1") || { echo "FAIL fetch $1"; fail=1; return; }
+            if [ "$code" != "200" ] || ! grep -qi "$2" /tmp/body; then
+              echo "FAIL $1 (http $code); body head:"; head -c 300 /tmp/body; echo; fail=1; return
+            fi
             echo "ok   $1"
           }
           check "https://www.gameweek.cloud/embed/?client=demo" "gameweek"
