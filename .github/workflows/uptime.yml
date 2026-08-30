@@ -1,0 +1,32 @@
+name: Uptime check
+# Phase 2.8 — a free uptime probe with no extra accounts: public-repo Actions
+# minutes are free, and a failed run emails the repo owner automatically.
+# Probes the embed (the product) and the seamless loader every 15 minutes.
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe production
+        run: |
+          set -euo pipefail
+          fail=0
+          check() { # url, expected marker
+            body=$(curl -sS --max-time 20 "$1") || { echo "FAIL fetch $1"; fail=1; return; }
+            echo "$body" | grep -q "$2" || { echo "FAIL marker '$2' missing at $1"; fail=1; return; }
+            echo "ok   $1"
+          }
+          check "https://www.gameweek.cloud/embed/?client=demo" "gameweek"
+          check "https://www.gameweek.cloud/embed.js" "GameweekEmbed"
+          # Supabase REST reachable with the public anon key extracted from the page
+          key=$(curl -sS --max-time 20 https://www.gameweek.cloud/embed/ | grep -oE 'eyJ[A-Za-z0-9_.-]+' | head -1)
+          code=$(curl -sS --max-time 20 -o /dev/null -w '%{http_code}' \
+            -H "apikey: $key" -H "Authorization: Bearer $key" \
+            "https://mgfzqkesikfdrahherfm.supabase.co/rest/v1/gw_competitions?select=id&limit=1")
+          [ "$code" = "200" ] && echo "ok   supabase REST" || { echo "FAIL supabase REST ($code)"; fail=1; }
+          exit $fail

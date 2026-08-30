@@ -24,6 +24,9 @@ const OPERATORS = {
 };
 
 async function interceptSupabase(context, state) {
+  // keep the suite hermetic and quiet: no Sentry SDK, no ingest
+  await context.route('https://browser.sentry-cdn.com/**', (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: '' }));
+  await context.route('https://*.ingest.de.sentry.io/**', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
   await context.route(`${SUPA}/**`, async (route) => {
     const url = new URL(route.request().url());
     const wantsObject = (route.request().headers()['accept'] || '').includes('pgrst.object');

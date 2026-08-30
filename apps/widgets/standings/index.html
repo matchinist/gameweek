@@ -59,6 +59,24 @@ td.col-diff.neg{color:var(--red);}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.js" integrity="sha384-ysv13JVP3fufiEXfjML9OdCa/rRbMJvUBOWyor82wfuK8INNZAvmbxHgKIHi+oqz" crossorigin="anonymous"></script>
+<script src="https://browser.sentry-cdn.com/10.72.0/bundle.min.js" integrity="sha384-CJFiRXW+X61SiwyHeuiHWqxTNgAMz3wwQn6/0t+i/Nvkq2VdGFNfEOu3XFmS9ogm" crossorigin="anonymous"></script>
+<script>
+// Sentry error tracking (Phase 2.8). Errors only — no tracing, no PII, no
+// user context; the DSN is a publishable ingest key (same philosophy as the
+// Supabase anon key). Guarded so a blocked CDN never breaks the app.
+if(window.Sentry){
+  Sentry.init({
+    dsn:'https://2f850c43742de022613e346d71c5e6f6@o4512000226557952.ingest.de.sentry.io/4512000232652880',
+    environment: location.hostname==='www.gameweek.cloud' ? 'production' : 'preview',
+    ignoreErrors:[
+      'ResizeObserver loop', // benign Chromium noise, esp. inside iframes
+      /extension:\/\//, /^chrome:\/\//, /moz-extension/,
+    ],
+  });
+  Sentry.setTag('app','widget-standings');
+  try{var gwCk=new URLSearchParams(location.search).get('client'); if(gwCk) Sentry.setTag('client_key', gwCk);}catch(e){}
+}
+</script>
 <script>
 const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI'; // same anon key used in gameweek-live.html

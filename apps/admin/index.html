@@ -1477,6 +1477,23 @@ tbody tr:hover td{background:var(--bg);}
 
 <!-- ══ JS ══ -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://browser.sentry-cdn.com/10.72.0/bundle.min.js" integrity="sha384-CJFiRXW+X61SiwyHeuiHWqxTNgAMz3wwQn6/0t+i/Nvkq2VdGFNfEOu3XFmS9ogm" crossorigin="anonymous"></script>
+<script>
+// Sentry error tracking (Phase 2.8). Errors only — no tracing, no PII, no
+// user context; the DSN is a publishable ingest key (same philosophy as the
+// Supabase anon key). Guarded so a blocked CDN never breaks the app.
+if(window.Sentry){
+  Sentry.init({
+    dsn:'https://2f850c43742de022613e346d71c5e6f6@o4512000226557952.ingest.de.sentry.io/4512000232652880',
+    environment: location.hostname==='www.gameweek.cloud' ? 'production' : 'preview',
+    ignoreErrors:[
+      'ResizeObserver loop', // benign Chromium noise, esp. inside iframes
+      /extension:\/\//, /^chrome:\/\//, /moz-extension/,
+    ],
+  });
+  Sentry.setTag('app','admin');
+}
+</script>
 <script>
 // ── SUPABASE ──────────────────────────────────────────────────────────────
 const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
