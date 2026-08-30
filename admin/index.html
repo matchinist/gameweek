@@ -88,6 +88,16 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .stat-card-sub{font-size:11px;color:var(--text-3);margin-top:5px;}
 .stat-card-accent .stat-card-value{color:var(--accent);}
 .stat-card-green .stat-card-value{color:var(--green);}
+.users-subtab-btn{padding:8px 18px;border:none;border-radius:8px;background:transparent;color:var(--text-3);font-size:13px;font-weight:600;cursor:pointer;}
+.users-subtab-btn.active{background:var(--white);color:var(--text);box-shadow:0 1px 2px rgba(20,20,40,0.06);}
+.engagement-round-row{display:grid;grid-template-columns:1fr 140px 200px;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);}
+.engagement-round-row:last-child{border-bottom:none;}
+.engagement-round-label{font-size:13px;font-weight:700;color:var(--text);}
+.engagement-round-status{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;padding:3px 8px;border-radius:999px;width:fit-content;}
+.engagement-round-status.completed{background:var(--sidebar-2);color:var(--text-3);}
+.engagement-round-status.active{background:var(--green-light,#DCFCE7);color:var(--green);}
+.engagement-round-metric{font-size:12px;color:var(--text-2);}
+.engagement-round-metric strong{color:var(--text);font-family:var(--mono);}
 
 /* ── CARDS ── */
 .card{background:var(--white);border:1px solid var(--border);border-radius:8px;}
@@ -403,17 +413,8 @@ tbody tr:hover td{background:var(--bg);}
           <div class="card" style="margin-bottom:14px;">
             <div class="card-header"><span class="card-title">Your Embed Code</span></div>
             <div class="card-body">
-              <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">Paste a snippet into any page on your site. The widget loads your competitions automatically.</p>
-              <div style="display:flex;gap:6px;margin-bottom:10px;">
-                <button class="btn btn-primary btn-sm" id="embed-mode-btn-script" onclick="setEmbedMode('script')">Seamless script</button>
-                <button class="btn btn-outline btn-sm" id="embed-mode-btn-iframe" onclick="setEmbedMode('iframe')">iframe</button>
-              </div>
-              <div class="embed-box" id="embed-code-box-script">
-&lt;div data-gameweek <span style="color:#FCD34D" id="embed-script-attrs">data-client="..."</span>&gt;&lt;/div&gt;<br>
-&lt;script async src="https://www.gameweek.cloud/embed.js"&gt;&lt;/script&gt;
-                <button class="btn btn-outline btn-sm embed-copy-btn" onclick="copyEmbed()" style="font-family:var(--mono);font-size:10px;background:var(--sidebar-2);border-color:var(--sidebar-border);color:#9CA3AF;" id="copy-btn-script">Copy</button>
-              </div>
-              <div class="embed-box" id="embed-code-box" style="display:none;">
+              <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">Paste this snippet into any page on your site. The widget loads your competitions automatically.</p>
+              <div class="embed-box" id="embed-code-box">
 &lt;iframe
   src="https://www.gameweek.cloud/embed?<span style="color:#FCD34D" id="embed-query-string">client=...</span>"
   width="100%"
@@ -423,7 +424,6 @@ tbody tr:hover td{background:var(--bg);}
 &gt;&lt;/iframe&gt;
                 <button class="btn btn-outline btn-sm embed-copy-btn" onclick="copyEmbed()" style="font-family:var(--mono);font-size:10px;background:var(--sidebar-2);border-color:var(--sidebar-border);color:#9CA3AF;" id="copy-btn">Copy</button>
               </div>
-              <p style="font-size:11px;color:var(--text-3);margin-top:10px;" id="embed-mode-note">Recommended. The game sizes itself to its content and scrolls with your page — no fixed height, no inner scrollbar, it just becomes part of the page.</p>
               <p style="font-size:11px;color:var(--text-3);margin-top:10px;">Your client key: <span style="font-family:var(--mono);color:var(--text)" id="embed-client-key-label">...</span></p>
               <p style="font-size:11px;color:var(--text-3);margin-top:4px;">Domain not live yet? <a href="#" id="embed-test-link" target="_blank" style="color:var(--accent);text-decoration:none;">Test your live embed →</a></p>
             </div>
@@ -447,39 +447,6 @@ tbody tr:hover td{background:var(--bg);}
               <div style="display:flex;flex-wrap:wrap;gap:8px;" id="domain-list"></div>
             </div>
           </div>
-
-          <div class="card" style="margin-top:14px;">
-            <div class="card-header">
-              <span class="card-title">Single Sign-On</span>
-              <span class="badge badge-gray" id="sso-status-badge">○ Off</span>
-            </div>
-            <div class="card-body">
-              <p style="font-size:12px;color:var(--text-2);margin-bottom:12px;">Sign players in with the account they already have on your site — no separate registration, no repeated logins. Your page passes each logged-in user's id, email and name together with a signature computed from the secret below; we verify the signature server-side before signing anyone in.</p>
-              <div id="sso-off-block">
-                <button class="btn btn-primary btn-sm" onclick="enableSso()">Enable SSO</button>
-              </div>
-              <div id="sso-on-block" style="display:none;">
-                <div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:4px;">Your SSO secret</div>
-                <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;">
-                  <input readonly type="password" id="sso-secret-input" style="flex:1;min-width:0;font-family:var(--mono);font-size:11px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg);color:var(--text);" />
-                  <button class="btn btn-outline btn-sm" id="sso-reveal-btn" onclick="toggleSsoSecretVisible()">Show</button>
-                  <button class="btn btn-outline btn-sm" onclick="copySsoSecret()">Copy</button>
-                </div>
-                <p style="font-size:11px;color:var(--text-3);margin-bottom:14px;">Keep the secret in server-rendered template code only — never in anything a visitor can view-source. Anyone holding it can sign your players in.</p>
-                <div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:4px;">Shopify snippet</div>
-                <p style="font-size:11px;color:var(--text-3);margin-bottom:8px;">Shopify's Liquid computes the signature natively (<span style="font-family:var(--mono);">hmac_sha256</span>) — no app needed, this replaces your embed snippet as-is:</p>
-                <!-- white-space:pre renders every text node literally, so the box must
-                     contain exactly the button (absolute, out of flow) and the span. -->
-                <div class="embed-box" style="white-space:pre;overflow-x:auto;"><button class="btn btn-outline btn-sm embed-copy-btn" onclick="copySsoSnippet()" style="font-family:var(--mono);font-size:10px;background:var(--sidebar-2);border-color:var(--sidebar-border);color:#9CA3AF;">Copy</button><span id="sso-snippet-pre"></span></div>
-                <p style="font-size:11px;color:var(--text-3);margin-top:10px;">On any other platform, render the same four <span style="font-family:var(--mono);">data-sso-*</span> attributes server-side, from your logged-in user, on the seamless script embed. The signature is the hex HMAC-SHA256 of <span style="font-family:var(--mono);">id + ":" + email</span> using your secret, computed on your server — never in code a visitor can view.</p>
-                <p style="font-size:11px;color:var(--text-3);margin-top:8px;">SSO needs the <strong>seamless script embed</strong> (above), not the classic iframe, and requires at least one entry under <strong>Allowed Domains</strong> — sign-in is only accepted from those domains, which is what stops a copied signature being replayed from another site.</p>
-                <div style="display:flex;gap:6px;margin-top:12px;">
-                  <button class="btn btn-outline btn-sm" onclick="regenerateSsoSecret()">Regenerate secret</button>
-                  <button class="btn btn-outline btn-sm" onclick="disableSso()">Disable</button>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div>
@@ -498,7 +465,7 @@ tbody tr:hover td{background:var(--bg);}
                   <div style="width:22px;height:22px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:700;color:white;flex-shrink:0;">2</div>
                   <div>
                     <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px;">Copy the snippet</div>
-                    <div style="font-size:11px;color:var(--text-3);">Paste the embed code (script or iframe) into your CMS, HTML, or template.</div>
+                    <div style="font-size:11px;color:var(--text-3);">Paste the iframe code into your CMS, HTML, or template.</div>
                   </div>
                 </div>
                 <div style="display:flex;gap:10px;align-items:flex-start;">
@@ -543,34 +510,49 @@ tbody tr:hover td{background:var(--bg);}
           <div class="page-title">Users</div>
           <div class="page-sub" style="font-size:15px;">Everyone who has registered to play on your site.</div>
         </div>
-        <button class="btn btn-outline" onclick="exportUsersCSV()">Export CSV</button>
+        <button class="btn btn-outline" id="users-export-btn" onclick="exportUsersCSV()">Export CSV</button>
       </div>
 
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Registered users <span id="users-count" style="color:var(--text-3);font-weight:500;"></span></span>
-          <input class="form-input" id="users-search" type="text" name="gw-user-filter"
-                 placeholder="Search users" autocomplete="gw-no-autofill" readonly
-                 autocorrect="off" autocapitalize="off" spellcheck="false"
-                 data-lpignore="true" data-form-type="other"
-                 onfocus="this.removeAttribute('readonly')"
-                 oninput="usersSetSearch(this.value)"
-                 style="width:230px;padding:7px 10px;font-size:12px;">
+      <div style="display:flex;gap:2px;background:var(--sidebar-2);border-radius:10px;padding:3px;margin-bottom:20px;width:fit-content;">
+        <button class="users-subtab-btn" id="users-subtab-btn-registrations" onclick="switchUsersSubTab('registrations')">Registrations</button>
+        <button class="users-subtab-btn" id="users-subtab-btn-engagement" onclick="switchUsersSubTab('engagement')">Engagement</button>
+      </div>
+
+      <div id="users-subtab-registrations">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Registered users <span id="users-count" style="color:var(--text-3);font-weight:500;"></span></span>
+            <input class="form-input" id="users-search" type="text" name="gw-user-filter"
+                   placeholder="Search users" autocomplete="gw-no-autofill" readonly
+                   autocorrect="off" autocapitalize="off" spellcheck="false"
+                   data-lpignore="true" data-form-type="other"
+                   onfocus="this.removeAttribute('readonly')"
+                   oninput="usersSetSearch(this.value)"
+                   style="width:230px;padding:7px 10px;font-size:12px;">
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th style="text-align:right;">Predictions</th>
+                  <th>Registered</th>
+                </tr>
+              </thead>
+              <tbody id="users-table"></tbody>
+            </table>
+          </div>
+          <div id="users-pager" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-top:1px solid var(--border);"></div>
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Username</th>
-                <th>Email</th>
-                <th style="text-align:right;">Predictions</th>
-                <th>Registered</th>
-              </tr>
-            </thead>
-            <tbody id="users-table"></tbody>
-          </table>
+      </div>
+
+      <div id="users-subtab-engagement" style="display:none;">
+        <div class="form-group" style="max-width:320px;margin-bottom:20px;">
+          <label class="form-label">Competition</label>
+          <select class="form-select" id="engagement-comp-select" onchange="loadEngagementAnalytics(this.value)"></select>
         </div>
-        <div id="users-pager" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-top:1px solid var(--border);"></div>
+        <div id="engagement-content"></div>
       </div>
     </div>
 
@@ -1494,7 +1476,7 @@ tbody tr:hover td{background:var(--bg);}
 <div id="toast"></div>
 
 <!-- ══ JS ══ -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.js" integrity="sha384-ysv13JVP3fufiEXfjML9OdCa/rRbMJvUBOWyor82wfuK8INNZAvmbxHgKIHi+oqz" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 // ── SUPABASE ──────────────────────────────────────────────────────────────
 const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
@@ -1569,6 +1551,10 @@ async function saveAdminState(){
   }
 }
 
+// ── DM HELPERS (read from in-memory dmState) ──────────────────────────────
+function getDMTournaments(){ const all=dmState.tournaments||[]; return coverageState.tournamentIds ? all.filter(t=>coverageState.tournamentIds.has(t.id)) : all; }
+function getDMEvents(){ return dmState.events||{}; }
+function getDMTeams(){ const all=dmState.teams||[]; return coverageState.teamIds ? all.filter(t=>coverageState.teamIds.has(t.id)) : all; }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
 const modeLabel = {lms:'Last Man Standing', score:'Score Predictor', betting:'Betting Markets', ranking:'Ranking', lineup:'Lineup Predictor', roulette:'Soccer Roulette'};
@@ -1682,6 +1668,8 @@ function nav(view, subLabel){
     setTimeout(clearSearch, 150);
     setTimeout(clearSearch, 600);
     loadUsers();
+    engagementLoaded = false; // re-computed fresh next time Engagement is opened, in case competitions/predictions changed since
+    switchUsersSubTab('registrations'); // Registrations is the default landing tab every time this page opens
   }
   if(view==='settings') renderSettings();
   if(view==='branding') renderBranding();
@@ -3386,125 +3374,9 @@ function buildEmbedQueryString(){
   return qs;
 }
 
-let embedMode = 'script'; // 'script' (seamless loader) or 'iframe' (classic fixed-height)
-
-function embedScriptAttrs(){
-  let attrs = `data-client="${CLIENT_KEY}"`;
-  if(embedFilterComps && embedFilterComps.length){
-    attrs += ` data-comp="${embedFilterComps.join(',')}"`;
-  }
-  return attrs;
-}
-
-function setEmbedMode(mode){
-  embedMode = mode;
-  const isScript = mode==='script';
-  document.getElementById('embed-code-box-script').style.display = isScript?'':'none';
-  document.getElementById('embed-code-box').style.display = isScript?'none':'';
-  document.getElementById('embed-mode-btn-script').className = isScript?'btn btn-primary btn-sm':'btn btn-outline btn-sm';
-  document.getElementById('embed-mode-btn-iframe').className = isScript?'btn btn-outline btn-sm':'btn btn-primary btn-sm';
-  document.getElementById('embed-mode-note').textContent = isScript
-    ? 'Recommended. The game sizes itself to its content and scrolls with your page — no fixed height, no inner scrollbar, it just becomes part of the page.'
-    : 'Classic fixed-height iframe (620px, scrolls internally). Use it if your CMS strips <script> tags.';
-}
-
 function copyEmbed(){
-  // The closing script tag must be split so this page's own HTML parser
-  // doesn't read it as the end of the admin script block.
-  const code = embedMode==='script'
-    ? `<div data-gameweek ${embedScriptAttrs()}></div>\n<script async src="https://www.gameweek.cloud/embed.js"></scr`+`ipt>`
-    : `<iframe src="https://www.gameweek.cloud/embed?${buildEmbedQueryString()}" width="100%" height="620" frameborder="0" style="border-radius:10px;"></iframe>`;
+  const code = `<iframe src="https://www.gameweek.cloud/embed?${buildEmbedQueryString()}" width="100%" height="620" frameborder="0" style="border-radius:10px;"></iframe>`;
   navigator.clipboard.writeText(code).then(()=>toast('Copied to clipboard'));
-}
-
-// ── SINGLE SIGN-ON ────────────────────────────────────────────────────────────
-// Host-page SSO: the operator's site signs each logged-in user's identity
-// with sso_secret, and the sso-login Edge Function verifies it before the
-// embed signs the player in (see docs/legacy/supabase-sso.sql for the full picture).
-// The secret lives on gw_operators, readable only through the operator's own
-// RLS-protected row — the anon-facing gw_operators_public view can't see it.
-
-function ssoLiquidSnippet(){
-  const secret = currentOperator?.sso_secret || 'YOUR_SSO_SECRET';
-  // The closing script tag is split so this page's own HTML parser doesn't
-  // read it as the end of the admin script block (same as copyEmbed).
-  return `{% if customer %}
-<div data-gameweek data-client="${CLIENT_KEY}"
-     data-sso-id="{{ customer.id }}"
-     data-sso-email="{{ customer.email }}"
-     data-sso-name="{{ customer.first_name }}"
-     data-sso-sig="{{ customer.id | append: ':' | append: customer.email | hmac_sha256: '${secret}' }}"></div>
-{% else %}
-<div data-gameweek data-client="${CLIENT_KEY}"></div>
-{% endif %}
-<script async src="https://www.gameweek.cloud/embed.js"></scr`+`ipt>`;
-}
-
-function renderSsoCard(){
-  const badge = document.getElementById('sso-status-badge');
-  if(!badge) return;
-  const on = !!(currentOperator && currentOperator.sso_enabled && currentOperator.sso_secret);
-  badge.className = on ? 'badge badge-green' : 'badge badge-gray';
-  badge.textContent = on ? '● Active' : '○ Off';
-  document.getElementById('sso-off-block').style.display = on ? 'none' : '';
-  document.getElementById('sso-on-block').style.display = on ? '' : 'none';
-  if(on){
-    const input = document.getElementById('sso-secret-input');
-    input.value = currentOperator.sso_secret;
-    input.type = 'password';
-    document.getElementById('sso-reveal-btn').textContent = 'Show';
-    document.getElementById('sso-snippet-pre').textContent = ssoLiquidSnippet();
-  }
-}
-
-function newSsoSecret(){
-  const bytes = new Uint8Array(24);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-
-async function saveSso(fields){
-  const {error} = await supa.from('gw_operators').update(fields).eq('auth_id',currentOperator.auth_id);
-  if(error){
-    console.error('SSO save:', error);
-    toast('Could not save SSO settings');
-    return false;
-  }
-  Object.assign(currentOperator, fields);
-  renderSsoCard();
-  return true;
-}
-
-async function enableSso(){
-  // Re-enabling keeps the previous secret so snippets already deployed on
-  // the operator's site keep working without an update.
-  const secret = currentOperator.sso_secret || newSsoSecret();
-  if(await saveSso({sso_enabled:true, sso_secret:secret})) toast('SSO enabled');
-}
-
-async function disableSso(){
-  if(!confirm('Disable SSO? Players arriving from your site will have to sign in manually again.')) return;
-  if(await saveSso({sso_enabled:false})) toast('SSO disabled');
-}
-
-async function regenerateSsoSecret(){
-  if(!confirm('Regenerate the secret? Snippets still using the old secret stop signing players in until you update them.')) return;
-  if(await saveSso({sso_secret:newSsoSecret()})) toast('New secret generated — update the snippet on your site');
-}
-
-function toggleSsoSecretVisible(){
-  const input = document.getElementById('sso-secret-input');
-  const isHidden = input.type === 'password';
-  input.type = isHidden ? 'text' : 'password';
-  document.getElementById('sso-reveal-btn').textContent = isHidden ? 'Hide' : 'Show';
-}
-
-function copySsoSecret(){
-  navigator.clipboard.writeText(currentOperator?.sso_secret||'').then(()=>toast('Secret copied'));
-}
-
-function copySsoSnippet(){
-  navigator.clipboard.writeText(ssoLiquidSnippet()).then(()=>toast('Snippet copied'));
 }
 
 function renderDomains(){
@@ -3520,8 +3392,6 @@ function renderDomains(){
 function updateEmbedCodeDisplay(){
   const qsEl = document.getElementById('embed-query-string');
   if(qsEl) qsEl.textContent = buildEmbedQueryString();
-  const attrsEl = document.getElementById('embed-script-attrs');
-  if(attrsEl) attrsEl.textContent = embedScriptAttrs();
   const testLink = document.getElementById('embed-test-link');
   if(testLink) testLink.href = `https://www.gameweek.cloud/embed?${buildEmbedQueryString()}`;
 }
@@ -3567,7 +3437,6 @@ function renderEmbedInfo(){
   embedFilterComps = null; // reset to "All" whenever this page is opened fresh
   renderEmbedCompFilter();
   renderDomains();
-  renderSsoCard();
 }
 
 function getCoveredTournaments(){
@@ -3730,6 +3599,134 @@ function escapeHtml(s){
 }
 
 // Exports the current filter, not just the visible page.
+let engagementLoaded = false;
+function switchUsersSubTab(tab){
+  ['registrations','engagement'].forEach(t=>{
+    const btn = document.getElementById('users-subtab-btn-'+t);
+    const panel = document.getElementById('users-subtab-'+t);
+    if(btn) btn.classList.toggle('active', t===tab);
+    if(panel) panel.style.display = t===tab ? 'block' : 'none';
+  });
+  const exportBtn = document.getElementById('users-export-btn');
+  if(exportBtn) exportBtn.style.display = tab==='registrations' ? '' : 'none';
+  if(tab==='engagement' && !engagementLoaded){
+    engagementLoaded = true;
+    populateEngagementCompSelect();
+  }
+}
+
+function populateEngagementCompSelect(){
+  const sel = document.getElementById('engagement-comp-select');
+  if(!sel) return;
+  const comps = state.competitions||[];
+  if(!comps.length){
+    sel.innerHTML = '';
+    document.getElementById('engagement-content').innerHTML = '<div class="empty" style="padding:40px;"><div class="empty-icon">📊</div><div class="empty-title">No competitions yet</div></div>';
+    return;
+  }
+  sel.innerHTML = comps.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  loadEngagementAnalytics(comps[0].id); // first competition shown by default
+}
+
+async function loadEngagementAnalytics(compId){
+  const comp = (state.competitions||[]).find(c=>c.id===compId);
+  const content = document.getElementById('engagement-content');
+  if(!content) return;
+  if(!comp){ content.innerHTML=''; return; }
+  content.innerHTML = '<div class="empty" style="padding:40px;"><div class="empty-title">Loading…</div></div>';
+
+  // Only completed and active rounds count — a future/draft round has no
+  // events open yet, so requiring it for "participated in all rounds"
+  // would make that metric read zero for an entire season until it ends.
+  const relevantRounds = (comp.rounds||[]).filter(r=>r.status==='completed'||r.status==='open');
+  if(!relevantRounds.length){
+    content.innerHTML = '<div class="empty" style="padding:40px;"><div class="empty-icon">📊</div><div class="empty-title">No completed or active rounds yet</div></div>';
+    return;
+  }
+
+  const {data: preds, error} = await supa.from('gw_predictions')
+    .select('username,player_id,round_id,event_id')
+    .eq('client_key', CLIENT_KEY)
+    .eq('competition_id', compId)
+    .in('round_id', relevantRounds.map(r=>r.id));
+  if(error){
+    content.innerHTML = '<div class="empty" style="padding:40px;"><div class="empty-title">Could not load analytics</div></div>';
+    console.error('loadEngagementAnalytics:', error);
+    return;
+  }
+
+  // Lineup Predictor stores one whole-XI prediction per round, with
+  // event_id set to the round's own id (not a real match event id) — so
+  // "predicted everything in this round" there just means "made any
+  // prediction for it", unlike Score/Betting/Ranking rounds which can have
+  // several matches each needing their own separate prediction.
+  const isLineup = comp.mode==='lineup';
+
+  const byUser = {}; // username -> roundId -> Set(event_id values predicted)
+  (preds||[]).forEach(p=>{
+    const uname = p.username || p.player_id;
+    if(!uname) return;
+    if(!byUser[uname]) byUser[uname] = {};
+    if(!byUser[uname][p.round_id]) byUser[uname][p.round_id] = new Set();
+    byUser[uname][p.round_id].add(p.event_id);
+  });
+
+  function roundEventCount(r){ return isLineup ? 1 : (r.eventIds||[]).length; }
+  function userPredictedAllInRound(roundsMap, r){
+    const s = roundsMap[r.id];
+    if(!s || !s.size) return false;
+    return isLineup ? true : s.size >= roundEventCount(r);
+  }
+
+  const totalParticipants = Object.keys(byUser).length;
+  let allRoundsCount = 0, everythingCount = 0;
+  Object.values(byUser).forEach(roundsMap=>{
+    if(relevantRounds.every(r => roundsMap[r.id] && roundsMap[r.id].size>0)) allRoundsCount++;
+    if(relevantRounds.every(r => userPredictedAllInRound(roundsMap, r))) everythingCount++;
+  });
+
+  const roundStats = relevantRounds.map(r=>{
+    let participants=0, predictedAll=0;
+    Object.values(byUser).forEach(roundsMap=>{
+      const s = roundsMap[r.id];
+      if(s && s.size>0) participants++;
+      if(userPredictedAllInRound(roundsMap, r)) predictedAll++;
+    });
+    return { id:r.id, label:r.label, status:r.status, participants, predictedAll };
+  });
+
+  content.innerHTML = `
+    <div class="stats-row">
+      <div class="stat-card stat-card-accent">
+        <div class="stat-card-label">Total Participants</div>
+        <div class="stat-card-value">${totalParticipants}</div>
+        <div class="stat-card-sub">Made at least one prediction</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Participated in All Rounds</div>
+        <div class="stat-card-value">${allRoundsCount}</div>
+        <div class="stat-card-sub">Predicted something in every round</div>
+      </div>
+      <div class="stat-card stat-card-green">
+        <div class="stat-card-label">Predicted Everything</div>
+        <div class="stat-card-value">${everythingCount}</div>
+        <div class="stat-card-sub">Every event, every round</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Rounds</span></div>
+      ${roundStats.map(r=>`
+        <div class="engagement-round-row">
+          <div class="engagement-round-label">${r.label}</div>
+          <div class="engagement-round-status ${r.status==='completed'?'completed':'active'}">${r.status==='completed'?'Completed':'Active'}</div>
+          <div style="display:flex;flex-direction:column;gap:2px;">
+            <div class="engagement-round-metric"><strong>${r.participants}</strong> total participants</div>
+            <div class="engagement-round-metric"><strong>${r.predictedAll}</strong> predicted all events</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
 function exportUsersCSV(){
   const rows = usersFiltered();
   if(!rows.length){ toast('Nothing to export'); return; }
@@ -4164,6 +4161,7 @@ function initOperatorChrome(){
     showAdminLogin();
     return;
   }
+  console.log('GW: Session restored for', session.user.email);
 
   // Load operator profile — try auth_id first, fall back to id
   let op = null;
