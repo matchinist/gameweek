@@ -1,0 +1,4719 @@
+{
+ "capturedAt": "2026-08-30T12:48:17.377Z",
+ "source": "production page oracle",
+ "scoreCases": [],
+ "betCases": [
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 1
+   },
+   "picks": {
+    "a": 1,
+    "h": 2,
+    "1x2": "H",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 3,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 1
+   },
+   "picks": {
+    "a": 0,
+    "h": 3,
+    "1x2": "H",
+    "btts": "N",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 5,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "N",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 3,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "N",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 5,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "N",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "N",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 5,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "N",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "N",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 5,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "N",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "N",
+    "ou25": "U"
+   },
+   "expected": {
+    "evPts": 7,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "U",
+      "isRight": true,
+      "pts": 2
+     },
+     {
+      "type": "btts",
+      "pick": "N",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "N",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 5,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "N",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 3,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 3,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 3,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 3,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 1
+   },
+   "picks": {
+    "a": 1,
+    "h": 2,
+    "1x2": "H",
+    "btts": "N",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 5,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "N",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "D",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 0,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "D",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "A",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 0,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "A",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "N",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 5,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "N",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 3,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "H"
+   },
+   "expected": {
+    "evPts": 3,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": null,
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": null,
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 2,
+    "h": 0
+   },
+   "picks": {
+    "1x2": "D",
+    "btts": "Y",
+    "ou25": "U"
+   },
+   "expected": {
+    "evPts": 2,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "D",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "ou25",
+      "pick": "U",
+      "isRight": true,
+      "pts": 2
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 1,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "A",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 2,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "A",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "D",
+    "btts": "Y",
+    "ou25": "U"
+   },
+   "expected": {
+    "evPts": 2,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "D",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "ou25",
+      "pick": "U",
+      "isRight": true,
+      "pts": 2
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "Y",
+    "ou25": "U"
+   },
+   "expected": {
+    "evPts": 5,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "U",
+      "isRight": true,
+      "pts": 2
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "H",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 3,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": null,
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 3,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 1,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "A",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 2,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "A",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 2,
+    "h": 0
+   },
+   "picks": {
+    "1x2": "A",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 3,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "A",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 2,
+    "h": 0
+   },
+   "picks": {
+    "1x2": "D",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 0,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "D",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 1,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "D",
+    "btts": "N",
+    "ou25": "U"
+   },
+   "expected": {
+    "evPts": 5,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "D",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "U",
+      "isRight": true,
+      "pts": 2
+     },
+     {
+      "type": "btts",
+      "pick": "N",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 2,
+    "h": 0
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 0,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 1,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "A",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 2,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "A",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 1,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "D",
+    "btts": "N",
+    "ou25": "U"
+   },
+   "expected": {
+    "evPts": 5,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "D",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "U",
+      "isRight": true,
+      "pts": 2
+     },
+     {
+      "type": "btts",
+      "pick": "N",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 2,
+    "h": 0
+   },
+   "picks": {
+    "1x2": "D",
+    "btts": "N",
+    "ou25": "U"
+   },
+   "expected": {
+    "evPts": 4,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "D",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "ou25",
+      "pick": "U",
+      "isRight": true,
+      "pts": 2
+     },
+     {
+      "type": "btts",
+      "pick": "N",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 2,
+    "h": 0
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "N",
+    "ou25": "U"
+   },
+   "expected": {
+    "evPts": 4,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "ou25",
+      "pick": "U",
+      "isRight": true,
+      "pts": 2
+     },
+     {
+      "type": "btts",
+      "pick": "N",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 1,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "A",
+    "btts": "N",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 0,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "A",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "N",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 1,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "A",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 2,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "A",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 2,
+    "h": 0
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 0,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 1,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "A",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 2,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "A",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 2,
+    "h": 0
+   },
+   "picks": {
+    "1x2": "D",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 0,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "D",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 2,
+    "h": 0
+   },
+   "picks": {
+    "1x2": "D",
+    "btts": "Y",
+    "ou25": "U"
+   },
+   "expected": {
+    "evPts": 2,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "D",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "ou25",
+      "pick": "U",
+      "isRight": true,
+      "pts": 2
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 1,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "A",
+    "btts": "N",
+    "ou25": "U"
+   },
+   "expected": {
+    "evPts": 2,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "A",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "ou25",
+      "pick": "U",
+      "isRight": true,
+      "pts": 2
+     },
+     {
+      "type": "btts",
+      "pick": "N",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 2
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "N",
+    "ou25": "U"
+   },
+   "expected": {
+    "evPts": 7,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "U",
+      "isRight": true,
+      "pts": 2
+     },
+     {
+      "type": "btts",
+      "pick": "N",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 1,
+    "h": 0
+   },
+   "picks": {
+    "1x2": "A",
+    "btts": "N",
+    "ou25": "U"
+   },
+   "expected": {
+    "evPts": 7,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "A",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "U",
+      "isRight": true,
+      "pts": 2
+     },
+     {
+      "type": "btts",
+      "pick": "N",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 1
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 3,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 2,
+    "h": 0
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 0,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 1,
+    "h": 0
+   },
+   "picks": {
+    "1x2": "A",
+    "btts": "N",
+    "ou25": "U"
+   },
+   "expected": {
+    "evPts": 7,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "A",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "U",
+      "isRight": true,
+      "pts": 2
+     },
+     {
+      "type": "btts",
+      "pick": "N",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 2
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 3,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 1,
+    "h": 0
+   },
+   "picks": {
+    "1x2": "A",
+    "btts": "N",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 5,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "A",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "N",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 2
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 3,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 2
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 3,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 1,
+    "h": 0
+   },
+   "picks": {
+    "1x2": "A",
+    "btts": "N",
+    "ou25": "U"
+   },
+   "expected": {
+    "evPts": 7,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "A",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "U",
+      "isRight": true,
+      "pts": 2
+     },
+     {
+      "type": "btts",
+      "pick": "N",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 1,
+    "h": 0
+   },
+   "picks": {
+    "1x2": "D",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 0,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "D",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 1,
+    "h": 0
+   },
+   "picks": {
+    "1x2": "A",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 3,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "A",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 2
+   },
+   "picks": {
+    "1x2": "A",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 0,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "A",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 2
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "N",
+    "ou25": "U"
+   },
+   "expected": {
+    "evPts": 7,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "U",
+      "isRight": true,
+      "pts": 2
+     },
+     {
+      "type": "btts",
+      "pick": "N",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 1,
+    "h": 0
+   },
+   "picks": {
+    "1x2": "A",
+    "btts": "N",
+    "ou25": "U"
+   },
+   "expected": {
+    "evPts": 7,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "A",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "U",
+      "isRight": true,
+      "pts": 2
+     },
+     {
+      "type": "btts",
+      "pick": "N",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 2
+   },
+   "picks": {
+    "1x2": "A",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 0,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "A",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 1,
+    "h": 0
+   },
+   "picks": {
+    "1x2": "A",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 3,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "A",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 2
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "Y",
+    "ou25": "O"
+   },
+   "expected": {
+    "evPts": 3,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "O",
+      "isRight": false,
+      "pts": 0
+     },
+     {
+      "type": "btts",
+      "pick": "Y",
+      "isRight": false,
+      "pts": 0
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 1,
+    "h": 0
+   },
+   "picks": {
+    "1x2": "A",
+    "btts": "N",
+    "ou25": "U"
+   },
+   "expected": {
+    "evPts": 7,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "A",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "U",
+      "isRight": true,
+      "pts": 2
+     },
+     {
+      "type": "btts",
+      "pick": "N",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  },
+  {
+   "markets": [
+    {
+     "type": "1x2",
+     "label": "1X2 Result",
+     "points": 3
+    },
+    {
+     "type": "ou25",
+     "label": "Over/Under 2.5",
+     "points": 2
+    },
+    {
+     "type": "btts",
+     "label": "Both Teams to Score",
+     "points": 2
+    }
+   ],
+   "res": {
+    "a": 0,
+    "h": 2
+   },
+   "picks": {
+    "1x2": "H",
+    "btts": "N",
+    "ou25": "U"
+   },
+   "expected": {
+    "evPts": 7,
+    "perMarket": [
+     {
+      "type": "1x2",
+      "pick": "H",
+      "isRight": true,
+      "pts": 3
+     },
+     {
+      "type": "ou25",
+      "pick": "U",
+      "isRight": true,
+      "pts": 2
+     },
+     {
+      "type": "btts",
+      "pick": "N",
+      "isRight": true,
+      "pts": 2
+     }
+    ]
+   }
+  }
+ ],
+ "marketActualCases": [
+  {
+   "mkt": {
+    "type": "1x2",
+    "points": 3
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "expected": "H"
+  },
+  {
+   "mkt": {
+    "type": "1x2",
+    "points": 3
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "expected": "D"
+  },
+  {
+   "mkt": {
+    "type": "1x2",
+    "points": 3
+   },
+   "res": {
+    "h": 1,
+    "a": 3
+   },
+   "expected": "A"
+  },
+  {
+   "mkt": {
+    "type": "1x2",
+    "points": 3
+   },
+   "res": {
+    "h": 24,
+    "a": 10
+   },
+   "expected": "H"
+  },
+  {
+   "mkt": {
+    "type": "1x2",
+    "points": 3
+   },
+   "res": {
+    "h": 3,
+    "a": 3
+   },
+   "expected": "D"
+  },
+  {
+   "mkt": {
+    "type": "1x2",
+    "points": 3
+   },
+   "res": {
+    "h": 0,
+    "a": 1
+   },
+   "expected": "A"
+  },
+  {
+   "mkt": {
+    "type": "ou25",
+    "points": 2
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "expected": "O"
+  },
+  {
+   "mkt": {
+    "type": "ou25",
+    "points": 2
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "expected": "U"
+  },
+  {
+   "mkt": {
+    "type": "ou25",
+    "points": 2
+   },
+   "res": {
+    "h": 1,
+    "a": 3
+   },
+   "expected": "O"
+  },
+  {
+   "mkt": {
+    "type": "ou25",
+    "points": 2
+   },
+   "res": {
+    "h": 24,
+    "a": 10
+   },
+   "expected": "O"
+  },
+  {
+   "mkt": {
+    "type": "ou25",
+    "points": 2
+   },
+   "res": {
+    "h": 3,
+    "a": 3
+   },
+   "expected": "O"
+  },
+  {
+   "mkt": {
+    "type": "ou25",
+    "points": 2
+   },
+   "res": {
+    "h": 0,
+    "a": 1
+   },
+   "expected": "U"
+  },
+  {
+   "mkt": {
+    "type": "btts",
+    "points": 2
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "expected": "Y"
+  },
+  {
+   "mkt": {
+    "type": "btts",
+    "points": 2
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "expected": "N"
+  },
+  {
+   "mkt": {
+    "type": "btts",
+    "points": 2
+   },
+   "res": {
+    "h": 1,
+    "a": 3
+   },
+   "expected": "Y"
+  },
+  {
+   "mkt": {
+    "type": "btts",
+    "points": 2
+   },
+   "res": {
+    "h": 24,
+    "a": 10
+   },
+   "expected": "Y"
+  },
+  {
+   "mkt": {
+    "type": "btts",
+    "points": 2
+   },
+   "res": {
+    "h": 3,
+    "a": 3
+   },
+   "expected": "Y"
+  },
+  {
+   "mkt": {
+    "type": "btts",
+    "points": 2
+   },
+   "res": {
+    "h": 0,
+    "a": 1
+   },
+   "expected": "N"
+  },
+  {
+   "mkt": {
+    "type": "winner",
+    "points": 3
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "expected": "H"
+  },
+  {
+   "mkt": {
+    "type": "winner",
+    "points": 3
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "expected": "A"
+  },
+  {
+   "mkt": {
+    "type": "winner",
+    "points": 3
+   },
+   "res": {
+    "h": 1,
+    "a": 3
+   },
+   "expected": "A"
+  },
+  {
+   "mkt": {
+    "type": "winner",
+    "points": 3
+   },
+   "res": {
+    "h": 24,
+    "a": 10
+   },
+   "expected": "H"
+  },
+  {
+   "mkt": {
+    "type": "winner",
+    "points": 3
+   },
+   "res": {
+    "h": 3,
+    "a": 3
+   },
+   "expected": "A"
+  },
+  {
+   "mkt": {
+    "type": "winner",
+    "points": 3
+   },
+   "res": {
+    "h": 0,
+    "a": 1
+   },
+   "expected": "A"
+  },
+  {
+   "mkt": {
+    "type": "margin",
+    "metric": "margin",
+    "points": 4,
+    "options": [
+     {
+      "key": "0-6",
+      "max": 6
+     },
+     {
+      "key": "7-13",
+      "max": 13
+     },
+     {
+      "key": "14+",
+      "max": null
+     }
+    ]
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "expected": "0-6"
+  },
+  {
+   "mkt": {
+    "type": "margin",
+    "metric": "margin",
+    "points": 4,
+    "options": [
+     {
+      "key": "0-6",
+      "max": 6
+     },
+     {
+      "key": "7-13",
+      "max": 13
+     },
+     {
+      "key": "14+",
+      "max": null
+     }
+    ]
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "expected": "0-6"
+  },
+  {
+   "mkt": {
+    "type": "margin",
+    "metric": "margin",
+    "points": 4,
+    "options": [
+     {
+      "key": "0-6",
+      "max": 6
+     },
+     {
+      "key": "7-13",
+      "max": 13
+     },
+     {
+      "key": "14+",
+      "max": null
+     }
+    ]
+   },
+   "res": {
+    "h": 1,
+    "a": 3
+   },
+   "expected": "0-6"
+  },
+  {
+   "mkt": {
+    "type": "margin",
+    "metric": "margin",
+    "points": 4,
+    "options": [
+     {
+      "key": "0-6",
+      "max": 6
+     },
+     {
+      "key": "7-13",
+      "max": 13
+     },
+     {
+      "key": "14+",
+      "max": null
+     }
+    ]
+   },
+   "res": {
+    "h": 24,
+    "a": 10
+   },
+   "expected": "14+"
+  },
+  {
+   "mkt": {
+    "type": "margin",
+    "metric": "margin",
+    "points": 4,
+    "options": [
+     {
+      "key": "0-6",
+      "max": 6
+     },
+     {
+      "key": "7-13",
+      "max": 13
+     },
+     {
+      "key": "14+",
+      "max": null
+     }
+    ]
+   },
+   "res": {
+    "h": 3,
+    "a": 3
+   },
+   "expected": "0-6"
+  },
+  {
+   "mkt": {
+    "type": "margin",
+    "metric": "margin",
+    "points": 4,
+    "options": [
+     {
+      "key": "0-6",
+      "max": 6
+     },
+     {
+      "key": "7-13",
+      "max": 13
+     },
+     {
+      "key": "14+",
+      "max": null
+     }
+    ]
+   },
+   "res": {
+    "h": 0,
+    "a": 1
+   },
+   "expected": "0-6"
+  },
+  {
+   "mkt": {
+    "type": "total",
+    "metric": "total",
+    "points": 2,
+    "options": [
+     {
+      "key": "lo",
+      "max": 2
+     },
+     {
+      "key": "hi",
+      "max": null
+     }
+    ]
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "expected": "hi"
+  },
+  {
+   "mkt": {
+    "type": "total",
+    "metric": "total",
+    "points": 2,
+    "options": [
+     {
+      "key": "lo",
+      "max": 2
+     },
+     {
+      "key": "hi",
+      "max": null
+     }
+    ]
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "expected": "lo"
+  },
+  {
+   "mkt": {
+    "type": "total",
+    "metric": "total",
+    "points": 2,
+    "options": [
+     {
+      "key": "lo",
+      "max": 2
+     },
+     {
+      "key": "hi",
+      "max": null
+     }
+    ]
+   },
+   "res": {
+    "h": 1,
+    "a": 3
+   },
+   "expected": "hi"
+  },
+  {
+   "mkt": {
+    "type": "total",
+    "metric": "total",
+    "points": 2,
+    "options": [
+     {
+      "key": "lo",
+      "max": 2
+     },
+     {
+      "key": "hi",
+      "max": null
+     }
+    ]
+   },
+   "res": {
+    "h": 24,
+    "a": 10
+   },
+   "expected": "hi"
+  },
+  {
+   "mkt": {
+    "type": "total",
+    "metric": "total",
+    "points": 2,
+    "options": [
+     {
+      "key": "lo",
+      "max": 2
+     },
+     {
+      "key": "hi",
+      "max": null
+     }
+    ]
+   },
+   "res": {
+    "h": 3,
+    "a": 3
+   },
+   "expected": "hi"
+  },
+  {
+   "mkt": {
+    "type": "total",
+    "metric": "total",
+    "points": 2,
+    "options": [
+     {
+      "key": "lo",
+      "max": 2
+     },
+     {
+      "key": "hi",
+      "max": null
+     }
+    ]
+   },
+   "res": {
+    "h": 0,
+    "a": 1
+   },
+   "expected": "lo"
+  }
+ ],
+ "lineupCases": [
+  {
+   "compId": "c0d0423c6bcb7",
+   "ev": {
+    "homeId": "tmxmrrk2c1gfkj",
+    "awayId": "tmxmrrntuqoonk",
+    "res": {
+     "a": 0,
+     "h": 1
+    },
+    "lineup": {
+     "away": [],
+     "home": [
+      "pl_7d3e1757",
+      "pl_e155f167",
+      "pl_de3141a6",
+      "pl_cdd5ec12",
+      "pl_0ed7f849",
+      "pl_a5d2a8f1",
+      "pl_ff7bbac2",
+      "pl_b8737436",
+      "pl_0a15545e",
+      "pl_f0031ee5",
+      "pl_a9c71495"
+     ]
+    },
+    "scorers": [
+     {
+      "team": "Be\u015fikta\u015f",
+      "type": "goal",
+      "minute": 25,
+      "playerId": "pl_ff7bbac2",
+      "playerName": "Orkun K\u00f6k\u00e7\u00fc"
+     },
+     {
+      "inId": "pl_79a3658e",
+      "team": "Be\u015fikta\u015f",
+      "type": "sub",
+      "outId": "pl_a9c71495",
+      "inName": "Semih K\u0131l\u0131\u00e7soy",
+      "minute": 63,
+      "outName": "Hyeon-gyu Oh"
+     },
+     {
+      "inId": "pl_ab6859e9",
+      "team": "Be\u015fikta\u015f",
+      "type": "sub",
+      "outId": "pl_0a15545e",
+      "inName": "Milot Rashica",
+      "minute": 63,
+      "outName": "\u0130lhan Fakili"
+     }
+    ]
+   },
+   "teamId": "tmxmrrk2c1gfkj",
+   "squadIds": [
+    "liv1",
+    "liv2",
+    "liv3",
+    "liv4",
+    "liv5",
+    "liv6",
+    "liv7",
+    "liv8",
+    "liv9",
+    "liv10",
+    "liv11",
+    "liv12",
+    "liv13",
+    "liv14",
+    "liv15",
+    "liv16",
+    "liv17",
+    "liv18",
+    "liv19",
+    "liv20"
+   ],
+   "pickedArr": [
+    "pl_7d3e1757",
+    "pl_e155f167",
+    "pl_de3141a6",
+    "pl_e675f93d",
+    "pl_0ed7f849",
+    "pl_c7cfc08a",
+    "pl_a5d2a8f1",
+    "pl_ff7bbac2",
+    "pl_b8737436",
+    "pl_f0031ee5",
+    "pl_a9c71495"
+   ],
+   "bonusPicks": {
+    "mvp": "pl_ff7bbac2",
+    "firstGoal": "pl_a9c71495",
+    "firstSubOut": "pl_b8737436"
+   },
+   "expected": {
+    "totalPts": 90,
+    "xiPts": 90,
+    "correctCount": 9,
+    "xiResolved": true,
+    "bonusCorrectCount": 0,
+    "bonusPts": 0,
+    "anyResolved": true,
+    "bonusAnswers": {
+     "firstGoal": null,
+     "firstSubOut": [],
+     "mvp": null
+    }
+   }
+  },
+  {
+   "compId": "c0d0423c6bcb7",
+   "ev": {
+    "homeId": "tmxmrrk2c1gfkj",
+    "awayId": "tmxmrrntuqoonk",
+    "res": {
+     "a": 0,
+     "h": 1
+    },
+    "lineup": {
+     "away": [],
+     "home": [
+      "pl_7d3e1757",
+      "pl_e155f167",
+      "pl_de3141a6",
+      "pl_cdd5ec12",
+      "pl_0ed7f849",
+      "pl_a5d2a8f1",
+      "pl_ff7bbac2",
+      "pl_b8737436",
+      "pl_0a15545e",
+      "pl_f0031ee5",
+      "pl_a9c71495"
+     ]
+    },
+    "scorers": [
+     {
+      "team": "Be\u015fikta\u015f",
+      "type": "goal",
+      "minute": 25,
+      "playerId": "pl_ff7bbac2",
+      "playerName": "Orkun K\u00f6k\u00e7\u00fc"
+     },
+     {
+      "inId": "pl_79a3658e",
+      "team": "Be\u015fikta\u015f",
+      "type": "sub",
+      "outId": "pl_a9c71495",
+      "inName": "Semih K\u0131l\u0131\u00e7soy",
+      "minute": 63,
+      "outName": "Hyeon-gyu Oh"
+     },
+     {
+      "inId": "pl_ab6859e9",
+      "team": "Be\u015fikta\u015f",
+      "type": "sub",
+      "outId": "pl_0a15545e",
+      "inName": "Milot Rashica",
+      "minute": 63,
+      "outName": "\u0130lhan Fakili"
+     }
+    ]
+   },
+   "teamId": "tmxmrrk2c1gfkj",
+   "squadIds": [
+    "liv1",
+    "liv2",
+    "liv3",
+    "liv4",
+    "liv5",
+    "liv6",
+    "liv7",
+    "liv8",
+    "liv9",
+    "liv10",
+    "liv11",
+    "liv12",
+    "liv13",
+    "liv14",
+    "liv15",
+    "liv16",
+    "liv17",
+    "liv18",
+    "liv19",
+    "liv20"
+   ],
+   "pickedArr": [
+    "pl_7d3e1757",
+    "pl_e155f167",
+    "pl_cdd5ec12",
+    "pl_e675f93d",
+    "pl_0ed7f849",
+    "pl_a5d2a8f1",
+    "pl_3bf31919",
+    "pl_ff7bbac2",
+    "pl_0a15545e",
+    "pl_f0031ee5",
+    "pl_a9c71495"
+   ],
+   "bonusPicks": {},
+   "expected": {
+    "totalPts": 90,
+    "xiPts": 90,
+    "correctCount": 9,
+    "xiResolved": true,
+    "bonusCorrectCount": 0,
+    "bonusPts": 0,
+    "anyResolved": true,
+    "bonusAnswers": {
+     "firstGoal": null,
+     "firstSubOut": [],
+     "mvp": null
+    }
+   }
+  },
+  {
+   "compId": "c0d0423c6bcb7",
+   "ev": {
+    "homeId": "tmxmrrk2c1gfkj",
+    "awayId": "tmxmrrntuqoonk",
+    "res": {
+     "a": 0,
+     "h": 1
+    },
+    "lineup": {
+     "away": [],
+     "home": [
+      "pl_7d3e1757",
+      "pl_e155f167",
+      "pl_de3141a6",
+      "pl_cdd5ec12",
+      "pl_0ed7f849",
+      "pl_a5d2a8f1",
+      "pl_ff7bbac2",
+      "pl_b8737436",
+      "pl_0a15545e",
+      "pl_f0031ee5",
+      "pl_a9c71495"
+     ]
+    },
+    "scorers": [
+     {
+      "team": "Be\u015fikta\u015f",
+      "type": "goal",
+      "minute": 25,
+      "playerId": "pl_ff7bbac2",
+      "playerName": "Orkun K\u00f6k\u00e7\u00fc"
+     },
+     {
+      "inId": "pl_79a3658e",
+      "team": "Be\u015fikta\u015f",
+      "type": "sub",
+      "outId": "pl_a9c71495",
+      "inName": "Semih K\u0131l\u0131\u00e7soy",
+      "minute": 63,
+      "outName": "Hyeon-gyu Oh"
+     },
+     {
+      "inId": "pl_ab6859e9",
+      "team": "Be\u015fikta\u015f",
+      "type": "sub",
+      "outId": "pl_0a15545e",
+      "inName": "Milot Rashica",
+      "minute": 63,
+      "outName": "\u0130lhan Fakili"
+     }
+    ]
+   },
+   "teamId": "tmxmrrk2c1gfkj",
+   "squadIds": [
+    "liv1",
+    "liv2",
+    "liv3",
+    "liv4",
+    "liv5",
+    "liv6",
+    "liv7",
+    "liv8",
+    "liv9",
+    "liv10",
+    "liv11",
+    "liv12",
+    "liv13",
+    "liv14",
+    "liv15",
+    "liv16",
+    "liv17",
+    "liv18",
+    "liv19",
+    "liv20"
+   ],
+   "pickedArr": [
+    "pl_7d3e1757",
+    "pl_ff512076",
+    "pl_e675f93d",
+    "pl_f3d4f719",
+    "pl_0ed7f849",
+    "pl_ff7bbac2",
+    "pl_a5d2a8f1",
+    "pl_0a15545e",
+    "pl_f0031ee5",
+    "pl_b8737436",
+    "pl_a9c71495"
+   ],
+   "bonusPicks": {},
+   "expected": {
+    "totalPts": 80,
+    "xiPts": 80,
+    "correctCount": 8,
+    "xiResolved": true,
+    "bonusCorrectCount": 0,
+    "bonusPts": 0,
+    "anyResolved": true,
+    "bonusAnswers": {
+     "firstGoal": null,
+     "firstSubOut": [],
+     "mvp": null
+    }
+   }
+  },
+  {
+   "compId": "c0d0423c6bcb7",
+   "ev": {
+    "homeId": "tmxmrrk2c1gfkj",
+    "awayId": "tmxmrrntuqoonk",
+    "res": {
+     "a": 0,
+     "h": 1
+    },
+    "lineup": {
+     "away": [],
+     "home": [
+      "pl_7d3e1757",
+      "pl_e155f167",
+      "pl_de3141a6",
+      "pl_cdd5ec12",
+      "pl_0ed7f849",
+      "pl_a5d2a8f1",
+      "pl_ff7bbac2",
+      "pl_b8737436",
+      "pl_0a15545e",
+      "pl_f0031ee5",
+      "pl_a9c71495"
+     ]
+    },
+    "scorers": [
+     {
+      "team": "Be\u015fikta\u015f",
+      "type": "goal",
+      "minute": 25,
+      "playerId": "pl_ff7bbac2",
+      "playerName": "Orkun K\u00f6k\u00e7\u00fc"
+     },
+     {
+      "inId": "pl_79a3658e",
+      "team": "Be\u015fikta\u015f",
+      "type": "sub",
+      "outId": "pl_a9c71495",
+      "inName": "Semih K\u0131l\u0131\u00e7soy",
+      "minute": 63,
+      "outName": "Hyeon-gyu Oh"
+     },
+     {
+      "inId": "pl_ab6859e9",
+      "team": "Be\u015fikta\u015f",
+      "type": "sub",
+      "outId": "pl_0a15545e",
+      "inName": "Milot Rashica",
+      "minute": 63,
+      "outName": "\u0130lhan Fakili"
+     }
+    ]
+   },
+   "teamId": "tmxmrrk2c1gfkj",
+   "squadIds": [
+    "liv1",
+    "liv2",
+    "liv3",
+    "liv4",
+    "liv5",
+    "liv6",
+    "liv7",
+    "liv8",
+    "liv9",
+    "liv10",
+    "liv11",
+    "liv12",
+    "liv13",
+    "liv14",
+    "liv15",
+    "liv16",
+    "liv17",
+    "liv18",
+    "liv19",
+    "liv20"
+   ],
+   "pickedArr": [
+    "pl_7d3e1757",
+    "pl_b8737436",
+    "pl_e675f93d",
+    "pl_f3d4f719",
+    "pl_e155f167",
+    "pl_a5d2a8f1",
+    "pl_0ed7f849",
+    "pl_f0031ee5",
+    "pl_ff7bbac2",
+    "pl_3bf31919",
+    "pl_a9c71495"
+   ],
+   "bonusPicks": {},
+   "expected": {
+    "totalPts": 80,
+    "xiPts": 80,
+    "correctCount": 8,
+    "xiResolved": true,
+    "bonusCorrectCount": 0,
+    "bonusPts": 0,
+    "anyResolved": true,
+    "bonusAnswers": {
+     "firstGoal": null,
+     "firstSubOut": [],
+     "mvp": null
+    }
+   }
+  },
+  {
+   "compId": "c0d0423c6bcb7",
+   "ev": {
+    "homeId": "tmxmrrk2c1gfkj",
+    "awayId": "tmxmrrntuqoonk",
+    "res": {
+     "a": 0,
+     "h": 1
+    },
+    "lineup": {
+     "away": [],
+     "home": [
+      "pl_7d3e1757",
+      "pl_e155f167",
+      "pl_de3141a6",
+      "pl_cdd5ec12",
+      "pl_0ed7f849",
+      "pl_a5d2a8f1",
+      "pl_ff7bbac2",
+      "pl_b8737436",
+      "pl_0a15545e",
+      "pl_f0031ee5",
+      "pl_a9c71495"
+     ]
+    },
+    "scorers": [
+     {
+      "team": "Be\u015fikta\u015f",
+      "type": "goal",
+      "minute": 25,
+      "playerId": "pl_ff7bbac2",
+      "playerName": "Orkun K\u00f6k\u00e7\u00fc"
+     },
+     {
+      "inId": "pl_79a3658e",
+      "team": "Be\u015fikta\u015f",
+      "type": "sub",
+      "outId": "pl_a9c71495",
+      "inName": "Semih K\u0131l\u0131\u00e7soy",
+      "minute": 63,
+      "outName": "Hyeon-gyu Oh"
+     },
+     {
+      "inId": "pl_ab6859e9",
+      "team": "Be\u015fikta\u015f",
+      "type": "sub",
+      "outId": "pl_0a15545e",
+      "inName": "Milot Rashica",
+      "minute": 63,
+      "outName": "\u0130lhan Fakili"
+     }
+    ]
+   },
+   "teamId": "tmxmrrk2c1gfkj",
+   "squadIds": [
+    "liv1",
+    "liv2",
+    "liv3",
+    "liv4",
+    "liv5",
+    "liv6",
+    "liv7",
+    "liv8",
+    "liv9",
+    "liv10",
+    "liv11",
+    "liv12",
+    "liv13",
+    "liv14",
+    "liv15",
+    "liv16",
+    "liv17",
+    "liv18",
+    "liv19",
+    "liv20"
+   ],
+   "pickedArr": [
+    "pl_7d3e1757",
+    "pl_ff512076",
+    "pl_cdd5ec12",
+    "pl_e675f93d",
+    "pl_0ed7f849",
+    "pl_b8737436",
+    "pl_a5d2a8f1",
+    "pl_ff7bbac2",
+    "pl_0a15545e",
+    "pl_f0031ee5",
+    "pl_a9c71495"
+   ],
+   "bonusPicks": {},
+   "expected": {
+    "totalPts": 90,
+    "xiPts": 90,
+    "correctCount": 9,
+    "xiResolved": true,
+    "bonusCorrectCount": 0,
+    "bonusPts": 0,
+    "anyResolved": true,
+    "bonusAnswers": {
+     "firstGoal": null,
+     "firstSubOut": [],
+     "mvp": null
+    }
+   }
+  },
+  {
+   "compId": "c0d0423c6bcb7",
+   "ev": {
+    "homeId": "tmxmrrk2c1gfkj",
+    "awayId": "tmxmrrntuqoonk",
+    "res": {
+     "a": 0,
+     "h": 1
+    },
+    "lineup": {
+     "away": [],
+     "home": [
+      "pl_7d3e1757",
+      "pl_e155f167",
+      "pl_de3141a6",
+      "pl_cdd5ec12",
+      "pl_0ed7f849",
+      "pl_a5d2a8f1",
+      "pl_ff7bbac2",
+      "pl_b8737436",
+      "pl_0a15545e",
+      "pl_f0031ee5",
+      "pl_a9c71495"
+     ]
+    },
+    "scorers": [
+     {
+      "team": "Be\u015fikta\u015f",
+      "type": "goal",
+      "minute": 25,
+      "playerId": "pl_ff7bbac2",
+      "playerName": "Orkun K\u00f6k\u00e7\u00fc"
+     },
+     {
+      "inId": "pl_79a3658e",
+      "team": "Be\u015fikta\u015f",
+      "type": "sub",
+      "outId": "pl_a9c71495",
+      "inName": "Semih K\u0131l\u0131\u00e7soy",
+      "minute": 63,
+      "outName": "Hyeon-gyu Oh"
+     },
+     {
+      "inId": "pl_ab6859e9",
+      "team": "Be\u015fikta\u015f",
+      "type": "sub",
+      "outId": "pl_0a15545e",
+      "inName": "Milot Rashica",
+      "minute": 63,
+      "outName": "\u0130lhan Fakili"
+     }
+    ]
+   },
+   "teamId": "tmxmrrk2c1gfkj",
+   "squadIds": [
+    "liv1",
+    "liv2",
+    "liv3",
+    "liv4",
+    "liv5",
+    "liv6",
+    "liv7",
+    "liv8",
+    "liv9",
+    "liv10",
+    "liv11",
+    "liv12",
+    "liv13",
+    "liv14",
+    "liv15",
+    "liv16",
+    "liv17",
+    "liv18",
+    "liv19",
+    "liv20"
+   ],
+   "pickedArr": [
+    "pl_7d3e1757",
+    "pl_e155f167",
+    "pl_de3141a6",
+    "pl_e675f93d",
+    "pl_0ed7f849",
+    "pl_c7cfc08a",
+    "pl_a5d2a8f1",
+    "pl_ff7bbac2",
+    "pl_f0031ee5",
+    "pl_b8737436",
+    "pl_a9c71495"
+   ],
+   "bonusPicks": {
+    "mvp": "pl_ff7bbac2",
+    "firstGoal": "pl_a9c71495",
+    "firstSubOut": "pl_c7cfc08a"
+   },
+   "expected": {
+    "totalPts": 90,
+    "xiPts": 90,
+    "correctCount": 9,
+    "xiResolved": true,
+    "bonusCorrectCount": 0,
+    "bonusPts": 0,
+    "anyResolved": true,
+    "bonusAnswers": {
+     "firstGoal": null,
+     "firstSubOut": [],
+     "mvp": null
+    }
+   }
+  },
+  {
+   "compId": "c0d0423c6bcb7",
+   "ev": {
+    "homeId": "tmxmrrntuqoonk",
+    "awayId": "tmxmrrk2c1gfkj",
+    "res": {
+     "a": 2,
+     "h": 0
+    },
+    "lineup": null,
+    "scorers": null
+   },
+   "teamId": "tmxmrrk2c1gfkj",
+   "squadIds": [
+    "liv1",
+    "liv2",
+    "liv3",
+    "liv4",
+    "liv5",
+    "liv6",
+    "liv7",
+    "liv8",
+    "liv9",
+    "liv10",
+    "liv11",
+    "liv12",
+    "liv13",
+    "liv14",
+    "liv15",
+    "liv16",
+    "liv17",
+    "liv18",
+    "liv19",
+    "liv20"
+   ],
+   "pickedArr": [
+    "pl_7d3e1757",
+    "pl_ff512076",
+    "pl_e675f93d",
+    "pl_cdd5ec12",
+    "pl_0ed7f849",
+    "pl_ff7bbac2",
+    "pl_a5d2a8f1",
+    "pl_0a15545e",
+    "pl_b8737436",
+    "pl_f0031ee5",
+    "pl_a9c71495"
+   ],
+   "bonusPicks": {
+    "mvp": "pl_a9c71495",
+    "firstGoal": "pl_a5d2a8f1",
+    "firstSubOut": "pl_0a15545e"
+   },
+   "expected": {
+    "totalPts": 0,
+    "xiPts": 0,
+    "correctCount": 0,
+    "xiResolved": false,
+    "bonusCorrectCount": 0,
+    "bonusPts": 0,
+    "anyResolved": false,
+    "bonusAnswers": {
+     "firstGoal": null,
+     "firstSubOut": [],
+     "mvp": null
+    }
+   }
+  },
+  {
+   "compId": "c0d0423c6bcb7",
+   "ev": {
+    "homeId": "tmxms8i4zpsk93",
+    "awayId": "tmxmrrk2c1gfkj",
+    "res": {
+     "a": 1,
+     "h": 0
+    },
+    "lineup": null,
+    "scorers": null
+   },
+   "teamId": "tmxmrrk2c1gfkj",
+   "squadIds": [
+    "liv1",
+    "liv2",
+    "liv3",
+    "liv4",
+    "liv5",
+    "liv6",
+    "liv7",
+    "liv8",
+    "liv9",
+    "liv10",
+    "liv11",
+    "liv12",
+    "liv13",
+    "liv14",
+    "liv15",
+    "liv16",
+    "liv17",
+    "liv18",
+    "liv19",
+    "liv20"
+   ],
+   "pickedArr": [
+    "pl_7d3e1757",
+    "pl_e155f167",
+    "pl_de3141a6",
+    "pl_cdd5ec12",
+    "pl_0ed7f849",
+    "pl_a5d2a8f1",
+    "pl_b8737436",
+    "pl_ff7bbac2",
+    "pl_0a15545e",
+    "pl_f0031ee5",
+    "pl_a9c71495"
+   ],
+   "bonusPicks": {
+    "mvp": "pl_ff7bbac2",
+    "firstGoal": "pl_a9c71495",
+    "firstSubOut": "pl_0a15545e"
+   },
+   "expected": {
+    "totalPts": 0,
+    "xiPts": 0,
+    "correctCount": 0,
+    "xiResolved": false,
+    "bonusCorrectCount": 0,
+    "bonusPts": 0,
+    "anyResolved": false,
+    "bonusAnswers": {
+     "firstGoal": null,
+     "firstSubOut": [],
+     "mvp": null
+    }
+   }
+  },
+  {
+   "compId": "c0d0423c6bcb7",
+   "ev": {
+    "homeId": "tmxmrrk2c1gfkj",
+    "awayId": "tmxms8i4zpsk93",
+    "res": {
+     "a": 0,
+     "h": 1
+    },
+    "lineup": null,
+    "scorers": null
+   },
+   "teamId": "tmxmrrk2c1gfkj",
+   "squadIds": [
+    "liv1",
+    "liv2",
+    "liv3",
+    "liv4",
+    "liv5",
+    "liv6",
+    "liv7",
+    "liv8",
+    "liv9",
+    "liv10",
+    "liv11",
+    "liv12",
+    "liv13",
+    "liv14",
+    "liv15",
+    "liv16",
+    "liv17",
+    "liv18",
+    "liv19",
+    "liv20"
+   ],
+   "pickedArr": [
+    "pl_7d3e1757",
+    "pl_e155f167",
+    "pl_cdd5ec12",
+    "pl_e675f93d",
+    "pl_0ed7f849",
+    "pl_ff7bbac2",
+    "pl_a5d2a8f1",
+    "pl_b8737436",
+    "pl_0a15545e",
+    "pl_735a3622",
+    "pl_a9c71495"
+   ],
+   "bonusPicks": {
+    "mvp": "pl_735a3622",
+    "firstGoal": "pl_735a3622",
+    "firstSubOut": "pl_735a3622"
+   },
+   "expected": {
+    "totalPts": 0,
+    "xiPts": 0,
+    "correctCount": 0,
+    "xiResolved": false,
+    "bonusCorrectCount": 0,
+    "bonusPts": 0,
+    "anyResolved": false,
+    "bonusAnswers": {
+     "firstGoal": null,
+     "firstSubOut": [],
+     "mvp": null
+    }
+   }
+  },
+  {
+   "compId": "ctiqdc7",
+   "ev": {
+    "homeId": "tmxmqrqvg0ibuh",
+    "awayId": "tmxmqrqteb4iy8",
+    "res": null,
+    "lineup": null,
+    "scorers": null
+   },
+   "teamId": "tmxmqrqvg0ibuh",
+   "squadIds": [
+    "liv1",
+    "liv2",
+    "liv3",
+    "liv4",
+    "liv5",
+    "liv6",
+    "liv7",
+    "liv8",
+    "liv9",
+    "liv10",
+    "liv11",
+    "liv12",
+    "liv13",
+    "liv14",
+    "liv15",
+    "liv16",
+    "liv17",
+    "liv18",
+    "liv19",
+    "liv20"
+   ],
+   "pickedArr": [
+    "pl_585b6df3",
+    "pl_420b656e",
+    "pl_b900cd20",
+    "pl_23585ac9",
+    "pl_2796830c",
+    "pl_cb551762",
+    "pl_1895e557",
+    "pl_1bb9de77",
+    "pl_338961ba",
+    "pl_e2714f13",
+    "pl_840c8c4f"
+   ],
+   "bonusPicks": {},
+   "expected": {
+    "totalPts": 0,
+    "xiPts": 0,
+    "correctCount": 0,
+    "xiResolved": false,
+    "bonusCorrectCount": 0,
+    "bonusPts": 0,
+    "anyResolved": false,
+    "bonusAnswers": {
+     "firstGoal": null,
+     "firstSubOut": [],
+     "mvp": null
+    }
+   }
+  },
+  {
+   "compId": "ctiqdc7",
+   "ev": {
+    "homeId": "tmxmqrqvg0ibuh",
+    "awayId": "tmxmqrqteb4iy8",
+    "res": null,
+    "lineup": null,
+    "scorers": null
+   },
+   "teamId": "tmxmqrqvg0ibuh",
+   "squadIds": [
+    "liv1",
+    "liv2",
+    "liv3",
+    "liv4",
+    "liv5",
+    "liv6",
+    "liv7",
+    "liv8",
+    "liv9",
+    "liv10",
+    "liv11",
+    "liv12",
+    "liv13",
+    "liv14",
+    "liv15",
+    "liv16",
+    "liv17",
+    "liv18",
+    "liv19",
+    "liv20"
+   ],
+   "pickedArr": [
+    "pl_0dfa0735",
+    "pl_b900cd20",
+    "pl_420b656e",
+    "pl_ce565264",
+    "pl_2796830c",
+    "pl_2e2497c3",
+    "pl_56f70ec0",
+    "pl_1bb9de77",
+    "pl_cb551762",
+    "pl_e2714f13",
+    "pl_378a5773"
+   ],
+   "bonusPicks": {},
+   "expected": {
+    "totalPts": 0,
+    "xiPts": 0,
+    "correctCount": 0,
+    "xiResolved": false,
+    "bonusCorrectCount": 0,
+    "bonusPts": 0,
+    "anyResolved": false,
+    "bonusAnswers": {
+     "firstGoal": null,
+     "firstSubOut": [],
+     "mvp": null
+    }
+   }
+  },
+  {
+   "compId": "ctiqdc7",
+   "ev": {
+    "homeId": "tmxmqrqvg0ibuh",
+    "awayId": "tmxmqrqteb4iy8",
+    "res": null,
+    "lineup": null,
+    "scorers": null
+   },
+   "teamId": "tmxmqrqvg0ibuh",
+   "squadIds": [
+    "liv1",
+    "liv2",
+    "liv3",
+    "liv4",
+    "liv5",
+    "liv6",
+    "liv7",
+    "liv8",
+    "liv9",
+    "liv10",
+    "liv11",
+    "liv12",
+    "liv13",
+    "liv14",
+    "liv15",
+    "liv16",
+    "liv17",
+    "liv18",
+    "liv19",
+    "liv20"
+   ],
+   "pickedArr": [
+    "pl_0dfa0735",
+    "pl_420b656e",
+    "pl_2796830c",
+    "pl_ce565264",
+    "pl_f2580ef7",
+    "pl_1895e557",
+    "pl_7142afee",
+    "pl_56f70ec0",
+    "pl_5956c592",
+    "pl_c7025cdf",
+    "pl_378a5773"
+   ],
+   "bonusPicks": {
+    "mvp": "pl_1bb9de77",
+    "firstGoal": "pl_840c8c4f",
+    "firstSubOut": "pl_1895e557"
+   },
+   "expected": {
+    "totalPts": 0,
+    "xiPts": 0,
+    "correctCount": 0,
+    "xiResolved": false,
+    "bonusCorrectCount": 0,
+    "bonusPts": 0,
+    "anyResolved": false,
+    "bonusAnswers": {
+     "firstGoal": null,
+     "firstSubOut": [],
+     "mvp": null
+    }
+   }
+  }
+ ],
+ "counts": {
+  "score": 0,
+  "betting": 60,
+  "marketActual": 36,
+  "lineup": 12
+ },
+ "squadsByComp": {
+  "c0d0423c6bcb7": {
+   "lineupConfig": {
+    "teamId": "tmxmrrk2c1gfkj",
+    "teamName": "Be\u015fikta\u015f"
+   },
+   "squadIds": [
+    "liv1",
+    "liv2",
+    "liv3",
+    "liv4",
+    "liv5",
+    "liv6",
+    "liv7",
+    "liv8",
+    "liv9",
+    "liv10",
+    "liv11",
+    "liv12",
+    "liv13",
+    "liv14",
+    "liv15",
+    "liv16",
+    "liv17",
+    "liv18",
+    "liv19",
+    "liv20"
+   ]
+  },
+  "ctiqdc7": {
+   "lineupConfig": {
+    "teamId": "tmxmqrqvg0ibuh",
+    "teamName": "Everton"
+   },
+   "squadIds": [
+    "liv1",
+    "liv2",
+    "liv3",
+    "liv4",
+    "liv5",
+    "liv6",
+    "liv7",
+    "liv8",
+    "liv9",
+    "liv10",
+    "liv11",
+    "liv12",
+    "liv13",
+    "liv14",
+    "liv15",
+    "liv16",
+    "liv17",
+    "liv18",
+    "liv19",
+    "liv20"
+   ]
+  }
+ }
+}

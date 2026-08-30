@@ -1,0 +1,7460 @@
+{
+ "scoreCases": [
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    5,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    2,
+    "Home team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": null,
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    5,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    2,
+    "Home team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": null,
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    5,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": null,
+   "expected": [
+    2,
+    "Home team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    5,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    2,
+    "Home team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": null,
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    5,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": null,
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    2,
+    "Home team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": null,
+   "expected": [
+    5,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    2,
+    "Home team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    5,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    2,
+    "Home team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    5,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    5,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    2,
+    "Home team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    5,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    2,
+    "Home team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    5,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    2,
+    "Home team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    5,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    2,
+    "Home team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    5,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    2,
+    "Home team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    1,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    5,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    2,
+    "Home team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    5,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    2,
+    "Home team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    2,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    5,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 5,
+    "homeGoals": 2,
+    "awayGoals": 2,
+    "totalGoals": 1
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    10,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    2,
+    "Total sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    2,
+    "Total sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    3,
+    "Away team sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    3,
+    "Home team sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    3,
+    "Away team sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    2,
+    "Total sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    10,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    2,
+    "Total sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    2,
+    "Total sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    3,
+    "Away team sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    3,
+    "Home team sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    3,
+    "Away team sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    2,
+    "Total sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    10,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    3,
+    "Away team sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    3,
+    "Home team sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    2,
+    "Total sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    10,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    2,
+    "Total sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    3,
+    "Home team sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    3,
+    "Away team sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    2,
+    "Total sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    2,
+    "Total sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    3,
+    "Away team sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    2,
+    "Total sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    10,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    2,
+    "Total sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    2,
+    "Total sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    3,
+    "Home team sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    2,
+    "Total sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    2,
+    "Total sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    10,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    3,
+    "Away team sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    3,
+    "Away team sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    3,
+    "Away team sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    3,
+    "Home team sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    10,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    3,
+    "Away team sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    3,
+    "Home team sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    3,
+    "Away team sets correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    10,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 10,
+    "homeGoals": 3,
+    "awayGoals": 3,
+    "totalGoals": 2,
+    "unit": "sets"
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    7,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Home team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 1
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    7,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Home team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "2",
+    "a": "1"
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    7,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 0,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Home team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    7,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Home team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 2
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    7,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 3,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Home team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Total goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "0",
+    "a": "3"
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    7,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 5,
+    "a": 5
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 10,
+    "a": 0
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": "",
+    "a": ""
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": null,
+    "a": null
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Home team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    7,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 1
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 2,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Home team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 0,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 1,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "Away team goals correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 3,
+    "a": 0
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 1,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 2,
+    "a": 2
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    7,
+    "Exact score correct"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 4,
+    "a": 1
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": {
+    "h": 2,
+    "a": 2
+   },
+   "res": {
+    "h": 0,
+    "a": 3
+   },
+   "scoring": {
+    "exactScore": 7,
+    "homeGoals": 0,
+    "awayGoals": 0,
+    "totalGoals": 0
+   },
+   "expected": [
+    0,
+    "No points scored"
+   ]
+  },
+  {
+   "pred": null,
+   "res": {
+    "h": 1,
+    "a": 0
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    ""
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 0
+   },
+   "res": null,
+   "scoring": null,
+   "expected": [
+    0,
+    ""
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 0
+   },
+   "res": {
+    "h": null,
+    "a": 2
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    ""
+   ]
+  },
+  {
+   "pred": {
+    "h": 1,
+    "a": 0
+   },
+   "res": {
+    "h": 2,
+    "a": null
+   },
+   "scoring": null,
+   "expected": [
+    0,
+    ""
+   ]
+  }
+ ],
+ "scoreCount": 388,
+ "rankingFixture": {
+  "round": {
+   "id": "r7480d6c01e0f",
+   "competition_id": "c1cc0622edac2",
+   "client_key": "gw_gam_lj0tg0",
+   "label": "Gameweek 1",
+   "status": "open",
+   "deadline": "2026-08-12T10:00",
+   "event_ids": [
+    "evxmrp9oy2td8l",
+    "evxmrpaw98e7bx"
+   ],
+   "tournament_ids": [],
+   "tournament_names": [],
+   "sort_order": 0,
+   "created_at": "2026-07-17T18:58:47.519299+00:00",
+   "ranking_teams": [
+    {
+     "id": "tmxmrp8z8fmm12",
+     "logo": "",
+     "name": "Test 1",
+     "isHome": true,
+     "opponent": "vs Test 2 \u00b7 12 Aug, 14:00",
+     "dateShort": "12 Aug",
+     "opponentLogo": "",
+     "opponentName": "Test 2"
+    },
+    {
+     "id": "tmxmrp8zfeo2ww",
+     "logo": "",
+     "name": "Test 2",
+     "isHome": false,
+     "opponent": "at Test 1 \u00b7 12 Aug, 14:00",
+     "dateShort": "12 Aug",
+     "opponentLogo": "",
+     "opponentName": "Test 1"
+    },
+    {
+     "id": "tmxmrpavixqgys",
+     "logo": "",
+     "name": "Test 3",
+     "isHome": true,
+     "opponent": "vs Test 4 \u00b7 14 Aug, 12:59",
+     "dateShort": "14 Aug",
+     "opponentLogo": "",
+     "opponentName": "Test 4"
+    },
+    {
+     "id": "tmxmrpavqafif6",
+     "logo": "",
+     "name": "Test 4",
+     "isHome": false,
+     "opponent": "at Test 3 \u00b7 14 Aug, 12:59",
+     "dateShort": "14 Aug",
+     "opponentLogo": "",
+     "opponentName": "Test 3"
+    }
+   ],
+   "prizes": []
+  },
+  "preds": [
+   {
+    "username": "catenacciotest",
+    "prediction": [
+     "tmxmrp8z8fmm12",
+     "tmxmrp8zfeo2ww",
+     "tmxmrpavixqgys",
+     "tmxmrpavqafif6"
+    ]
+   }
+  ],
+  "comp": {
+   "id": "c1cc0622edac2",
+   "mode": "ranking",
+   "ranking_config": {
+    "metric": "xG",
+    "perfectBonus": 5,
+    "pointsPerCorrect": 2
+   }
+  },
+  "events": [
+   {
+    "id": "evxmrp9oy2td8l",
+    "home_id": "tmxmrp8z8fmm12",
+    "away_id": "tmxmrp8zfeo2ww",
+    "result": {
+     "a": 1,
+     "h": 2,
+     "away_xg": 2,
+     "home_xg": 4
+    }
+   },
+   {
+    "id": "evxmrpaw98e7bx",
+    "home_id": "tmxmrpavixqgys",
+    "away_id": "tmxmrpavqafif6",
+    "result": {
+     "a": 2,
+     "h": 3,
+     "away_xg": 1,
+     "home_xg": 3
+    }
+   }
+  ]
+ }
+}
