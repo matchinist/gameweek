@@ -6,3 +6,7 @@ _site/
 supabase/.temp/
 supabase/.branches/
 dist/
+
+# Re-include: the global gitignore has a blanket build/ rule, but this
+# directory holds the deploy allowlist + parity gate and MUST be tracked.
+!scripts/build/
