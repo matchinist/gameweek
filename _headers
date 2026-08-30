@@ -1,0 +1,10 @@
+# Cloudflare Pages headers (Phase 2.6). GitHub Pages ignores this file, so it
+# ships harmlessly during the dual-deploy migration window.
+#
+# Deliberately NO X-Frame-Options / frame-ancestors here: the embed and the
+# widgets exist to be iframed by operator sites. Per-tenant frame-ancestors
+# arrives as a Pages Function in Phase 4.4.
+/*
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin

@@ -37,7 +37,7 @@ for p in contact privacy terms pricingtest cs2fantasy welcome reset reset-passwo
 done
 # statics + the demo fork (still a plain copy until 2.5)
 pair demo/index.html demo/index.html
-for f in embed.js robots.txt sitemap.xml favicon.png og-image.png CNAME llms.txt; do
+for f in embed.js robots.txt sitemap.xml favicon.png og-image.png CNAME llms.txt _headers; do
   pair "$f" "$f"
 done
 
@@ -48,7 +48,7 @@ LEAKS=$(cd _site && find . -type f \
   ! -path './pricingtest/*' ! -path './cs2fantasy/*' ! -path './welcome/*' \
   ! -path './reset/*' ! -path './reset-password/*' \
   ! -name index.html ! -name embed.js ! -name robots.txt ! -name sitemap.xml \
-  ! -name favicon.png ! -name og-image.png ! -name CNAME ! -name llms.txt | sort)
+  ! -name favicon.png ! -name og-image.png ! -name CNAME ! -name llms.txt ! -name _headers | sort)
 if [ -n "$LEAKS" ]; then echo "FAIL  unexpected files in _site:"; echo "$LEAKS" | head; FAILED=1
 else echo "PASS  no non-allowlisted files in _site"; fi
 for bad in sso-test.html CLAUDE.md package.json vite.config.js; do

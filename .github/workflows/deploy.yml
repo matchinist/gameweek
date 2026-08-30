@@ -46,3 +46,14 @@ jobs:
           path: '_site'
       - id: deployment
         uses: actions/deploy-pages@v4
+      # Phase 2.6: dual-deploy the same gated _site to Cloudflare Pages.
+      # GitHub Pages stays the origin for www.gameweek.cloud until the DNS
+      # cutover; the CF deployment is reachable at the project's pages.dev
+      # URL for parity checks, and becomes the origin when DNS flips.
+      - name: Deploy to Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          pnpm exec wrangler pages project create gameweek --production-branch=main 2>/dev/null || true
+          pnpm exec wrangler pages deploy _site --project-name=gameweek --branch=main --commit-dirty=true

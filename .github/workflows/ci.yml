@@ -32,3 +32,16 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Embed-contract tests (classic render, inline handshake, SSO origin gate)
         run: pnpm run test:contract
+      # Preview deploy for branches/PRs from this repo (fork PRs get no
+      # secrets, so the step is skipped there). The branch name goes through
+      # an env var — never interpolated into the script — and produces a
+      # <branch>.gameweek.pages.dev preview URL.
+      - name: Preview deploy to Cloudflare Pages
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "no CF secrets — skipping preview"; exit 0; fi
+          pnpm exec wrangler pages deploy _site --project-name=gameweek --branch="$BRANCH" --commit-dirty=true

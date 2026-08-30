@@ -29,7 +29,7 @@ for (const [from, to] of Object.entries(appDist)) {
 cpSync(join(root, 'demo'), join(site, 'demo'), { recursive: true });
 
 // Root static allowlist.
-for (const f of ['embed.js', 'robots.txt', 'sitemap.xml', 'favicon.png', 'og-image.png', 'CNAME', 'llms.txt']) {
+for (const f of ['embed.js', 'robots.txt', 'sitemap.xml', 'favicon.png', 'og-image.png', 'CNAME', 'llms.txt', '_headers']) {
   cpSync(join(root, f), join(site, f));
 }
 
