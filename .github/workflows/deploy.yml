@@ -55,5 +55,5 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          pnpm exec wrangler pages project create gameweek --production-branch=main 2>/dev/null || true
+          pnpm exec wrangler pages project create gameweek --production-branch=main || echo "project create failed or already exists — continuing"
           pnpm exec wrangler pages deploy _site --project-name=gameweek --branch=main --commit-dirty=true
