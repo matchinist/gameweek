@@ -1907,7 +1907,7 @@ function controlBandOpen(comp, roundOptionsHtml, tabsHtml, tabsMobileHtml, selec
       ${renderExplainerPills(comp)}
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-      <select class="round-select control-band-select" onchange="${selectOnchange||'changeRound(this.value)'}">${roundOptionsHtml}</select>
+      ${roundOptionsHtml ? `<select class="round-select control-band-select" onchange="${selectOnchange||'changeRound(this.value)'}">${roundOptionsHtml}</select>` : '<div></div>'}
       <div class="predict-subtabs">${tabsHtml}</div>
       ${mobileTabSelectHtml}
     </div>`;
@@ -2655,7 +2655,10 @@ function renderLineupLeaderboardShell(comp){
   const round = sel==='overall' ? null : (comp.rounds[sel]||comp.rounds[maxIdx]);
   const roundOptions = comp.rounds.slice(0, maxIdx+1).map((r,i)=>`<option value="${i}"${sel===i?' selected':''}>${r.label}</option>`).join('');
   const roundSelect = `<option value="overall"${sel==='overall'?' selected':''}>${t('overall')}</option>${roundOptions}`;
-  let html=controlBandOpen(comp, roundSelect,
+  // Same rule as renderLeaderboardShell: the leagues list is overall-only,
+  // so the round selector only renders once a league is open.
+  const onLeaguesList = leagueSelection[currentCompIdx]===undefined;
+  let html=controlBandOpen(comp, onLeaguesList?'':roundSelect,
     `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">${t('builder')}</button>
      <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">${t('leaderboard')}</button>`,
     `<select onchange="switchPredictSubTab(this.value)">
@@ -4236,7 +4239,11 @@ function renderLeaderboardShell(comp){
   const maxRoundIdx = (()=>{ const c = computeCurrentRoundIdx(comp); return c!=null ? c : comp.rounds.length-1; })();
   const roundOptions=comp.rounds.slice(0, maxRoundIdx+1).map((r,i)=>`<option value="${i}"${(!isOverall&&sel===i)?' selected':''}>${r.label}</option>`).join('');
   const roundSelect=`<option value="overall"${isOverall?' selected':''}>${t('overall')}</option>${roundOptions}`;
-  let html=controlBandOpen(comp, roundSelect,
+  // The leagues LIST screen ranks by overall points only, so the round
+  // selector would sit above it doing nothing — hide it there and show it
+  // once inside a league, where changing the round actually re-scores.
+  const onLeaguesList = leagueSelection[currentCompIdx]===undefined;
+  let html=controlBandOpen(comp, onLeaguesList?'':roundSelect,
     `<button class="ps-tab${predictSubTab==='predictions'?' active':''}" onclick="switchPredictSubTab('predictions')">${t('predictions')}</button>
      <button class="ps-tab${predictSubTab==='leaderboard'?' active':''}" onclick="switchPredictSubTab('leaderboard')">${t('leaderboard')}</button>`,
     `<select onchange="switchPredictSubTab(this.value)">

@@ -13,7 +13,9 @@
     --text:#1a1a2e; --text-3:#9AA2B1; --accent:#4F46E5;
   }
   html,body{margin:0;padding:0;background:var(--bg);font-family:var(--sans);}
-  .demo-shell{max-width:560px;margin:0 auto;min-height:100vh;background:var(--bg);box-shadow:0 0 40px rgba(20,20,43,0.06);}
+  /* 860px matches the embed's own .app max-width, and clears its 600px
+     two-column breakpoint — narrower flattens every round to one column. */
+  .demo-shell{max-width:860px;margin:0 auto;min-height:100vh;background:var(--bg);box-shadow:0 0 40px rgba(20,20,43,0.06);}
   .filter-bar{display:flex;gap:8px;padding:10px 16px 12px;border-bottom:1px solid var(--border);background:var(--white);position:sticky;top:0;z-index:50;}
   .filter-item{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:3px;}
   .filter-label{font-family:var(--sans);font-size:9.5px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-3);padding-left:2px;}
