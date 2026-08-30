@@ -1143,7 +1143,6 @@ async function buildCompsFromRealData(){
     // Alphabetical by name — a predictable, stable order regardless of
     // which order competitions happened to be created in.
     COMPS.sort((a,b)=>a.name.localeCompare(b.name));
-    console.log('Loaded:',{comps:COMPS.length,events:Object.keys(EVENTS).length,client:CLIENT_PARAM});
   }catch(err){ console.error('buildCompsFromRealData:',err); }
 }
 

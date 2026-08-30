@@ -1,0 +1,30 @@
+name: CI
+# Phase 2.7 — the same gates the deploy runs, for branches and pull requests
+# (Cloudflare preview deploys in 2.6 hang off green CI here).
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm exec tsc --noEmit
+      - name: Unit tests
+        run: pnpm vitest run
+      - name: Migration suites (node --test)
+        run: node --test scripts/kickoff-backfill/parse-kickoff.test.mjs scripts/kickoff-backfill/report.test.mjs
+      - name: Duplicate-declaration + forbidden-pattern gate
+        run: node scripts/build/ci-checks.mjs
+      - name: Build and verify _site
+        run: scripts/build/parity-test.sh

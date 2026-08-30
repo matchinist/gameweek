@@ -21,7 +21,7 @@ function literalSource(name) {
     for (const node of ast.body) {
       if (node.type !== 'VariableDeclaration') continue;
       for (const d of node.declarations) {
-        if (d.id.name === name) return s.slice(d.init.start, d.init.end);
+        if (d.id.type === 'Identifier' && d.id.name === name) return s.slice(d.init.start, d.init.end);
       }
     }
   }

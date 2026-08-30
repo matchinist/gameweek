@@ -3803,9 +3803,9 @@ function renderLeaguesListScreenDemo(comp){
     <div class="leagues-list">
       ${leagues.map(lg=>`
         <button class="league-row" onclick='selectLeagueDemo(${JSON.stringify(lg).replace(/'/g,"&#39;")})'>
-          <div class="league-icon">${(lg.name||'?').trim().charAt(0).toUpperCase()}</div>
+          <div class="league-icon">${escapeHtmlLineup((lg.name||'?').trim().charAt(0).toUpperCase())}</div>
           <div style="flex:1;min-width:0;">
-            <div class="league-row-name">${lg.name}</div>
+            <div class="league-row-name">${escapeHtmlLineup(lg.name)}</div>
             <div class="league-row-sub">${lg.isGeneral?'Open to everyone':'Private league'} · ${lg.count} participants</div>
           </div>
           <div class="league-row-position">
@@ -3822,10 +3822,10 @@ function leagueSubHeaderHtmlDemo(){
   return `<div class="league-header">
     <button class="league-header-back" onclick="backToLeaguesDemo()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-      ${league.name}
+      ${escapeHtmlLineup(league.name)}
     </button>
     ${!league.isGeneral ? `<div class="league-header-actions">
-      <button class="league-header-btn" onclick="copyLeagueCodeDemo('${league.code}')">
+      <button class="league-header-btn" onclick="copyLeagueCodeDemo(this.dataset.code)" data-code="${escapeHtmlLineup(league.code)}">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
         Copy code
       </button>

@@ -1551,10 +1551,6 @@ async function saveAdminState(){
   }
 }
 
-// ── DM HELPERS (read from in-memory dmState) ──────────────────────────────
-function getDMTournaments(){ const all=dmState.tournaments||[]; return coverageState.tournamentIds ? all.filter(t=>coverageState.tournamentIds.has(t.id)) : all; }
-function getDMEvents(){ return dmState.events||{}; }
-function getDMTeams(){ const all=dmState.teams||[]; return coverageState.teamIds ? all.filter(t=>coverageState.teamIds.has(t.id)) : all; }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
 const modeLabel = {lms:'Last Man Standing', score:'Score Predictor', betting:'Betting Markets', ranking:'Ranking', lineup:'Lineup Predictor', roulette:'Soccer Roulette'};
@@ -2630,7 +2626,6 @@ function goRoundStep1(prefix){
 
 // ── OPEN MODAL (refresh DM data first) ───────────────────────────────────
 async function openModal(id){
-  console.log('GW: openModal called for', id, '(v2)');
   try{
     if(id==='modal-create-comp'){
       // Close round modal if somehow open
@@ -3514,7 +3509,6 @@ async function loadUsers(force){
       predictions: (byName[p.username] || 0) + (byId[p.id] || 0),
       created_at: p.created_at || p.inserted_at || null,
     })).sort((a,b)=> b.predictions - a.predictions || a.username.localeCompare(b.username));
-    console.log('GW: loaded', usersState.rows.length, 'users for', CLIENT_KEY);
   }catch(e){
     console.error('GW: loadUsers failed', e);
     usersState.rows = [];
@@ -4161,7 +4155,6 @@ function initOperatorChrome(){
     showAdminLogin();
     return;
   }
-  console.log('GW: Session restored for', session.user.email);
 
   // Load operator profile — try auth_id first, fall back to id
   let op = null;
@@ -4191,7 +4184,6 @@ function initOperatorChrome(){
     showAdminLogin('Could not load your account. Please contact support.');
     return;
   }
-  console.log('GW: Operator loaded', op.company_name);
   currentOperator = op;
   state.operatorProfile = op;
   state.domains = op.domains||[];

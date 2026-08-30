@@ -28,8 +28,12 @@ jobs:
       # the deploy allowlist from Phase 0.6 — a file ships only by being
       # listed there), then the parity gate verifies the output shape and
       # that nothing non-allowlisted leaked before anything is uploaded.
+      - name: Typecheck (packages + build scripts)
+        run: pnpm exec tsc --noEmit
       - name: Unit tests (packages + anti-drift guards)
         run: pnpm vitest run
+      - name: Duplicate-declaration + forbidden-pattern gate
+        run: node scripts/build/ci-checks.mjs
       - name: Build and verify _site
         run: scripts/build/parity-test.sh
       - uses: actions/configure-pages@v5
