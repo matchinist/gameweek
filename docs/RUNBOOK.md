@@ -68,3 +68,22 @@ Drill log:
 | Date | Dump size | Restore runtime | Notes |
 |---|---|---|---|
 | 2026-08-29 | 442 KB | ~1 s | run 33279619278; all app tables complete (230 teams, 2,254 events, 771 squad players, 20 tournaments, 47 players, 145 predictions, 3 leagues); spot-checked the evening's newest prediction present; 71 warnings, all platform objects (roles/vault/advisor extensions), zero data errors |
+
+## Cloudflare Pages (Phase 2.6)
+
+Every gated `main` build dual-deploys: GitHub Pages (the `www` origin until
+cutover) and the Cloudflare Pages project **gameweek-cloud**
+(https://gameweek-cloud.pages.dev). Repo branches deploy previews at
+`<branch>.gameweek-cloud.pages.dev` via `ci.yml`.
+
+**Rollback (one click):** dashboard → Workers & Pages → gameweek-cloud →
+Deployments → ⋯ menu on any previous deployment → *Rollback to this
+deployment*. Instant, no rebuild. From the CLI:
+`pnpm exec wrangler pages deployment list --project-name=gameweek-cloud`.
+
+**Cutover plan (pending):** zone `gameweek.cloud` added to Cloudflare, then
+nameservers switched at Namecheap (verify the Google MX + TXT records
+imported first — email breaks otherwise); once the zone is active, attach
+`www.gameweek.cloud` as a custom domain on the project and point the `www`
+CNAME at `gameweek-cloud.pages.dev`. GitHub Pages stays warm; reverting is
+one CNAME change back to `matchinist.github.io`.
