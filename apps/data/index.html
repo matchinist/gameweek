@@ -781,6 +781,51 @@ async function scoreAffectedRounds(eid, opts){
   }
 }
 
+// Phase 3.4 — the historical backfill, as an admin action instead of a
+// script with its own credentials: enumerate every round with something to
+// score and push each through the SAME score-round function the live path
+// uses. Idempotent, so running it twice (or after 3.3 already scored some)
+// only rewrites the same numbers.
+async function backfillAllScores(){
+  const btn=document.getElementById('backfill-scores-btn');
+  const setBtn=(t,dis)=>{ if(btn){btn.textContent=t;btn.disabled=dis;} };
+  setBtn('Collecting…',true);
+  try{
+    const [{data:rounds,error:e1},{data:lineupComps,error:e2}] = await Promise.all([
+      supa.from('gw_rounds').select('id,client_key,competition_id,event_ids').limit(10000),
+      supa.from('gw_competitions').select('id,client_key,lineup_config').eq('mode','lineup').eq('status','active'),
+    ]);
+    if(e1) throw e1; if(e2) throw e2;
+    const scopes=[];
+    (rounds||[]).forEach(r=>{
+      if((r.event_ids||[]).some(id=>S.events[id]?.result))
+        scopes.push({client_key:r.client_key, competition_id:r.competition_id, round_id:r.id});
+    });
+    (lineupComps||[]).forEach(c=>{
+      const tid=c.lineup_config?.teamId; if(!tid) return;
+      Object.entries(S.events).forEach(([eid,ev])=>{
+        if((ev.homeId===tid||ev.awayId===tid) && (ev.result||ev.lineup))
+          scopes.push({client_key:c.client_key, competition_id:c.id, round_id:eid});
+      });
+    });
+    if(!scopes.length){ toast('Nothing to score'); setBtn('Score all rounds',false); return; }
+    let done=0, failed=0;
+    for(let i=0;i<scopes.length;i+=4){
+      const results=await Promise.all(scopes.slice(i,i+4).map(s=>supa.functions.invoke('score-round',{body:s})));
+      results.forEach((r,j)=>{
+        if(r.error||(r.data&&r.data.error)){ failed++; console.error('backfill score-round:', scopes[i+j], r.error||r.data); }
+        else done++;
+      });
+      setBtn(`Scoring… ${done+failed}/${scopes.length}`,true);
+    }
+    toast(failed?`Backfill: ${done} scored, ${failed} failed — see console`:`Backfill complete: ${done} rounds scored`);
+  }catch(e){
+    console.error('backfillAllScores:',e);
+    toast('Backfill failed: '+e.message);
+  }
+  setBtn('Score all rounds',false);
+}
+
 async function rescoreFromModal(){
   const eid=document.getElementById('score-modal-eid').value;
   const btn=document.getElementById('score-rescore-btn');
@@ -1839,7 +1884,8 @@ function navTo(page,tournamentId){
   } else if(page==='clients'){
     document.getElementById('nav-clients').classList.add('active');
     document.getElementById('view-clients').classList.add('active');
-    document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">Clients</div></div>';
+    document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">Clients</div></div>'+
+      '<div id="main-header-actions"><button class="btn btn-ghost" id="backfill-scores-btn" onclick="backfillAllScores()" title="Run server-side scoring for every resulted round of every client (idempotent — Phase 3.4 backfill)">Score all rounds</button></div>';
     renderClients();
   }
 }
