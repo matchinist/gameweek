@@ -2744,6 +2744,7 @@ async function loadAndRenderLineupLeaderboard(comp){
       if(i>0 && typeof rows[i].pts==='number' && typeof rows[i-1].pts==='number' && rows[i].pts<rows[i-1].pts) rank=i+1;
       r.rank=rank;
     });
+    if(!leagueMembers) shadowCompareLeaderboard(comp, round.id, rows);
     const html = leagueSubHeaderHtml()+buildLBTable(comp.name, round?.label||'', rows,
       r=>`<td style="text-align:center;">${typeof r.pts==='number'?`<button class="lb-pts-btn" onclick="openLineupPredHistory('${encodeURIComponent(r.u)}')">${r.pts} pts</button>`:'-'}</td>`,
       '<th style="width:96px;text-align:center;">Points</th>',
@@ -2818,6 +2819,7 @@ async function loadAndRenderLineupLeaderboardOverall(comp, target){
     rows.sort((a,b)=>b.pts-a.pts);
     let rank=1;
     rows.forEach((r,i)=>{ if(i>0 && rows[i].pts<rows[i-1].pts) rank=i+1; r.rank=rank; });
+    if(!leagueMembers) shadowCompareLeaderboard(comp, null, rows);
 
     const prizes = comp.overallPrizes || [];
     const html = leagueSubHeaderHtml()+buildLBTable(comp.name, `Overall · ${rounds.length} gameweek${rounds.length===1?'':'s'}`, rows,
@@ -4261,6 +4263,55 @@ function changeLBSelection(val){
   renderPredict();
 }
 
+// ── Phase 3.5 shadow-compare ────────────────────────────────────────────────
+// For one release the embed keeps computing leaderboards client-side but
+// also fetches the server-scored gw_leaderboards rows for the same scope and
+// reports any disagreement to Sentry. When that stays quiet, the tabs cut
+// over to reading only the stored rows.
+function diffLeaderboardRows(clientRows, storedRows){
+  const stored={}; (storedRows||[]).forEach(r=>{ stored[r.username]=r; });
+  const diffs=[];
+  (clientRows||[]).forEach(r=>{
+    // Lineup renders '-' for a not-yet-resolvable row; the server stores 0.
+    const cp = typeof r.pts==='number' ? r.pts : 0;
+    const s = stored[r.u];
+    if(!s){ diffs.push({u:r.u, kind:'missing-stored', client:cp}); return; }
+    delete stored[r.u];
+    if(s.points!==cp){ diffs.push({u:r.u, kind:'points', client:cp, stored:s.points}); return; }
+    if(s.correct!=null && typeof r.correct==='number' && s.correct!==r.correct)
+      diffs.push({u:r.u, kind:'correct', client:r.correct, stored:s.correct});
+  });
+  Object.values(stored).forEach(s=>diffs.push({u:s.username, kind:'missing-client', stored:s.points}));
+  return diffs;
+}
+
+const shadowComparedScopes = new Set(); // one comparison per scope per page load
+async function shadowCompareLeaderboard(comp, roundId, clientRows){
+  if(IS_DEMO) return; // demo is contract-bound to zero backend traffic
+  const key = comp.id+'|'+(roundId||'overall');
+  if(shadowComparedScopes.has(key)) return;
+  shadowComparedScopes.add(key);
+  try{
+    let q = supa.from('gw_leaderboards').select('username,points,correct,total')
+      .eq('client_key',CLIENT_PARAM).eq('competition_id',comp.id);
+    q = roundId ? q.eq('round_id',roundId) : q.is('round_id',null);
+    const {data:storedRows,error} = await q;
+    if(error) return;
+    if(!storedRows || !storedRows.length){
+      // Unscored scopes (open rounds, comps with no results) legitimately
+      // have no stored rows — only scream if the client found real points.
+      const anyPts = (clientRows||[]).some(r=>typeof r.pts==='number'&&r.pts>0);
+      if(!anyPts) return;
+    }
+    const diffs = diffLeaderboardRows(clientRows, storedRows);
+    if(diffs.length && window.Sentry){
+      Sentry.captureMessage('leaderboard shadow mismatch', {level:'warning',
+        tags:{competition_id:comp.id, lb_scope:roundId||'overall'},
+        extra:{diffs:diffs.slice(0,10), client_rows:(clientRows||[]).length, stored_rows:(storedRows||[]).length}});
+    }
+  }catch(e){ /* the shadow must never affect the page */ }
+}
+
 async function fetchLeagueMemberUsernames(leagueId){
   // null/undefined/'general' means "no filter" — everyone, same as today.
   if(!leagueId || leagueId==='general') return null;
@@ -4541,6 +4592,7 @@ async function loadAndRenderLeaderboard(comp){
       });
       rows.sort((a,b)=>b.pts-a.pts||b.correct-a.correct);
       rows.forEach((r,i)=>r.rank=i+1);
+      if(!leagueMembers) shadowCompareLeaderboard(comp, round.id, rows);
       lbPredHistoryCache={sub:round.label, byUser:histByUser};
       target.innerHTML=leagueSubHeaderHtml()+buildLBTable('Leaderboard',round.label,rows,
         row=>`<td style="text-align:center;"><button class="lb-pts-btn" onclick="openPredHistory('${encodeURIComponent(row.u)}')">${row.pts} pts</button></td><td style="text-align:right;font-size:11px;color:var(--text-3);">${row.correct}/${row.total}</td>`,
@@ -4582,6 +4634,7 @@ async function loadAndRenderLeaderboard(comp){
       });
       rows.sort((a,b)=>b.pts-a.pts);
       rows.forEach((r,i)=>r.rank=i+1);
+      if(!leagueMembers) shadowCompareLeaderboard(comp, round.id, rows);
       lbPredHistoryCache={sub:round.label, byUser:histByUser};
       target.innerHTML=leagueSubHeaderHtml()+buildLBTable('Leaderboard',round.label,rows,
         row=>`<td style="text-align:center;"><button class="lb-pts-btn" onclick="openPredHistory('${encodeURIComponent(row.u)}')">${row.pts} pts</button></td>`,
@@ -4618,6 +4671,7 @@ async function loadAndRenderLeaderboard(comp){
       });
       rows.sort((a,b)=>b.pts-a.pts);
       rows.forEach((r,i)=>r.rank=i+1);
+      if(!leagueMembers) shadowCompareLeaderboard(comp, round.id, rows);
       target.innerHTML=leagueSubHeaderHtml()+buildLBTable('Leaderboard',round.label,rows,
         row=>`<td style="text-align:center;font-family:var(--mono);font-weight:800;color:var(--text);">${row.pts} pts</td><td style="text-align:right;font-size:11px;color:var(--text-3);">${row.correct}/${row.total}</td>`,
         '<th style="width:80px;text-align:center;">Points</th><th style="width:80px;text-align:right;">Correct</th>',
@@ -4728,6 +4782,7 @@ async function loadAndRenderLeaderboardOverall(comp, target, leagueMembers){
     }
     rows.sort((a,b)=>b.pts-a.pts);
     let rank=1; rows.forEach((r,i)=>{ if(i>0&&rows[i].pts<rows[i-1].pts) rank=i+1; r.rank=rank; });
+    if(!leagueMembers) shadowCompareLeaderboard(comp, null, rows);
 
     const prizes = comp.overallPrizes || [];
     if(comp.mode==='betting'){
