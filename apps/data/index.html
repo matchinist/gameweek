@@ -354,6 +354,15 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
           </div>
         </div>
         <div class="view" id="view-ingest">
+          <div class="card" style="margin-bottom:14px;">
+            <div class="card-body">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:2px 8px 10px;">
+                <div style="font-size:11px;font-weight:800;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;">Data providers</div>
+                <button class="btn btn-ghost btn-xs" onclick="openProviderModal()">+ Add provider</button>
+              </div>
+              <div id="providers-list" style="display:flex;flex-direction:column;gap:2px;"></div>
+            </div>
+          </div>
           <div class="card">
             <div class="card-body">
               <div id="ingest-summary" style="font-size:12px;color:var(--text-3);padding:2px 8px 10px;"></div>
@@ -422,6 +431,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-create-player')">Cancel</button>
+      <button class="btn btn-ghost" id="cp-i18n-btn" onclick="openLocalizedNames('player', editingPlayerId)" style="display:none;">🌐 Localized names…</button>
       <button class="btn btn-primary" id="cp-submit-btn" onclick="createPlayer()">Add Player</button>
     </div>
   </div>
@@ -468,18 +478,48 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 </div>
 
 <!-- Edit Team -->
-<div class="modal-overlay" id="modal-tournament-names">
-  <div class="modal" style="max-width:420px;">
-    <div class="modal-header"><div class="modal-title">Localized names</div><button class="modal-close" onclick="closeModal('modal-tournament-names')">×</button></div>
+<div class="modal-overlay" id="modal-i18n-names" style="z-index:1100;">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header"><div class="modal-title" id="i18n-names-title">Localized names</div><button class="modal-close" onclick="closeModal('modal-i18n-names')">×</button></div>
     <div class="modal-body">
-      <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;">Shown to operators using that language; the base name stays canonical. Leave a field empty to fall back to the base name.</div>
-      <div class="form-group"><label class="form-label">Türkçe</label><input class="form-input" id="tn-name-tr"></div>
-      <div class="form-group"><label class="form-label">Deutsch</label><input class="form-input" id="tn-name-de"></div>
-      <div class="form-group"><label class="form-label">Português</label><input class="form-input" id="tn-name-pt"></div>
+      <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;">Shown in the game and widgets when the operator uses that language; anything without an override falls back to the base name. Add languages as you need them.</div>
+      <div id="i18n-names-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;"></div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select class="form-select" id="i18n-lang-add" style="flex:1;"></select>
+        <button class="btn btn-ghost btn-sm" onclick="addI18nLang()">+ Add language</button>
+      </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-tournament-names')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveTournamentNames()">Save</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-i18n-names')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveLocalizedNames()">Save</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-provider">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header"><div class="modal-title" id="provider-modal-title">Add provider</div><button class="modal-close" onclick="closeModal('modal-provider')">×</button></div>
+    <div class="modal-body">
+      <div class="form-row form-row-2 form-group">
+        <div><label class="form-label">ID (slug)</label><input class="form-input" id="pv-id" placeholder="sportmonks" style="font-family:var(--mono);"></div>
+        <div><label class="form-label">Name</label><input class="form-input" id="pv-name" placeholder="SportMonks"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">API token</label>
+        <input class="form-input" id="pv-token" placeholder="paste the provider API token" style="font-family:var(--mono);font-size:12px;">
+        <div style="font-size:11px;color:var(--text-3);margin-top:4px;">Stored in the database, readable only by platform admins and the ingest worker.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Base URL <span style="font-weight:400;color:var(--text-3);">— optional, adapter default when empty</span></label>
+        <input class="form-input" id="pv-base-url" placeholder="https://api.sportmonks.com/v3/football" style="font-family:var(--mono);font-size:12px;">
+      </div>
+      <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="pv-enabled" style="width:16px;height:16px;">
+        <label for="pv-enabled" style="font-size:13px;color:var(--text);cursor:pointer;">Enabled — include in the 5-minute sync schedule</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-provider')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProvider()">Save</button>
     </div>
   </div>
 </div>
@@ -515,12 +555,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Localized names <span style="font-weight:400;color:var(--text-3);">— optional, shown to operators using that language</span></label>
-        <div class="form-row form-row-2">
-          <div><label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Türkçe</label><input class="form-input" id="et-name-tr" placeholder="same as name"></div>
-          <div><label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Deutsch</label><input class="form-input" id="et-name-de" placeholder="same as name"></div>
-        </div>
-        <div style="margin-top:8px;"><label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Português</label><input class="form-input" id="et-name-pt" placeholder="same as name" style="max-width:calc(50% - 6px);"></div>
+        <button class="btn btn-ghost btn-sm" onclick="openLocalizedNames('team', S.editingTeamId)">🌐 Localized names…</button>
       </div>
       <div class="form-group">
         <label class="form-label">Fixture Difficulty <span style="font-weight:400;color:var(--text-3);">— optional</span></label>
@@ -1603,12 +1638,14 @@ function editPlayer(id){
   document.getElementById('cp-photo-url').value = p.photo_url||'';
   document.getElementById('cp-photo').value = '';
   document.getElementById('cp-submit-btn').textContent = 'Save Changes';
+  document.getElementById('cp-i18n-btn').style.display=''; // overrides need an existing row
 }
 
 function resetPlayerForm(){
   editingPlayerId = null;
   document.getElementById('cp-modal-title').textContent = 'Add Player';
   document.getElementById('cp-submit-btn').textContent = 'Add Player';
+  document.getElementById('cp-i18n-btn').style.display='none';
   document.getElementById('cp-name').value='';
   document.getElementById('cp-birthday').value='';
   document.getElementById('cp-nationality').value='';
@@ -1941,31 +1978,38 @@ function navTo(page,tournamentId){
   } else if(page==='ingest'){
     document.getElementById('nav-ingest').classList.add('active');
     document.getElementById('view-ingest').classList.add('active');
-    document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">SportMonks Ingest</div></div>'+
-      '<div id="main-header-actions"><button class="btn btn-ghost" onclick="renderIngestLog()">Refresh</button>'+
-      '<button class="btn btn-primary btn-sm" id="ingest-run-btn" onclick="runIngestNow()">Run now</button></div>';
+    document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">Data Ingest</div></div>'+
+      '<div id="main-header-actions"><button class="btn btn-ghost" onclick="renderProviders();renderIngestLog()">Refresh</button>'+
+      '<button class="btn btn-primary btn-sm" id="ingest-run-btn" onclick="runIngestNow()">Run all now</button></div>';
+    renderProviders();
     renderIngestLog();
   }
 }
 
-// SportMonks feed iterations — every run of the sportmonks-ingest Edge
-// Function (cron every 5 minutes, or manual from here) logs to
-// gw_ingest_runs. The feed only touches events an admin mapped via
-// provider_ids, so this page is the full account of what it did.
-async function runIngestNow(){
+// Feed iterations — every provider run of the data-ingest Edge Function
+// (cron every 5 minutes, or manual from here) logs its own gw_ingest_runs
+// row. The feed only touches events an admin mapped via provider_ids, so
+// this page is the full account of what it did.
+async function runIngestNow(providerId){
   const btn=document.getElementById('ingest-run-btn');
   if(btn){btn.disabled=true;btn.textContent='Running…';}
   try{
-    const {data,error}=await supa.functions.invoke('sportmonks-ingest',{body:{trigger:'manual'}});
+    const body={trigger:'manual'};
+    if(providerId) body.provider=providerId;
+    const {data,error}=await supa.functions.invoke('data-ingest',{body});
     if(error){
       // A 4xx from the function still carries its JSON explanation
       let msg=error.message;
       try{ const ctx=await error.context.json(); if(ctx.error) msg=ctx.error; }catch(_e){}
       toast('Ingest: '+msg);
-    } else if(data&&data.error){ toast('Ingest: '+data.error); }
-    else if(data){ toast(`Ingest complete — ${data.results_updated??0} results, ${data.kickoffs_updated??0} kickoffs, ${data.rounds_scored??0} rounds scored`); }
+    } else if(data&&data.providers){
+      const parts=data.providers.map(p=>p.ok
+        ?`${p.provider}: ${p.results_updated??0} results, ${p.kickoffs_updated??0} kickoffs, ${p.rounds_scored??0} rounds scored`
+        :`${p.provider}: ${p.error}`);
+      toast(parts.join(' · ')||'No providers ran');
+    }
   }catch(e){ toast('Ingest failed: '+e.message); }
-  if(btn){btn.disabled=false;btn.textContent='Run now';}
+  if(btn){btn.disabled=false;btn.textContent='Run all now';}
   renderIngestLog();
 }
 
@@ -2005,7 +2049,7 @@ async function renderIngestLog(){
       <div style="display:flex;align-items:center;gap:12px;">
         <div style="width:128px;flex-shrink:0;font-size:11.5px;color:var(--text-2);font-variant-numeric:tabular-nums;">${when}</div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:12.5px;font-weight:700;color:var(--text);">${r.trigger_source==='manual'?`Manual · ${esc(r.initiated_by||'')}`:'Scheduled (cron)'}</div>
+          <div style="font-size:12.5px;font-weight:700;color:var(--text);">${r.provider?`<span style="font-family:var(--mono);font-size:10.5px;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:1px 6px;margin-right:6px;">${esc(r.provider)}</span>`:''}${r.trigger_source==='manual'?`Manual · ${esc(r.initiated_by||'')}`:'Scheduled (cron)'}</div>
           <div style="font-size:11px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${statLine}</div>
         </div>
         <div style="width:64px;text-align:right;flex-shrink:0;font-size:11px;color:var(--text-3);font-variant-numeric:tabular-nums;">${r.duration_ms!=null?r.duration_ms+' ms':'—'}</div>
@@ -2403,34 +2447,138 @@ function editTeam(id){
   const prev=document.getElementById('et-logo-preview');
   if(t.logo) prev.innerHTML=`<img src="${t.logo}" style="width:100%;height:100%;object-fit:contain;">`;
   else prev.textContent='IMG';
-  ['tr','de','pt'].forEach(l=>{ document.getElementById('et-name-'+l).value=(t.nameI18n||{})[l]||''; });
   openModal('modal-edit-team');
 }
 
 // Collects the localized-name inputs of a modal into a jsonb-shaped object,
 // or null when every field is empty (so untouched rows stay null in the DB
 // instead of accumulating {} husks).
-function collectNameI18n(prefix){
-  const out={};
-  ['tr','de','pt'].forEach(l=>{
-    const v=document.getElementById(prefix+'-name-'+l).value.trim();
-    if(v) out[l]=v;
-  });
-  return Object.keys(out).length?out:null;
+// ── Localized names (any entity, any language) ─────────────────────────────
+// Supported languages grow over time, so this is a pick-a-language editor
+// rather than fixed per-language fields: current overrides list + an "add
+// language" select. The app falls back to the base name when a language
+// has no override.
+const I18N_LANGS=[['tr','Türkçe'],['de','Deutsch'],['pt','Português'],['es','Español'],['fr','Français'],['it','Italiano'],['nl','Nederlands'],['pl','Polski'],['ro','Română'],['el','Ελληνικά'],['ru','Русский'],['uk','Українська'],['sr','Srpski'],['hr','Hrvatski'],['bg','Български'],['cs','Čeština'],['sk','Slovenčina'],['hu','Magyar'],['sv','Svenska'],['no','Norsk'],['da','Dansk'],['fi','Suomi'],['ar','العربية'],['he','עברית'],['az','Azərbaycanca'],['id','Bahasa Indonesia'],['th','ไทย'],['vi','Tiếng Việt'],['ja','日本語'],['ko','한국어'],['zh','中文'],['hi','हिन्दी']];
+const I18N_LANG_LABEL=Object.fromEntries(I18N_LANGS);
+let i18nNamesCtx=null; // {type:'team'|'tournament'|'player', id, working:{lang:name}}
+
+function openLocalizedNames(type,id){
+  let baseName='', current=null;
+  if(type==='team'){ const t=getTeam(id); if(!t)return; baseName=t.name; current=t.nameI18n; }
+  else if(type==='tournament'){ const t=S.tournaments.find(x=>x.id===id); if(!t)return; baseName=t.name; current=t.nameI18n; }
+  else if(type==='player'){ const p=players.find(x=>x.id===id); if(!p)return; baseName=p.full_name||''; current=p.name_i18n; }
+  i18nNamesCtx={type,id,working:Object.assign({},current||{})};
+  document.getElementById('i18n-names-title').textContent=`Localized names — ${baseName}`;
+  renderI18nNamesList();
+  openModal('modal-i18n-names');
 }
 
-let editingTournamentNamesId=null;
-function openTournamentNames(id){
-  editingTournamentNamesId=id;
-  const t=S.tournaments.find(x=>x.id===id); if(!t) return;
-  ['tr','de','pt'].forEach(l=>{ document.getElementById('tn-name-'+l).value=(t.nameI18n||{})[l]||''; });
-  openModal('modal-tournament-names');
+function renderI18nNamesList(){
+  const w=i18nNamesCtx.working;
+  const langs=Object.keys(w).sort();
+  document.getElementById('i18n-names-list').innerHTML = langs.length
+    ? langs.map(l=>`<div style="display:flex;gap:8px;align-items:center;">
+        <span style="width:110px;flex-shrink:0;font-size:12px;font-weight:700;color:var(--text-2);"><span style="font-family:var(--mono);font-size:10.5px;color:var(--text-3);">${l}</span> ${I18N_LANG_LABEL[l]||''}</span>
+        <input class="form-input" style="flex:1;" value="${(w[l]||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}" oninput="i18nNamesCtx.working['${l}']=this.value">
+        <button class="btn btn-ghost btn-xs" style="color:var(--red);" onclick="delete i18nNamesCtx.working['${l}'];renderI18nNamesList()" title="Remove override">✕</button>
+      </div>`).join('')
+    : '<div style="font-size:12px;color:var(--text-3);">No overrides yet — every language shows the base name.</div>';
+  document.getElementById('i18n-lang-add').innerHTML =
+    I18N_LANGS.filter(([l])=>!(l in w)).map(([l,label])=>`<option value="${l}">${label} (${l})</option>`).join('');
 }
-function saveTournamentNames(){
-  const t=S.tournaments.find(x=>x.id===editingTournamentNamesId); if(!t) return;
-  t.nameI18n=collectNameI18n('tn');
-  closeModal('modal-tournament-names');
-  save();toast('Localized names saved');
+
+function addI18nLang(){
+  const l=document.getElementById('i18n-lang-add').value;
+  if(!l) return;
+  i18nNamesCtx.working[l]='';
+  renderI18nNamesList();
+  const inputs=document.querySelectorAll('#i18n-names-list input');
+  if(inputs.length) inputs[Object.keys(i18nNamesCtx.working).sort().indexOf(l)]?.focus();
+}
+
+async function saveLocalizedNames(){
+  const {type,id,working}=i18nNamesCtx;
+  const cleaned={};
+  Object.entries(working).forEach(([l,v])=>{ if(v&&v.trim()) cleaned[l]=v.trim(); });
+  const obj=Object.keys(cleaned).length?cleaned:null;
+  closeModal('modal-i18n-names');
+  if(type==='team'){ const t=getTeam(id); if(t){ t.nameI18n=obj; save(); } }
+  else if(type==='tournament'){ const t=S.tournaments.find(x=>x.id===id); if(t){ t.nameI18n=obj; save(); } }
+  else if(type==='player'){
+    // players aren't part of the bulk save() — persist directly
+    const {error}=await supa.from('gw_dm_players').update({name_i18n:obj}).eq('id',id);
+    if(error){ toast('Save failed: '+error.message); return; }
+    const p=players.find(x=>x.id===id); if(p) p.name_i18n=obj;
+  }
+  toast('Localized names saved');
+}
+
+// ── Data providers (dynamic registry incl. credentials) ────────────────────
+let providersCache=[];
+async function renderProviders(){
+  const list=document.getElementById('providers-list');
+  try{
+    const {data,error}=await supa.from('gw_providers').select('*').order('id');
+    if(error) throw error;
+    providersCache=data||[];
+  }catch(e){
+    list.innerHTML=`<div style="padding:10px 8px;font-size:12px;color:var(--red);">⚠ Could not load providers: ${e.message}</div>`;
+    return;
+  }
+  if(!providersCache.length){
+    list.innerHTML='<div style="padding:10px 8px;font-size:12px;color:var(--text-3);">No providers configured.</div>';
+    return;
+  }
+  list.innerHTML=providersCache.map(p=>`<div style="display:flex;align-items:center;gap:12px;padding:9px 8px;border-bottom:1px solid var(--border);">
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:13px;font-weight:700;color:var(--text);">${p.name} <span style="font-family:var(--mono);font-size:10.5px;color:var(--text-3);">${p.id}</span></div>
+      <div style="font-size:11px;color:var(--text-3);">${p.token?'token ●●●●':'<span style="color:var(--red);">no token</span>'}${p.base_url?` · ${p.base_url}`:''}</div>
+    </div>
+    <span style="font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px;background:${p.enabled?'oklch(0.94 0.09 155/0.5)':'oklch(0.94 0.004 260)'};color:${p.enabled?'oklch(0.4 0.12 155)':'var(--text-3)'};">${p.enabled?'ENABLED':'OFF'}</span>
+    <button class="btn btn-ghost btn-xs" onclick="runIngestNow('${p.id}')" title="Sync this provider now">Run</button>
+    <button class="btn btn-ghost btn-xs" onclick="openProviderModal('${p.id}')">Edit</button>
+    <button class="btn btn-ghost btn-xs" style="color:var(--red);" onclick="deleteProvider('${p.id}')">✕</button>
+  </div>`).join('');
+}
+
+let editingProviderId=null;
+function openProviderModal(id){
+  editingProviderId=id||null;
+  const p=id?providersCache.find(x=>x.id===id):null;
+  document.getElementById('provider-modal-title').textContent=p?`Edit provider — ${p.name}`:'Add provider';
+  document.getElementById('pv-id').value=p?p.id:'';
+  document.getElementById('pv-id').disabled=!!p;
+  document.getElementById('pv-name').value=p?p.name:'';
+  document.getElementById('pv-token').value=p?(p.token||''):'';
+  document.getElementById('pv-base-url').value=p?(p.base_url||''):'';
+  document.getElementById('pv-enabled').checked=p?!!p.enabled:false;
+  openModal('modal-provider');
+}
+
+async function saveProvider(){
+  const id=(editingProviderId||document.getElementById('pv-id').value.trim().toLowerCase()).replace(/[^a-z0-9_-]/g,'');
+  const name=document.getElementById('pv-name').value.trim();
+  if(!id||!name){ toast('ID and name are required'); return; }
+  const row={
+    id, name,
+    token:document.getElementById('pv-token').value.trim()||null,
+    base_url:document.getElementById('pv-base-url').value.trim()||null,
+    enabled:document.getElementById('pv-enabled').checked,
+    updated_at:new Date().toISOString(),
+  };
+  const {error}=await supa.from('gw_providers').upsert(row,{onConflict:'id'});
+  if(error){ toast('Save failed: '+error.message); return; }
+  closeModal('modal-provider');
+  toast('Provider saved');
+  renderProviders();
+}
+
+async function deleteProvider(id){
+  if(!confirm(`Delete provider "${id}"? Its ingest history stays; provider_ids mappings on events are untouched.`)) return;
+  const {error}=await supa.from('gw_providers').delete().eq('id',id);
+  if(error){ toast('Delete failed: '+error.message); return; }
+  toast('Provider deleted');
+  renderProviders();
 }
 
 function saveTeamEdit(){
@@ -2444,7 +2592,6 @@ function saveTeamEdit(){
   const fdAwayVal = document.getElementById('et-fd-away').value;
   t.fdHome = fdHomeVal ? +fdHomeVal : null;
   t.fdAway = fdAwayVal ? +fdAwayVal : null;
-  t.nameI18n = collectNameI18n('et');
   closeModal('modal-edit-team');renderTeams();
   if(S.activePage==='tournament')renderTournamentView();
   save();toast('Team updated');
@@ -2472,7 +2619,7 @@ function renderTournamentView(){
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
       <select class="form-select" style="width:auto;font-size:12px;padding:6px 8px;" onchange="setTournamentSport('${t.id}',this.value)">${sportOptions(t.sport)}</select>
-      <button class="btn btn-ghost btn-sm" onclick="openTournamentNames('${t.id}')" title="Per-language display-name overrides">Names</button>
+      <button class="btn btn-ghost btn-sm" onclick="openLocalizedNames('tournament','${t.id}')" title="Per-language display-name overrides">🌐 Names</button>
       <button class="btn btn-danger btn-sm" onclick="deleteTournament('${t.id}')">Delete</button>
     </div>`;
 

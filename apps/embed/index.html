@@ -975,6 +975,13 @@ let COMP_FILTER_INVALID = false; // set true if a comp filter was given but matc
 // ── DATA LOAD ─────────────────────────────────────────────────────────────────
 let COMPS=[], EVENTS={}, EVENTS_RAW={}, EVENT_GAMEWEEK={}, EVENT_TOURNAMENT={}, EVENT_TOURNAMENT_ID={}, TOURNAMENT_NAMES={};
 
+// Per-language display names: gw_dm_* rows carry name_i18n ({lang: name})
+// edited in Data Manager; show the operator-language override, fall back to
+// the canonical name. Display-only — ids and stored scoring never localize.
+function gwLocName(row, lang){
+  return (row && row.name_i18n && row.name_i18n[lang]) || (row ? row.name : '') || '';
+}
+
 function shortPitchName(name){
   if(!name) return '';
   const parts = name.trim().split(/\s+/);
@@ -1022,12 +1029,12 @@ async function buildCompsFromRealData(){
     // than season key naming — see the comment there for why.
     const eventSeasonKey = {};
     (tournamentRows||[]).forEach(t=>{
-      TOURNAMENT_NAMES[t.id]=t.name;
+      TOURNAMENT_NAMES[t.id]=gwLocName(t, LANG);
       Object.entries(t.seasons||{}).forEach(([seasonKey,season])=>{
         (season.rounds||[]).forEach(r=>{
           (r.eventIds||[]).forEach(eid=>{
             EVENT_GAMEWEEK[eid]=r.label;
-            EVENT_TOURNAMENT[eid]=t.name;
+            EVENT_TOURNAMENT[eid]=gwLocName(t, LANG);
             // An event can be linked into more than one tournament's rounds
             // (e.g. the same fixture reused across a league and a cup round
             // grouping) — track every tournament it belongs to, not just
@@ -1040,11 +1047,17 @@ async function buildCompsFromRealData(){
     });
 
     const teamById = id => (teams||[]).find(t=>t.id===id);
+    // Canonical -> localized team-name map. Operator-typed names (ranking
+    // team lists) localize through the SAME map as EVENTS below, so
+    // client-side ranking scoring — which matches teams BY NAME — sees
+    // consistent names on both sides whether or not an override exists.
+    const rankingNameLoc = {};
+    (teams||[]).forEach(tm=>{ const l=gwLocName(tm, LANG); if(l && l!==tm.name) rankingNameLoc[tm.name]=l; });
     (evRows||[]).forEach(ev=>{
       const home=teamById(ev.home_id), away=teamById(ev.away_id);
       const hasResult = ev.result && ev.result.h!=null && ev.result.a!=null;
       EVENTS[ev.id] = {
-        home: home?.name||ev.home_id, away: away?.name||ev.away_id,
+        home: gwLocName(home, LANG)||ev.home_id, away: gwLocName(away, LANG)||ev.away_id,
         homeLogo: home?.logo||'', awayLogo: away?.logo||'',
         homeId: ev.home_id, awayId: ev.away_id,
         // kickoff_at (timestamptz, Phase 1.2) is the preferred instant; the
@@ -1140,7 +1153,7 @@ async function buildCompsFromRealData(){
         return {id:r.id, label:r.label, deadline:r.deadline||'',
           status: r.status==='completed'?'completed':(allDone&&evIds.length?'completed':'open'),
           eventIds:evIds, tournamentNames:r.tournament_names||[],
-          rankingTeams:r.ranking_teams||null,
+          rankingTeams:r.ranking_teams ? r.ranking_teams.map(t=>({...t, name: rankingNameLoc[t.name]||t.name})) : null,
           prizes:r.prizes||null};
         });
       }
@@ -1989,7 +2002,7 @@ async function loadTeamSquad(teamId){
       const pos = normalizePos(p.position||p.pos);
       if(!pos) return;
       squad[pos].push({
-        id:p.id, name:p.full_name||p.name||'Unknown',
+        id:p.id, name:gwLocName({name:p.full_name||p.name||'Unknown', name_i18n:p.name_i18n}, LANG),
         no:p.jersey_number??p.number??p.shirt_number??p.no??'',
         nationality:p.nationality||''
       });
