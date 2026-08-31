@@ -83,7 +83,7 @@ Everything after this depends on a build, tests, and rollback. Deliberately zero
 
 | # | Task |
 |---|---|
-| 3.1 | ☐ Migration: `gw_predictions.points int` (nullable = unscored); `gw_leaderboards` (`client_key`, `competition_id`, `round_id` nullable for overall, `player_id`, `username`, `points`, `updated_at`; unique on the scope + player). Public read policy (no PII beyond the display username); writes only via service role. |
+| 3.1 | ☒ Migration: `gw_predictions.points int` (nullable = unscored); `gw_leaderboards` (`client_key`, `competition_id`, `round_id` nullable for overall, `player_id`, `username`, `points`, `updated_at`; unique on the scope + player). Public read policy (no PII beyond the display username); writes only via service role. |
 | 3.2 | ☐ **`score-round` Edge Function**: verifies the caller is a platform admin (later: the competition's operator); loads the round's predictions + result; runs `packages/scoring`; writes `points`; upserts `gw_leaderboards` for round and overall scopes. Same deploy pipeline as `sso-login`. |
 | 3.3 | ☐ Wire `/data`'s `saveResultTab()` to invoke it after a result save; add a "re-score round" button for corrections (idempotent by construction). |
 | 3.4 | ☐ **Backfill**: script scores every historical resulted round through the same function. |
@@ -144,6 +144,7 @@ Leave Supabase · Hono API tier · KV/edge caching · Queues · R2 · rate limit
 
 | Date | Phase.Task | Note |
 |---|---|---|
+| 2026-08-31 | 3.1 | `20260831095500_leaderboards.sql` live. `gw_predictions.points` (nullable = unscored) + `gw_leaderboards` keyed `(client_key, competition_id, round_id NULLS NOT DISTINCT, player_id)` so overall-scope upserts can't stack; `correct`/`total` columns added beyond the spec so score/ranking tabs can render "6/8" without client recompute. Public SELECT (username is the only identifying column); writes grant-revoked for anon/authenticated (C-1 pattern — no write policy to get wrong), service_role only. TDD: `scripts/migrations/leaderboards.test.sh` (11 checks incl. nulls-not-distinct upsert semantics) RED first; replay-test green; live-probed anon read 200 / insert 401. Betting semantics decided with owner: **all configured markets score** (winner/margin included) — event cards become canonical; cheeseheadtv/demarco/basketballireland totals will rise at backfill. |
 | 2026-08-28 | — | Document created at `a06b055`. Pre-work already done: C-3 closed in production (PII RLS fix); `gw_operators_public` live; username unique index shipped with SSO SQL. |
 | 2026-08-28 | 0.9 | `.gitignore` added; both session-email `console.log`s removed. |
 | 2026-08-28 | 0.8 | Dead copies deleted from `embed/` (~455 lines) and `admin/` (getDM* triple, byte-identical). `demo/` has no duplicates. Diff finding: the dead `renderPredictionsPane` dispatched `roulette` to `renderRouletteHTML()`; the live one does **not** — so roulette comps already render the generic pane in production. Relevant to 6.4 (translate roulette or drop it). Dead `renderEventCard` also had an "awaiting result" betting recap the live one dropped. All inline scripts pass `node --check` after excision. |
