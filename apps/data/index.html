@@ -495,6 +495,44 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
     </div>
   </div>
 </div>
+<div class="modal-overlay" id="modal-provider-map">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-header"><div class="modal-title" id="pm-title">Provider mapping</div><button class="modal-close" onclick="closeModal('modal-provider-map')">×</button></div>
+    <div class="modal-body">
+      <div class="form-row form-row-2 form-group">
+        <div>
+          <label class="form-label">Provider</label>
+          <select class="form-select" id="pm-provider" onchange="pmProviderChanged()"></select>
+        </div>
+        <div>
+          <label class="form-label">League</label>
+          <div style="display:flex;gap:6px;">
+            <select class="form-select" id="pm-league" style="flex:1;"><option value="">— load leagues first —</option></select>
+            <button class="btn btn-ghost btn-sm" id="pm-load-leagues" onclick="pmLoadLeagues()">Load</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="pm-auto-import" checked style="width:16px;height:16px;">
+        <label for="pm-auto-import" style="font-size:13px;color:var(--text);cursor:pointer;">Auto-import — the daily sync creates new fixtures (and unseen teams) for this league automatically</label>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
+        <button class="btn btn-primary btn-sm" onclick="pmSaveMapping()">Save mapping</button>
+        <span id="pm-mapping-status" style="font-size:12px;color:var(--text-3);"></span>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div style="font-size:11px;font-weight:800;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;">Fixture matching (last 7 → next 21 days)</div>
+          <button class="btn btn-ghost btn-sm" id="pm-fetch-btn" onclick="pmFetchFixtures()">Fetch &amp; match</button>
+        </div>
+        <div id="pm-review" style="display:flex;flex-direction:column;gap:4px;max-height:320px;overflow-y:auto;"></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+          <button class="btn btn-primary btn-sm" id="pm-apply-btn" onclick="pmApply()" style="display:none;">Apply selected</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="modal-overlay" id="modal-provider">
   <div class="modal" style="max-width:440px;">
     <div class="modal-header"><div class="modal-title" id="provider-modal-title">Add provider</div><button class="modal-close" onclick="closeModal('modal-provider')">×</button></div>
@@ -929,19 +967,20 @@ async function save(){
   try{
     if(S.teams.length){
       const {error:e1} = await supa.from('gw_dm_teams')
-        .upsert(S.teams.map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||'',sport:t.sport||'football',fd_home:t.fdHome??null,fd_away:t.fdAway??null,name_i18n:t.nameI18n??null})),{onConflict:'id'});
+        .upsert(S.teams.map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||'',sport:t.sport||'football',fd_home:t.fdHome??null,fd_away:t.fdAway??null,name_i18n:t.nameI18n??null,provider_ids:t.providerIds??null})),{onConflict:'id'});
       if(e1){ toast('Save failed: '+e1.message); console.error('teams save:',e1); return false; }
     }
     if(S.tournaments.length){
       const {error:e2} = await supa.from('gw_dm_tournaments')
-        .upsert(S.tournaments.map(t=>({id:t.id,name:t.name,country:t.country||'',type:t.type||'league',sport:t.sport||'football',color:t.color||'#4F46E5',seasons:t.seasons||{},name_i18n:t.nameI18n??null})),{onConflict:'id'});
+        .upsert(S.tournaments.map(t=>({id:t.id,name:t.name,country:t.country||'',type:t.type||'league',sport:t.sport||'football',color:t.color||'#4F46E5',seasons:t.seasons||{},name_i18n:t.nameI18n??null,provider_ids:t.providerIds??null})),{onConflict:'id'});
       if(e2){ toast('Save failed: '+e2.message); console.error('tournaments save:',e2); return false; }
     }
     const evArr = Object.entries(S.events).map(([id,ev])=>({
       id, home_id:ev.homeId, away_id:ev.awayId,
       kickoff:ev.kickoff||'', kickoff_at:ev.kickoffAt||null, result:ev.result||null,
       status:ev.status||'upcoming', line:ev.line||2.5,
-      lineup:ev.lineup||null, scorers:ev.scorers||null
+      lineup:ev.lineup||null, scorers:ev.scorers||null,
+      provider_ids:ev.providerIds??null
     }));
     if(evArr.length){
       const {error:e3} = await supa.from('gw_dm_events').upsert(evArr,{onConflict:'id'});
@@ -2521,6 +2560,174 @@ async function saveLocalizedNames(){
   toast('Localized names saved');
 }
 
+// ── Provider mapping (tournament → provider league → fixtures) ─────────────
+// The dynamic flow the feed is built around: pick a provider, pick one of
+// its leagues, save — from then on the daily sync keeps that tournament's
+// fixtures flowing (auto_import), and "Fetch & match" links or imports the
+// current window immediately with per-row review. All provider API calls go
+// through the admin-gated provider-browse function (tokens never reach the
+// browser).
+let pmCtx=null; // {tournamentId, fixtures:[], suggestions:[], rows:[]}
+
+async function openProviderMap(tournamentId){
+  pmCtx={tournamentId, fixtures:[], suggestions:[], rows:[]};
+  const t=S.tournaments.find(x=>x.id===tournamentId); if(!t) return;
+  document.getElementById('pm-title').textContent=`Provider mapping — ${t.name}`;
+  document.getElementById('pm-review').innerHTML='';
+  document.getElementById('pm-apply-btn').style.display='none';
+  if(!providersCache.length){
+    const {data}=await supa.from('gw_providers').select('*').order('id');
+    providersCache=data||[];
+  }
+  document.getElementById('pm-provider').innerHTML=providersCache.map(p=>`<option value="${escHtml(p.id)}">${escHtml(p.name)}</option>`).join('');
+  pmProviderChanged();
+  openModal('modal-provider-map');
+}
+
+function pmMapping(){
+  const t=S.tournaments.find(x=>x.id===pmCtx.tournamentId);
+  const pid=document.getElementById('pm-provider').value;
+  return {t, pid, m:(t&&t.providerIds&&t.providerIds[pid])||null};
+}
+
+function pmProviderChanged(){
+  const {m}=pmMapping();
+  const sel=document.getElementById('pm-league');
+  sel.innerHTML=m?`<option value="${m.league_id}">${escHtml(m.league_name||('league '+m.league_id))} (current)</option>`:'<option value="">— load leagues first —</option>';
+  document.getElementById('pm-auto-import').checked=m?!!m.auto_import:true;
+  document.getElementById('pm-mapping-status').textContent=m?`Mapped to league ${m.league_id}${m.auto_import?' · auto-import on':''}`:'Not mapped yet';
+}
+
+async function pmBrowse(body){
+  const {data,error}=await supa.functions.invoke('provider-browse',{body});
+  if(error){
+    let msg=error.message;
+    try{ const ctx=await error.context.json(); if(ctx.error) msg=ctx.error; }catch(_e){}
+    throw new Error(msg);
+  }
+  if(data&&data.error) throw new Error(data.error);
+  return data;
+}
+
+async function pmLoadLeagues(){
+  const btn=document.getElementById('pm-load-leagues');
+  btn.disabled=true;btn.textContent='…';
+  try{
+    const {pid,m}=pmMapping();
+    const {data}=await pmBrowse({provider:pid,resource:'leagues'});
+    document.getElementById('pm-league').innerHTML=(data||[]).map(l=>
+      `<option value="${l.smId}"${m&&m.league_id===l.smId?' selected':''}>${escHtml(l.name)} (#${l.smId})</option>`).join('');
+    toast(`${(data||[]).length} leagues in your plan`);
+  }catch(e){ toast('Leagues: '+e.message); }
+  btn.disabled=false;btn.textContent='Load';
+}
+
+function pmSaveMapping(){
+  const {t,pid}=pmMapping();
+  const sel=document.getElementById('pm-league');
+  const leagueId=parseInt(sel.value);
+  if(!leagueId){ toast('Pick a league first'); return; }
+  const leagueName=(sel.options[sel.selectedIndex]?.textContent||'').replace(/ \(#\d+\)| \(current\)/,'');
+  t.providerIds=Object.assign({},t.providerIds,{[pid]:{league_id:leagueId,league_name:leagueName,auto_import:document.getElementById('pm-auto-import').checked}});
+  save();
+  pmProviderChanged();
+  toast('Mapping saved — the daily sync now covers this tournament');
+}
+
+async function pmFetchFixtures(){
+  const {pid,m}=pmMapping();
+  if(!m){ toast('Save the league mapping first'); return; }
+  const btn=document.getElementById('pm-fetch-btn');
+  btn.disabled=true;btn.textContent='Fetching…';
+  try{
+    const d=ms=>new Date(ms).toISOString().slice(0,10);
+    const events=Object.entries(S.events).map(([id,ev])=>({id,homeId:ev.homeId,awayId:ev.awayId,kickoffAt:ev.kickoffAt||null}));
+    const teams=Object.fromEntries(S.teams.map(t=>[t.id,{name:t.name}]));
+    const res=await pmBrowse({provider:pid,resource:'fixtures',league_id:m.league_id,
+      from:d(Date.now()-7*864e5),to:d(Date.now()+21*864e5),events,teams});
+    pmCtx.fixtures=res.data||[];
+    pmCtx.suggestions=res.suggestions||[];
+    pmBuildReview(pid);
+  }catch(e){ toast('Fixtures: '+e.message); }
+  btn.disabled=false;btn.textContent='Fetch & match';
+}
+
+function pmNorm(n){ return String(n||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,''); }
+
+function pmBuildReview(pid){
+  const sugBySm={}; (pmCtx.suggestions||[]).forEach(s=>{ sugBySm[s.smId]=s; });
+  const linkedSm=new Set();
+  Object.values(S.events).forEach(ev=>{ if(ev.providerIds&&ev.providerIds[pid]!=null) linkedSm.add(String(ev.providerIds[pid])); });
+  const teamBySm={}; S.teams.forEach(t=>{ if(t.providerIds&&t.providerIds[pid]!=null) teamBySm[String(t.providerIds[pid])]=t.id; });
+  const teamByNorm={}; S.teams.forEach(t=>{ teamByNorm[pmNorm(t.name)]=t.id; });
+
+  pmCtx.rows=pmCtx.fixtures.map((fx,idx)=>{
+    if(linkedSm.has(String(fx.smId))) return {idx,fx,kind:'linked'};
+    const sug=sugBySm[fx.smId];
+    if(sug&&sug.eventId) return {idx,fx,kind:'link',eventId:sug.eventId,score:sug.score,checked:true};
+    const homeTeam=teamBySm[String(fx.homeSmId)]||teamByNorm[pmNorm(fx.homeName)]||null;
+    const awayTeam=teamBySm[String(fx.awaySmId)]||teamByNorm[pmNorm(fx.awayName)]||null;
+    return {idx,fx,kind:'create',homeTeam,awayTeam,checked:true};
+  });
+
+  const fmt=iso=>iso?new Date(iso).toLocaleString(undefined,{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'?';
+  document.getElementById('pm-review').innerHTML=pmCtx.rows.map(r=>{
+    const label=`${escHtml(r.fx.homeName||'?')} vs ${escHtml(r.fx.awayName||'?')} · ${fmt(r.fx.startingAt)}`;
+    if(r.kind==='linked') return `<div style="display:flex;gap:8px;align-items:center;padding:5px 4px;font-size:12px;color:var(--text-3);"><span style="width:16px;text-align:center;">✓</span><span style="flex:1;">${label}</span><span>already linked</span></div>`;
+    const cb=`<input type="checkbox" data-idx="${r.idx}" ${r.checked?'checked':''} onchange="pmCtx.rows[this.dataset.idx].checked=this.checked" style="width:15px;height:15px;">`;
+    if(r.kind==='link'){
+      const ev=S.events[r.eventId];
+      const evLabel=ev?`${escHtml(getTeam(ev.homeId)?.name||'?')} vs ${escHtml(getTeam(ev.awayId)?.name||'?')}`:r.eventId;
+      return `<div style="display:flex;gap:8px;align-items:center;padding:5px 4px;font-size:12px;color:var(--text);">${cb}<span style="flex:1;">${label}</span><span style="color:oklch(0.45 0.12 155);font-weight:700;">link → ${evLabel}</span></div>`;
+    }
+    const th=r.homeTeam?escHtml(getTeam(r.homeTeam)?.name||''):`<b>new: ${escHtml(r.fx.homeName||'?')}</b>`;
+    const ta=r.awayTeam?escHtml(getTeam(r.awayTeam)?.name||''):`<b>new: ${escHtml(r.fx.awayName||'?')}</b>`;
+    return `<div style="display:flex;gap:8px;align-items:center;padding:5px 4px;font-size:12px;color:var(--text);">${cb}<span style="flex:1;">${label}</span><span style="color:var(--accent);font-weight:700;">create (${th} / ${ta})</span></div>`;
+  }).join('')||'<div style="font-size:12px;color:var(--text-3);padding:8px 4px;">No fixtures in the window.</div>';
+  document.getElementById('pm-apply-btn').style.display=pmCtx.rows.some(r=>r.kind!=='linked')?'':'none';
+}
+
+function pmApply(){
+  const {t,pid}=pmMapping();
+  const season=t&&S.activeSeason&&t.seasons?t.seasons[S.activeSeason]:null;
+  let linked=0,created=0,teamsCreated=0;
+  const ensureTeam=(existingId,smId,name,short,image)=>{
+    if(existingId){
+      const tm=getTeam(existingId);
+      if(tm&&smId!=null){ tm.providerIds=Object.assign({},tm.providerIds,{[pid]:smId}); }
+      return existingId;
+    }
+    const id='tm'+uid();
+    S.teams.push({id,name:name||('Team '+smId),short:(short||String(name||'').slice(0,3)).toUpperCase().slice(0,5),color:'#4F46E5',logo:image||'',sport:'football',providerIds:smId!=null?{[pid]:smId}:null});
+    teamsCreated++;
+    return id;
+  };
+  pmCtx.rows.forEach(r=>{
+    if(r.kind==='link'&&r.checked){
+      const ev=S.events[r.eventId]; if(!ev) return;
+      ev.providerIds=Object.assign({},ev.providerIds,{[pid]:r.fx.smId});
+      const hm=getTeam(ev.homeId), am=getTeam(ev.awayId);
+      if(hm&&r.fx.homeSmId!=null) hm.providerIds=Object.assign({},hm.providerIds,{[pid]:r.fx.homeSmId});
+      if(am&&r.fx.awaySmId!=null) am.providerIds=Object.assign({},am.providerIds,{[pid]:r.fx.awaySmId});
+      linked++;
+    } else if(r.kind==='create'&&r.checked){
+      const homeId=ensureTeam(r.homeTeam,r.fx.homeSmId,r.fx.homeName,r.fx.homeShort,r.fx.homeImage);
+      const awayId=ensureTeam(r.awayTeam,r.fx.awaySmId,r.fx.awayName,r.fx.awayShort,r.fx.awayImage);
+      const eid='ev'+uid();
+      S.events[eid]={homeId,awayId,kickoff:r.fx.startingAt||'',kickoffAt:r.fx.startingAt||null,result:null,status:'upcoming',line:2.5,providerIds:{[pid]:r.fx.smId}};
+      if(season){ [homeId,awayId].forEach(id=>{ if(!season.teamIds.includes(id)) season.teamIds.push(id); }); }
+      created++;
+    }
+  });
+  save();
+  toast(`Applied: ${linked} linked, ${created} created${teamsCreated?`, ${teamsCreated} new teams`:''}`);
+  pmFetchFixturesRefreshLocal(pid);
+  if(S.activePage==='tournament') renderTournamentView();
+  renderTeams();
+}
+
+function pmFetchFixturesRefreshLocal(pid){ pmBuildReview(pid); }
+
 // ── Data providers (dynamic registry incl. credentials) ────────────────────
 let providersCache=[];
 async function renderProviders(){
@@ -2628,6 +2835,7 @@ function renderTournamentView(){
     <div style="display:flex;gap:8px;align-items:center;">
       <select class="form-select" style="width:auto;font-size:12px;padding:6px 8px;" onchange="setTournamentSport('${t.id}',this.value)">${sportOptions(t.sport)}</select>
       <button class="btn btn-ghost btn-sm" onclick="openLocalizedNames('tournament','${t.id}')" title="Per-language display-name overrides">🌐 Names</button>
+      <button class="btn btn-ghost btn-sm" onclick="openProviderMap('${t.id}')" title="Map this tournament to a data provider league">🔗 Provider</button>
       <button class="btn btn-danger btn-sm" onclick="deleteTournament('${t.id}')">Delete</button>
     </div>`;
 
@@ -3507,15 +3715,15 @@ async function loadDMData(){
   }
   // ── END MIGRATION ────────────────────────────────────────────────────────
 
-  S.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||'',sport:t.sport||'football',fdHome:t.fd_home ?? null,fdAway:t.fd_away ?? null,nameI18n:t.name_i18n||null}))
+  S.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||'',sport:t.sport||'football',fdHome:t.fd_home ?? null,fdAway:t.fd_away ?? null,nameI18n:t.name_i18n||null,providerIds:t.provider_ids||null}))
     .sort((a,b)=>a.name.localeCompare(b.name));
-  S.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,sport:t.sport||'football',color:t.color,seasons:t.seasons||{},nameI18n:t.name_i18n||null}));
+  S.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,sport:t.sport||'football',color:t.color,seasons:t.seasons||{},nameI18n:t.name_i18n||null,providerIds:t.provider_ids||null}));
   const evMap={};
   (events||[]).forEach(e=>{
     // kickoffAt rides along so an untouched event re-upserted by the bulk
     // save keeps its backfilled kickoff_at instead of clobbering it — it is
     // only recomputed when the operator actually edits the kickoff.
-    evMap[e.id]={homeId:e.home_id,awayId:e.away_id,kickoff:e.kickoff,kickoffAt:e.kickoff_at||null,result:e.result,status:e.status,line:e.line||2.5,lineup:e.lineup||null,scorers:e.scorers||null};
+    evMap[e.id]={homeId:e.home_id,awayId:e.away_id,kickoff:e.kickoff,kickoffAt:e.kickoff_at||null,result:e.result,status:e.status,line:e.line||2.5,lineup:e.lineup||null,scorers:e.scorers||null,providerIds:e.provider_ids||null};
   });
   S.events=evMap;
 

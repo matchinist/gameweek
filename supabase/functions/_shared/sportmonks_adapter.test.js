@@ -3,7 +3,7 @@
 // `state` includes); once the owner's API key exists these get re-verified
 // against real payloads and extended.
 import { describe, it, expect } from 'vitest';
-import { parseFixture } from './sportmonks_adapter.mjs';
+import { parseFixture, parseLeague } from './sportmonks_adapter.mjs';
 
 const FT_FIXTURE = {
   id: 18535517,
@@ -43,5 +43,32 @@ describe('parseFixture', () => {
     expect(f.finished).toBe(true);
     expect(f.h).toBe(null);
     expect(f.a).toBe(null);
+  });
+});
+
+describe('participants + leagues', () => {
+  it('extracts home/away participant ids, names and images when included', () => {
+    const fx = {
+      ...FT_FIXTURE,
+      participants: [
+        { id: 501, name: 'Besiktas JK', short_code: 'BJK', image_path: 'https://x/bjk.png', meta: { location: 'home' } },
+        { id: 502, name: 'Galatasaray', short_code: 'GS', image_path: 'https://x/gs.png', meta: { location: 'away' } },
+      ],
+    };
+    const p = parseFixture(fx);
+    expect(p.homeSmId).toBe(501);
+    expect(p.awayName).toBe('Galatasaray');
+    expect(p.homeImage).toBe('https://x/bjk.png');
+    expect(p.homeShort).toBe('BJK');
+  });
+
+  it('fixtures without participants still parse (result-only sync path)', () => {
+    const p = parseFixture(FT_FIXTURE);
+    expect(p.homeSmId).toBe(null);
+    expect(p.h).toBe(2);
+  });
+
+  it('parseLeague maps id and name', () => {
+    expect(parseLeague({ id: 600, name: 'Super Lig', short_code: 'TUR SL' })).toMatchObject({ smId: 600, name: 'Super Lig' });
   });
 });

@@ -41,64 +41,159 @@ type RunResult = { stats: Record<string, number>; log: LogLine[] };
 // One entry per implemented provider; /data can register any provider row,
 // but until an adapter exists here its runs report "no adapter implemented".
 
+// Budget-aware sync. The Starter plan allows ~2000 API calls/month while
+// the cron fires every 5 minutes, so the worker must decide when calling
+// out is WORTH a request:
+//   * LIVE window (every run): only events kicked off in the last 6 hours
+//     and not yet completed — that is where results appear. No live events
+//     -> zero API calls for that run.
+//   * DAILY pass (~once per 20h, tracked in provider.config): refresh
+//     upcoming kickoffs for mapped events, and auto-import new fixtures for
+//     tournaments mapped with auto_import — creating events (and unseen
+//     teams) with provider_ids, so a mapped tournament keeps itself fresh.
 async function runSportmonks(service: SupabaseClient, provider: ProviderRow): Promise<RunResult> {
   const log: LogLine[] = [];
   const base = provider.base_url || "https://api.sportmonks.com/v3/football";
-  const since = new Date(Date.now() - 7 * 864e5).toISOString();
+  const now = Date.now();
+  const stats: Record<string, number> = {
+    api_calls: 0, live_events: 0, fixtures_checked: 0,
+    results_updated: 0, kickoffs_updated: 0, fixtures_imported: 0, teams_created: 0, rounds_scored: 0,
+  };
+  const smFetch = async (path: string) => {
+    stats.api_calls++;
+    const res = await fetch(`${base}${path}`, { headers: { Authorization: provider.token! } });
+    if (!res.ok) throw new Error(`SportMonks ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    return res.json();
+  };
+
+  // All mapped events once — the live filter, kickoff refresh and import
+  // dedupe all read from this.
   const { data: mapped, error: mapErr } = await service.from("gw_dm_events")
     .select("id,provider_ids,kickoff_at,result,status")
     .not(`provider_ids->${provider.id}`, "is", null)
-    .gte("kickoff_at", since)
-    .limit(2000);
+    .limit(5000);
   if (mapErr) throw new Error(`mapped-events load failed: ${mapErr.message}`);
-  const bySmId: Record<string, { id: string; kickoff_at: string | null; result: { h: number; a: number } | null }> = {};
-  (mapped || []).forEach((e: { id: string; provider_ids: Record<string, number | string>; kickoff_at: string | null; result: { h: number; a: number } | null }) => {
-    bySmId[String(e.provider_ids[provider.id])] = e;
-  });
-  const smIds = Object.keys(bySmId);
-  const stats: Record<string, number> = {
-    events_mapped: smIds.length, fixtures_checked: 0,
-    results_updated: 0, kickoffs_updated: 0, rounds_scored: 0,
-  };
-  if (!smIds.length) {
-    log.push({ level: "info", msg: "no mapped events in the sync window — map provider ids on events to activate syncing" });
-    return { stats, log };
-  }
+  type MappedEv = { id: string; provider_ids: Record<string, number | string>; kickoff_at: string | null; result: { h: number; a: number } | null; status: string | null };
+  const bySmId: Record<string, MappedEv> = {};
+  (mapped || []).forEach((e: MappedEv) => { bySmId[String(e.provider_ids[provider.id])] = e; });
 
   const updatedEventIds: string[] = [];
-  for (let i = 0; i < smIds.length; i += 50) {
-    const batch = smIds.slice(i, i + 50);
-    const res = await fetch(`${base}/fixtures/multi/${batch.join(",")}?include=scores;state`, {
-      headers: { Authorization: provider.token! },
-    });
-    if (!res.ok) throw new Error(`SportMonks ${res.status}: ${(await res.text()).slice(0, 300)}`);
-    const payload = await res.json();
-    for (const fx of payload.data || []) {
-      stats.fixtures_checked++;
-      const p = parseFixture(fx);
-      const ev = bySmId[String(p.smId)];
-      if (!ev) continue;
-      const patch: Record<string, unknown> = {};
-      if (p.startingAt && (!ev.kickoff_at || Math.abs(new Date(p.startingAt).getTime() - new Date(ev.kickoff_at).getTime()) > 60_000)) {
-        patch.kickoff_at = p.startingAt;
-        stats.kickoffs_updated++;
-        log.push({ level: "info", msg: `kickoff ${ev.id}: ${ev.kickoff_at || "unset"} -> ${p.startingAt}` });
-      }
-      if (p.finished && p.h != null && (!ev.result || ev.result.h !== p.h || ev.result.a !== p.a)) {
-        patch.result = { ...(ev.result || {}), h: p.h, a: p.a };
-        patch.status = "completed";
-        stats.results_updated++;
-        log.push({ level: "info", msg: `result ${ev.id}: ${p.h}-${p.a} (${p.state})` });
-      }
-      if (Object.keys(patch).length) {
-        const { error: upErr } = await service.from("gw_dm_events").update(patch).eq("id", ev.id);
-        if (upErr) { log.push({ level: "error", msg: `update ${ev.id} failed: ${upErr.message}` }); continue; }
-        if (patch.result) updatedEventIds.push(ev.id);
+  const syncByIds = async (smIds: string[]) => {
+    for (let i = 0; i < smIds.length; i += 50) {
+      const payload = await smFetch(`/fixtures/multi/${smIds.slice(i, i + 50).join(",")}?include=scores;state`);
+      for (const fx of payload.data || []) {
+        stats.fixtures_checked++;
+        const p = parseFixture(fx);
+        const ev = bySmId[String(p.smId)];
+        if (!ev) continue;
+        const patch: Record<string, unknown> = {};
+        if (p.startingAt && (!ev.kickoff_at || Math.abs(new Date(p.startingAt).getTime() - new Date(ev.kickoff_at).getTime()) > 60_000)) {
+          patch.kickoff_at = p.startingAt;
+          stats.kickoffs_updated++;
+          log.push({ level: "info", msg: `kickoff ${ev.id}: ${ev.kickoff_at || "unset"} -> ${p.startingAt}` });
+        }
+        if (p.finished && p.h != null && (!ev.result || ev.result.h !== p.h || ev.result.a !== p.a)) {
+          patch.result = { ...(ev.result || {}), h: p.h, a: p.a };
+          patch.status = "completed";
+          stats.results_updated++;
+          log.push({ level: "info", msg: `result ${ev.id}: ${p.h}-${p.a} (${p.state})` });
+        }
+        if (Object.keys(patch).length) {
+          const { error: upErr } = await service.from("gw_dm_events").update(patch).eq("id", ev.id);
+          if (upErr) { log.push({ level: "error", msg: `update ${ev.id} failed: ${upErr.message}` }); continue; }
+          if (patch.result) updatedEventIds.push(ev.id);
+        }
       }
     }
+  };
+
+  // ── live window ─────────────────────────────────────────────────────────
+  const liveIds = Object.entries(bySmId)
+    .filter(([, e]) => e.status !== "completed" && e.kickoff_at
+      && new Date(e.kickoff_at).getTime() <= now + 10 * 60_000
+      && new Date(e.kickoff_at).getTime() >= now - 6 * 3600_000)
+    .map(([smId]) => smId);
+  stats.live_events = liveIds.length;
+  if (liveIds.length) await syncByIds(liveIds);
+
+  // ── daily pass ──────────────────────────────────────────────────────────
+  const cfg = (provider.config || {}) as Record<string, unknown>;
+  const lastDaily = cfg.last_daily_sync ? Date.parse(String(cfg.last_daily_sync)) : 0;
+  if (now - lastDaily > 20 * 3600_000) {
+    // upcoming kickoff refresh for already-mapped events
+    const upcomingIds = Object.entries(bySmId)
+      .filter(([, e]) => e.status !== "completed" && e.kickoff_at
+        && new Date(e.kickoff_at).getTime() > now + 10 * 60_000
+        && new Date(e.kickoff_at).getTime() < now + 14 * 864e5)
+      .map(([smId]) => smId);
+    if (upcomingIds.length) await syncByIds(upcomingIds);
+
+    // auto-import new fixtures for mapped tournaments
+    const { data: tournaments } = await service.from("gw_dm_tournaments")
+      .select("id,name,provider_ids").not(`provider_ids->${provider.id}`, "is", null);
+    const importTargets = (tournaments || []).filter((t: { provider_ids: Record<string, { league_id?: number; auto_import?: boolean }> }) =>
+      t.provider_ids[provider.id]?.league_id && t.provider_ids[provider.id]?.auto_import);
+    if (importTargets.length) {
+      const { data: teamRows } = await service.from("gw_dm_teams")
+        .select("id,provider_ids").not(`provider_ids->${provider.id}`, "is", null);
+      const teamBySmId: Record<string, string> = {};
+      (teamRows || []).forEach((t: { id: string; provider_ids: Record<string, number | string> }) => {
+        teamBySmId[String(t.provider_ids[provider.id])] = t.id;
+      });
+      const d = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+      for (const t of importTargets) {
+        const leagueId = t.provider_ids[provider.id].league_id;
+        try {
+          const payload = await smFetch(`/fixtures/between/${d(now)}/${d(now + 14 * 864e5)}?include=participants&filters=fixtureLeagues:${leagueId}&per_page=50`);
+          for (const fx of payload.data || []) {
+            const p = parseFixture(fx);
+            if (bySmId[String(p.smId)]) continue; // already ours
+            if (!p.homeSmId || !p.awaySmId) continue;
+            // resolve teams, creating any this league hasn't shown us before
+            const teamIdFor = async (smId: number, name: string | null, short: string | null, image: string | null) => {
+              const known = teamBySmId[String(smId)];
+              if (known) return known;
+              const id = "tm" + crypto.randomUUID().replace(/-/g, "").slice(0, 9);
+              const { error } = await service.from("gw_dm_teams").insert({
+                id, name: name || `Team ${smId}`, short: (short || (name || "").slice(0, 3)).toUpperCase().slice(0, 5),
+                color: "#4F46E5", logo: image || "", sport: "football",
+                provider_ids: { [provider.id]: smId },
+              });
+              if (error) throw new Error(`team create failed: ${error.message}`);
+              teamBySmId[String(smId)] = id;
+              stats.teams_created++;
+              log.push({ level: "info", msg: `created team ${name} (${id})` });
+              return id;
+            };
+            const homeId = await teamIdFor(p.homeSmId, p.homeName, p.homeShort, p.homeImage);
+            const awayId = await teamIdFor(p.awaySmId, p.awayName, p.awayShort, p.awayImage);
+            const evId = "ev" + crypto.randomUUID().replace(/-/g, "").slice(0, 9);
+            const { error: insErr } = await service.from("gw_dm_events").insert({
+              id: evId, home_id: homeId, away_id: awayId,
+              kickoff: p.startingAt || "", kickoff_at: p.startingAt, status: "upcoming", line: 2.5,
+              provider_ids: { [provider.id]: p.smId },
+            });
+            if (insErr) { log.push({ level: "error", msg: `import ${p.homeName} vs ${p.awayName} failed: ${insErr.message}` }); continue; }
+            bySmId[String(p.smId)] = { id: evId, provider_ids: { [provider.id]: p.smId }, kickoff_at: p.startingAt, result: null, status: "upcoming" };
+            stats.fixtures_imported++;
+            log.push({ level: "info", msg: `imported ${p.homeName} vs ${p.awayName} (${t.name}) ${p.startingAt || ""}` });
+          }
+        } catch (e) {
+          log.push({ level: "error", msg: `auto-import ${t.name}: ${(e as Error).message}` });
+        }
+      }
+    }
+    const { error: cfgErr } = await service.from("gw_providers")
+      .update({ config: { ...cfg, last_daily_sync: new Date(now).toISOString() }, updated_at: new Date().toISOString() })
+      .eq("id", provider.id);
+    if (cfgErr) log.push({ level: "error", msg: `config update failed: ${cfgErr.message}` });
+    (stats as Record<string, number>).daily_pass = 1;
   }
 
   stats.rounds_scored = await scoreAffectedRounds(service, updatedEventIds, log);
+  if (!Object.keys(bySmId).length && !stats.fixtures_imported) {
+    log.push({ level: "info", msg: "nothing mapped yet — map a tournament (or events) to activate syncing" });
+  }
   return { stats, log };
 }
 
@@ -217,6 +312,13 @@ Deno.serve(async (req: Request) => {
     }
     try {
       const { stats, log } = await adapter(service, provider);
+      // A cron tick that spent no API quota and changed nothing is the
+      // steady idle state — logging 288 of those a day would bury the
+      // signal. Manual runs always log (a human wants the answer).
+      if (triggerSource === "cron" && !stats.api_calls && !stats.results_updated && !stats.fixtures_imported) {
+        results.push({ provider: provider.id, ok: true, idle: true });
+        continue;
+      }
       await logRun({ ok: true, stats, log });
       results.push({ provider: provider.id, ok: true, ...stats });
     } catch (e) {

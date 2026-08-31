@@ -21,6 +21,13 @@ export function parseFixture(fx) {
     else if (s.score?.participant === 'away') a = s.score.goals;
   });
   if (h == null || a == null) { h = null; a = null; } // never invent half a score
+  // include=participants (mapping/import paths only — the result-sync path
+  // omits it to keep payloads light)
+  let home = null, away = null;
+  (fx.participants || []).forEach((p) => {
+    if (p.meta?.location === 'home') home = p;
+    else if (p.meta?.location === 'away') away = p;
+  });
   return {
     smId: fx.id,
     startingAt: fx.starting_at ? fx.starting_at.replace(' ', 'T') + 'Z' : null,
@@ -28,5 +35,13 @@ export function parseFixture(fx) {
     finished,
     h: finished ? h : null,
     a: finished ? a : null,
+    homeSmId: home ? home.id : null, awaySmId: away ? away.id : null,
+    homeName: home ? home.name : null, awayName: away ? away.name : null,
+    homeShort: home ? (home.short_code || null) : null, awayShort: away ? (away.short_code || null) : null,
+    homeImage: home ? (home.image_path || null) : null, awayImage: away ? (away.image_path || null) : null,
   };
+}
+
+export function parseLeague(l) {
+  return { smId: l.id, name: l.name, shortCode: l.short_code || null, imagePath: l.image_path || null };
 }
