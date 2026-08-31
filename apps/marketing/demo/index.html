@@ -2791,12 +2791,14 @@ function renderRouletteLeaderboardShell(comp){
   html += leagueSubHeaderHtmlDemo();
   html += '<div style="padding:16px;">';
   html+='<div style="background:#fff;border:1px solid oklch(0.92 0.004 260);border-radius:16px;overflow:hidden;">';
+  const usernames=['footy_oracle','coin_flip_king','lucky_stripes','demo_user','xavi_8','golazo99','stadyum76','bet_master'];
   ROULETTE_LB.forEach((row,i)=>{
-    const isMe=row.u==='demo_user';
+    const userName=usernames[i]||'unknown';
+    const isMe=userName==='demo_user';
     html+=`<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;${i>0?'border-top:1px solid oklch(0.95 0.004 260);':''}${isMe?'background:oklch(0.97 0.01 275);':''}">
       <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:oklch(0.5 0.01 260);min-width:22px;">${i+1}</span>
       <div style="flex:1;">
-        <div style="font-size:14px;font-weight:${isMe?'700':'600'};color:oklch(0.2 0.01 260);">${row.u}${isMe?' 👤':''}</div>
+        <div style="font-size:14px;font-weight:${isMe?'700':'600'};color:oklch(0.2 0.01 260);">`+userName+`${isMe?' 👤':''}</div>
       </div>
       <span style="font-family:'DM Mono',monospace;font-size:16px;font-weight:800;color:oklch(0.42 0.12 275);">${row.winnings} coins</span>
     </div>`;
@@ -3795,11 +3797,13 @@ function renderLeaguesListScreenDemo(comp){
     </div>
     <div class="leagues-section-label">Your Leagues</div>
     <div class="leagues-list">
-      ${leagues.map(lg=>`
+      ${leagues.map(lg=>{
+        const lgName=lg.name||'?';
+        return `
         <button class="league-row" onclick='selectLeagueDemo(${JSON.stringify(lg).replace(/'/g,"&#39;")})'>
-          <div class="league-icon">${(lg.name||'?').trim().charAt(0).toUpperCase()}</div>
+          <div class="league-icon">${lgName.trim().charAt(0).toUpperCase()}</div>
           <div style="flex:1;min-width:0;">
-            <div class="league-row-name">${lg.name}</div>
+            <div class="league-row-name">`+lgName+`</div>
             <div class="league-row-sub">${lg.isGeneral?'Open to everyone':'Private league'} · ${lg.count} participants</div>
           </div>
           <div class="league-row-position">
@@ -3807,28 +3811,32 @@ function renderLeaguesListScreenDemo(comp){
             <div class="league-row-position-value">${ordinal(lg.myRank)} of ${lg.count}</div>
           </div>
           <svg class="league-row-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-        </button>`).join('')}
+        </button>`;}
+      ).join('')}
     </div>`;
 }
 function leagueSubHeaderHtmlDemo(){
   const league = selectedLeagueInfoDemo[currentCompIdx];
   if(!league) return '';
+  const leagueName=league.name||'Demo League';
+  const leagueCode=league.code||'DEMO123';
+  const leagueId=league.id||'demo-id';
   return `<div class="league-header">
     <button class="league-header-back" onclick="backToLeaguesDemo()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-      ${league.name}
+      `+leagueName+`
     </button>
     ${!league.isGeneral ? `<div class="league-header-actions">
-      <button class="league-header-btn" onclick="copyLeagueCodeDemo('${league.code}')">
+      <button class="league-header-btn" onclick="copyLeagueCodeDemo('`+leagueCode+`')">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
         Copy code
       </button>
-      <button class="league-header-btn leave" onclick="leaveLeagueDemo('${league.id}')" title="Leave league">
+      <button class="league-header-btn leave" onclick="leaveLeagueDemo('`+leagueId+`')" title="Leave league">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
       </button>
     </div>` : ''}
   </div>`;
-}
+  }
 function selectLeagueDemo(league){
   leagueSelection[currentCompIdx]=league.id;
   selectedLeagueInfoDemo[currentCompIdx]=league;
@@ -4241,6 +4249,7 @@ function buildLBTable(title,sub,rows,cellFn,colHeader,prizes,extraCellFn,extraCo
   const prizeBg={1:'#fbf1cf',2:'#eef0f4',3:'#f4e3d3'};
   let html=`<div class="lb-wrap"><table class="lb-table" style="table-layout:fixed;"><thead><tr><th style="width:32px;text-align:center">#</th><th style="width:auto;">Player</th>${colHeader}${hasExtra?extraColHeaderMobile:''}${hasExtra2?extra2ColHeaderMobile:''}${hasPrizes?'<th style="width:56px;text-align:center;">Prize</th>':''}</tr></thead><tbody>`;
   rows.forEach(row=>{
+    const userName=row.u||'unknown';
     const isMe=row.u===me;
     const rankColor=row.rank<=3?medalColor[row.rank]:'var(--text-3)';
     const prizeText=prizeMap[row.rank];
@@ -4257,7 +4266,7 @@ function buildLBTable(title,sub,rows,cellFn,colHeader,prizes,extraCellFn,extraCo
     }
     const extraCell = hasExtra ? extraCellFn(row).replace('<td ','<td class="lb-col-extra" ') : '';
     const extra2Cell = hasExtra2 ? extra2CellFn(row).replace('<td ','<td class="lb-col-extra2" ') : '';
-    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank" style="color:${rankColor};">${row.rank}</td><td><div style="display:flex;align-items:center;gap:8px;min-width:0;"><span class="lb-uname ${isMe?'me':''}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${row.u}</span>${isMe?'<span style="flex-shrink:0;margin-left:2px;font-size:9px;font-weight:800;color:var(--accent);background:var(--accent-light);padding:2px 6px;border-radius:5px;letter-spacing:0.3px;">YOU</span>':''}</div></td>${cellFn(row)}${extraCell}${extra2Cell}${prizeCell}</tr>`;
+    html+=`<tr class="${isMe?'me':''}"><td class="lb-rank" style="color:${rankColor};">${row.rank}</td><td><div style="display:flex;align-items:center;gap:8px;min-width:0;"><span class="lb-uname ${isMe?'me':''}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">`+userName+`</span>${isMe?'<span style="flex-shrink:0;margin-left:2px;font-size:9px;font-weight:800;color:var(--accent);background:var(--accent-light);padding:2px 6px;border-radius:5px;letter-spacing:0.3px;">YOU</span>':''}</div></td>${cellFn(row)}${extraCell}${extra2Cell}${prizeCell}</tr>`;
   });
   html+='</tbody></table></div>';return html;
 }
