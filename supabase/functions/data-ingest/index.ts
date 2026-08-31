@@ -127,10 +127,14 @@ async function runSportmonks(service: SupabaseClient, provider: ProviderRow, man
     // upcoming kickoff refresh + recent-past events still missing results
     // (a mapped event older than the 6h live window would otherwise never
     // get its result — e.g. last week's round linked after the fact)
+    // 60 days back: any mapped-but-unresulted event stays in this set until
+    // its result lands (then status=completed removes it), so linking an
+    // old round backfills its scores on the next pass. The cap only stops
+    // abandoned fixtures from being polled forever.
     const liveSet = new Set(liveIds);
     const staleIds = Object.entries(bySmId)
       .filter(([smId, e]) => !liveSet.has(smId) && e.status !== "completed" && e.kickoff_at
-        && new Date(e.kickoff_at).getTime() > now - 7 * 864e5
+        && new Date(e.kickoff_at).getTime() > now - 60 * 864e5
         && new Date(e.kickoff_at).getTime() < now + 14 * 864e5)
       .map(([smId]) => smId);
     if (staleIds.length) await syncByIds(staleIds);
