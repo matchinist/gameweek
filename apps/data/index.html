@@ -637,6 +637,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
     <div class="modal-footer" style="justify-content:space-between;">
       <button class="btn btn-ghost" id="score-step1-clear" onclick="clearScore()" style="color:var(--red);">Clear Result</button>
       <div style="display:flex;gap:6px;" id="score-step1-actions">
+        <button class="btn btn-ghost" id="score-rescore-btn" onclick="rescoreFromModal()" title="Re-run server-side scoring for every round using this event (idempotent)">Re-score</button>
         <button class="btn btn-ghost" onclick="closeModal('modal-score-entry')">Cancel</button>
         <button class="btn btn-primary" id="score-save-btn" onclick="saveResultTab()">Save Result</button>
       </div>
@@ -743,6 +744,49 @@ async function saveEventFields(eid, fields){
     if(error){ toast('Save failed: '+error.message); console.error('event field save:',error); return false; }
     return true;
   }catch(e){ console.error('event field save failed:',e.message); toast('Save failed: '+e.message); return false; }
+}
+
+// Phase 3.3 — after a result (or lineup) lands, push every affected round
+// through the score-round Edge Function so stored points and gw_leaderboards
+// follow the data. Fire-and-report: a scoring hiccup must never read as a
+// failed save (the save already succeeded when this runs).
+async function scoreAffectedRounds(eid, opts){
+  const explicit = !!(opts && opts.explicit);
+  const ev = S.events[eid];
+  if(!ev) return;
+  try{
+    // Every operator round that contains this event…
+    const {data: rounds, error} = await supa.from('gw_rounds')
+      .select('id,client_key,competition_id').contains('event_ids',[eid]);
+    if(error) throw error;
+    const scopes = (rounds||[]).map(r=>({client_key:r.client_key, competition_id:r.competition_id, round_id:r.id}));
+    // …plus lineup competitions tracking either team — their "round" IS the
+    // fixture (round_id = event id), so they never appear in gw_rounds.
+    const {data: lineupComps} = await supa.from('gw_competitions')
+      .select('id,client_key,lineup_config').eq('mode','lineup').eq('status','active');
+    (lineupComps||[]).forEach(c=>{
+      const tid=c.lineup_config?.teamId;
+      if(tid && (tid===ev.homeId || tid===ev.awayId))
+        scopes.push({client_key:c.client_key, competition_id:c.id, round_id:eid});
+    });
+    if(!scopes.length){ if(explicit) toast('No competition rounds use this event'); return; }
+    const results = await Promise.all(scopes.map(s=>supa.functions.invoke('score-round',{body:s})));
+    const failed = results.filter(r=>r.error || (r.data && r.data.error));
+    if(failed.length) toast(`Scored ${scopes.length-failed.length}/${scopes.length} rounds — see console`);
+    else if(explicit) toast(`Re-scored ${scopes.length} round${scopes.length===1?'':'s'}`);
+    failed.forEach(r=>console.error('score-round:', r.error||r.data));
+  }catch(e){
+    console.error('scoreAffectedRounds:', e);
+    if(explicit) toast('Scoring failed: '+e.message);
+  }
+}
+
+async function rescoreFromModal(){
+  const eid=document.getElementById('score-modal-eid').value;
+  const btn=document.getElementById('score-rescore-btn');
+  if(btn){btn.disabled=true;btn.textContent='Scoring…';}
+  await scoreAffectedRounds(eid,{explicit:true});
+  if(btn){btn.disabled=false;btn.textContent='Re-score';}
 }
 
 const SPORTS = [
@@ -2816,6 +2860,7 @@ async function saveResultTab(){
   const el=document.getElementById('evmini-'+eid);
   if(el)el.outerHTML=renderEventMini(eid);
   toast(status==='completed'?`Result saved: ${h}–${a}`:'Status updated: '+status);
+  scoreAffectedRounds(eid); // async on purpose — scoring trails the save
 }
 
 async function saveLineupsTab(){
@@ -2834,6 +2879,7 @@ async function saveLineupsTab(){
   const el=document.getElementById('evmini-'+eid);
   if(el)el.outerHTML=renderEventMini(eid);
   toast('Lineups saved');
+  scoreAffectedRounds(eid); // lineup XI is a scoring input for lineup comps
 }
 
 async function saveScorersTab(){
