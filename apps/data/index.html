@@ -2453,6 +2453,10 @@ function editTeam(id){
 // Collects the localized-name inputs of a modal into a jsonb-shaped object,
 // or null when every field is empty (so untouched rows stay null in the DB
 // instead of accumulating {} husks).
+// Shared HTML-escape for admin-entered values rendered via innerHTML —
+// /data is admin-only, but stored XSS between admin sessions is still XSS.
+function escHtml(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
 // ── Localized names (any entity, any language) ─────────────────────────────
 // Supported languages grow over time, so this is a pick-a-language editor
 // rather than fixed per-language fields: current overrides list + an "add
@@ -2467,7 +2471,11 @@ function openLocalizedNames(type,id){
   if(type==='team'){ const t=getTeam(id); if(!t)return; baseName=t.name; current=t.nameI18n; }
   else if(type==='tournament'){ const t=S.tournaments.find(x=>x.id===id); if(!t)return; baseName=t.name; current=t.nameI18n; }
   else if(type==='player'){ const p=players.find(x=>x.id===id); if(!p)return; baseName=p.full_name||''; current=p.name_i18n; }
-  i18nNamesCtx={type,id,working:Object.assign({},current||{})};
+  // Language keys land inside markup and inline handlers below — accept only
+  // sane locale codes, silently dropping anything else a stored blob carries.
+  const working={};
+  Object.entries(current||{}).forEach(([k,v])=>{ if(/^[a-z]{2,3}(-[a-z]{2})?$/i.test(k)) working[k]=v; });
+  i18nNamesCtx={type,id,working};
   document.getElementById('i18n-names-title').textContent=`Localized names — ${baseName}`;
   renderI18nNamesList();
   openModal('modal-i18n-names');
@@ -2479,7 +2487,7 @@ function renderI18nNamesList(){
   document.getElementById('i18n-names-list').innerHTML = langs.length
     ? langs.map(l=>`<div style="display:flex;gap:8px;align-items:center;">
         <span style="width:110px;flex-shrink:0;font-size:12px;font-weight:700;color:var(--text-2);"><span style="font-family:var(--mono);font-size:10.5px;color:var(--text-3);">${l}</span> ${I18N_LANG_LABEL[l]||''}</span>
-        <input class="form-input" style="flex:1;" value="${(w[l]||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}" oninput="i18nNamesCtx.working['${l}']=this.value">
+        <input class="form-input" style="flex:1;" value="${escHtml(w[l]||'')}" oninput="i18nNamesCtx.working['${l}']=this.value">
         <button class="btn btn-ghost btn-xs" style="color:var(--red);" onclick="delete i18nNamesCtx.working['${l}'];renderI18nNamesList()" title="Remove override">✕</button>
       </div>`).join('')
     : '<div style="font-size:12px;color:var(--text-3);">No overrides yet — every language shows the base name.</div>';
@@ -2531,13 +2539,13 @@ async function renderProviders(){
   }
   list.innerHTML=providersCache.map(p=>`<div style="display:flex;align-items:center;gap:12px;padding:9px 8px;border-bottom:1px solid var(--border);">
     <div style="flex:1;min-width:0;">
-      <div style="font-size:13px;font-weight:700;color:var(--text);">${p.name} <span style="font-family:var(--mono);font-size:10.5px;color:var(--text-3);">${p.id}</span></div>
-      <div style="font-size:11px;color:var(--text-3);">${p.token?'token ●●●●':'<span style="color:var(--red);">no token</span>'}${p.base_url?` · ${p.base_url}`:''}</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text);">${escHtml(p.name)} <span style="font-family:var(--mono);font-size:10.5px;color:var(--text-3);">${escHtml(p.id)}</span></div>
+      <div style="font-size:11px;color:var(--text-3);">${p.token?'token ●●●●':'<span style="color:var(--red);">no token</span>'}${p.base_url?` · ${escHtml(p.base_url)}`:''}</div>
     </div>
     <span style="font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px;background:${p.enabled?'oklch(0.94 0.09 155/0.5)':'oklch(0.94 0.004 260)'};color:${p.enabled?'oklch(0.4 0.12 155)':'var(--text-3)'};">${p.enabled?'ENABLED':'OFF'}</span>
-    <button class="btn btn-ghost btn-xs" onclick="runIngestNow('${p.id}')" title="Sync this provider now">Run</button>
-    <button class="btn btn-ghost btn-xs" onclick="openProviderModal('${p.id}')">Edit</button>
-    <button class="btn btn-ghost btn-xs" style="color:var(--red);" onclick="deleteProvider('${p.id}')">✕</button>
+    <button class="btn btn-ghost btn-xs" data-pid="${escHtml(p.id)}" onclick="runIngestNow(this.dataset.pid)" title="Sync this provider now">Run</button>
+    <button class="btn btn-ghost btn-xs" data-pid="${escHtml(p.id)}" onclick="openProviderModal(this.dataset.pid)">Edit</button>
+    <button class="btn btn-ghost btn-xs" style="color:var(--red);" data-pid="${escHtml(p.id)}" onclick="deleteProvider(this.dataset.pid)">✕</button>
   </div>`).join('');
 }
 
