@@ -241,6 +241,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
           <button class="nav-item" id="nav-scorelog" onclick="navTo('scorelog')">
             <span class="ni-icon">📋</span> Scoring Log
           </button>
+          <button class="nav-item" id="nav-ingest" onclick="navTo('ingest')">
+            <span class="ni-icon">📡</span> Ingest
+          </button>
         </div>
         <div class="sidebar-section">
           <div style="display:flex;align-items:center;justify-content:space-between;padding:0 8px;margin-bottom:6px;">
@@ -347,6 +350,14 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
             <div class="card-body">
               <div id="scorelog-summary" style="font-size:12px;color:var(--text-3);padding:2px 8px 10px;"></div>
               <div id="scorelog-list" style="display:flex;flex-direction:column;gap:2px;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="view" id="view-ingest">
+          <div class="card">
+            <div class="card-body">
+              <div id="ingest-summary" style="font-size:12px;color:var(--text-3);padding:2px 8px 10px;"></div>
+              <div id="ingest-list" style="display:flex;flex-direction:column;gap:2px;"></div>
             </div>
           </div>
         </div>
@@ -457,6 +468,21 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 </div>
 
 <!-- Edit Team -->
+<div class="modal-overlay" id="modal-tournament-names">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header"><div class="modal-title">Localized names</div><button class="modal-close" onclick="closeModal('modal-tournament-names')">×</button></div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;">Shown to operators using that language; the base name stays canonical. Leave a field empty to fall back to the base name.</div>
+      <div class="form-group"><label class="form-label">Türkçe</label><input class="form-input" id="tn-name-tr"></div>
+      <div class="form-group"><label class="form-label">Deutsch</label><input class="form-input" id="tn-name-de"></div>
+      <div class="form-group"><label class="form-label">Português</label><input class="form-input" id="tn-name-pt"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-tournament-names')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTournamentNames()">Save</button>
+    </div>
+  </div>
+</div>
 <div class="modal-overlay" id="modal-edit-team">
   <div class="modal">
     <div class="modal-header"><div class="modal-title">Edit Team</div><button class="modal-close" onclick="closeModal('modal-edit-team')">×</button></div>
@@ -487,6 +513,14 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
           <input type="color" class="color-picker" id="et-color">
           <input class="form-input" id="et-color-hex" style="font-family:var(--mono);font-size:12px;max-width:110px;" oninput="syncColor('et')">
         </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Localized names <span style="font-weight:400;color:var(--text-3);">— optional, shown to operators using that language</span></label>
+        <div class="form-row form-row-2">
+          <div><label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Türkçe</label><input class="form-input" id="et-name-tr" placeholder="same as name"></div>
+          <div><label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Deutsch</label><input class="form-input" id="et-name-de" placeholder="same as name"></div>
+        </div>
+        <div style="margin-top:8px;"><label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px;">Português</label><input class="form-input" id="et-name-pt" placeholder="same as name" style="max-width:calc(50% - 6px);"></div>
       </div>
       <div class="form-group">
         <label class="form-label">Fixture Difficulty <span style="font-weight:400;color:var(--text-3);">— optional</span></label>
@@ -860,12 +894,12 @@ async function save(){
   try{
     if(S.teams.length){
       const {error:e1} = await supa.from('gw_dm_teams')
-        .upsert(S.teams.map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||'',sport:t.sport||'football',fd_home:t.fdHome??null,fd_away:t.fdAway??null})),{onConflict:'id'});
+        .upsert(S.teams.map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||'',sport:t.sport||'football',fd_home:t.fdHome??null,fd_away:t.fdAway??null,name_i18n:t.nameI18n??null})),{onConflict:'id'});
       if(e1){ toast('Save failed: '+e1.message); console.error('teams save:',e1); return false; }
     }
     if(S.tournaments.length){
       const {error:e2} = await supa.from('gw_dm_tournaments')
-        .upsert(S.tournaments.map(t=>({id:t.id,name:t.name,country:t.country||'',type:t.type||'league',sport:t.sport||'football',color:t.color||'#4F46E5',seasons:t.seasons||{}})),{onConflict:'id'});
+        .upsert(S.tournaments.map(t=>({id:t.id,name:t.name,country:t.country||'',type:t.type||'league',sport:t.sport||'football',color:t.color||'#4F46E5',seasons:t.seasons||{},name_i18n:t.nameI18n??null})),{onConflict:'id'});
       if(e2){ toast('Save failed: '+e2.message); console.error('tournaments save:',e2); return false; }
     }
     const evArr = Object.entries(S.events).map(([id,ev])=>({
@@ -1904,7 +1938,82 @@ function navTo(page,tournamentId){
     document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">Scoring Log</div></div>'+
       '<div id="main-header-actions"><button class="btn btn-ghost" onclick="renderScoreLog()">Refresh</button></div>';
     renderScoreLog();
+  } else if(page==='ingest'){
+    document.getElementById('nav-ingest').classList.add('active');
+    document.getElementById('view-ingest').classList.add('active');
+    document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">SportMonks Ingest</div></div>'+
+      '<div id="main-header-actions"><button class="btn btn-ghost" onclick="renderIngestLog()">Refresh</button>'+
+      '<button class="btn btn-primary btn-sm" id="ingest-run-btn" onclick="runIngestNow()">Run now</button></div>';
+    renderIngestLog();
   }
+}
+
+// SportMonks feed iterations — every run of the sportmonks-ingest Edge
+// Function (cron every 5 minutes, or manual from here) logs to
+// gw_ingest_runs. The feed only touches events an admin mapped via
+// provider_ids, so this page is the full account of what it did.
+async function runIngestNow(){
+  const btn=document.getElementById('ingest-run-btn');
+  if(btn){btn.disabled=true;btn.textContent='Running…';}
+  try{
+    const {data,error}=await supa.functions.invoke('sportmonks-ingest',{body:{trigger:'manual'}});
+    if(error){
+      // A 4xx from the function still carries its JSON explanation
+      let msg=error.message;
+      try{ const ctx=await error.context.json(); if(ctx.error) msg=ctx.error; }catch(_e){}
+      toast('Ingest: '+msg);
+    } else if(data&&data.error){ toast('Ingest: '+data.error); }
+    else if(data){ toast(`Ingest complete — ${data.results_updated??0} results, ${data.kickoffs_updated??0} kickoffs, ${data.rounds_scored??0} rounds scored`); }
+  }catch(e){ toast('Ingest failed: '+e.message); }
+  if(btn){btn.disabled=false;btn.textContent='Run now';}
+  renderIngestLog();
+}
+
+async function renderIngestLog(){
+  const list=document.getElementById('ingest-list');
+  const summary=document.getElementById('ingest-summary');
+  list.innerHTML='<div style="padding:14px;font-size:12px;color:var(--text-3);">Loading…</div>';
+  summary.textContent='';
+  let runs;
+  try{
+    const {data,error}=await supa.from('gw_ingest_runs').select('*').order('run_at',{ascending:false}).limit(200);
+    if(error) throw error;
+    runs=data||[];
+  }catch(e){
+    console.error('renderIngestLog:',e);
+    list.innerHTML=`<div style="padding:14px;font-size:12px;color:var(--red);">⚠ Could not load the ingest log: ${e.message}</div>`;
+    return;
+  }
+  if(!runs.length){
+    list.innerHTML='<div class="empty"><div class="empty-icon">📡</div><div class="empty-title">No ingest runs logged yet</div><div style="font-size:12px;color:var(--text-3);margin-top:4px;max-width:420px;margin-left:auto;margin-right:auto;">The cron fires every 5 minutes but stays silent until the SportMonks API key is configured and events are mapped (provider_ids). Click "Run now" to test — an unconfigured key logs an explanatory failure here.</div></div>';
+    return;
+  }
+  const failures=runs.filter(r=>!r.ok).length;
+  summary.textContent=`${runs.length} run${runs.length===1?'':'s'}${runs.length===200?' (latest 200)':''} · ${failures} failed · newest first`;
+  const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  list.innerHTML=runs.map(r=>{
+    const when=new Date(r.run_at).toLocaleString(undefined,{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const badge=r.ok
+      ? '<span style="font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px;background:oklch(0.94 0.09 155/0.5);color:oklch(0.4 0.12 155);">OK</span>'
+      : '<span style="font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px;background:oklch(0.95 0.04 20/0.5);color:oklch(0.5 0.16 20);">FAILED</span>';
+    const st=r.stats||{};
+    const statLine=r.ok
+      ? `${st.events_mapped??0} mapped · ${st.fixtures_checked??0} checked · ${st.results_updated??0} results · ${st.kickoffs_updated??0} kickoffs · ${st.rounds_scored??0} rounds scored`
+      : `<span style="color:var(--red);">${esc(r.error||'unknown error')}</span>`;
+    const logLines=(r.log||[]).map(l=>`<div style="font-family:var(--mono);font-size:10.5px;color:${l.level==='error'?'var(--red)':'var(--text-2)'};padding:1px 0;">${esc(l.msg)}</div>`).join('');
+    return `<div style="padding:9px 8px;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:128px;flex-shrink:0;font-size:11.5px;color:var(--text-2);font-variant-numeric:tabular-nums;">${when}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12.5px;font-weight:700;color:var(--text);">${r.trigger_source==='manual'?`Manual · ${esc(r.initiated_by||'')}`:'Scheduled (cron)'}</div>
+          <div style="font-size:11px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${statLine}</div>
+        </div>
+        <div style="width:64px;text-align:right;flex-shrink:0;font-size:11px;color:var(--text-3);font-variant-numeric:tabular-nums;">${r.duration_ms!=null?r.duration_ms+' ms':'—'}</div>
+        ${badge}
+      </div>
+      ${logLines?`<details style="margin:4px 0 0 140px;"><summary style="font-size:10.5px;color:var(--text-3);cursor:pointer;">${(r.log||[]).length} detail line${(r.log||[]).length===1?'':'s'}</summary>${logLines}</details>`:''}
+    </div>`;
+  }).join('');
 }
 
 // Scoring audit trail (owner request 2026-08-31): every score-round
@@ -2294,7 +2403,34 @@ function editTeam(id){
   const prev=document.getElementById('et-logo-preview');
   if(t.logo) prev.innerHTML=`<img src="${t.logo}" style="width:100%;height:100%;object-fit:contain;">`;
   else prev.textContent='IMG';
+  ['tr','de','pt'].forEach(l=>{ document.getElementById('et-name-'+l).value=(t.nameI18n||{})[l]||''; });
   openModal('modal-edit-team');
+}
+
+// Collects the localized-name inputs of a modal into a jsonb-shaped object,
+// or null when every field is empty (so untouched rows stay null in the DB
+// instead of accumulating {} husks).
+function collectNameI18n(prefix){
+  const out={};
+  ['tr','de','pt'].forEach(l=>{
+    const v=document.getElementById(prefix+'-name-'+l).value.trim();
+    if(v) out[l]=v;
+  });
+  return Object.keys(out).length?out:null;
+}
+
+let editingTournamentNamesId=null;
+function openTournamentNames(id){
+  editingTournamentNamesId=id;
+  const t=S.tournaments.find(x=>x.id===id); if(!t) return;
+  ['tr','de','pt'].forEach(l=>{ document.getElementById('tn-name-'+l).value=(t.nameI18n||{})[l]||''; });
+  openModal('modal-tournament-names');
+}
+function saveTournamentNames(){
+  const t=S.tournaments.find(x=>x.id===editingTournamentNamesId); if(!t) return;
+  t.nameI18n=collectNameI18n('tn');
+  closeModal('modal-tournament-names');
+  save();toast('Localized names saved');
 }
 
 function saveTeamEdit(){
@@ -2308,6 +2444,7 @@ function saveTeamEdit(){
   const fdAwayVal = document.getElementById('et-fd-away').value;
   t.fdHome = fdHomeVal ? +fdHomeVal : null;
   t.fdAway = fdAwayVal ? +fdAwayVal : null;
+  t.nameI18n = collectNameI18n('et');
   closeModal('modal-edit-team');renderTeams();
   if(S.activePage==='tournament')renderTournamentView();
   save();toast('Team updated');
@@ -2335,6 +2472,7 @@ function renderTournamentView(){
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
       <select class="form-select" style="width:auto;font-size:12px;padding:6px 8px;" onchange="setTournamentSport('${t.id}',this.value)">${sportOptions(t.sport)}</select>
+      <button class="btn btn-ghost btn-sm" onclick="openTournamentNames('${t.id}')" title="Per-language display-name overrides">Names</button>
       <button class="btn btn-danger btn-sm" onclick="deleteTournament('${t.id}')">Delete</button>
     </div>`;
 
@@ -3214,9 +3352,9 @@ async function loadDMData(){
   }
   // ── END MIGRATION ────────────────────────────────────────────────────────
 
-  S.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||'',sport:t.sport||'football',fdHome:t.fd_home ?? null,fdAway:t.fd_away ?? null}))
+  S.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||'',sport:t.sport||'football',fdHome:t.fd_home ?? null,fdAway:t.fd_away ?? null,nameI18n:t.name_i18n||null}))
     .sort((a,b)=>a.name.localeCompare(b.name));
-  S.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,sport:t.sport||'football',color:t.color,seasons:t.seasons||{}}));
+  S.tournaments = (tournaments||[]).map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,sport:t.sport||'football',color:t.color,seasons:t.seasons||{},nameI18n:t.name_i18n||null}));
   const evMap={};
   (events||[]).forEach(e=>{
     // kickoffAt rides along so an untouched event re-upserted by the bulk

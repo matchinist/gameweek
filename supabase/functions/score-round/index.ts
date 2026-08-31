@@ -45,18 +45,27 @@ Deno.serve(async (req: Request) => {
   const url = Deno.env.get("SUPABASE_URL")!;
   const service = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-  // ── caller must be a platform admin ─────────────────────────────────────
+  // ── caller must be a platform admin, or another of our own functions ────
   // (No audit row before this gate: logging anonymous 401 probes would let
-  // anyone flood the trail; the audit is of ADMIN activity.)
+  // anyone flood the trail; the audit is of admin/service activity.)
   const authHeader = req.headers.get("Authorization") || "";
-  const asCaller = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, {
-    global: { headers: { Authorization: authHeader } },
-  });
-  const { data: userData, error: userErr } = await asCaller.auth.getUser();
-  if (userErr || !userData?.user) return json(401, { error: "not signed in" });
-  const { data: adminRow } = await service
-    .from("gw_admins").select("id").eq("auth_id", userData.user.id).maybeSingle();
-  if (!adminRow) return json(403, { error: "not a platform admin" });
+  const bearer = authHeader.replace(/^Bearer\s+/i, "");
+  let initiatedBy: string;
+  if (bearer && bearer === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) {
+    // service-to-service: the sportmonks-ingest worker chaining scoring
+    // after a result lands. Possession of the service key IS the authority.
+    initiatedBy = "service:ingest";
+  } else {
+    const asCaller = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: userData, error: userErr } = await asCaller.auth.getUser();
+    if (userErr || !userData?.user) return json(401, { error: "not signed in" });
+    const { data: adminRow } = await service
+      .from("gw_admins").select("id").eq("auth_id", userData.user.id).maybeSingle();
+    if (!adminRow) return json(403, { error: "not a platform admin" });
+    initiatedBy = userData.user.email || userData.user.id;
+  }
 
   // ── input ───────────────────────────────────────────────────────────────
   let body: { client_key?: string; competition_id?: string; round_id?: string };
@@ -69,10 +78,7 @@ Deno.serve(async (req: Request) => {
   // Everything past this point is an admin acting on a concrete scope —
   // exactly what the audit trail exists to record.
   const startedAt = Date.now();
-  const auditBase = {
-    initiated_by: userData.user.email || userData.user.id,
-    client_key, competition_id, round_id,
-  };
+  const auditBase = { initiated_by: initiatedBy, client_key, competition_id, round_id };
   const logRun = async (fields: Record<string, unknown>) => {
     const { error } = await service.from("gw_score_runs")
       .insert({ ...auditBase, duration_ms: Date.now() - startedAt, ...fields });
