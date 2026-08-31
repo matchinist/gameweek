@@ -2652,39 +2652,138 @@ async function pmFetchFixtures(){
   btn.disabled=false;btn.textContent='Fetch & match';
 }
 
-function pmNorm(n){ return String(n||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,''); }
+// Client-side name scoring for the pickers — mirrors the server matcher's
+// idea (diacritics + club-suffix stripping) so "Amed SK" ranks next to
+// "Amedspor" instead of proposing a duplicate team. Every choice here is
+// reviewed by the admin, so this only has to RANK well, not decide.
+const PM_SUFFIXES=new Set(['fc','cf','afc','sk','sc','jk','cd','ac','as','ss','fk','club','clube','spor']);
+function pmTokens(n){
+  return String(n||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()
+    .replace(/[^a-z0-9 ]+/g,' ').split(/\s+/).filter(w=>w.length>1&&!PM_SUFFIXES.has(w));
+}
+function pmNameScore(a,b){
+  const ta=pmTokens(a), tb=pmTokens(b);
+  if(!ta.length||!tb.length) return 0;
+  const sa=ta.join(' '), sb=tb.join(' ');
+  if(sa===sb) return 1;
+  if(sa.includes(sb)||sb.includes(sa)) return 0.8;
+  // token containment either way catches "amedspor" vs "amed"
+  let hit=0; ta.forEach(w=>{ if(tb.some(v=>v===w||v.includes(w)||w.includes(v))) hit++; });
+  return hit/Math.max(ta.length,tb.length);
+}
+const pmFmt=iso=>iso?new Date(iso).toLocaleString(undefined,{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'?';
 
 function pmBuildReview(pid){
   const sugBySm={}; (pmCtx.suggestions||[]).forEach(s=>{ sugBySm[s.smId]=s; });
   const linkedSm=new Set();
   Object.values(S.events).forEach(ev=>{ if(ev.providerIds&&ev.providerIds[pid]!=null) linkedSm.add(String(ev.providerIds[pid])); });
   const teamBySm={}; S.teams.forEach(t=>{ if(t.providerIds&&t.providerIds[pid]!=null) teamBySm[String(t.providerIds[pid])]=t.id; });
-  const teamByNorm={}; S.teams.forEach(t=>{ teamByNorm[pmNorm(t.name)]=t.id; });
 
+  // candidate events for manual linking: not provider-linked yet, ranked by
+  // name similarity with kickoff distance as tie-break — NO hard date
+  // cutoff, because "the date changed" is exactly when manual linking is
+  // needed.
+  const evCandidates=(fx)=>{
+    const fxKo=fx.startingAt?new Date(fx.startingAt).getTime():null;
+    return Object.entries(S.events)
+      .filter(([,ev])=>!(ev.providerIds&&ev.providerIds[pid]!=null))
+      .map(([id,ev])=>{
+        const ns=(pmNameScore(fx.homeName,getTeam(ev.homeId)?.name)+pmNameScore(fx.awayName,getTeam(ev.awayId)?.name))/2;
+        const hours=(fxKo&&ev.kickoffAt)?Math.abs(new Date(ev.kickoffAt).getTime()-fxKo)/36e5:999;
+        return {id,ev,ns,hours,rank:ns*1000-Math.min(hours,999)};
+      })
+      .sort((a,b)=>b.rank-a.rank).slice(0,25);
+  };
+  const teamOptions=(name,smId,tournamentSport)=>{
+    const mapped=teamBySm[String(smId)];
+    const scored=S.teams
+      .filter(t=>!tournamentSport||!t.sport||t.sport===tournamentSport)
+      .map(t=>({t,ns:pmNameScore(name,t.name)}))
+      .sort((a,b)=>b.ns-a.ns).slice(0,30);
+    const best=mapped||((scored[0]&&scored[0].ns>=0.55)?scored[0].t.id:null);
+    return {best, options:scored};
+  };
+
+  const tourn=S.tournaments.find(x=>x.id===pmCtx.tournamentId);
   pmCtx.rows=pmCtx.fixtures.map((fx,idx)=>{
-    if(linkedSm.has(String(fx.smId))) return {idx,fx,kind:'linked'};
+    if(linkedSm.has(String(fx.smId))) return {idx,fx,action:'linked'};
     const sug=sugBySm[fx.smId];
-    if(sug&&sug.eventId) return {idx,fx,kind:'link',eventId:sug.eventId,score:sug.score,checked:true};
-    const homeTeam=teamBySm[String(fx.homeSmId)]||teamByNorm[pmNorm(fx.homeName)]||null;
-    const awayTeam=teamBySm[String(fx.awaySmId)]||teamByNorm[pmNorm(fx.awayName)]||null;
-    return {idx,fx,kind:'create',homeTeam,awayTeam,checked:true};
+    const candidates=evCandidates(fx);
+    const home=teamOptions(fx.homeName,fx.homeSmId,tourn?.sport);
+    const away=teamOptions(fx.awayName,fx.awaySmId,tourn?.sport);
+    const eventId=(sug&&sug.eventId)||null;
+    return {idx,fx,candidates,
+      action:eventId?'link':'create',
+      eventId, updateKickoff:true,
+      homeTeam:home.best, awayTeam:away.best,
+      homeOptions:home.options, awayOptions:away.options};
   });
+  pmRenderRows();
+}
 
-  const fmt=iso=>iso?new Date(iso).toLocaleString(undefined,{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'?';
-  document.getElementById('pm-review').innerHTML=pmCtx.rows.map(r=>{
-    const label=`${escHtml(r.fx.homeName||'?')} vs ${escHtml(r.fx.awayName||'?')} · ${fmt(r.fx.startingAt)}`;
-    if(r.kind==='linked') return `<div style="display:flex;gap:8px;align-items:center;padding:5px 4px;font-size:12px;color:var(--text-3);"><span style="width:16px;text-align:center;">✓</span><span style="flex:1;">${label}</span><span>already linked</span></div>`;
-    const cb=`<input type="checkbox" data-idx="${r.idx}" ${r.checked?'checked':''} onchange="pmCtx.rows[this.dataset.idx].checked=this.checked" style="width:15px;height:15px;">`;
-    if(r.kind==='link'){
-      const ev=S.events[r.eventId];
-      const evLabel=ev?`${escHtml(getTeam(ev.homeId)?.name||'?')} vs ${escHtml(getTeam(ev.awayId)?.name||'?')}`:r.eventId;
-      return `<div style="display:flex;gap:8px;align-items:center;padding:5px 4px;font-size:12px;color:var(--text);">${cb}<span style="flex:1;">${label}</span><span style="color:oklch(0.45 0.12 155);font-weight:700;">link → ${evLabel}</span></div>`;
+function pmKickoffDiffers(r){
+  if(!r.eventId||!r.fx.startingAt) return false;
+  const ev=S.events[r.eventId];
+  if(!ev) return false;
+  if(!ev.kickoffAt) return true;
+  return Math.abs(new Date(ev.kickoffAt).getTime()-new Date(r.fx.startingAt).getTime())>60_000;
+}
+
+function pmRenderRows(){
+  const rows=pmCtx.rows;
+  document.getElementById('pm-review').innerHTML=rows.map(r=>{
+    const label=`<b>${escHtml(r.fx.homeName||'?')}</b> vs <b>${escHtml(r.fx.awayName||'?')}</b> · ${pmFmt(r.fx.startingAt)}`;
+    if(r.action==='linked') return `<div style="display:flex;gap:8px;align-items:center;padding:6px 4px;font-size:12px;color:var(--text-3);border-bottom:1px solid var(--border);"><span style="width:52px;text-align:center;">✓</span><span style="flex:1;">${label}</span><span>already linked</span></div>`;
+    const actionSel=`<select class="form-select" style="width:86px;font-size:11.5px;padding:4px 6px;" data-idx="${r.idx}" onchange="pmSetAction(this.dataset.idx,this.value)">
+        <option value="link"${r.action==='link'?' selected':''}>Link</option>
+        <option value="create"${r.action==='create'?' selected':''}>Create</option>
+        <option value="skip"${r.action==='skip'?' selected':''}>Skip</option>
+      </select>`;
+    let detail='';
+    if(r.action==='link'){
+      const opts=['<option value="">— pick the matching event —</option>']
+        .concat(r.candidates.map(c=>{
+          const lbl=`${getTeam(c.ev.homeId)?.name||'?'} vs ${getTeam(c.ev.awayId)?.name||'?'} · ${pmFmt(c.ev.kickoffAt)}`;
+          return `<option value="${c.id}"${c.id===r.eventId?' selected':''}>${escHtml(lbl)}</option>`;
+        }));
+      detail=`<select class="form-select" style="flex:1;min-width:0;font-size:11.5px;padding:4px 6px;" data-idx="${r.idx}" onchange="pmPickEvent(this.dataset.idx,this.value)">${opts.join('')}</select>`;
+      if(pmKickoffDiffers(r)){
+        const evKo=S.events[r.eventId]?.kickoffAt;
+        detail+=`<label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--amber,#b45309);white-space:nowrap;cursor:pointer;" title="Our event says ${pmFmt(evKo)}; the provider says ${pmFmt(r.fx.startingAt)}">
+          <input type="checkbox" ${r.updateKickoff?'checked':''} data-idx="${r.idx}" onchange="pmCtx.rows[this.dataset.idx].updateKickoff=this.checked" style="width:13px;height:13px;">
+          update kickoff ${pmFmt(evKo)} → ${pmFmt(r.fx.startingAt)}</label>`;
+      }
+    } else if(r.action==='create'){
+      const teamSel=(side)=>{
+        const chosen=r[side==='home'?'homeTeam':'awayTeam'];
+        const options=r[side==='home'?'homeOptions':'awayOptions'];
+        const name=side==='home'?r.fx.homeName:r.fx.awayName;
+        return `<select class="form-select" style="flex:1;min-width:0;font-size:11.5px;padding:4px 6px;" data-idx="${r.idx}" data-side="${side}" onchange="pmPickTeam(this.dataset.idx,this.dataset.side,this.value)">
+          <option value=""${chosen?'':' selected'}>➕ new team: ${escHtml(name||'?')}</option>
+          ${options.map(o=>`<option value="${o.t.id}"${o.t.id===chosen?' selected':''}>${escHtml(o.t.name)}</option>`).join('')}
+        </select>`;
+      };
+      detail=`${teamSel('home')}${teamSel('away')}`;
+    } else {
+      detail='<span style="font-size:11.5px;color:var(--text-3);">skipped</span>';
     }
-    const th=r.homeTeam?escHtml(getTeam(r.homeTeam)?.name||''):`<b>new: ${escHtml(r.fx.homeName||'?')}</b>`;
-    const ta=r.awayTeam?escHtml(getTeam(r.awayTeam)?.name||''):`<b>new: ${escHtml(r.fx.awayName||'?')}</b>`;
-    return `<div style="display:flex;gap:8px;align-items:center;padding:5px 4px;font-size:12px;color:var(--text);">${cb}<span style="flex:1;">${label}</span><span style="color:var(--accent);font-weight:700;">create (${th} / ${ta})</span></div>`;
+    return `<div style="border-bottom:1px solid var(--border);padding:6px 4px;">
+      <div style="display:flex;gap:8px;align-items:center;font-size:12px;color:var(--text);margin-bottom:4px;">${actionSel}<span style="flex:1;">${label}</span></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-left:94px;">${detail}</div>
+    </div>`;
   }).join('')||'<div style="font-size:12px;color:var(--text-3);padding:8px 4px;">No fixtures in the window.</div>';
-  document.getElementById('pm-apply-btn').style.display=pmCtx.rows.some(r=>r.kind!=='linked')?'':'none';
+  document.getElementById('pm-apply-btn').style.display=rows.some(r=>r.action!=='linked')?'':'none';
+}
+
+function pmSetAction(idx,val){ pmCtx.rows[idx].action=val; pmRenderRows(); }
+function pmPickEvent(idx,eventId){
+  const r=pmCtx.rows[idx];
+  r.eventId=eventId||null;
+  r.updateKickoff=true;
+  pmRenderRows();
+}
+function pmPickTeam(idx,side,teamId){
+  pmCtx.rows[idx][side==='home'?'homeTeam':'awayTeam']=teamId||null;
 }
 
 function pmApply(){
@@ -2702,15 +2801,22 @@ function pmApply(){
     teamsCreated++;
     return id;
   };
+  let kickoffsUpdated=0;
   pmCtx.rows.forEach(r=>{
-    if(r.kind==='link'&&r.checked){
+    if(r.action==='link'&&r.eventId){
       const ev=S.events[r.eventId]; if(!ev) return;
       ev.providerIds=Object.assign({},ev.providerIds,{[pid]:r.fx.smId});
+      // linking a fixture is also how teams get their provider ids —
+      // future fixtures then auto-match by id, no name guessing.
       const hm=getTeam(ev.homeId), am=getTeam(ev.awayId);
       if(hm&&r.fx.homeSmId!=null) hm.providerIds=Object.assign({},hm.providerIds,{[pid]:r.fx.homeSmId});
       if(am&&r.fx.awaySmId!=null) am.providerIds=Object.assign({},am.providerIds,{[pid]:r.fx.awaySmId});
+      if(r.updateKickoff&&r.fx.startingAt&&pmKickoffDiffers(r)){
+        ev.kickoffAt=r.fx.startingAt; ev.kickoff=r.fx.startingAt;
+        kickoffsUpdated++;
+      }
       linked++;
-    } else if(r.kind==='create'&&r.checked){
+    } else if(r.action==='create'){
       const homeId=ensureTeam(r.homeTeam,r.fx.homeSmId,r.fx.homeName,r.fx.homeShort,r.fx.homeImage);
       const awayId=ensureTeam(r.awayTeam,r.fx.awaySmId,r.fx.awayName,r.fx.awayShort,r.fx.awayImage);
       const eid='ev'+uid();
@@ -2720,7 +2826,7 @@ function pmApply(){
     }
   });
   save();
-  toast(`Applied: ${linked} linked, ${created} created${teamsCreated?`, ${teamsCreated} new teams`:''}`);
+  toast(`Applied: ${linked} linked${kickoffsUpdated?` (${kickoffsUpdated} kickoffs updated)`:''}, ${created} created${teamsCreated?`, ${teamsCreated} new teams`:''}`);
   pmFetchFixturesRefreshLocal(pid);
   if(S.activePage==='tournament') renderTournamentView();
   renderTeams();
