@@ -2081,7 +2081,7 @@ async function renderIngestLog(){
       : '<span style="font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px;background:oklch(0.95 0.04 20/0.5);color:oklch(0.5 0.16 20);">FAILED</span>';
     const st=r.stats||{};
     const statLine=r.ok
-      ? `${st.events_mapped??0} mapped · ${st.fixtures_checked??0} checked · ${st.results_updated??0} results · ${st.kickoffs_updated??0} kickoffs · ${st.rounds_scored??0} rounds scored`
+      ? `${st.fixtures_checked??0} checked · ${st.results_updated??0} results · ${st.kickoffs_updated??0} kickoffs · ${st.fixtures_imported??0} imported · ${st.teams_created??0} new teams · ${st.rounds_scored??0} rounds scored · ${st.api_calls??0} API calls`
       : `<span style="color:var(--red);">${esc(r.error||'unknown error')}</span>`;
     const logLines=(r.log||[]).map(l=>`<div style="font-family:var(--mono);font-size:10.5px;color:${l.level==='error'?'var(--red)':'var(--text-2)'};padding:1px 0;">${esc(l.msg)}</div>`).join('');
     return `<div style="padding:9px 8px;border-bottom:1px solid var(--border);">

@@ -51,7 +51,7 @@ type RunResult = { stats: Record<string, number>; log: LogLine[] };
 //     upcoming kickoffs for mapped events, and auto-import new fixtures for
 //     tournaments mapped with auto_import — creating events (and unseen
 //     teams) with provider_ids, so a mapped tournament keeps itself fresh.
-async function runSportmonks(service: SupabaseClient, provider: ProviderRow): Promise<RunResult> {
+async function runSportmonks(service: SupabaseClient, provider: ProviderRow, manual: boolean): Promise<RunResult> {
   const log: LogLine[] = [];
   const base = provider.base_url || "https://api.sportmonks.com/v3/football";
   const now = Date.now();
@@ -117,16 +117,23 @@ async function runSportmonks(service: SupabaseClient, provider: ProviderRow): Pr
   if (liveIds.length) await syncByIds(liveIds);
 
   // ── daily pass ──────────────────────────────────────────────────────────
+  // A manual run ALWAYS gets the full pass — an admin clicking Run just
+  // changed something (a new mapping, a correction) and wants the sync NOW;
+  // the 20h throttle exists only to keep the unattended cron inside the
+  // API budget.
   const cfg = (provider.config || {}) as Record<string, unknown>;
   const lastDaily = cfg.last_daily_sync ? Date.parse(String(cfg.last_daily_sync)) : 0;
-  if (now - lastDaily > 20 * 3600_000) {
-    // upcoming kickoff refresh for already-mapped events
-    const upcomingIds = Object.entries(bySmId)
-      .filter(([, e]) => e.status !== "completed" && e.kickoff_at
-        && new Date(e.kickoff_at).getTime() > now + 10 * 60_000
+  if (manual || now - lastDaily > 20 * 3600_000) {
+    // upcoming kickoff refresh + recent-past events still missing results
+    // (a mapped event older than the 6h live window would otherwise never
+    // get its result — e.g. last week's round linked after the fact)
+    const liveSet = new Set(liveIds);
+    const staleIds = Object.entries(bySmId)
+      .filter(([smId, e]) => !liveSet.has(smId) && e.status !== "completed" && e.kickoff_at
+        && new Date(e.kickoff_at).getTime() > now - 7 * 864e5
         && new Date(e.kickoff_at).getTime() < now + 14 * 864e5)
       .map(([smId]) => smId);
-    if (upcomingIds.length) await syncByIds(upcomingIds);
+    if (staleIds.length) await syncByIds(staleIds);
 
     // auto-import new fixtures for mapped tournaments
     const { data: tournaments } = await service.from("gw_dm_tournaments")
@@ -197,7 +204,7 @@ async function runSportmonks(service: SupabaseClient, provider: ProviderRow): Pr
   return { stats, log };
 }
 
-const ADAPTERS: Record<string, (service: SupabaseClient, provider: ProviderRow) => Promise<RunResult>> = {
+const ADAPTERS: Record<string, (service: SupabaseClient, provider: ProviderRow, manual: boolean) => Promise<RunResult>> = {
   sportmonks: runSportmonks,
 };
 
@@ -311,7 +318,7 @@ Deno.serve(async (req: Request) => {
       continue;
     }
     try {
-      const { stats, log } = await adapter(service, provider);
+      const { stats, log } = await adapter(service, provider, triggerSource === "manual");
       // A cron tick that spent no API quota and changed nothing is the
       // steady idle state — logging 288 of those a day would bury the
       // signal. Manual runs always log (a human wants the answer).
