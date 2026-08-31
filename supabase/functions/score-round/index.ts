@@ -3,6 +3,8 @@
 // Scores one round of one competition server-side and stores the outcome:
 //   * gw_predictions.points per prediction (null = still unscorable)
 //   * gw_leaderboards rows for the round scope AND the overall scope
+//   * a gw_score_runs audit row for every admin-initiated run, success or
+//     failure — who, when, scope, duration, rows affected, error text
 // The computation itself lives in ../_shared/score_round_compute.mjs (pure,
 // vitest-covered); this file is authentication + I/O only.
 //
@@ -44,6 +46,8 @@ Deno.serve(async (req: Request) => {
   const service = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
   // ── caller must be a platform admin ─────────────────────────────────────
+  // (No audit row before this gate: logging anonymous 401 probes would let
+  // anyone flood the trail; the audit is of ADMIN activity.)
   const authHeader = req.headers.get("Authorization") || "";
   const asCaller = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, {
     global: { headers: { Authorization: authHeader } },
@@ -62,6 +66,23 @@ Deno.serve(async (req: Request) => {
     return json(400, { error: "client_key, competition_id and round_id are required" });
   }
 
+  // Everything past this point is an admin acting on a concrete scope —
+  // exactly what the audit trail exists to record.
+  const startedAt = Date.now();
+  const auditBase = {
+    initiated_by: userData.user.email || userData.user.id,
+    client_key, competition_id, round_id,
+  };
+  const logRun = async (fields: Record<string, unknown>) => {
+    const { error } = await service.from("gw_score_runs")
+      .insert({ ...auditBase, duration_ms: Date.now() - startedAt, ...fields });
+    if (error) console.error("audit log write failed:", error.message);
+  };
+  const fail = async (status: number, error: string, mode?: string) => {
+    await logRun({ ok: false, error, mode: mode || null });
+    return json(status, { error });
+  };
+
   // ── load ────────────────────────────────────────────────────────────────
   const [{ data: comp }, { data: rounds }, { data: predictions }] = await Promise.all([
     service.from("gw_competitions").select("*").eq("client_key", client_key).eq("id", competition_id).maybeSingle(),
@@ -69,13 +90,13 @@ Deno.serve(async (req: Request) => {
     service.from("gw_predictions").select("id,player_id,username,round_id,event_id,prediction,points")
       .eq("client_key", client_key).eq("competition_id", competition_id).limit(100000),
   ]);
-  if (!comp) return json(404, { error: "competition not found" });
-  if (!SCOREABLE_MODES.includes(comp.mode)) return json(400, { error: `mode ${comp.mode} is not scoreable` });
+  if (!comp) return await fail(404, "competition not found");
+  if (!SCOREABLE_MODES.includes(comp.mode)) return await fail(400, `mode ${comp.mode} is not scoreable`, comp.mode);
 
   // A lineup "round" is the tracked team's fixture — round_id IS the event
   // id and there is no gw_rounds row to find.
   const targetRound = (rounds || []).find((r: { id: string }) => r.id === round_id) || null;
-  if (comp.mode !== "lineup" && !targetRound) return json(404, { error: "round not found" });
+  if (comp.mode !== "lineup" && !targetRound) return await fail(404, "round not found", comp.mode);
 
   const eventIds = new Set<string>();
   (rounds || []).forEach((r: { event_ids?: string[] }) => (r.event_ids || []).forEach((id) => eventIds.add(id)));
@@ -111,7 +132,7 @@ Deno.serve(async (req: Request) => {
     const results = await Promise.all(chunk.map((pp: { id: string; points: number | null }) =>
       service.from("gw_predictions").update({ points: pp.points }).eq("id", pp.id)));
     const failed = results.find((r) => r.error);
-    if (failed?.error) return json(500, { error: `points write failed: ${failed.error.message}` });
+    if (failed?.error) return await fail(500, `points write failed: ${failed.error.message}`, comp.mode);
   }
 
   // ── write: leaderboard scopes (upsert current, delete departed) ─────────
@@ -135,16 +156,16 @@ Deno.serve(async (req: Request) => {
     await writeScope(roundRows, round_id);
     await writeScope(overallRows, null);
   } catch (e) {
-    return json(500, { error: (e as Error).message });
+    return await fail(500, (e as Error).message, comp.mode);
   }
 
-  return json(200, {
-    ok: true,
+  const summary = {
     mode: comp.mode,
-    round_id,
     predictions_scored: predictionPoints.length,
     predictions_updated: changed.length,
     round_rows: roundRows.length,
     overall_rows: overallRows.length,
-  });
+  };
+  await logRun({ ok: true, ...summary });
+  return json(200, { ok: true, round_id, ...summary });
 });

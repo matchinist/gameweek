@@ -238,6 +238,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
             <span class="ni-icon">🏢</span> Clients
             <span class="ni-count" id="nav-clients-count">0</span>
           </button>
+          <button class="nav-item" id="nav-scorelog" onclick="navTo('scorelog')">
+            <span class="ni-icon">📋</span> Scoring Log
+          </button>
         </div>
         <div class="sidebar-section">
           <div style="display:flex;align-items:center;justify-content:space-between;padding:0 8px;margin-bottom:6px;">
@@ -336,6 +339,14 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
           <div class="card">
             <div class="card-body">
               <div id="clients-list" style="display:flex;flex-direction:column;gap:2px;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="view" id="view-scorelog">
+          <div class="card">
+            <div class="card-body">
+              <div id="scorelog-summary" style="font-size:12px;color:var(--text-3);padding:2px 8px 10px;"></div>
+              <div id="scorelog-list" style="display:flex;flex-direction:column;gap:2px;"></div>
             </div>
           </div>
         </div>
@@ -1887,7 +1898,59 @@ function navTo(page,tournamentId){
     document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">Clients</div></div>'+
       '<div id="main-header-actions"><button class="btn btn-ghost" id="backfill-scores-btn" onclick="backfillAllScores()" title="Run server-side scoring for every resulted round of every client (idempotent — Phase 3.4 backfill)">Score all rounds</button></div>';
     renderClients();
+  } else if(page==='scorelog'){
+    document.getElementById('nav-scorelog').classList.add('active');
+    document.getElementById('view-scorelog').classList.add('active');
+    document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">Scoring Log</div></div>'+
+      '<div id="main-header-actions"><button class="btn btn-ghost" onclick="renderScoreLog()">Refresh</button></div>';
+    renderScoreLog();
   }
+}
+
+// Scoring audit trail (owner request 2026-08-31): every score-round
+// invocation is logged server-side by the Edge Function into gw_score_runs
+// (admin-read-only) — this page just renders it. The log can't be forged or
+// skipped from a browser, which is the point of writing it in the function.
+async function renderScoreLog(){
+  const list=document.getElementById('scorelog-list');
+  const summary=document.getElementById('scorelog-summary');
+  list.innerHTML='<div style="padding:14px;font-size:12px;color:var(--text-3);">Loading…</div>';
+  summary.textContent='';
+  let runs;
+  try{
+    const {data,error}=await supa.from('gw_score_runs').select('*').order('run_at',{ascending:false}).limit(300);
+    if(error) throw error;
+    runs=data||[];
+  }catch(e){
+    console.error('renderScoreLog:',e);
+    list.innerHTML=`<div style="padding:14px;font-size:12px;color:var(--red);">⚠ Could not load the scoring log: ${e.message}</div>`;
+    return;
+  }
+  if(!runs.length){
+    list.innerHTML='<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No scoring runs logged yet</div><div style="font-size:12px;color:var(--text-3);margin-top:4px;">Runs are recorded from result saves, Re-score and "Score all rounds". (Runs before the log existed were not captured.)</div></div>';
+    return;
+  }
+  const failures=runs.filter(r=>!r.ok).length;
+  summary.textContent=`${runs.length} run${runs.length===1?'':'s'}${runs.length===300?' (latest 300)':''} · ${failures} failed · newest first`;
+  const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  list.innerHTML=runs.map(r=>{
+    const when=new Date(r.run_at).toLocaleString(undefined,{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const badge=r.ok
+      ? '<span style="font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px;background:oklch(0.94 0.09 155/0.5);color:oklch(0.4 0.12 155);">OK</span>'
+      : '<span style="font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px;background:oklch(0.95 0.04 20/0.5);color:oklch(0.5 0.16 20);">FAILED</span>';
+    const stats=r.ok
+      ? `${r.predictions_updated??0}/${r.predictions_scored??0} preds updated · ${r.round_rows??0} round + ${r.overall_rows??0} overall rows`
+      : `<span style="color:var(--red);">${esc(r.error||'unknown error')}</span>`;
+    return `<div style="display:flex;align-items:center;gap:12px;padding:9px 8px;border-bottom:1px solid var(--border);">
+      <div style="width:128px;flex-shrink:0;font-size:11.5px;color:var(--text-2);font-variant-numeric:tabular-nums;">${when}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12.5px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(r.client_key)} · ${esc(r.competition_id)} · ${esc(r.round_id)}${r.mode?` <span style="font-weight:600;color:var(--text-3);">(${esc(r.mode)})</span>`:''}</div>
+        <div style="font-size:11px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(r.initiated_by)} · ${stats}</div>
+      </div>
+      <div style="width:64px;text-align:right;flex-shrink:0;font-size:11px;color:var(--text-3);font-variant-numeric:tabular-nums;">${r.duration_ms!=null?r.duration_ms+' ms':'—'}</div>
+      ${badge}
+    </div>`;
+  }).join('');
 }
 
 let tournamentNavSportFilter = 'football';
