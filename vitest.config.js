@@ -5,6 +5,6 @@ import { defineConfig } from 'vitest/config';
 // must not be collected here.
 export default defineConfig({
   test: {
-    include: ['packages/**/*.test.js', 'apps/**/*.test.js'],
+    include: ['packages/**/*.test.js', 'apps/**/*.test.js', 'supabase/functions/_shared/*.test.js'],
   },
 });

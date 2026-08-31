@@ -14,6 +14,7 @@
   },
   "include": [
     "packages/*/index.js",
-    "scripts/build/*.mjs"
+    "scripts/build/*.mjs",
+    "supabase/functions/_shared/*.mjs"
   ]
 }

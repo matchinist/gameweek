@@ -22,7 +22,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import {
   scorePoints, marketMetricValue, marketBucketKey, marketActual,
-  buildBettingEventHistory, flattenLineupSlots,
+  buildBettingEventHistory, scoreBettingEventAllMarkets, flattenLineupSlots,
   firstGoalScorerId, firstSubOutPlayerIds, lineupBonusAnswers,
   computeLineupRoundScore,
   deriveRankingActuals, rankingActualOrder, scoreRankingOrder,
@@ -220,6 +220,56 @@ describe('anti-drift vs inline embed copies', () => {
       const a = buildBettingEventHistory({ markets: c.markets }, { home: 'H', away: 'A', res: c.res }, c.picks);
       const b = inline.buildBettingEventHistory({ markets: c.markets }, { home: 'H', away: 'A', res: c.res }, c.picks);
       expect(a).toStrictEqual(b);
+    }
+  });
+});
+
+// ── Phase 3.2: canonical betting semantics (owner-ratified 2026-08-31) ──────
+// Every configured market scores via marketActual — winner and bucket
+// (margin/total) markets included. This is what score-round stores; the
+// legacy client path above keeps ignoring them until the 3.5 cutover.
+describe('scoreBettingEventAllMarkets', () => {
+  const comp = { markets: [
+    { type: '1x2', points: 3 },
+    { type: 'winner', points: 3 },
+    { type: 'margin', metric: 'margin', points: 4, options: [
+      { key: '1-5', max: 5 }, { key: '6-10', max: 10 }, { key: '11+', max: null },
+    ] },
+    { type: 'ou25', points: 2 },
+    { type: 'btts', points: 2 },
+  ] };
+
+  it('scores winner and margin buckets, not just the classic trio', () => {
+    // Arrange — basketball-style result: home by 8
+    const ev = { res: { h: 100, a: 92 } };
+    const val = { winner: 'H', margin: '6-10', '1x2': 'H' };
+
+    // Act
+    const { pts, perMarket } = scoreBettingEventAllMarkets(comp, ev, val);
+
+    // Assert — 1x2 (3) + winner (3) + margin bucket (4); no ou25/btts picks
+    expect(pts).toBe(10);
+    expect(perMarket.find((m) => m.type === 'winner').isRight).toBe(true);
+    expect(perMarket.find((m) => m.type === 'margin').isRight).toBe(true);
+  });
+
+  it('wrong bucket and missing picks score zero without throwing', () => {
+    const ev = { res: { h: 101, a: 90 } }; // margin 11 -> '11+'
+    const { pts } = scoreBettingEventAllMarkets(comp, ev, { margin: '6-10' });
+    expect(pts).toBe(0);
+  });
+
+  it('unresulted event scores nothing and marks nothing right', () => {
+    const { pts, perMarket } = scoreBettingEventAllMarkets(comp, { res: null }, { winner: 'H' });
+    expect(pts).toBe(0);
+    expect(perMarket.every((m) => !m.isRight)).toBe(true);
+  });
+
+  it('agrees with buildBettingEventHistory on classic-trio-only comps', () => {
+    for (const c of g1.betCases) {
+      const legacy = buildBettingEventHistory({ markets: c.markets }, { home: 'H', away: 'A', res: c.res }, c.picks);
+      const canonical = scoreBettingEventAllMarkets({ markets: c.markets }, { res: c.res }, c.picks);
+      expect(canonical.pts).toBe(legacy.evPts);
     }
   });
 });
