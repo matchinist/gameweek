@@ -45,3 +45,36 @@ export function parseFixture(fx) {
 export function parseLeague(l) {
   return { smId: l.id, name: l.name, shortCode: l.short_code || null, imagePath: l.image_path || null };
 }
+
+// v3 standings (include=participant;details.type). Detail rows are typed by
+// developer_name — matched by name, not magic type ids, so a plan/API
+// variation degrades to zeros instead of garbage.
+const STANDING_FIELDS = {
+  played: ['OVERALL_MATCHES', 'OVERALL_GAMES_PLAYED', 'OVERALL_PLAYED'],
+  w: ['OVERALL_WINS', 'OVERALL_WON'],
+  d: ['OVERALL_DRAWS', 'OVERALL_DRAW'],
+  l: ['OVERALL_LOST', 'OVERALL_LOSSES'],
+  gf: ['OVERALL_SCORED', 'OVERALL_GOALS_FOR', 'OVERALL_GOALS_SCORED'],
+  ga: ['OVERALL_CONCEDED', 'OVERALL_GOALS_AGAINST'],
+};
+
+export function parseStandings(rows) {
+  return (rows || []).map((r) => {
+    const det = {};
+    (r.details || []).forEach((d) => {
+      const dn = d.type?.developer_name || '';
+      for (const [field, names] of Object.entries(STANDING_FIELDS)) {
+        if (names.includes(dn) && det[field] == null) det[field] = d.value;
+      }
+    });
+    const gf = det.gf ?? 0, ga = det.ga ?? 0;
+    return {
+      rank: r.position,
+      participantId: r.participant_id ?? r.participant?.id ?? null,
+      name: r.participant?.name || String(r.participant_id ?? '?'),
+      played: det.played ?? 0, w: det.w ?? 0, d: det.d ?? 0, l: det.l ?? 0,
+      gf, ga, diff: gf - ga,
+      pts: r.points ?? 0,
+    };
+  }).sort((a, b) => a.rank - b.rank);
+}

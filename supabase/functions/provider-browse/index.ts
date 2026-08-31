@@ -13,7 +13,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 // @ts-ignore — plain ESM shared with the vitest suite
-import { parseFixture, parseLeague } from "../_shared/sportmonks_adapter.mjs";
+import { parseFixture, parseLeague, parseStandings } from "../_shared/sportmonks_adapter.mjs";
 // @ts-ignore — plain ESM shared with the vitest suite
 import { suggestFixtureLinks } from "../_shared/fixture_match.mjs";
 
@@ -84,6 +84,16 @@ Deno.serve(async (req: Request) => {
         ? suggestFixtureLinks(fixtures, body.events, body.teams)
         : null;
       return json(200, { data: fixtures, suggestions });
+    }
+    if (body.resource === "standings") {
+      if (!body.league_id) return json(400, { error: "league_id is required" });
+      // league -> current season -> season standings (2 API calls)
+      const lres = await fetch(`${base}/leagues/${body.league_id}?include=currentSeason`, { headers: { Authorization: provider.token } });
+      if (!lres.ok) throw new Error(`SportMonks ${lres.status}: ${(await lres.text()).slice(0, 300)}`);
+      const seasonId = (await lres.json()).data?.currentseason?.id;
+      if (!seasonId) return json(404, { error: "no current season found for this league" });
+      const rows = await smPaged(base, provider.token, `/standings/seasons/${seasonId}?include=participant;details.type`, 2);
+      return json(200, { data: parseStandings(rows), season_id: seasonId });
     }
     return json(400, { error: "unknown resource" });
   } catch (e) {

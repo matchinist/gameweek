@@ -3,7 +3,7 @@
 // `state` includes); once the owner's API key exists these get re-verified
 // against real payloads and extended.
 import { describe, it, expect } from 'vitest';
-import { parseFixture, parseLeague } from './sportmonks_adapter.mjs';
+import { parseFixture, parseLeague, parseStandings } from './sportmonks_adapter.mjs';
 
 const FT_FIXTURE = {
   id: 18535517,
@@ -70,5 +70,33 @@ describe('participants + leagues', () => {
 
   it('parseLeague maps id and name', () => {
     expect(parseLeague({ id: 600, name: 'Super Lig', short_code: 'TUR SL' })).toMatchObject({ smId: 600, name: 'Super Lig' });
+  });
+});
+
+describe('parseStandings', () => {
+  const row = (pos, pid, name, det) => ({
+    position: pos, points: det.pts, participant_id: pid, participant: { id: pid, name },
+    details: [
+      { value: det.p,  type: { developer_name: 'OVERALL_MATCHES' } },
+      { value: det.w,  type: { developer_name: 'OVERALL_WINS' } },
+      { value: det.d,  type: { developer_name: 'OVERALL_DRAWS' } },
+      { value: det.l,  type: { developer_name: 'OVERALL_LOST' } },
+      { value: det.gf, type: { developer_name: 'OVERALL_SCORED' } },
+      { value: det.ga, type: { developer_name: 'OVERALL_CONCEDED' } },
+    ],
+  });
+
+  it('maps a v3 standings payload onto rank/name/W-D-L/goals/points', () => {
+    const out = parseStandings([
+      row(1, 501, 'Galatasaray', { pts: 9, p: 3, w: 3, d: 0, l: 0, gf: 8, ga: 2 }),
+      row(2, 502, 'Fenerbahçe', { pts: 7, p: 3, w: 2, d: 1, l: 0, gf: 6, ga: 3 }),
+    ]);
+    expect(out[0]).toMatchObject({ rank: 1, participantId: 501, name: 'Galatasaray', played: 3, w: 3, d: 0, l: 0, gf: 8, ga: 2, diff: 6, pts: 9 });
+    expect(out[1].diff).toBe(3);
+  });
+
+  it('missing details degrade to zeros instead of NaN', () => {
+    const out = parseStandings([{ position: 1, points: 3, participant_id: 9, participant: { name: 'X' }, details: [] }]);
+    expect(out[0]).toMatchObject({ rank: 1, pts: 3, played: 0, w: 0, gf: 0, diff: 0 });
   });
 });

@@ -16,7 +16,7 @@
 
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 // @ts-ignore — plain ESM module shared with the vitest suite
-import { parseFixture } from "../_shared/sportmonks_adapter.mjs";
+import { parseFixture, parseStandings } from "../_shared/sportmonks_adapter.mjs";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -191,6 +191,49 @@ async function runSportmonks(service: SupabaseClient, provider: ProviderRow, man
           }
         } catch (e) {
           log.push({ level: "error", msg: `auto-import ${t.name}: ${(e as Error).message}` });
+        }
+      }
+    }
+    // standings refresh — only worth API quota when results changed (the
+    // table can't move otherwise) or when a human explicitly ran the sync.
+    if (stats.results_updated > 0 || manual) {
+      const { data: mappedTs } = await service.from("gw_dm_tournaments")
+        .select("id,name,seasons,provider_ids").not(`provider_ids->${provider.id}`, "is", null);
+      const { data: teamRows2 } = await service.from("gw_dm_teams")
+        .select("id,name,provider_ids").not(`provider_ids->${provider.id}`, "is", null);
+      const teamBySmId2: Record<string, { id: string; name: string }> = {};
+      (teamRows2 || []).forEach((t: { id: string; name: string; provider_ids: Record<string, number | string> }) => {
+        teamBySmId2[String(t.provider_ids[provider.id])] = { id: t.id, name: t.name };
+      });
+      for (const t of (mappedTs || [])) {
+        const m = t.provider_ids[provider.id] as { league_id?: number; season_key?: string };
+        if (!m?.league_id || !m?.season_key || !t.seasons?.[m.season_key]) continue;
+        try {
+          const lres = await smFetch(`/leagues/${m.league_id}?include=currentSeason`);
+          const seasonId = lres.data?.currentseason?.id;
+          if (!seasonId) { log.push({ level: "error", msg: `standings ${t.name}: no current season` }); continue; }
+          const sres = await smFetch(`/standings/seasons/${seasonId}?include=participant;details.type&per_page=50`);
+          const parsed = parseStandings(sres.data || []);
+          if (!parsed.length) continue;
+          const season = t.seasons[m.season_key];
+          const rankToZone: Record<number, unknown> = {};
+          (season.standings?.rows || []).forEach((r: { rank: number; zoneId?: unknown }) => { if (r.zoneId != null) rankToZone[r.rank] = r.zoneId; });
+          season.standings = {
+            updatedAt: new Date().toISOString(),
+            zones: season.standings?.zones || [],
+            rows: parsed.map((r: { rank: number; participantId: number; name: string; played: number; w: number; d: number; l: number; gf: number; ga: number; diff: number; pts: number }) => {
+              const team = teamBySmId2[String(r.participantId)] || null;
+              return { rank: r.rank, name: team ? team.name : r.name, teamId: team ? team.id : null,
+                played: r.played, w: r.w, d: r.d, l: r.l, diff: r.diff, gf: r.gf, ga: r.ga, pts: r.pts,
+                zoneId: rankToZone[r.rank] ?? null };
+            }),
+          };
+          const { error: sErr } = await service.from("gw_dm_tournaments").update({ seasons: t.seasons }).eq("id", t.id);
+          if (sErr) { log.push({ level: "error", msg: `standings write ${t.name}: ${sErr.message}` }); continue; }
+          stats.standings_updated = (stats.standings_updated || 0) + 1;
+          log.push({ level: "info", msg: `standings ${t.name}: ${parsed.length} rows (${m.season_key})` });
+        } catch (e) {
+          log.push({ level: "error", msg: `standings ${t.name}: ${(e as Error).message}` });
         }
       }
     }

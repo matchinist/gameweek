@@ -528,6 +528,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
             <span style="font-size:11px;color:var(--text-3);">→</span>
             <input type="date" class="form-input" id="pm-to" style="font-size:11.5px;padding:4px 6px;width:130px;">
             <button class="btn btn-ghost btn-sm" id="pm-fetch-btn" onclick="pmFetchFixtures()">Fetch &amp; match</button>
+            <button class="btn btn-ghost btn-sm" id="pm-standings-btn" onclick="pmSyncStandings()" title="Fetch the current league table into this tournament's active season (widget + standings tab)">Sync standings</button>
           </div>
         </div>
         <div id="pm-review" style="display:flex;flex-direction:column;gap:4px;max-height:320px;overflow-y:auto;"></div>
@@ -2086,7 +2087,7 @@ async function renderIngestLog(){
       : '<span style="font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px;background:oklch(0.95 0.04 20/0.5);color:oklch(0.5 0.16 20);">FAILED</span>';
     const st=r.stats||{};
     const statLine=r.ok
-      ? `${st.fixtures_checked??0} checked · ${st.results_updated??0} results · ${st.kickoffs_updated??0} kickoffs · ${st.fixtures_imported??0} imported · ${st.teams_created??0} new teams · ${st.rounds_scored??0} rounds scored · ${st.api_calls??0} API calls`
+      ? `${st.fixtures_checked??0} checked · ${st.results_updated??0} results · ${st.kickoffs_updated??0} kickoffs · ${st.fixtures_imported??0} imported · ${st.teams_created??0} new teams · ${st.standings_updated??0} standings · ${st.rounds_scored??0} rounds scored · ${st.api_calls??0} API calls`
       : `<span style="color:var(--red);">${esc(r.error||'unknown error')}</span>`;
     const logLines=(r.log||[]).map(l=>`<div style="font-family:var(--mono);font-size:10.5px;color:${l.level==='error'?'var(--red)':'var(--text-2)'};padding:1px 0;">${esc(l.msg)}</div>`).join('');
     return `<div style="padding:9px 8px;border-bottom:1px solid var(--border);">
@@ -2637,7 +2638,9 @@ function pmSaveMapping(){
   const leagueId=parseInt(sel.value);
   if(!leagueId){ toast('Pick a league first'); return; }
   const leagueName=(sel.options[sel.selectedIndex]?.textContent||'').replace(/ \(#\d+\)| \(current\)/,'');
-  t.providerIds=Object.assign({},t.providerIds,{[pid]:{league_id:leagueId,league_name:leagueName,auto_import:document.getElementById('pm-auto-import').checked}});
+  // season_key tells the daily sync WHICH season blob gets standings
+  // refreshes — the one the admin is looking at when they map.
+  t.providerIds=Object.assign({},t.providerIds,{[pid]:{league_id:leagueId,league_name:leagueName,auto_import:document.getElementById('pm-auto-import').checked,season_key:S.activeSeason||null}});
   save();
   pmProviderChanged();
   toast('Mapping saved — the daily sync now covers this tournament');
@@ -2781,6 +2784,49 @@ function pmRenderRows(){
     </div>`;
   }).join('')||'<div style="font-size:12px;color:var(--text-3);padding:8px 4px;">No fixtures in the window.</div>';
   document.getElementById('pm-apply-btn').style.display=rows.some(r=>r.action!=='linked')?'':'none';
+}
+
+// League table from the provider into this tournament's active season —
+// same shape the paste-import produces, so the standings tab and the
+// standings widget read it unchanged. Zone assignments (promotion/relegation
+// colours) survive by RANK: zones describe table positions, not teams.
+async function pmSyncStandings(){
+  const {t,pid,m}=pmMapping();
+  if(!m){ toast('Save the league mapping first'); return; }
+  const seasonKey=(m.season_key&&t.seasons[m.season_key])?m.season_key:S.activeSeason;
+  const season=t.seasons[seasonKey];
+  if(!season){ toast('Open a season on this tournament first'); return; }
+  const btn=document.getElementById('pm-standings-btn');
+  btn.disabled=true;btn.textContent='Syncing…';
+  try{
+    const res=await pmBrowse({provider:pid,resource:'standings',league_id:m.league_id});
+    const rows=res.data||[];
+    if(!rows.length) throw new Error('provider returned an empty table');
+    const teamBySm={}; S.teams.forEach(tm=>{ if(tm.providerIds&&tm.providerIds[pid]!=null) teamBySm[String(tm.providerIds[pid])]=tm.id; });
+    const rankToZone={}; ((season.standings&&season.standings.rows)||[]).forEach(r=>{ if(r.zoneId!=null) rankToZone[r.rank]=r.zoneId; });
+    const matchTeam=(row)=>{
+      const byId=teamBySm[String(row.participantId)];
+      if(byId) return byId;
+      let best=null,bestScore=0;
+      S.teams.forEach(tm=>{ const s=pmNameScore(row.name,tm.name); if(s>bestScore){best=tm.id;bestScore=s;} });
+      return bestScore>=0.55?best:null;
+    };
+    season.standings={
+      updatedAt:new Date().toISOString(),
+      zones:(season.standings&&season.standings.zones)||[],
+      rows:rows.map(r=>{
+        const teamId=matchTeam(r);
+        return {rank:r.rank, name:teamId?(getTeam(teamId)?.name||r.name):r.name, teamId,
+          played:r.played, w:r.w, d:r.d, l:r.l, diff:r.diff, gf:r.gf, ga:r.ga, pts:r.pts,
+          zoneId:rankToZone[r.rank]??null};
+      }),
+    };
+    const unmatched=season.standings.rows.filter(r=>!r.teamId).length;
+    await save();
+    toast(`Standings synced: ${rows.length} rows${unmatched?` (${unmatched} without a linked team)`:''}`);
+    if(S.activePage==='tournament') renderTournamentView();
+  }catch(e){ toast('Standings: '+e.message); }
+  btn.disabled=false;btn.textContent='Sync standings';
 }
 
 function pmSetAction(idx,val){ pmCtx.rows[idx].action=val; pmRenderRows(); }
