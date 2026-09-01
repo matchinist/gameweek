@@ -185,17 +185,77 @@ h3{font-size:17px;font-weight:700;letter-spacing:-0.3px;}
 .section-head p{font-size:16px;color:var(--text-2);margin-top:14px;}
 
 /* ── HERO ────────────────────────────────────────── */
-.hero{padding:104px 0 92px;}
-.hero h1{max-width:800px;margin-bottom:22px;}
-.hero .lede{margin-bottom:34px;}
-.hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:44px;}
-.hero-meta{
-  display:flex;flex-wrap:wrap;gap:10px 28px;
-  padding-top:30px;border-top:1px solid var(--border);
-}
+.hero{padding:60px 0 92px;}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;}
+.hero h1{max-width:800px;margin-bottom:20px;}
+.hero .lede{margin-bottom:26px;}
+.hero-meta{display:flex;flex-wrap:wrap;gap:10px 26px;margin-bottom:28px;}
 .hero-meta div{font-size:14px;color:var(--text-2);display:flex;align-items:center;gap:8px;}
 .hero-meta strong{color:var(--text);font-weight:600;}
+.hero-actions{display:flex;flex-wrap:wrap;gap:12px;}
 .dot{width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+
+/* hero visual — Lineup Predictor mock (right column desktop, below buttons mobile) */
+.hero-visual{width:100%;}
+.hero-visual img{width:100%;height:auto;display:block;border:1px solid var(--border);border-radius:18px;box-shadow:0 20px 54px rgba(14,17,22,0.14);}
+.hv-frame{
+  --hv-navy:#17244A;--hv-ink:#1B2A52;--hv-soft:#F4F5FB;--hv-bd:#E4E7F1;
+  border:1px solid var(--border);border-radius:18px;overflow:hidden;background:#fff;
+  box-shadow:0 20px 54px rgba(14,17,22,0.14);max-width:380px;margin:0 auto;
+}
+.hv-frame *{box-sizing:border-box;}
+.hv-fx{padding:16px 16px 12px;text-align:center;}
+.hv-fx-label{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);}
+.hv-fx-teams{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;}
+.hv-fx-teams .tm{font-weight:700;color:var(--hv-ink);font-size:12.5px;flex:1;min-width:0;}
+.hv-fx-teams .tm.l{text-align:right;}
+.hv-fx-teams .tm.r{text-align:left;}
+.hv-fx-teams .vs{font-size:10px;color:var(--text-3);font-weight:600;flex:none;}
+.hv-crest{width:22px;height:22px;border-radius:50%;background:var(--hv-soft);border:1px solid var(--hv-bd);flex:none;}
+.hv-ctrl{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 16px;border-top:1px solid var(--border);}
+.hv-ctrl-l{display:flex;align-items:center;gap:9px;}
+.hv-ctrl-l>span{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--text-3);}
+.hv-select{border:1px solid var(--hv-bd);border-radius:7px;padding:5px 9px;font-weight:700;color:var(--hv-ink);font-size:11px;display:inline-flex;align-items:center;gap:6px;background:#fff;}
+.hv-select::after{content:'▾';font-size:8px;color:var(--text-3);}
+.hv-pts{background:var(--hv-soft);border:1px solid var(--hv-bd);border-radius:999px;padding:4px 11px;font-size:11px;color:var(--text-2);font-weight:600;}
+.hv-bonus{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 14px 14px;}
+.hv-bcard{background:var(--hv-soft);border:1px solid var(--hv-bd);border-radius:10px;padding:9px 6px;text-align:center;}
+.hv-bcard i{display:block;font-style:normal;font-family:var(--mono);font-size:7px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;color:var(--text-3);margin-bottom:4px;}
+.hv-bcard b{font-size:10.5px;font-weight:700;color:var(--hv-ink);}
+.hv-pitch{
+  position:relative;margin:0 12px;border-radius:14px;overflow:hidden;aspect-ratio:21/26;
+  background:repeating-linear-gradient(180deg,#38A85B 0 11.11%,#2F9C4E 11.11% 22.22%);
+}
+.hv-pitch::before{content:'';position:absolute;inset:9px;border:2px solid rgba(255,255,255,0.55);border-radius:8px;}
+.hv-pitch::after{content:'';position:absolute;top:50%;left:50%;width:24%;aspect-ratio:1;transform:translate(-50%,-50%);border:2px solid rgba(255,255,255,0.45);border-radius:50%;}
+.hv-halfway{position:absolute;left:9px;right:9px;top:50%;height:2px;background:rgba(255,255,255,0.45);}
+.hv-row{position:absolute;left:0;right:0;display:flex;justify-content:space-evenly;padding:0 20px;animation:hvUp .5s cubic-bezier(.2,.7,.2,1) both;}
+.hv-row.r-st{top:6%;animation-delay:.10s;}
+.hv-row.r-am{top:26%;animation-delay:.20s;}
+.hv-row.r-dm{top:46%;animation-delay:.30s;}
+.hv-row.r-df{top:66%;animation-delay:.40s;}
+.hv-row.r-gk{top:86%;animation-delay:.50s;}
+@keyframes hvUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+.hv-tok{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;width:22%;}
+.hv-av{width:32px;height:32px;border-radius:50%;background:#EEF0F6;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.28);}
+.hv-nm{font-size:8px;font-weight:700;color:#fff;background:rgba(23,36,74,0.92);border-radius:4px;padding:2px 5px;max-width:56px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hv-bdg{position:absolute;top:-3px;left:calc(50% + 8px);width:14px;height:14px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:800;line-height:1;color:#fff;}
+.hv-bdg.g{background:var(--hv-navy);}
+.hv-bdg.star{background:#F5A623;}
+.hv-bdg.sub{background:#E0392B;}
+.hv-tok.pick .hv-av{animation:hvPulse 2.6s ease-in-out 1.1s infinite;}
+@keyframes hvPulse{0%,100%{box-shadow:0 2px 6px rgba(0,0,0,.28);}50%{box-shadow:0 0 0 6px rgba(245,166,35,.32);}}
+.hv-save{margin:14px 12px 0;background:var(--hv-navy);color:#fff;text-align:center;font-weight:700;font-size:12px;padding:12px;border-radius:10px;}
+.hv-prog{margin:10px 12px 16px;display:flex;align-items:center;gap:10px;}
+.hv-prog .bar{flex:1;height:4px;border-radius:999px;background:var(--hv-bd);overflow:hidden;}
+.hv-prog .bar i{display:block;width:100%;height:100%;background:var(--hv-navy);}
+.hv-prog span{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--text-3);flex:none;}
+@media(prefers-reduced-motion:reduce){.hv-row{animation:none;}.hv-tok.pick .hv-av{animation:none;}}
+@media(max-width:900px){
+  .hero{padding:38px 0 64px;}
+  .hero-grid{grid-template-columns:1fr;gap:36px;}
+  .hero-visual{max-width:380px;}
+}
 
 /* ── STEPS ───────────────────────────────────────── */
 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:30px;}
@@ -300,22 +360,76 @@ footer{border-top:1px solid var(--border);padding:34px 0;}
 <!-- ── HERO ────────────────────────────────────────── -->
 <section class="hero">
   <div class="wrap">
-    <div class="eyebrow">For sports publishers</div>
-    <h1>Give your readers a reason to come back every week.</h1>
-    <p class="lede">
-      Gameweek is a free-to-play prediction game you embed on your own site.
-      Readers predict, compete on a leaderboard, and return match after match —
-      in your branding, on any sport you cover.
-    </p>
-    <div class="hero-actions">
-      <a href="/demo" onclick="gtag('event','click',{event_category:'cta',event_label:'hero_demo'})" class="btn btn-primary btn-lg">See the live demo →</a>
-      <a href="/contact" onclick="gtag('event','click',{event_category:'cta',event_label:'hero_contact'})" class="btn btn-outline btn-lg">Contact us</a>
-    </div>
-    <div class="hero-meta">
-      <div><span class="dot"></span><strong>One line</strong> of code to install</div>
-      <div><span class="dot"></span><strong>No</strong> development work</div>
-      <div><span class="dot"></span><strong>Any</strong> sport or competition</div>
-      <div><span class="dot"></span><strong>Free</strong> for your readers</div>
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <div class="eyebrow">Sports Engagement Software</div>
+        <h1>Give your readers a reason to come back every week.</h1>
+        <p class="lede">
+          Gameweek is a free-to-play prediction game you embed on your own site.
+          Readers predict, compete on a leaderboard, and return match after match,
+          in your branding, on any sport you cover.
+        </p>
+        <div class="hero-meta">
+          <div><span class="dot"></span><strong>One line</strong> of code to install</div>
+          <div><span class="dot"></span><strong>No</strong> development work</div>
+          <div><span class="dot"></span><strong>Any</strong> sport or competition</div>
+          <div><span class="dot"></span><strong>Free</strong> for your readers</div>
+        </div>
+        <div class="hero-actions">
+          <a href="/contact" onclick="gtag('event','click',{event_category:'cta',event_label:'hero_contact'})" class="btn btn-primary btn-lg">Contact us</a>
+          <a href="/demo" onclick="gtag('event','click',{event_category:'cta',event_label:'hero_demo'})" class="btn btn-outline btn-lg">Demo</a>
+        </div>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <!-- Recreated from a Lineup Predictor screenshot. Swap for <img src="/hero-lineup.png" alt="Lineup Predictor"> to use the real capture instead. -->
+        <div class="hv-frame">
+          <div class="hv-fx">
+            <div class="hv-fx-label">Next fixture · 05 Sept · 02:00</div>
+            <div class="hv-fx-teams">
+              <span class="tm l">Nottingham Forest</span>
+              <span class="hv-crest"></span>
+              <span class="vs">vs</span>
+              <span class="hv-crest"></span>
+              <span class="tm r">Tottenham Hotspur</span>
+            </div>
+          </div>
+          <div class="hv-ctrl">
+            <div class="hv-ctrl-l"><span>Form</span><span class="hv-select">4-2-3-1</span></div>
+            <span class="hv-pts">0 pts</span>
+          </div>
+          <div class="hv-bonus">
+            <div class="hv-bcard"><i>First goal</i><b>D. Solanke</b></div>
+            <div class="hv-bcard"><i>Best player</i><b>A. Gray</b></div>
+            <div class="hv-bcard"><i>First sub-off</i><b>M. Tel</b></div>
+          </div>
+          <div class="hv-pitch">
+            <div class="hv-halfway"></div>
+            <div class="hv-row r-st">
+              <div class="hv-tok"><span class="hv-bdg g">G</span><span class="hv-av"></span><span class="hv-nm">D. Solanke</span></div>
+            </div>
+            <div class="hv-row r-am">
+              <div class="hv-tok"><span class="hv-bdg sub">↓</span><span class="hv-av"></span><span class="hv-nm">M. Tel</span></div>
+              <div class="hv-tok"><span class="hv-av"></span><span class="hv-nm">M. Fernandes</span></div>
+              <div class="hv-tok"><span class="hv-av"></span><span class="hv-nm">P. Porro</span></div>
+            </div>
+            <div class="hv-row r-dm">
+              <div class="hv-tok"><span class="hv-av"></span><span class="hv-nm">R. Bentancur</span></div>
+              <div class="hv-tok"><span class="hv-av"></span><span class="hv-nm">S. Tonali</span></div>
+            </div>
+            <div class="hv-row r-df">
+              <div class="hv-tok"><span class="hv-av"></span><span class="hv-nm">A. Robertson</span></div>
+              <div class="hv-tok"><span class="hv-av"></span><span class="hv-nm">M. van de V…</span></div>
+              <div class="hv-tok"><span class="hv-av"></span><span class="hv-nm">J. Paul van …</span></div>
+              <div class="hv-tok pick"><span class="hv-bdg star">★</span><span class="hv-av"></span><span class="hv-nm">A. Gray</span></div>
+            </div>
+            <div class="hv-row r-gk">
+              <div class="hv-tok"><span class="hv-av"></span><span class="hv-nm">A. Kinský</span></div>
+            </div>
+          </div>
+          <div class="hv-save">Save starting XI</div>
+          <div class="hv-prog"><span class="bar"><i></i></span><span>11/11</span></div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -487,7 +601,7 @@ footer{border-top:1px solid var(--border);padding:34px 0;}
       <p>Try the demo first, then send us a note. We'll set up a version in your branding so you can see exactly how it looks on your site.</p>
       <div class="cta-actions">
         <a href="/contact" onclick="gtag('event','click',{event_category:'cta',event_label:'final_contact'})" class="btn btn-primary btn-lg">Contact us →</a>
-        <a href="/demo" onclick="gtag('event','click',{event_category:'cta',event_label:'final_demo'})" class="btn btn-outline btn-lg">See the demo</a>
+        <a href="/demo" onclick="gtag('event','click',{event_category:'cta',event_label:'final_demo'})" class="btn btn-outline btn-lg">Demo</a>
       </div>
     </div>
   </div>
