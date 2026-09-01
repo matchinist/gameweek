@@ -69,4 +69,22 @@ describe('demo dataset', () => {
       expect(predictors.has(m.username), m.username).toBe(true);
     });
   });
+
+  test('every tennis competitor carries a 2-letter nationality code', () => {
+    // Arrange — the demo-only flag illustration: the embed's flagImg() draws
+    // a flag whenever a team row has `country`, and only the tennis players
+    // in this dataset do. A missing/malformed code would render no flag.
+    const round = DB.gw_rounds.find((r) => r.competition_id === 'demo_score_tennis');
+    const eventIds = new Set(round.event_ids);
+    const playerIds = new Set(
+      DB.gw_dm_events.filter((e) => eventIds.has(e.id)).flatMap((e) => [e.home_id, e.away_id]),
+    );
+    const players = DB.gw_dm_teams.filter((t) => playerIds.has(t.id));
+
+    // Act & Assert
+    expect(players.length).toBe(12);
+    players.forEach((p) => {
+      expect(/^[a-z]{2}$/.test(p.country || ''), `${p.name}: ${p.country}`).toBe(true);
+    });
+  });
 });

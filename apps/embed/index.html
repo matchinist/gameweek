@@ -1059,6 +1059,7 @@ async function buildCompsFromRealData(){
       EVENTS[ev.id] = {
         home: gwLocName(home, LANG)||ev.home_id, away: gwLocName(away, LANG)||ev.away_id,
         homeLogo: home?.logo||'', awayLogo: away?.logo||'',
+        homeCountry: home?.country||'', awayCountry: away?.country||'',
         homeId: ev.home_id, awayId: ev.away_id,
         // kickoff_at (timestamptz, Phase 1.2) is the preferred instant; the
         // legacy text column is the fallback until 1.7 verifies parity.
@@ -3195,6 +3196,15 @@ function teamBadge(logo,name){
   return`<div class="ev-badge">${abbr}</div>`;
 }
 
+// A nationality flag before a competitor's name. Only the demo dataset
+// carries team.country today (tennis players) — live gw_dm_teams has no
+// such column, so this renders nothing for real operators.
+function flagImg(cc){
+  if(!cc||!/^[a-z]{2}$/i.test(cc))return'';
+  const c=cc.toLowerCase();
+  return`<img class="ev-flag" src="https://flagcdn.com/w20/${c}.png" srcset="https://flagcdn.com/w40/${c}.png 2x" alt="" width="18" height="13" loading="lazy" style="border-radius:2px;margin-right:5px;vertical-align:-3px;flex:none;">`;
+}
+
 // ── COUNTDOWN ──────────────────────────────────────────────────────────────
 let countdownInterval;
 function startCountdown(deadline,onExpire){
@@ -4132,7 +4142,7 @@ function renderEventCard(ev,comp,isOpen){
     midSection='<div class="ev-vs">vs</div>';
   }
 
-  let html=`<div class="${cls}" data-evid="${ev.id}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${ev.tournament||comp.name}</span><span class="event-kickoff">${ev.kickoff||''}</span></div><div class="event-teams"><div style="display:flex;align-items:center;gap:8px;min-width:0;">${teamBadge(ev.homeLogo,ev.home)}<span class="ev-name">${ev.home}</span></div>${midSection}<div style="display:flex;align-items:center;gap:8px;justify-content:flex-end;min-width:0;"><span class="ev-name" style="text-align:right;">${ev.away}</span>${teamBadge(ev.awayLogo,ev.away)}</div></div></div><div class="pred-area">`;
+  let html=`<div class="${cls}" data-evid="${ev.id}"><div class="event-card-top"><div class="event-meta"><span class="event-league">${ev.tournament||comp.name}</span><span class="event-kickoff">${ev.kickoff||''}</span></div><div class="event-teams"><div style="display:flex;align-items:center;gap:8px;min-width:0;">${teamBadge(ev.homeLogo,ev.home)}<span class="ev-name">${flagImg(ev.homeCountry)}${ev.home}</span></div>${midSection}<div style="display:flex;align-items:center;gap:8px;justify-content:flex-end;min-width:0;"><span class="ev-name" style="text-align:right;">${flagImg(ev.awayCountry)}${ev.away}</span>${teamBadge(ev.awayLogo,ev.away)}</div></div></div><div class="pred-area">`;
 
   if(canPredict){
     // Open for prediction
