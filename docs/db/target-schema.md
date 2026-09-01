@@ -25,16 +25,21 @@ referential integrity everywhere; RLS that scales; indexes matched to the real q
 ```mermaid
 erDiagram
     %% ── SPORTS DATA (global, provider-fed, tenant-independent) ──
+    ref_countries ||--o{ sd_teams : ""
+    ref_countries ||--o{ sd_players : nationality
+    ref_countries ||--o{ sd_venues : ""
+    ref_countries ||--o{ operators : location
     sd_sports ||--o{ sd_tournaments : has
     sd_tournaments ||--o{ sd_seasons : has
     sd_seasons ||--o{ sd_season_teams : enrolls
-    sd_seasons ||--o{ sd_stages : "official matchdays"
-    sd_seasons ||--o{ sd_standings : "table (per stage snapshot)"
+    sd_seasons ||--o{ sd_stages : "phases"
+    sd_stages ||--o{ sd_rounds : "matchdays (Gameweek 3)"
+    sd_seasons ||--o{ sd_standings : "table (per round snapshot)"
     sd_teams ||--o{ sd_season_teams : ""
     sd_teams ||--o{ sd_players : squad
     sd_teams ||--o{ sd_fixtures : "home/away"
     sd_venues ||--o{ sd_fixtures : hosts
-    sd_stages ||--o{ sd_fixtures : groups
+    sd_rounds ||--o{ sd_fixtures : groups
     sd_fixtures ||--o{ sd_fixture_incidents : "goals/subs/cards"
     providers ||--o{ sd_provider_refs : maps
     sd_provider_refs }o--|| sd_teams : "any sd entity"
@@ -83,35 +88,72 @@ erDiagram
 
 ---
 
-## 3. Layer 1 — Sports data (`sd_*`)
+## 3. Layer 0 — Shared reference data (`ref_*`)
+
+Owned by no layer because everyone uses it — sports entities, customer records, billing.
+
+```sql
+ref_countries (id smallint GENERATED ALWAYS AS IDENTITY PK,
+               alpha2 char(2) UNIQUE CHECK (alpha2 ~ '^[a-z]{2}$'),  -- flags/ISO surface
+               alpha3 char(3) UNIQUE,
+               name text NOT NULL, name_i18n jsonb)
+```
+
+Every table that previously carried a free-text `country` column references
+`country_id → ref_countries` instead: `sd_teams`, `sd_players` (nationality), `sd_venues`,
+`sd_tournaments`, and on the tenant side `operators` (customer location — billing, tax and
+analytics all want it normalized). Provider country ids map through `sd_provider_refs`
+(entity `'country'`), so feeds resolve their own country codes to ours. Seeded once from
+ISO 3166-1; a tiny always-cached table, so the display join is effectively free.
+
+### Why canonical `name text` stays next to `name_i18n`
+
+With many languages coming, why keep a plain-text name at all? Because the alternative — one
+`names jsonb` holding every language — turns every sort, search, uniqueness check and index into
+a jsonb extraction, for rows where the vast majority will only ever have the base name. The rule
+the app already implements is the durable one: **`name` is the NOT NULL canonical anchor**
+(indexable, searchable, what feeds and admins write first), **`name_i18n` is a sparse override
+map** — present only where a language genuinely differs, unbounded in which languages it can
+hold, zero DDL to add another. Readers everywhere resolve `name_i18n[lang] → name`.
+
+## 3b. Layer 1 — Sports data (`sd_*`)
 
 Current equivalents: `gw_dm_teams/players/events/tournaments` + the `seasons` jsonb megablob,
 which this layer **decomposes into rows** (review finding 2.2).
 
 ```sql
 sd_sports        (id smallint PK, key text UNIQUE)            -- 'football', 'basketball', …
-sd_venues        (id bigint PK, name text, city text, country text, name_i18n jsonb)
+sd_venues        (id bigint PK, name text, city text, country_id → ref_countries, name_i18n jsonb)
 sd_teams         (id bigint PK, legacy_id text UNIQUE,        -- 'tm…' compat
                   sport_id → sd_sports, name text, short text, color text, logo text,
-                  country text, name_i18n jsonb,
+                  country_id → ref_countries NULL, name_i18n jsonb,
                   fd_home smallint, fd_away smallint,
                   created_at, updated_at)
 sd_players       (id bigint PK, legacy_id text UNIQUE, team_id → sd_teams,
                   full_name text, name_i18n jsonb, position text CHECK (…),
-                  jersey_number smallint, nationality text, birthday date,
+                  jersey_number smallint, nationality_id → ref_countries NULL, birthday date,
                   height_cm smallint, photo_url text, created_at, updated_at)
 sd_tournaments   (id bigint PK, legacy_id text UNIQUE, sport_id → sd_sports,
-                  name text, name_i18n jsonb, country text, type text CHECK (…), color text)
+                  name text, name_i18n jsonb, country_id → ref_countries NULL, type text CHECK (…), color text)
 sd_seasons       (id bigint PK, tournament_id → sd_tournaments,
                   key text,                                    -- '2026-27' (blob key compat)
                   starts_on date, ends_on date, is_current bool,
                   UNIQUE (tournament_id, key))
 sd_season_teams  (season_id → sd_seasons, team_id → sd_teams, PK (season_id, team_id))
-sd_stages        (id bigint PK, season_id → sd_seasons,        -- official matchday/stage
-                  label text, sort int, UNIQUE (season_id, sort))
+sd_stages        (id bigint PK, season_id → sd_seasons,        -- season PHASE:
+                  name text,                                     -- 'Regular Season', 'Group A',
+                  type text CHECK (type IN ('regular_season','group','qualifying',
+                                            'knockout','playoffs')),
+                  sort int, UNIQUE (season_id, sort))
+sd_rounds        (id bigint PK, stage_id → sd_stages,            -- official matchday WITHIN a
+                  label text,                                    -- stage: 'Gameweek 3', 'Semi-final'
+                  sort int, starts_on date, ends_on date,
+                  UNIQUE (stage_id, sort))
 sd_fixtures      (id bigint PK, legacy_id text UNIQUE,         -- 'ev…' compat
                   season_id → sd_seasons NULL,                 -- null = not yet organised
-                  stage_id → sd_stages NULL,
+                  round_id → sd_rounds NULL,                     -- stage derivable via round;
+                  stage_id → sd_stages NULL,                     -- set alone when only the phase
+                                                                 -- is known yet
                   home_team_id → sd_teams, away_team_id → sd_teams,
                   venue_id → sd_venues NULL,
                   kickoff_at timestamptz, status text CHECK (status IN
@@ -125,19 +167,26 @@ sd_fixture_incidents (id bigint PK, fixture_id → sd_fixtures,
                   minute smallint, player_id → sd_players NULL, player_in_id → sd_players NULL,
                   team_id → sd_teams, sort int)                -- replaces scorers jsonb
 sd_standings     (id bigint PK, season_id → sd_seasons,
-                  stage_id → sd_stages NULL,                   -- NULL = current table;
-                                                               -- set = snapshot after that matchday
+                  round_id → sd_rounds NULL,                   -- NULL = current table;
+                                                               -- set = frozen snapshot after
+                                                               -- that round ('table after GW3')
                   rank smallint, team_id → sd_teams NULL, display_name text,
                   played smallint, w smallint, d smallint, l smallint,
                   gf smallint, ga smallint, pts smallint, zone text,
-                  updated_at, UNIQUE NULLS NOT DISTINCT (season_id, stage_id, rank))
+                  updated_at, UNIQUE NULLS NOT DISTINCT (season_id, round_id, rank))
 ```
 
 Why it looks like this:
-- **`sd_standings` with a nullable `stage_id`** gives both the current table (what the widget
-  shows) *and* per-round snapshots ("table after Round 3") — the owner-requested feature the
+- **`sd_stages` vs `sd_rounds` vs tenant `game_rounds` — three different things.** A *stage* is
+  a season phase ('Regular Season', 'Group A', 'Play-offs'); a *round* is an official matchday
+  within a stage ('Gameweek 3') — a plain league is one stage with 34 rounds, a cup is several
+  stages with rounds inside each (this mirrors the provider model, so ingest maps 1:1). Tenant
+  `game_rounds` stay a separate concept on purpose: an operator's game round bundles whatever
+  fixtures they choose, which may span or subset official rounds.
+- **`sd_standings` with a nullable `round_id`** gives both the current table (what the widget
+  shows) *and* per-round snapshots ("table after Gameweek 3") — the owner-requested feature the
   jsonb blob could never support. The ingest writes the current row set every sync and freezes a
-  snapshot when a stage completes.
+  snapshot when a round completes.
 - **`sd_fixture_incidents` as rows** replaces the `scorers` jsonb: first-goal-scorer and
   first-sub bonus questions become indexed queries instead of client-side array walks, and a
   future "top scorers" widget reads it directly.
@@ -153,7 +202,7 @@ providers        (id text PK CHECK (id ~ '^[a-z0-9_]+$'), name text, base_url te
                   config jsonb, created_at, updated_at)
 sd_provider_refs (provider_id → providers,
                   entity text CHECK (entity IN ('team','player','tournament','season',
-                                                'fixture','venue','stage')),
+                                                'fixture','venue','stage','round','country')),
                   entity_id bigint,                       -- the sd_* row
                   external_id text,                       -- the provider's id
                   payload jsonb,                          -- last raw provider snapshot
@@ -175,7 +224,8 @@ columns are dropped once refs are backfilled.
 
 ```sql
 operators        (id bigint PK, client_key text UNIQUE CHECK (format), auth_id uuid → auth.users,
-                  company_name, email UNIQUE, language, domains text[],
+                  company_name, email UNIQUE, language, country_id → ref_countries NULL,
+                  domains text[],
                   branding jsonb,                  -- colors/logo (today: loose columns)
                   sso_secret_ref uuid → vault.secrets,
                   plan text, created_at, updated_at)
@@ -292,7 +342,7 @@ keeps the live product byte-compatible at the API surface.
 | M1 | Review roadmap R1–R5 (policies, index cleanup, FKs on *existing* columns, CHECKs, retention) | Integrity + RLS perf on the current shape | now |
 | M2 | `sd_provider_refs` + backfill from `provider_ids` jsonb; ingest/mapping UI switch to it; drop jsonb columns | Multi-provider + cross-check foundation | provider work |
 | M3 | `game_round_fixtures` junction backfilled from `event_ids[]`; embed/score-round read the junction (array column kept in sync by trigger until all readers move) | Tenant-scoped fixture reads (4.1), FK integrity on rounds | Phase 4.1 |
-| M4 | `sd_seasons`/`sd_season_teams`/`sd_stages`/`sd_standings` extracted from the seasons blob; /data + widgets read tables; blob becomes generated/legacy then dropped | Kills the megablob; per-round standings snapshots | after 3.5 cutover |
+| M4 | `ref_countries` seed + `sd_seasons`/`sd_season_teams`/`sd_stages`/`sd_rounds`/`sd_standings` extracted from the seasons blob; /data + widgets read tables; blob becomes generated/legacy then dropped | Kills the megablob; per-round standings snapshots | after 3.5 cutover |
 | M5 | `operator_id bigint` added alongside `client_key` on tenant tables, FK'd, backfilled, indexes re-led; RLS switches to `current_operator_id()`; `client_key` remains the public handle | Narrow indexes, cascade offboarding, clean tenancy | Phase 4 |
 | M6 | `league_members` re-key to `player_id`; predictions get `fixture_id` (sentinel `event_id` retired); `username` becomes display-only | Rename-safe identity | Phase 6 window |
 | M7 | Vault for provider tokens + sso_secret; `audit_log` triggers; `api_usage` rollup | Secrets + full audit story | Phase 6 |
