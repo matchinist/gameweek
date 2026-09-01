@@ -122,7 +122,9 @@ Current equivalents: `gw_dm_teams/players/events/tournaments` + the `seasons` js
 which this layer **decomposes into rows** (review finding 2.2).
 
 ```sql
-sd_sports        (id smallint PK, key text UNIQUE)            -- 'football', 'basketball', …
+sd_sports        (id smallint PK, key text UNIQUE,            -- machine id: 'football', …
+                  name text NOT NULL, name_i18n jsonb)        -- display names, same override
+                                                              -- pattern as every other entity
 sd_venues        (id bigint PK, name text, city text, country_id → ref_countries, name_i18n jsonb)
 sd_teams         (id bigint PK, legacy_id text UNIQUE,        -- 'tm…' compat
                   sport_id → sd_sports, name text, short text, color text, logo text,
