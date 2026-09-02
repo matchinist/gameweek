@@ -303,7 +303,7 @@ tbody tr:hover td{background:var(--row-hover);}
   <div class="sidebar-section">
     <div class="sidebar-section-label">Account</div>
     <button class="nav-item" onclick="nav('billing')">
-      <span class="ni-icon">💳</span> Usage & Billing
+      <span class="ni-icon">💳</span> Subscription
     </button>
     <button class="nav-item" onclick="nav('settings')">
       <span class="ni-icon">⚙</span> Settings
@@ -769,26 +769,6 @@ tbody tr:hover td{background:var(--row-hover);}
           </div>
         </div>
         <div>
-          <div class="card" style="margin-bottom:14px;">
-            <div class="card-header"><span class="card-title">Current Plan</span></div>
-            <div class="card-body">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-                <div>
-                  <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);">No plan selected</div>
-                  <div style="font-size:12px;color:var(--text-3);">Free trial — full access while we set up billing</div>
-                </div>
-                <span class="badge badge-amber">Trial</span>
-              </div>
-              <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--text-2);">
-                <div>✓ Unlimited competitions</div>
-                <div>✓ All 4 game modes</div>
-                <div>✓ Analytics dashboard</div>
-                <div>✓ Up to 3 allowed domains</div>
-              </div>
-              <div class="divider"></div>
-
-            </div>
-          </div>
           <div class="card">
             <div class="card-header"><span class="card-title">Notifications</span></div>
             <div class="card-body">
@@ -904,8 +884,8 @@ tbody tr:hover td{background:var(--row-hover);}
     <div class="view" id="view-billing">
       <div class="page-header">
         <div>
-          <div class="page-title">Usage & Billing</div>
-          <div class="page-sub" style="font-size:15px;">Track your active users and current billing cycle.</div>
+          <div class="page-title">Subscription</div>
+          <div class="page-sub" style="font-size:15px;">Your package, its included limits, and this month's usage.</div>
         </div>
       </div>
 
@@ -957,18 +937,17 @@ tbody tr:hover td{background:var(--row-hover);}
 
       </div>
 
-      <!-- Plan info -->
+      <!-- Package info -->
       <div class="card" style="max-width:760px;">
-        <div class="card-header"><span class="card-title">Your Plan</span></div>
+        <div class="card-header"><span class="card-title">Your Package</span></div>
         <div class="card-body">
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-            <div>
-              <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;" id="billing-plan-name">Gameweek Standard</div>
-              <div style="font-size:12px;color:var(--text-3);">$50/month base · $0.40 per active user · all game modes · unlimited competitions</div>
-            </div>
-            <div style="display:flex;gap:8px;">
-              <button class="btn btn-outline btn-sm" onclick="toast('Payment portal coming soon')">Manage Payment</button>
-            </div>
+          <div style="margin-bottom:4px;">
+            <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;" id="billing-package-name">—</div>
+            <div style="font-size:12px;color:var(--text-3);">Assigned by the Gameweek team — contact us to move packages.</div>
+          </div>
+          <div class="divider"></div>
+          <div id="billing-package-features" style="display:flex;flex-direction:column;gap:10px;">
+            <div style="font-size:12px;color:var(--text-3);">Loading package limits…</div>
           </div>
           <div class="divider"></div>
           <div style="font-size:12px;color:var(--text-3);line-height:1.7;">
@@ -1679,7 +1658,7 @@ function nav(view, subLabel){
   });
 
   // breadcrumb
-  const labels = {dashboard:'Dashboard','comp-detail':'Competitions','competitions':'Competitions',embed:'Embed & Integration',settings:'Settings',branding:'Customisation',billing:'Usage & Billing',widgets:'Widgets',users:'Users',monetization:'Monetization'};
+  const labels = {dashboard:'Dashboard','comp-detail':'Competitions','competitions':'Competitions',embed:'Embed & Integration',settings:'Settings',branding:'Customisation',billing:'Subscription',widgets:'Widgets',users:'Users',monetization:'Monetization'};
   let bc = '';
   if(view==='comp-detail' && subLabel){
     bc = `<span>Competitions</span><span class="sep">/</span><span class="current">${subLabel}</span>`;
@@ -1717,6 +1696,7 @@ function nav(view, subLabel){
 }
 
 async function renderBilling(){
+  renderBillingPackage();
   try{
     // Fetch billing data from Supabase view
     const {data:bill} = await supa.from('gw_billing_current')
@@ -1753,6 +1733,34 @@ async function renderBilling(){
   }catch(e){
     console.error('renderBilling:',e);
     document.getElementById('billing-total').textContent = 'Error loading';
+  }
+}
+
+// Assigned package name + its per-setting values, read straight from
+// gw_package_settings (Data Manager → Package Settings). Runs independently
+// of the billing view above so it still shows when that view has no row.
+const PACKAGE_LABELS = {free:'Free',start:'Start',growth:'Growth',scale:'Scale',enterprise:'Enterprise'};
+async function renderBillingPackage(){
+  const slug = (currentOperator && currentOperator.plan) || 'free';
+  const nameEl = document.getElementById('billing-package-name');
+  if(nameEl) nameEl.textContent = (PACKAGE_LABELS[slug] || slug) + ' package';
+  const featEl = document.getElementById('billing-package-features');
+  if(!featEl) return;
+  try{
+    const {data:pkgRows} = await supa.from('gw_package_settings')
+      .select('setting_key,label,values,sort_order').order('sort_order');
+    const rows = pkgRows || [];
+    featEl.innerHTML = rows.length ? rows.map(r=>{
+      const raw = (r.values || {})[slug];
+      const shown = (raw === undefined || raw === null || raw === '') ? '—' : String(raw);
+      return `<div style="display:flex;justify-content:space-between;gap:12px;font-size:13px;">
+        <span style="color:var(--text-2);">${escapeHtml(r.label)}</span>
+        <span style="font-family:var(--mono);font-weight:700;color:var(--text);">${escapeHtml(shown)}</span>
+      </div>`;
+    }).join('') : `<div style="font-size:12px;color:var(--text-3);">No package limits configured yet.</div>`;
+  }catch(e){
+    console.error('renderBillingPackage:',e);
+    featEl.innerHTML = `<div style="font-size:12px;color:var(--red);">Could not load package limits.</div>`;
   }
 }
 
