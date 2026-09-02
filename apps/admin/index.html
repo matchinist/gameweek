@@ -97,6 +97,16 @@ h1,h2,h3,h4,h5,h6{font-family:var(--sans);font-weight:800;letter-spacing:-0.015e
 .stat-card-green .stat-card-value{color:var(--accent);}
 .users-subtab-btn{padding:8px 18px;border:none;border-radius:0;background:transparent;color:var(--text-3);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--mono);letter-spacing:0.04em;}
 .users-subtab-btn.active{background:var(--text);color:#fff;box-shadow:none;}
+.retention-round-picker{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+.retention-round-list{border:1px solid var(--border);max-height:300px;overflow-y:auto;}
+.retention-round-option{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;font-size:12px;}
+.retention-round-option:last-child{border-bottom:none;}
+.retention-round-option:hover{background:var(--row-hover);}
+.retention-round-option input{accent-color:var(--accent);}
+.retention-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:20px;}
+.retention-summary-card{padding:20px;border-left:1px solid var(--border);}
+.retention-summary-card:first-child{border-left:none;padding-left:0;}
+@media(max-width:768px){.retention-round-picker{grid-template-columns:1fr;}.retention-summary{grid-template-columns:1fr;}.retention-summary-card,.retention-summary-card:first-child{border-left:none;border-bottom:1px solid var(--border);padding-left:0;}.retention-summary-card:last-child{border-bottom:none;}}
 .engagement-round-row{display:grid;grid-template-columns:1fr 140px 200px;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);}
 .engagement-round-row:last-child{border-bottom:none;}
 .engagement-round-label{font-size:13px;font-weight:700;color:var(--text);}
@@ -522,7 +532,8 @@ tbody tr:hover td{background:var(--row-hover);}
 
       <div style="display:flex;gap:2px;background:var(--sidebar-2);border-radius:10px;padding:3px;margin-bottom:20px;width:fit-content;">
         <button class="users-subtab-btn" id="users-subtab-btn-registrations" onclick="switchUsersSubTab('registrations')">Registrations</button>
-        <button class="users-subtab-btn" id="users-subtab-btn-engagement" onclick="switchUsersSubTab('engagement')">Engagement</button>
+        <button class="users-subtab-btn" id="users-subtab-btn-engagement" onclick="switchUsersSubTab('engagement')">Basic</button>
+        <button class="users-subtab-btn" id="users-subtab-btn-advanced" onclick="switchUsersSubTab('advanced')">Advanced</button>
       </div>
 
       <div id="users-subtab-registrations">
@@ -560,6 +571,14 @@ tbody tr:hover td{background:var(--row-hover);}
           <select class="form-select" id="engagement-comp-select" onchange="loadEngagementAnalytics(this.value)"></select>
         </div>
         <div id="engagement-content"></div>
+      </div>
+
+      <div id="users-subtab-advanced" style="display:none;">
+        <div class="form-group" style="max-width:320px;margin-bottom:20px;">
+          <label class="form-label">Competition</label>
+          <select class="form-select" id="retention-comp-select" onchange="loadRetentionAnalytics(this.value)"></select>
+        </div>
+        <div id="retention-content"></div>
       </div>
     </div>
 
@@ -1689,6 +1708,7 @@ function nav(view, subLabel){
     setTimeout(clearSearch, 600);
     loadUsers();
     engagementLoaded = false; // re-computed fresh next time Engagement is opened, in case competitions/predictions changed since
+    retentionLoaded = false;
     switchUsersSubTab('registrations'); // Registrations is the default landing tab every time this page opens
   }
   if(view==='settings') renderSettings();
@@ -3618,8 +3638,11 @@ function escapeHtml(s){
 
 // Exports the current filter, not just the visible page.
 let engagementLoaded = false;
+let retentionLoaded = false;
+let retentionSelections = {};
+let retentionLoadToken = 0;
 function switchUsersSubTab(tab){
-  ['registrations','engagement'].forEach(t=>{
+  ['registrations','engagement','advanced'].forEach(t=>{
     const btn = document.getElementById('users-subtab-btn-'+t);
     const panel = document.getElementById('users-subtab-'+t);
     if(btn) btn.classList.toggle('active', t===tab);
@@ -3630,6 +3653,10 @@ function switchUsersSubTab(tab){
   if(tab==='engagement' && !engagementLoaded){
     engagementLoaded = true;
     populateEngagementCompSelect();
+  }
+  if(tab==='advanced' && !retentionLoaded){
+    retentionLoaded = true;
+    populateRetentionCompSelect();
   }
 }
 
@@ -3743,6 +3770,137 @@ async function loadEngagementAnalytics(compId){
           </div>
         </div>`).join('')}
     </div>`;
+}
+
+function populateRetentionCompSelect(){
+  const sel = document.getElementById('retention-comp-select');
+  if(!sel) return;
+  const comps = state.competitions||[];
+  if(!comps.length){
+    sel.innerHTML = '';
+    document.getElementById('retention-content').innerHTML = '<div class="empty" style="padding:40px;"><div class="empty-icon">📊</div><div class="empty-title">No competitions yet</div></div>';
+    return;
+  }
+  sel.innerHTML = comps.map(c=>`<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join('');
+  loadRetentionAnalytics(comps[0].id);
+}
+
+function retentionRoundIds(compId){
+  const comp = (state.competitions||[]).find(c=>c.id===compId);
+  return (comp?.rounds||[]).map(r=>r.id);
+}
+
+function renderRetentionRoundPicker(compId, rounds){
+  const selection = retentionSelections[compId] || { source:[], retained:[] };
+  const renderList = (setName, title, hint) => `
+    <div class="card">
+      <div class="card-header"><span class="card-title">${title}</span></div>
+      <div class="card-body">
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:10px;">${hint}</div>
+        <div class="retention-round-list">
+          ${rounds.map(r=>`<label class="retention-round-option">
+            <input type="checkbox" value="${escapeHtml(r.id)}" ${selection[setName].includes(r.id)?'checked':''}
+              onchange="updateRetentionSelection('${escapeHtml(compId)}','${setName}',this.value,this.checked)">
+            <span>${escapeHtml(r.label||'Unnamed round')}</span>
+          </label>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  return `<div class="retention-round-picker">
+    ${renderList('source','Starting set','Users must have participated in every selected round.')}
+    ${renderList('retained','Follow-up set','Measure how many of those users also participated in every selected round here.')}
+  </div>`;
+}
+
+function updateRetentionSelection(compId, setName, roundId, checked){
+  const selection = retentionSelections[compId] || { source:[], retained:[] };
+  const ids = new Set(selection[setName]);
+  if(checked) ids.add(roundId); else ids.delete(roundId);
+  selection[setName] = [...ids];
+  retentionSelections[compId] = selection;
+  renderRetentionAnalytics(compId);
+}
+
+function renderRetentionAnalytics(compId){
+  const content = document.getElementById('retention-content');
+  const comp = (state.competitions||[]).find(c=>c.id===compId);
+  if(!content || !comp) return;
+  const rounds = comp.rounds||[];
+  const selection = retentionSelections[compId] || { source:[], retained:[] };
+  const source = selection.source;
+  const retained = selection.retained;
+  if(!source.length || !retained.length){
+    content.innerHTML = renderRetentionRoundPicker(compId, rounds) +
+      '<div class="card"><div class="card-body" style="color:var(--text-3);font-size:12px;">Select at least one round in both sets to calculate retention.</div></div>';
+    return;
+  }
+  const data = retentionSelections[compId].data;
+  if(!data){
+    content.innerHTML = renderRetentionRoundPicker(compId, rounds) +
+      '<div class="card"><div class="card-body" style="color:var(--text-3);font-size:12px;">Loading participation data…</div></div>';
+    return;
+  }
+  const sourceUsers = new Set();
+  const retainedUsers = new Set();
+  const roundsByUser = {};
+  data.forEach(p=>{
+    const user = p.player_id || p.username;
+    if(!user) return;
+    if(!roundsByUser[user]) roundsByUser[user] = new Set();
+    roundsByUser[user].add(p.round_id);
+  });
+  Object.entries(roundsByUser).forEach(([user, userRounds])=>{
+    if(source.every(roundId=>userRounds.has(roundId))) sourceUsers.add(user);
+    if(retained.every(roundId=>userRounds.has(roundId))) retainedUsers.add(user);
+  });
+  const retainedFromSource = [...sourceUsers].filter(user=>retainedUsers.has(user)).length;
+  const pct = sourceUsers.size ? Math.round(retainedFromSource / sourceUsers.size * 100) : 0;
+  content.innerHTML = renderRetentionRoundPicker(compId, rounds) + `
+    <div class="retention-summary">
+      <div class="retention-summary-card">
+        <div class="stat-card-label">Starting users</div>
+        <div class="stat-card-value">${sourceUsers.size}</div>
+        <div class="stat-card-sub">Participated in the starting set</div>
+      </div>
+      <div class="retention-summary-card retention-summary-card-accent">
+        <div class="stat-card-label">Retained users</div>
+        <div class="stat-card-value">${retainedFromSource}</div>
+        <div class="stat-card-sub">Starting users also in the follow-up set</div>
+      </div>
+      <div class="retention-summary-card">
+        <div class="stat-card-label">Retention rate</div>
+        <div class="stat-card-value" style="color:var(--accent);">${pct}%</div>
+        <div class="stat-card-sub">${retainedFromSource} of ${sourceUsers.size} starting users</div>
+      </div>
+    </div>`;
+}
+
+async function loadRetentionAnalytics(compId){
+  const content = document.getElementById('retention-content');
+  const comp = (state.competitions||[]).find(c=>c.id===compId);
+  if(!content || !comp) return;
+  const token = ++retentionLoadToken;
+  const selection = retentionSelections[compId] || { source:[], retained:[] };
+  retentionSelections[compId] = selection;
+  renderRetentionAnalytics(compId);
+  const roundIds = retentionRoundIds(compId);
+  if(!roundIds.length) {
+    content.innerHTML = '<div class="empty" style="padding:40px;"><div class="empty-icon">📊</div><div class="empty-title">No rounds created yet</div></div>';
+    return;
+  }
+  const {data, error} = await supa.from('gw_predictions')
+    .select('username,player_id,round_id')
+    .eq('client_key',CLIENT_KEY)
+    .eq('competition_id',compId)
+    .in('round_id',roundIds);
+  if(token!==retentionLoadToken) return;
+  if(error){
+    content.innerHTML = '<div class="empty" style="padding:40px;"><div class="empty-title">Could not load retention analytics</div></div>';
+    console.error('loadRetentionAnalytics:', error);
+    return;
+  }
+  selection.data = data||[];
+  renderRetentionAnalytics(compId);
 }
 
 function exportUsersCSV(){
