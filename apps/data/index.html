@@ -176,6 +176,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .pkg-table .pkg-setting-label{font-size:12px;font-weight:600;color:var(--text);}
 .pkg-table .pkg-setting-hint{font-size:11px;color:var(--text-3);margin-top:2px;}
 .pkg-table td .form-input{width:100%;padding:6px 8px;font-size:12px;font-family:var(--mono);text-align:right;}
+.pkg-table td .form-select{width:100%;padding:6px 8px;font-size:12px;font-family:var(--mono);}
 .view{display:none;}.view.active{display:block;}
 ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 #toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:white;font-family:var(--mono);font-size:11px;padding:9px 16px;border-radius:6px;z-index:999;transform:translateY(60px);transition:transform 0.2s;pointer-events:none;}
@@ -2295,16 +2296,18 @@ async function saveCoverage(){
 }
 
 // ── PACKAGE SETTINGS ──────────────────────────────────────────────────────
-// The platform's pricing packages are the COLUMNS; every configurable
-// number is a ROW, stored one-row-per-setting in gw_package_settings
-// (values jsonb = { <package slug>: <number> }). To add another setting
-// later, push an entry to PACKAGE_SETTING_DEFS — the grid, the save path
-// and the upsert all key off this list, so nothing else needs touching.
+// The platform's pricing packages are the COLUMNS; every configurable value
+// is a ROW, stored one-row-per-setting in gw_package_settings (values jsonb
+// = { <package slug>: <value> }). To add another setting later, push an
+// entry to PACKAGE_SETTING_DEFS — the grid, the save path and the upsert all
+// key off this list. `type:'number'` (default) renders a number input;
+// `type:'select'` renders a dropdown of `options` (blank = not set).
 const PACKAGES = [
   ['free','Free'], ['start','Start'], ['growth','Growth'], ['scale','Scale'], ['enterprise','Enterprise'],
 ];
 const PACKAGE_SETTING_DEFS = [
-  {key:'monthly_active_users', label:'Monthly Active Users', hint:'MAU included in each package'},
+  {key:'monthly_active_users', label:'Monthly Active Users', hint:'MAU included in each package', type:'number'},
+  {key:'user_analytics', label:'User Analytics', hint:'Analytics depth available to the client', type:'select', options:['Basic','Advanced']},
 ];
 
 async function renderPackageSettings(){
@@ -2325,6 +2328,11 @@ async function renderPackageSettings(){
     const vals = S.packageSettings[def.key] || {};
     const cells = PACKAGES.map(([slug])=>{
       const v = vals[slug] ?? '';
+      if(def.type === 'select'){
+        const opts = ['', ...(def.options||[])].map(o=>
+          `<option value="${o}"${String(v)===o?' selected':''}>${o===''?'—':o}</option>`).join('');
+        return `<td><select class="form-select" data-setting="${def.key}" data-package="${slug}">${opts}</select></td>`;
+      }
       return `<td><input class="form-input" type="number" min="0" step="1" value="${v}"
         data-setting="${def.key}" data-package="${slug}" placeholder="—"></td>`;
     }).join('');
@@ -2341,12 +2349,16 @@ async function savePackageSettings(){
   if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
   // Read the grid back into one values-object per setting_key. A blank cell
   // means "not set for this package" and is simply left out of the jsonb.
+  // Number settings store a Number; select settings store the chosen string.
+  const defByKey = Object.fromEntries(PACKAGE_SETTING_DEFS.map(d=>[d.key, d]));
   const bySetting = {};
-  document.querySelectorAll('#packages-table-wrap input[data-setting]').forEach(inp=>{
-    const key = inp.dataset.setting, pkg = inp.dataset.package;
-    const raw = inp.value.trim();
+  document.querySelectorAll('#packages-table-wrap [data-setting]').forEach(el=>{
+    const key = el.dataset.setting, pkg = el.dataset.package;
+    const raw = (el.value || '').trim();
     (bySetting[key] = bySetting[key] || {});
-    if(raw !== '' && Number.isFinite(Number(raw))) bySetting[key][pkg] = Number(raw);
+    if(raw === '') return;
+    if((defByKey[key] || {}).type === 'select') bySetting[key][pkg] = raw;
+    else if(Number.isFinite(Number(raw))) bySetting[key][pkg] = Number(raw);
   });
   try{
     const rows = PACKAGE_SETTING_DEFS.map(def=>({
