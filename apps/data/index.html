@@ -168,6 +168,14 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .swatches{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;}
 .swatch{width:22px;height:22px;border-radius:4px;cursor:pointer;border:2px solid transparent;transition:all 0.13s;}
 .swatch:hover{border-color:var(--text);}
+.pkg-table{border-collapse:collapse;width:100%;min-width:640px;}
+.pkg-table th,.pkg-table td{border:1px solid var(--border);padding:10px 12px;text-align:left;vertical-align:middle;}
+.pkg-table thead th{background:var(--bg);font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);text-align:center;}
+.pkg-table thead th:first-child{text-align:left;width:240px;}
+.pkg-table tbody td:first-child{background:var(--bg);}
+.pkg-table .pkg-setting-label{font-size:12px;font-weight:600;color:var(--text);}
+.pkg-table .pkg-setting-hint{font-size:11px;color:var(--text-3);margin-top:2px;}
+.pkg-table td .form-input{width:100%;padding:6px 8px;font-size:12px;font-family:var(--mono);text-align:right;}
 .view{display:none;}.view.active{display:block;}
 ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 #toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:white;font-family:var(--mono);font-size:11px;padding:9px 16px;border-radius:6px;z-index:999;transform:translateY(60px);transition:transform 0.2s;pointer-events:none;}
@@ -243,6 +251,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
           </button>
           <button class="nav-item" id="nav-ingest" onclick="navTo('ingest')">
             <span class="ni-icon">📡</span> Ingest
+          </button>
+          <button class="nav-item" id="nav-packages" onclick="navTo('packages')">
+            <span class="ni-icon">📦</span> Package Settings
           </button>
         </div>
         <div class="sidebar-section">
@@ -367,6 +378,17 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
             <div class="card-body">
               <div id="ingest-summary" style="font-size:12px;color:var(--text-3);padding:2px 8px 10px;"></div>
               <div id="ingest-list" style="display:flex;flex-direction:column;gap:2px;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="view" id="view-packages">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Package Settings</span>
+              <span style="font-size:11px;color:var(--text-3);">Packages are columns · each setting is a row — add more settings over time</span>
+            </div>
+            <div class="card-body">
+              <div id="packages-table-wrap" style="overflow-x:auto;"></div>
             </div>
           </div>
         </div>
@@ -854,6 +876,7 @@ const S={
   teams:[], tournaments:[], events:{},
   clients:[], // [{client_key, label}] — loaded once for the coverage picker
   coverageClientKey:null, coverageTournamentIds:new Set(), coverageTeamIds:new Set(),
+  packageSettings:{}, // setting_key -> { <package slug>: <value> } (gw_package_settings)
 };
 
 // ── SAVE TO SUPABASE ─────────────────────────────────────────────────────
@@ -2028,6 +2051,12 @@ function navTo(page,tournamentId){
       '<button class="btn btn-primary btn-sm" id="ingest-run-btn" onclick="runIngestNow()">Run all now</button></div>';
     renderProviders();
     renderIngestLog();
+  } else if(page==='packages'){
+    document.getElementById('nav-packages').classList.add('active');
+    document.getElementById('view-packages').classList.add('active');
+    document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">Package Settings</div></div>'+
+      '<div id="main-header-actions"><button class="btn btn-primary btn-sm" id="packages-save-btn" onclick="savePackageSettings()">Save changes</button></div>';
+    renderPackageSettings();
   }
 }
 
@@ -2263,6 +2292,78 @@ async function saveCoverage(){
     toast('⚠ Could not save coverage: '+e.message);
   }
   btn.disabled = false; btn.textContent = 'Save coverage';
+}
+
+// ── PACKAGE SETTINGS ──────────────────────────────────────────────────────
+// The platform's pricing packages are the COLUMNS; every configurable
+// number is a ROW, stored one-row-per-setting in gw_package_settings
+// (values jsonb = { <package slug>: <number> }). To add another setting
+// later, push an entry to PACKAGE_SETTING_DEFS — the grid, the save path
+// and the upsert all key off this list, so nothing else needs touching.
+const PACKAGES = [
+  ['free','Free'], ['start','Start'], ['growth','Growth'], ['scale','Scale'], ['enterprise','Enterprise'],
+];
+const PACKAGE_SETTING_DEFS = [
+  {key:'monthly_active_users', label:'Monthly Active Users', hint:'MAU included in each package'},
+];
+
+async function renderPackageSettings(){
+  const wrap = document.getElementById('packages-table-wrap');
+  wrap.innerHTML = '<div style="padding:14px;font-size:12px;color:var(--text-3);">Loading…</div>';
+  try{
+    const {data,error} = await supa.from('gw_package_settings').select('*');
+    if(error) throw error;
+    S.packageSettings = {};
+    (data||[]).forEach(r=>{ S.packageSettings[r.setting_key] = r.values || {}; });
+  }catch(e){
+    console.error('renderPackageSettings:',e);
+    wrap.innerHTML = `<div style="padding:14px;font-size:12px;color:var(--red);">⚠ Could not load package settings: ${e.message}</div>`;
+    return;
+  }
+  const head = '<tr><th>Setting</th>' + PACKAGES.map(([,label])=>`<th>${label}</th>`).join('') + '</tr>';
+  const body = PACKAGE_SETTING_DEFS.map(def=>{
+    const vals = S.packageSettings[def.key] || {};
+    const cells = PACKAGES.map(([slug])=>{
+      const v = vals[slug] ?? '';
+      return `<td><input class="form-input" type="number" min="0" step="1" value="${v}"
+        data-setting="${def.key}" data-package="${slug}" placeholder="—"></td>`;
+    }).join('');
+    return `<tr>
+      <td><div class="pkg-setting-label">${def.label}</div>${def.hint?`<div class="pkg-setting-hint">${def.hint}</div>`:''}</td>
+      ${cells}
+    </tr>`;
+  }).join('');
+  wrap.innerHTML = `<table class="pkg-table"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+}
+
+async function savePackageSettings(){
+  const btn = document.getElementById('packages-save-btn');
+  if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
+  // Read the grid back into one values-object per setting_key. A blank cell
+  // means "not set for this package" and is simply left out of the jsonb.
+  const bySetting = {};
+  document.querySelectorAll('#packages-table-wrap input[data-setting]').forEach(inp=>{
+    const key = inp.dataset.setting, pkg = inp.dataset.package;
+    const raw = inp.value.trim();
+    (bySetting[key] = bySetting[key] || {});
+    if(raw !== '' && Number.isFinite(Number(raw))) bySetting[key][pkg] = Number(raw);
+  });
+  try{
+    const rows = PACKAGE_SETTING_DEFS.map(def=>({
+      setting_key: def.key,
+      label: def.label,
+      values: bySetting[def.key] || {},
+      updated_at: new Date().toISOString(),
+    }));
+    const {error} = await supa.from('gw_package_settings').upsert(rows,{onConflict:'setting_key'});
+    if(error) throw error;
+    rows.forEach(r=>{ S.packageSettings[r.setting_key] = r.values; });
+    toast('Package settings saved');
+  }catch(e){
+    console.error('savePackageSettings:',e);
+    toast('⚠ Could not save package settings: '+e.message);
+  }
+  if(btn){ btn.disabled = false; btn.textContent = 'Save changes'; }
 }
 
 // ── CLIENTS ───────────────────────────────────────────────────────────────
