@@ -2308,6 +2308,7 @@ const PACKAGES = [
 const PACKAGE_SETTING_DEFS = [
   {key:'monthly_active_users', label:'Monthly Active Users', hint:'MAU included in each package', type:'number'},
   {key:'user_analytics', label:'User Analytics', hint:'Analytics depth available to the client', type:'select', options:['Basic','Advanced']},
+  {key:'sso', label:'SSO', hint:'Host-page single sign-on available to the client', type:'select', options:['Yes','No']},
 ];
 
 async function renderPackageSettings(){
