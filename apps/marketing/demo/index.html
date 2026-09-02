@@ -43,7 +43,14 @@
   .demo-note a{color:var(--accent);font-weight:700;text-decoration:none;}
 
   /* Soccer Roulette — static showcase view (no backend, nothing saved).
-     Header mirrors the embed's control band so it reads like the other modes. */
+     Header + control band mirror the embed so it reads like the other modes. */
+  .rl-app-header{background:var(--white);border-bottom:1px solid var(--border);}
+  .rl-header-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;}
+  .rl-header-logo{font-family:var(--sans);font-size:19px;font-weight:800;letter-spacing:-0.02em;color:var(--text);}
+  .rl-header-logo span{color:var(--accent);}
+  .rl-header-user{display:flex;align-items:center;gap:8px;cursor:pointer;}
+  .rl-header-avatar{width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:700;color:#fff;}
+  .rl-header-username{font-size:12px;font-weight:500;color:var(--text-2);}
   .rl-control-band{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(20,20,40,0.03);margin:16px 16px 8px;}
   .rl-cb-title-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
   .rl-cb-title{margin:0 0 10px;font-size:22px;font-weight:800;letter-spacing:-0.3px;color:var(--text);padding-left:4px;}
@@ -188,7 +195,15 @@
     var eventIds=round.eventIds||[];
     if(rlExpandedEventId===null && eventIds.length) rlExpandedEventId=eventIds[0];
 
-    var html='<div style="padding:0 0 30px;">'+
+    var html=''+
+      '<div class="rl-app-header"><div class="rl-header-top">'+
+        '<div class="rl-header-logo">game<span>week</span></div>'+
+        '<div class="rl-header-user" onclick="rlDemoNote()">'+
+          '<div class="rl-header-avatar">DE</div>'+
+          '<div class="rl-header-username">demo_user</div>'+
+        '</div>'+
+      '</div></div>'+
+      '<div style="padding:0 0 30px;">'+
       '<div class="rl-control-band">'+
         '<div class="rl-cb-title-row">'+
           '<h1 class="rl-cb-title">Spin the score matrix</h1>'+
@@ -456,6 +471,7 @@
     setTimeout(function(){ initRouletteBoard(); },50);
   }
   function rlPlaceBets(){ toast('✓ Static preview — nothing is saved'); }
+  function rlDemoNote(){ toast('Demo — you\'re browsing as demo_user'); }
 
   var toastT;
   function toast(msg){
@@ -489,6 +505,7 @@
   window.rlAddChip = rlAddChip;
   window.rlRemoveChip = rlRemoveChip;
   window.rlPlaceBets = rlPlaceBets;
+  window.rlDemoNote = rlDemoNote;
   window.showRules = showRules;
 
   mount();
