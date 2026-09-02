@@ -9,8 +9,11 @@
 <style>
   :root{
     --sans:'Inter',system-ui,-apple-system,sans-serif;
-    --bg:#F7F7FB; --white:#FFFFFF; --border:#E7E7EF;
-    --text:#1a1a2e; --text-3:#9AA2B1; --accent:#4F46E5;
+    --mono:'DM Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --bg:#F7F7FB; --white:#FFFFFF; --border:#E7E7EF; --surface:#F1F2F6;
+    --text:#1a1a2e; --text-2:#5B6472; --text-3:#9AA2B1;
+    --accent:#4F46E5; --accent-light:#EEF2FF;
+    --red:#DC2626; --green:#16A34A;
   }
   html,body{margin:0;padding:0;background:var(--bg);font-family:var(--sans);}
   /* 860px matches the embed's own .app max-width, and clears its 600px
@@ -38,6 +41,17 @@
   .widget-title{font-size:11px;font-weight:800;letter-spacing:0.6px;text-transform:uppercase;color:var(--text-3);padding:18px 16px 6px;}
   .demo-note{font-size:11.5px;color:var(--text-3);text-align:center;padding:14px 16px 26px;}
   .demo-note a{color:var(--accent);font-weight:700;text-decoration:none;}
+
+  /* Soccer Roulette — static showcase view (no backend, nothing saved) */
+  .rl-round-bar{display:flex;align-items:center;gap:8px;padding:12px 16px;background:var(--white);border-bottom:1px solid var(--border);}
+  .rl-round-select{height:32px;font-family:var(--mono);font-size:11px;border:1px solid var(--border);background:var(--white);padding:0 22px 0 8px;border-radius:5px;cursor:pointer;outline:none;color:var(--text);appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%239CA3AF' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;background-size:10px 6px;}
+  .rl-round-select:focus{border-color:var(--accent);}
+  .rl-round-bar-spacer{flex:1;}
+  .rl-rules-btn{height:28px;padding:0 14px;display:inline-flex;align-items:center;font-size:12.5px;font-weight:600;color:var(--text-3);background:var(--white);border:1px solid var(--border);border-radius:999px;cursor:pointer;flex-shrink:0;}
+  .rl-rules-btn:hover{color:var(--text);}
+  .rl-deadline-banner{display:flex;align-items:center;gap:8px;background:#EEF0FF;border:1px solid #DDE1FF;border-radius:10px;padding:11px 16px;margin:16px 16px 8px;font-size:13px;font-weight:600;color:#4048B0;}
+  #toast{position:fixed;bottom:70px;left:50%;opacity:0;transform:translateX(-50%) translateY(60px);background:var(--text);color:#fff;font-family:var(--mono);font-size:11px;padding:9px 18px;border-radius:6px;z-index:999;transition:transform .25s ease,opacity .25s ease;pointer-events:none;white-space:nowrap;}
+  #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
 </style>
 </head>
 <body>
@@ -47,6 +61,7 @@
   <div class="demo-note">This is a live demo with sample data — nothing is saved.
     <a href="https://www.gameweek.cloud">Get Gameweek for your site →</a></div>
 </div>
+<div id="toast"></div>
 
 <script>
 // The demo page is a thin shell (Phase 2.5): the game below is the REAL
@@ -56,10 +71,13 @@
 (function(){
   'use strict';
   var FEATURES = [
-    {key:'score',   label:'Score Predictor', sports:['football','volleyball','tennis']},
-    {key:'betting', label:'Betting Markets', sports:['football']},
-    {key:'ranking', label:'Ranking',         sports:['football']},
-    {key:'lineup',  label:'Lineup Predictor',sports:['football']},
+    {key:'score',    label:'Score Predictor',  sports:['football','volleyball','tennis']},
+    {key:'betting',  label:'Betting Markets',  sports:['football']},
+    {key:'ranking',  label:'Ranking',          sports:['football']},
+    {key:'lineup',   label:'Lineup Predictor', sports:['football']},
+    // Static showcase only — rendered locally by renderRoulette(), never
+    // mounts the embed and never touches any backend.
+    {key:'roulette', label:'Soccer Roulette',  sports:['football']},
   ];
   var SPORT_LABELS = {football:'Football', volleyball:'Volleyball', tennis:'Tennis'};
   // sport → comp alias for the score feature (other features are football-only)
@@ -98,6 +116,11 @@
         '<iframe class="widget-frame" src="/widgets/top-scorers/" title="Top scorers widget" scrolling="no"></iframe>';
       return;
     }
+    if(state.feature==='roulette'){
+      stage.innerHTML = renderRoulette();
+      requestAnimationFrame(function(){ initRouletteBoard(); });
+      return;
+    }
     var comp = state.feature==='score' ? SCORE_COMP[state.sport] : state.feature;
     stage.innerHTML = '';
     var holder = document.createElement('div');
@@ -111,6 +134,322 @@
   window.gwSetType = function(v){ state.type=v; mount(); };
   window.gwSetSport = function(v){ state.sport=v; mount(); };
   window.gwSetFeature = function(v){ state.feature=v; mount(); };
+
+  // ── Soccer Roulette — static showcase ──────────────────────────────────────
+  // Entirely self-contained: fixed sample fixtures, client-side chip placement,
+  // no persistence, no leaderboard, no connection to the embed or any backend.
+  // "Save" just flashes a toast. Ported from the retired demo fork's board.
+  var RL_LOGO = {
+    'Arsenal':'https://upload.wikimedia.org/wikipedia/en/5/53/Arsenal_FC.svg',
+    'Chelsea':'https://upload.wikimedia.org/wikipedia/en/c/cc/Chelsea_FC.svg',
+    'Liverpool':'https://upload.wikimedia.org/wikipedia/en/0/0c/Liverpool_FC.svg',
+    'Man City':'https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg',
+    'Man Utd':'https://upload.wikimedia.org/wikipedia/en/7/7a/Manchester_United_FC_crest.svg',
+    'Spurs':'https://upload.wikimedia.org/wikipedia/en/b/b4/Tottenham_Hotspur.svg',
+    'Wolves':'https://upload.wikimedia.org/wikipedia/en/f/fc/Wolverhampton_Wanderers.svg',
+    'Aston Villa':'https://upload.wikimedia.org/wikipedia/en/f/f9/Aston_Villa_FC_crest_%282016%29.svg',
+    'Newcastle':'https://upload.wikimedia.org/wikipedia/en/5/56/Newcastle_United_Logo.svg'
+  };
+  var RL_ROUNDS = [{ label:'Gameweek 3', eventIds:['e1','e2','e3','e4','e5','e6'] }];
+  var RL_EVENTS = {
+    e1:{home:'Arsenal',away:'Wolves',kickoff:'Sat 30 Aug · 15:00'},
+    e2:{home:'Man City',away:'Chelsea',kickoff:'Sat 30 Aug · 17:30'},
+    e3:{home:'Liverpool',away:'Man Utd',kickoff:'Sun 31 Aug · 14:00'},
+    e4:{home:'Chelsea',away:'Spurs',kickoff:'Sun 31 Aug · 16:30'},
+    e5:{home:'Wolves',away:'Man City',kickoff:'Mon 01 Sep · 15:00'},
+    e6:{home:'Aston Villa',away:'Newcastle',kickoff:'Mon 01 Sep · 17:30'}
+  };
+  Object.keys(RL_EVENTS).forEach(function(k){
+    var e=RL_EVENTS[k]; e.homeLogo=RL_LOGO[e.home]||''; e.awayLogo=RL_LOGO[e.away]||'';
+  });
+
+  var rlRemaining=100, rlStakes={}, rlMeta={}, rlExpandedEventId=null, RL_STATE={}, rlRoundIdx=0;
+  var RL_BUDGET=100, RL_STEP=10, RL_CELL=92, RL_GAP=8;
+  var RL_HOME=['0','1','2','3+'], RL_AWAY=['0','1','2','3+'];
+  function rlNumVal(v){return v==='3+'?3:parseInt(v,10);}
+  function rlCellType(h,a){var hv=rlNumVal(h),av=rlNumVal(a);if(hv===av)return'draw';return hv>av?'home':'away';}
+  function rlCellId(r,c){return 'rlscore_'+RL_HOME[r]+'_'+RL_AWAY[c];}
+  function rlScoreLabel(r,c){return RL_HOME[r]+'-'+RL_AWAY[c];}
+
+  function renderRoulette(){
+    var round=RL_ROUNDS[rlRoundIdx]||RL_ROUNDS[0];
+    var roundSelect=RL_ROUNDS.map(function(r,i){return '<option value="'+i+'"'+(i===rlRoundIdx?' selected':'')+'>'+r.label+'</option>';}).join('');
+    var eventIds=round.eventIds||[];
+    if(rlExpandedEventId===null && eventIds.length) rlExpandedEventId=eventIds[0];
+
+    var html='<div style="padding:0 0 30px;">'+
+      '<div class="rl-round-bar">'+
+        '<select class="rl-round-select" onchange="rlChangeGameweek(this.value)">'+roundSelect+'</select>'+
+        '<div class="rl-round-bar-spacer"></div>'+
+        '<button class="rl-rules-btn" onclick="showRules(\'roulette\')">Rules</button>'+
+      '</div>'+
+      '<div class="rl-deadline-banner">⏱ Bets lock in <strong style="margin-left:2px;">2 days</strong> &nbsp;·&nbsp; static preview — nothing is saved</div>'+
+      '<div style="padding:16px 16px 0;display:flex;flex-direction:column;gap:10px;">';
+
+    eventIds.forEach(function(eid){
+      var ev=RL_EVENTS[eid]; if(!ev) return;
+      var isExpanded = rlExpandedEventId===eid;
+      html+='<div style="background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;">'+
+        '<div onclick="rlToggleEvent(\''+eid+'\')" style="padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;">'+
+          '<div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">'+
+            '<div style="width:28px;height:28px;border-radius:50%;background:var(--white);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"><img src="'+ev.homeLogo+'" alt="" style="width:100%;height:100%;object-fit:contain;padding:3px;"></div>'+
+            '<span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+ev.home+'</span>'+
+            '<span style="font-size:10px;color:var(--text-3);">vs</span>'+
+            '<span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+ev.away+'</span>'+
+            '<div style="width:28px;height:28px;border-radius:50%;background:var(--white);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"><img src="'+ev.awayLogo+'" alt="" style="width:100%;height:100%;object-fit:contain;padding:3px;"></div>'+
+          '</div>'+
+          '<span style="font-size:10px;color:var(--text-3);white-space:nowrap;">'+ev.kickoff+'</span>'+
+          '<span style="font-size:14px;color:var(--text-3);display:inline-block;transform:rotate('+(isExpanded?'180':'0')+'deg);transition:transform .15s;">⌄</span>'+
+        '</div>'+
+        (isExpanded?rlBoardHTML(eid):'')+
+      '</div>';
+    });
+
+    html+='</div></div>';
+    return html;
+  }
+
+  function rlBoardHTML(eventId){
+    return '<div style="border-top:1px solid var(--border);padding:14px;">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:14px;">'+
+        '<div style="display:flex;align-items:center;gap:10px;">'+
+          '<div style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:var(--accent-light);"><span style="font-size:15px;">🪙</span></div>'+
+          '<div>'+
+            '<div style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.4px;">Coins remaining</div>'+
+            '<div style="display:flex;align-items:baseline;gap:4px;"><span id="rl-coin-value" style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--text);line-height:1.1;">100</span><span style="font-size:11px;color:var(--text-3);font-weight:500;">/ 100</span></div>'+
+          '</div>'+
+        '</div>'+
+        '<button onclick="rlClearAll()" style="font-size:12px;font-weight:600;color:var(--text-2);background:var(--surface);border:1px solid var(--border);border-radius:8px;cursor:pointer;padding:7px 14px;">Clear all</button>'+
+      '</div>'+
+      '<div style="max-width:640px;margin:0 auto;">'+
+        '<div style="display:flex;gap:8px;margin-bottom:16px;">'+
+          rlMarketPair('Both Teams to Score (Pays x2)','rlbtts_Y','Yes','rlbtts_N','No')+
+          rlMarketPair('Over/Under 2.5 Goals (Pays x2)','rlou_O','Over','rlou_U','Under')+
+        '</div>'+
+        '<div style="font-size:11px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 10px 2px;text-align:center;">Correct score (Pays x16 for correct answer)</div>'+
+        '<div id="rl-scale-outer" style="width:100%;overflow:hidden;display:flex;justify-content:center;">'+
+        '<div id="rl-scale-inner" style="width:-moz-fit-content;width:fit-content;flex-shrink:0;transform-origin:top center;">'+
+        '<div style="width:-moz-fit-content;width:fit-content;margin:0 auto;padding:14px;background:var(--white);border-radius:14px;border:1px solid var(--border);">'+
+          '<div style="position:relative;width:'+(RL_CELL*4+RL_GAP*3)+'px;height:'+(RL_CELL*4+RL_GAP*3)+'px;">'+
+            '<div id="rl-grid" style="position:absolute;top:0;left:0;display:grid;grid-template-columns:repeat(4,'+RL_CELL+'px);grid-template-rows:repeat(4,'+RL_CELL+'px);gap:'+RL_GAP+'px;"></div>'+
+          '</div>'+
+        '</div></div></div>'+
+        '<div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;justify-content:center;">'+
+          '<div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:var(--accent-light);border:1px solid var(--accent);"></span>Home win</div>'+
+          '<div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:var(--surface);border:1px solid var(--text-3);"></span>Draw</div>'+
+          '<div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-2);"><span style="width:9px;height:9px;border-radius:3px;background:#FFEDD5;border:1px solid #EA580C;"></span>Away win</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;max-width:640px;margin:20px auto 0;padding-top:16px;border-top:1px solid var(--border);">'+
+        '<div style="font-size:12px;color:var(--text-2);"><strong id="rl-staked-count" style="color:var(--text);font-family:var(--mono);">0</strong> of 100 staked</div>'+
+        '<button id="rl-place-btn" disabled onclick="rlPlaceBets()" style="font-family:var(--mono);font-size:12px;font-weight:700;color:white;background:var(--accent);border:none;border-radius:8px;padding:12px 24px;cursor:pointer;">Save</button>'+
+      '</div>'+
+      '<div id="rl-betslip" style="margin-top:16px;max-width:640px;margin-left:auto;margin-right:auto;"></div>'+
+    '</div>';
+  }
+
+  function rlMarketPair(title,idA,labelA,idB,labelB){
+    function cell(id,label){
+      return '<div id="'+id+'" onclick="rlAddChip(\''+id+'\')" onmouseenter="rlPreviewHighlight(\''+id+'\')" onmouseleave="rlHighlightGrid()" style="flex:1;position:relative;text-align:center;padding:9px 4px;border-radius:8px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);">'+
+        '<span id="rlminus_'+id+'" onclick="event.stopPropagation();rlRemoveChip(\''+id+'\')" style="position:absolute;top:-7px;right:-7px;width:17px;height:17px;border-radius:50%;background:var(--red);color:white;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;z-index:6;">−</span>'+
+        label+
+        '<div id="rlchip_'+id+'" style="display:none;margin-top:3px;font-family:var(--mono);font-size:11px;font-weight:700;color:white;background:var(--accent);border-radius:6px;padding:1px 6px;"></div>'+
+      '</div>';
+    }
+    return '<div style="flex:1;display:flex;flex-direction:column;gap:5px;">'+
+      '<div style="font-size:11px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;text-align:center;">'+title+'</div>'+
+      '<div style="display:flex;gap:6px;">'+cell(idA,labelA)+cell(idB,labelB)+'</div>'+
+    '</div>';
+  }
+
+  function initRouletteBoard(){
+    rlMeta={};
+    var gridEl=document.getElementById('rl-grid');
+    if(!gridEl)return;
+    gridEl.innerHTML='';
+    for(var r=0;r<4;r++){
+      for(var c=0;c<4;c++){
+        (function(r,c){
+          var id=rlCellId(r,c);
+          var type=rlCellType(RL_HOME[r],RL_AWAY[c]);
+          var bg=type==='draw'?'var(--surface)':type==='home'?'var(--accent-light)':'#FFEDD5';
+          var div=document.createElement('div');
+          div.id=id;
+          div.style.cssText='position:relative;border-radius:12px;border:1px solid var(--border);background:'+bg+';display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;user-select:none;transition:transform .1s,box-shadow .15s;';
+          div.onclick=function(){ rlAddChip(id); };
+          div.innerHTML='<span id="rlminus_'+id+'" onclick="event.stopPropagation();rlRemoveChip(\''+id+'\')" style="position:absolute;top:-7px;right:-7px;width:19px;height:19px;border-radius:50%;background:var(--red);color:white;font-size:12px;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;z-index:6;">−</span>'+
+            '<span style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);">'+rlScoreLabel(r,c)+'</span>'+
+            '<span id="rlchip_'+id+'" style="display:none;margin-top:5px;font-family:var(--mono);font-size:12px;font-weight:700;color:white;background:var(--accent);border-radius:8px;padding:2px 9px;min-width:24px;text-align:center;"></span>';
+          gridEl.appendChild(div);
+          rlMeta[id]={label:rlScoreLabel(r,c)+' correct score',mult:16,type:'SCORE'};
+        })(r,c);
+      }
+    }
+    rlMeta['rlbtts_Y']={label:'Both teams to score: Yes',mult:2,type:'MARKET'};
+    rlMeta['rlbtts_N']={label:'Both teams to score: No',mult:2,type:'MARKET'};
+    rlMeta['rlou_O']={label:'Over 2.5 goals',mult:2,type:'MARKET'};
+    rlMeta['rlou_U']={label:'Under 2.5 goals',mult:2,type:'MARKET'};
+    Object.keys(rlMeta).forEach(rlRender);
+    rlUpdateFooter();
+    rlFitBoard();
+  }
+
+  function rlFitBoard(){
+    var outer=document.getElementById('rl-scale-outer');
+    var inner=document.getElementById('rl-scale-inner');
+    if(!outer||!inner)return;
+    inner.style.transform='none';
+    var naturalW=inner.offsetWidth, naturalH=inner.offsetHeight;
+    var scale=Math.min(1, outer.clientWidth/naturalW);
+    inner.style.transform='scale('+scale+')';
+    outer.style.height=(naturalH*scale)+'px';
+  }
+  window.addEventListener('resize',function(){ if(document.getElementById('rl-scale-outer'))rlFitBoard(); });
+
+  function rlAddChip(id){
+    if(rlRemaining<RL_STEP)return;
+    rlStakes[id]=(rlStakes[id]||0)+RL_STEP;
+    rlRemaining-=RL_STEP;
+    rlRender(id); rlHighlightGrid();
+  }
+  function rlRemoveChip(id){
+    if(!rlStakes[id])return;
+    rlStakes[id]-=RL_STEP;
+    rlRemaining+=RL_STEP;
+    if(rlStakes[id]<=0)delete rlStakes[id];
+    rlRender(id); rlHighlightGrid();
+  }
+  function rlClearAll(){
+    Object.keys(rlStakes).forEach(function(k){delete rlStakes[k];});
+    rlRemaining=RL_BUDGET;
+    Object.keys(rlMeta).forEach(rlRender);
+    rlHighlightGrid();
+  }
+  function rlRender(id){
+    var chipEl=document.getElementById('rlchip_'+id);
+    var minusEl=document.getElementById('rlminus_'+id);
+    var val=rlStakes[id]||0;
+    var isMarket = id.indexOf('rlbtts_')===0 || id.indexOf('rlou_')===0;
+    if(chipEl){
+      chipEl.textContent=val;
+      chipEl.style.display=val>0?(isMarket?'block':'inline-block'):'none';
+    }
+    if(minusEl){minusEl.style.display=val>0?'flex':'none';}
+    rlUpdateFooter();
+  }
+  function rlMatchesMarket(marketId,h,a){
+    var total=h+a;
+    if(marketId==='rlbtts_Y') return h>0 && a>0;
+    if(marketId==='rlbtts_N') return h===0 || a===0;
+    if(marketId==='rlou_O') return total>2.5;
+    if(marketId==='rlou_U') return total<=2.5;
+    return false;
+  }
+  function rlPreviewHighlight(marketId){ rlApplyGridHighlight([marketId]); }
+  function rlHighlightGrid(){
+    var active=['rlbtts_Y','rlbtts_N','rlou_O','rlou_U'].filter(function(id){return (rlStakes[id]||0)>0;});
+    rlApplyGridHighlight(active);
+  }
+  function rlApplyGridHighlight(marketIds){
+    for(var r=0;r<4;r++){
+      for(var c=0;c<4;c++){
+        var el=document.getElementById(rlCellId(r,c));
+        if(!el)continue;
+        var h=rlNumVal(RL_HOME[r]), a=rlNumVal(RL_AWAY[c]);
+        var match=marketIds.some(function(mid){return rlMatchesMarket(mid,h,a);});
+        el.style.boxShadow = match ? '0 0 0 2.5px #F59E0B' : 'none';
+      }
+    }
+  }
+  function rlUpdateFooter(){
+    var staked=RL_BUDGET-rlRemaining;
+    var coinEl=document.getElementById('rl-coin-value');
+    if(coinEl){coinEl.textContent=rlRemaining;coinEl.style.color=rlRemaining===0?'var(--red)':'var(--text)';}
+    var stakedEl=document.getElementById('rl-staked-count');
+    if(stakedEl)stakedEl.textContent=staked;
+    var btn=document.getElementById('rl-place-btn');
+    if(btn)btn.disabled=staked===0;
+    rlRenderBetslip();
+  }
+  function rlRenderBetslip(){
+    var el=document.getElementById('rl-betslip');
+    if(!el)return;
+    var ids=Object.keys(rlStakes);
+    if(!ids.length){el.innerHTML='';return;}
+    el.innerHTML='<div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Bet Slip</div>'+ids.map(function(id){
+      var m=rlMeta[id]; if(!m) return '';
+      var stake=rlStakes[id], payout=stake*m.mult;
+      var typeColor=m.type==='MARKET'?'#0891B2':'var(--accent)';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;margin-bottom:6px;background:var(--surface);border-radius:8px;border-left:3px solid '+typeColor+';">'+
+        '<div><div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);">'+m.label+'</div>'+
+        '<div style="font-size:11px;color:var(--text-3);margin-top:1px;">'+stake+' coins staked</div></div>'+
+        '<div style="text-align:right;"><div style="font-size:10px;color:var(--text-3);">potential win</div>'+
+        '<div style="font-family:var(--mono);font-size:18px;font-weight:800;color:var(--green);">'+payout+'</div></div>'+
+      '</div>';
+    }).join('');
+  }
+  function rlSaveCurrentState(){
+    if(rlExpandedEventId) RL_STATE[rlExpandedEventId]={remaining:rlRemaining, stakes:JSON.parse(JSON.stringify(rlStakes))};
+  }
+  function rlLoadState(eventId){
+    var saved=RL_STATE[eventId];
+    rlRemaining = saved ? saved.remaining : RL_BUDGET;
+    rlStakes = saved ? JSON.parse(JSON.stringify(saved.stakes)) : {};
+  }
+  function rlToggleEvent(eventId){
+    rlSaveCurrentState();
+    rlExpandedEventId = (rlExpandedEventId===eventId) ? null : eventId;
+    var el=document.getElementById('stage');
+    if(el) el.innerHTML=renderRoulette();
+    if(rlExpandedEventId){
+      rlLoadState(rlExpandedEventId);
+      setTimeout(function(){ initRouletteBoard(); },50);
+    }
+  }
+  function rlChangeGameweek(idx){
+    rlRoundIdx=parseInt(idx,10)||0;
+    rlExpandedEventId=null; RL_STATE={}; rlStakes={}; rlRemaining=RL_BUDGET;
+    var el=document.getElementById('stage');
+    if(el) el.innerHTML=renderRoulette();
+    setTimeout(function(){ initRouletteBoard(); },50);
+  }
+  function rlPlaceBets(){ toast('✓ Static preview — nothing is saved'); }
+
+  var toastT;
+  function toast(msg){
+    var el=document.getElementById('toast'); if(!el)return;
+    el.textContent=msg; el.classList.add('show');
+    clearTimeout(toastT); toastT=setTimeout(function(){ el.classList.remove('show'); },2600);
+  }
+
+  function showRules(mode){
+    var rules={
+      roulette:'<h3 style="margin:0 0 12px;font-size:16px;color:var(--text);">Soccer Roulette Rules</h3>'+
+        '<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">'+
+        '<div><strong style="color:var(--text);">How to play:</strong> You get 100 coins per match. Place them anywhere on the score grid, or on Both Teams to Score / Over-Under 2.5.</div>'+
+        '<div><strong style="color:var(--text);">Bet types:</strong></div>'+
+        '<div style="padding-left:12px;">• Straight — one exact score — <strong style="color:var(--green);">×16</strong><br>• Both Teams to Score / Over-Under 2.5 — <strong style="color:var(--green);">×2</strong></div>'+
+        '<div><strong style="color:var(--text);">Payouts:</strong> Set purely by how many outcomes a bet covers — no bookmaker-style odds.</div>'+
+        '</div>'
+    };
+    var content=rules[mode]||'';
+    var overlay=document.createElement('div');
+    overlay.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.innerHTML='<div onclick="this.parentElement.remove()" style="position:absolute;inset:0;background:rgba(0,0,0,0.4);"></div>'+
+      '<div style="position:relative;background:var(--white);border-radius:14px;max-width:400px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-height:80vh;overflow-y:auto;">'+
+      '<button onclick="this.closest(\'[style*=fixed]\').remove()" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-3);">×</button>'+content+'</div>';
+    document.body.appendChild(overlay);
+  }
+
+  window.rlChangeGameweek = rlChangeGameweek;
+  window.rlToggleEvent = rlToggleEvent;
+  window.rlClearAll = rlClearAll;
+  window.rlAddChip = rlAddChip;
+  window.rlRemoveChip = rlRemoveChip;
+  window.rlPreviewHighlight = rlPreviewHighlight;
+  window.rlHighlightGrid = rlHighlightGrid;
+  window.rlPlaceBets = rlPlaceBets;
+  window.showRules = showRules;
 
   mount();
 })();
