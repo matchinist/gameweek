@@ -207,7 +207,7 @@ async function runSportmonks(service: SupabaseClient, provider: ProviderRow, man
       });
       for (const t of (mappedTs || [])) {
         const m = t.provider_ids[provider.id] as { league_id?: number; season_key?: string };
-        if (!m?.league_id || !m?.season_key || !t.seasons?.[m.season_key]) continue;
+        if (!m?.league_id || !m?.season_key) continue;
         try {
           const lres = await smFetch(`/leagues/${m.league_id}?include=currentSeason`);
           const seasonId = lres.data?.currentseason?.id;
@@ -215,21 +215,24 @@ async function runSportmonks(service: SupabaseClient, provider: ProviderRow, man
           const sres = await smFetch(`/standings/seasons/${seasonId}?include=participant;details.type&per_page=50`);
           const parsed = parseStandings(sres.data || []);
           if (!parsed.length) continue;
-          const season = t.seasons[m.season_key];
-          const rankToZone: Record<number, unknown> = {};
-          (season.standings?.rows || []).forEach((r: { rank: number; zoneId?: unknown }) => { if (r.zoneId != null) rankToZone[r.rank] = r.zoneId; });
-          season.standings = {
-            updatedAt: new Date().toISOString(),
-            zones: season.standings?.zones || [],
-            rows: parsed.map((r: { rank: number; participantId: number; name: string; played: number; w: number; d: number; l: number; gf: number; ga: number; diff: number; pts: number }) => {
+          // gw_dm_standings rows (redesign R1). Zone bands live in their own
+          // table and describe table POSITIONS, so carry them over by rank.
+          const { data: prevRows } = await service.from("gw_dm_standings")
+            .select("rank,zone_id").eq("tournament_id", t.id).eq("season_key", m.season_key).is("round_id", null);
+          const rankToZone: Record<number, string | null> = {};
+          (prevRows || []).forEach((r: { rank: number; zone_id: string | null }) => { if (r.zone_id != null) rankToZone[r.rank] = r.zone_id; });
+          const { error: delErr } = await service.from("gw_dm_standings").delete()
+            .eq("tournament_id", t.id).eq("season_key", m.season_key).is("round_id", null);
+          if (delErr) { log.push({ level: "error", msg: `standings clear ${t.name}: ${delErr.message}` }); continue; }
+          const { error: insErr } = await service.from("gw_dm_standings").insert(
+            parsed.map((r: { rank: number; participantId: number; name: string; played: number; w: number; d: number; l: number; gf: number; ga: number; diff: number; pts: number }) => {
               const team = teamBySmId2[String(r.participantId)] || null;
-              return { rank: r.rank, name: team ? team.name : r.name, teamId: team ? team.id : null,
-                played: r.played, w: r.w, d: r.d, l: r.l, diff: r.diff, gf: r.gf, ga: r.ga, pts: r.pts,
-                zoneId: rankToZone[r.rank] ?? null };
-            }),
-          };
-          const { error: sErr } = await service.from("gw_dm_tournaments").update({ seasons: t.seasons }).eq("id", t.id);
-          if (sErr) { log.push({ level: "error", msg: `standings write ${t.name}: ${sErr.message}` }); continue; }
+              return { tournament_id: t.id, season_key: m.season_key, round_id: null,
+                rank: r.rank, team_id: team ? team.id : null, name: team ? team.name : r.name,
+                played: r.played, w: r.w, d: r.d, l: r.l, gf: r.gf, ga: r.ga, diff: r.diff, pts: r.pts,
+                zone_id: rankToZone[r.rank] ?? null };
+            }));
+          if (insErr) { log.push({ level: "error", msg: `standings write ${t.name}: ${insErr.message}` }); continue; }
           stats.standings_updated = (stats.standings_updated || 0) + 1;
           log.push({ level: "info", msg: `standings ${t.name}: ${parsed.length} rows (${m.season_key})` });
         } catch (e) {

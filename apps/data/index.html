@@ -1337,13 +1337,61 @@ function overrideStandingsMatch(rowIndex, teamId){
   row.matchScore = team ? 100 : 0; // manual pick is treated as fully confident
 }
 
+// ── Standings storage (DB redesign R1) ─────────────────────────────────────
+// Standings live in gw_dm_standings / gw_dm_standing_zones tables, not the
+// seasons blob. The in-memory store mirrors the old blob shape so every
+// render path is unchanged; the blob fallback in getStandings only covers
+// the deploy-before-migration window and costs nothing after it.
+function stKey(tid,seasonKey){ return tid+'|'+seasonKey; }
+function getStandings(tid,seasonKey){
+  const st=S.standingsStore&&S.standingsStore[stKey(tid,seasonKey)];
+  if(st) return st;
+  const season=S.tournaments.find(t=>t.id===tid)?.seasons?.[seasonKey];
+  return (season&&season.standings)||null;
+}
+async function loadStandingsStore(){
+  try{
+    const [{data:rows,error:e1},{data:zones,error:e2}]=await Promise.all([
+      supa.from('gw_dm_standings').select('*').is('round_id',null).limit(10000),
+      supa.from('gw_dm_standing_zones').select('*').order('sort').limit(10000),
+    ]);
+    if(e1||e2) throw (e1||e2);
+    const store={};
+    const slot=k=>store[k]=store[k]||{updatedAt:null,zones:[],rows:[]};
+    (zones||[]).forEach(z=>{ slot(stKey(z.tournament_id,z.season_key)).zones.push({id:z.zone_id,name:z.name,color:z.color}); });
+    (rows||[]).forEach(r=>{
+      const s=slot(stKey(r.tournament_id,r.season_key));
+      s.rows.push({rank:r.rank,name:r.name,teamId:r.team_id,played:r.played,w:r.w,d:r.d,l:r.l,diff:r.diff,gf:r.gf,ga:r.ga,pts:r.pts,zoneId:r.zone_id});
+      if(!s.updatedAt||r.updated_at>s.updatedAt) s.updatedAt=r.updated_at;
+    });
+    Object.values(store).forEach(s=>s.rows.sort((a,b)=>a.rank-b.rank));
+    S.standingsStore=store;
+  }catch(e){ console.error('standings load:',e); } // pre-migration: blob fallback carries
+}
+async function persistStandings(tid,seasonKey,st){
+  const d1=await supa.from('gw_dm_standings').delete().eq('tournament_id',tid).eq('season_key',seasonKey).is('round_id',null);
+  const d2=await supa.from('gw_dm_standing_zones').delete().eq('tournament_id',tid).eq('season_key',seasonKey);
+  if(d1.error||d2.error){ toast('Standings save failed: '+(d1.error||d2.error).message); return false; }
+  S.standingsStore=S.standingsStore||{};
+  if(!st){ delete S.standingsStore[stKey(tid,seasonKey)]; return true; }
+  if(st.zones&&st.zones.length){
+    const {error}=await supa.from('gw_dm_standing_zones').insert(st.zones.map((z,i)=>({tournament_id:tid,season_key:seasonKey,zone_id:z.id,name:z.name||null,color:z.color||null,sort:i})));
+    if(error){ toast('Standings save failed: '+error.message); return false; }
+  }
+  if(st.rows&&st.rows.length){
+    const {error}=await supa.from('gw_dm_standings').insert(st.rows.map(r=>({tournament_id:tid,season_key:seasonKey,round_id:null,rank:r.rank,team_id:r.teamId||null,name:r.name,played:r.played||0,w:r.w||0,d:r.d||0,l:r.l||0,gf:r.gf||0,ga:r.ga||0,diff:r.diff||0,pts:r.pts||0,zone_id:r.zoneId??null,updated_at:st.updatedAt||new Date().toISOString()})));
+    if(error){ toast('Standings save failed: '+error.message); return false; }
+  }
+  S.standingsStore[stKey(tid,seasonKey)]=st;
+  return true;
+}
+
 async function saveStandingsToSeason(){
   const st = standingsPreviewState;
   if(!st) return;
   const unmatched = st.rows.filter(r=>!r.teamId);
   if(unmatched.length && !confirm(`${unmatched.length} team(s) have no match selected and will be saved without a linked team. Continue?`)) return;
-  const season = getSeasonData(S.activeTournamentId, S.activeSeason);
-  season.standings = {
+  const ok = await persistStandings(S.activeTournamentId, S.activeSeason, {
     updatedAt: new Date().toISOString(),
     zones: st.zones,
     rows: st.rows.map(r=>({
@@ -1351,8 +1399,7 @@ async function saveStandingsToSeason(){
       played:r.played, w:r.w, d:r.d, l:r.l, diff:r.diff, gf:r.gf, ga:r.ga, pts:r.pts,
       zoneId:r.zoneId,
     })),
-  };
-  const ok = await save();
+  });
   if(ok){
     toast('Standings saved');
     standingsPreviewState = null;
@@ -1363,9 +1410,8 @@ async function saveStandingsToSeason(){
 
 function clearStandings(){
   if(!confirm('Remove saved standings for this season? This won\'t affect the raw paste — you can re-parse it anytime.')) return;
-  const season = getSeasonData(S.activeTournamentId, S.activeSeason);
-  delete season.standings;
-  save().then(ok=>{ if(ok){ toast('Standings cleared'); renderTournamentView(); } });
+  persistStandings(S.activeTournamentId, S.activeSeason, null)
+    .then(ok=>{ if(ok){ toast('Standings cleared'); renderTournamentView(); } });
 }
 
 function renderStandingsTable(standings){
@@ -1415,12 +1461,14 @@ function renderStandingsTable(standings){
 }
 
 async function updateSavedZoneColor(zoneId, color){
-  const season = getSeasonData(S.activeTournamentId, S.activeSeason);
-  const zone = season.standings?.zones?.find(z=>z.id===zoneId);
+  const st = getStandings(S.activeTournamentId, S.activeSeason);
+  const zone = st?.zones?.find(z=>z.id===zoneId);
   if(!zone) return;
   zone.color = color;
-  const ok = await save();
-  if(ok) toast('Zone colour updated');
+  const {error} = await supa.from('gw_dm_standing_zones').update({color})
+    .eq('tournament_id',S.activeTournamentId).eq('season_key',S.activeSeason).eq('zone_id',zoneId);
+  if(error){ toast('Zone colour: '+error.message); return; }
+  toast('Zone colour updated');
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -2936,7 +2984,8 @@ async function pmSyncStandings(){
     const rows=res.data||[];
     if(!rows.length) throw new Error('provider returned an empty table');
     const teamBySm={}; S.teams.forEach(tm=>{ if(tm.providerIds&&tm.providerIds[pid]!=null) teamBySm[String(tm.providerIds[pid])]=tm.id; });
-    const rankToZone={}; ((season.standings&&season.standings.rows)||[]).forEach(r=>{ if(r.zoneId!=null) rankToZone[r.rank]=r.zoneId; });
+    const prev=getStandings(t.id,seasonKey);
+    const rankToZone={}; ((prev&&prev.rows)||[]).forEach(r=>{ if(r.zoneId!=null) rankToZone[r.rank]=r.zoneId; });
     const matchTeam=(row)=>{
       const byId=teamBySm[String(row.participantId)];
       if(byId) return byId;
@@ -2944,9 +2993,9 @@ async function pmSyncStandings(){
       S.teams.forEach(tm=>{ const s=pmNameScore(row.name,tm.name); if(s>bestScore){best=tm.id;bestScore=s;} });
       return bestScore>=0.55?best:null;
     };
-    season.standings={
+    const stNew={
       updatedAt:new Date().toISOString(),
-      zones:(season.standings&&season.standings.zones)||[],
+      zones:(prev&&prev.zones)||[],
       rows:rows.map(r=>{
         const teamId=matchTeam(r);
         return {rank:r.rank, name:teamId?(getTeam(teamId)?.name||r.name):r.name, teamId,
@@ -2954,8 +3003,8 @@ async function pmSyncStandings(){
           zoneId:rankToZone[r.rank]??null};
       }),
     };
-    const unmatched=season.standings.rows.filter(r=>!r.teamId).length;
-    await save();
+    const unmatched=stNew.rows.filter(r=>!r.teamId).length;
+    if(!await persistStandings(t.id, seasonKey, stNew)) throw new Error('write failed');
     toast(`Standings synced: ${rows.length} rows${unmatched?` (${unmatched} without a linked team)`:''}`);
     if(S.activePage==='tournament') renderTournamentView();
   }catch(e){ toast('Standings: '+e.message); }
@@ -3142,7 +3191,7 @@ function renderTournamentView(){
   html+=`<div class="tabs">
     <button class="tab active" id="ttab-teams" onclick="switchTTab('teams')">Teams <span style="font-family:var(--mono);font-size:10px;color:var(--text-3);margin-left:4px;">${season.teamIds.length}</span></button>
     <button class="tab" id="ttab-rounds" onclick="switchTTab('rounds')">Rounds & Events <span style="font-family:var(--mono);font-size:10px;color:var(--text-3);margin-left:4px;">${season.rounds.length}</span></button>
-    <button class="tab" id="ttab-standings" onclick="switchTTab('standings')">Standings ${season.standings?.rows?.length?`<span style="font-family:var(--mono);font-size:10px;color:var(--text-3);margin-left:4px;">${season.standings.rows.length}</span>`:''}</button>
+    <button class="tab" id="ttab-standings" onclick="switchTTab('standings')">Standings ${getStandings(t.id,S.activeSeason)?.rows?.length?`<span style="font-family:var(--mono);font-size:10px;color:var(--text-3);margin-left:4px;">${getStandings(t.id,S.activeSeason).rows.length}</span>`:''}</button>
   </div>`;
 
   html+=`<div id="ttab-content-teams">
@@ -3226,17 +3275,17 @@ function renderTournamentView(){
       </div>
     </div>
     <div id="standings-preview"></div>
-    ${season.standings && season.standings.rows && season.standings.rows.length ? `
+    ${(()=>{const stCur=getStandings(t.id,S.activeSeason);return stCur && stCur.rows && stCur.rows.length ? `
     <div class="card" style="margin-top:16px;">
       <div class="card-header">
         <span class="card-title">Current standings</span>
-        <span style="font-size:11px;color:var(--text-3);">Updated ${season.standings.updatedAt?new Date(season.standings.updatedAt).toLocaleString():''}</span>
+        <span style="font-size:11px;color:var(--text-3);">Updated ${stCur.updatedAt?new Date(stCur.updatedAt).toLocaleString():''}</span>
       </div>
       <div class="card-body">
-        ${renderStandingsTable(season.standings)}
+        ${renderStandingsTable(stCur)}
         <button class="btn btn-danger btn-sm" style="margin-top:12px;" onclick="clearStandings()">Clear saved standings</button>
       </div>
-    </div>` : ''}
+    </div>` : '';})()}
   </div>`;
 
   document.getElementById('tournament-content').innerHTML=html;
@@ -4019,6 +4068,10 @@ async function loadDMData(){
     evMap[e.id]={homeId:e.home_id,awayId:e.away_id,kickoff:e.kickoff,kickoffAt:e.kickoff_at||null,result:e.result,status:e.status,line:e.line||2.5,lineup:e.lineup||null,scorers:e.scorers||null,providerIds:e.provider_ids||null};
   });
   S.events=evMap;
+
+  // standings live in their own tables (redesign R1) — loaded alongside,
+  // re-rendering the tournament view if one is already open when they land
+  loadStandingsStore().then(()=>{ if(S.activePage==='tournament') renderTournamentView(); });
 
   renderTournamentNav();
   renderTeams();

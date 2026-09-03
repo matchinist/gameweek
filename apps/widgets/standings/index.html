@@ -251,9 +251,11 @@ async function boot(){
     return;
   }
 
-  const [{data:tRow, error:tErr}, {data:teamRows}, sponsor, opResult, langResult] = await Promise.all([
+  const [{data:tRow, error:tErr}, {data:teamRows}, {data:stRows}, {data:zoneRows}, sponsor, opResult, langResult] = await Promise.all([
     supa.from('gw_dm_tournaments').select('id,name,country,seasons').eq('id', TOURNAMENT_ID).maybeSingle(),
     supa.from('gw_dm_teams').select('id,name,logo').limit(10000),
+    supa.from('gw_dm_standings').select('*').eq('tournament_id', TOURNAMENT_ID).is('round_id', null),
+    supa.from('gw_dm_standing_zones').select('*').eq('tournament_id', TOURNAMENT_ID).order('sort'),
     fetchActiveSponsor(),
     fetchOperatorTheme(),
     fetchOperatorLanguage(),
@@ -266,10 +268,24 @@ async function boot(){
     return;
   }
 
+  // Standings come from their own tables (DB redesign R1); the seasons-blob
+  // path below only covers the window before the migration backfilled them.
   const seasons = tRow.seasons || {};
-  const seasonKey = SEASON && seasons[SEASON] ? SEASON : Object.keys(seasons).sort().reverse()[0];
-  const season = seasonKey ? seasons[seasonKey] : null;
-  const standings = season?.standings;
+  let seasonKey, standings = null;
+  const tableKeys = [...new Set((stRows||[]).map(r=>r.season_key))].sort().reverse();
+  if(tableKeys.length){
+    seasonKey = (SEASON && tableKeys.includes(SEASON)) ? SEASON : tableKeys[0];
+    standings = {
+      zones: (zoneRows||[]).filter(z=>z.season_key===seasonKey).map(z=>({id:z.zone_id, name:z.name, color:z.color})),
+      rows: (stRows||[]).filter(r=>r.season_key===seasonKey).map(r=>({
+        rank:r.rank, name:r.name, teamId:r.team_id,
+        played:r.played, w:r.w, d:r.d, l:r.l, diff:r.diff, gf:r.gf, ga:r.ga, pts:r.pts, zoneId:r.zone_id,
+      })),
+    };
+  } else {
+    seasonKey = SEASON && seasons[SEASON] ? SEASON : Object.keys(seasons).sort().reverse()[0];
+    standings = seasonKey ? seasons[seasonKey]?.standings : null;
+  }
 
   if(!standings || !standings.rows || !standings.rows.length){
     el.innerHTML = `${sponsorBannerHtml(sponsor)}<div class="w-header"><div><div class="w-title">${escapeHtml(tRow.name)}</div></div></div>
