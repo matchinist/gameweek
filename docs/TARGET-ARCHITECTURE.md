@@ -41,8 +41,8 @@ Unchanged from v1, restated because every v2 decision was tested against them:
 | # | Principle | Why it binds here |
 |---|---|---|
 | P1 | **One engineer must be able to operate the whole thing on a Sunday.** | 466 of 467 commits are by one person. |
-| P2 | **Infrastructure cost per tenant must round to zero.** | Revenue is capped at $150/month per operator. |
-| P3 | **Never break a live customer.** | Every phase ships incrementally and is reversible. The seamless-embed postMessage protocol and the SSO flow are now **public contracts** operators have integrated — they must survive every phase unchanged. |
+| P2 | **Infrastructure cost per tenant must round to zero.** | Revenue is capped at $150/month per customer. |
+| P3 | **Never break a live customer.** | Every phase ships incrementally and is reversible. The seamless-embed postMessage protocol and the SSO flow are now **public contracts** customers have integrated — they must survive every phase unchanged. |
 | P4 | **Trust nothing the player can edit.** | The browser is a rendering surface, not a rules engine. |
 | P5 | **Prefer boring, portable technology.** | Postgres, SQL, TypeScript, HTTP. |
 | P6 | **Every layer removed is worth more than every layer added.** | v2 exists because v1 flunked its own principle here. |
@@ -61,7 +61,7 @@ flowchart TB
 
     subgraph supa["Supabase (kept, and used properly)"]
         pg[("<b>Postgres</b><br/>rules live here:<br/>save_prediction() RPC · CHECK constraints<br/>locked policies · committed migrations")]
-        auth["<b>GoTrue</b><br/>players · operators · staff<br/>+ SSO synthetic users"]
+        auth["<b>GoTrue</b><br/>players · customers · staff<br/>+ SSO synthetic users"]
         fns["<b>Edge Functions</b><br/>sso-login (live)<br/>score-round (new)"]
         storage["Storage<br/>logos · player photos"]
     end
@@ -75,7 +75,7 @@ flowchart TB
     sentry["Sentry (free)"]
 
     player["Player<br/><i>iframe / seamless embed</i>"] --> pages
-    operator["Operator"] --> pages
+    customer["Customer"] --> pages
     staff["Staff"] --> pages
 
     pages -->|"anon key: reads,<br/>RPC for writes"| pg
@@ -107,7 +107,7 @@ This is the heart of v2. Instead of one new API tier enforcing everything, each 
 | Who sees predictions before lock (H-6) | **Postgres** | select policy: own rows always, others' rows only after event lock |
 | Points (§5.2 of assessment) | **Edge Function** | `score-round` runs `packages/scoring`, writes `points` + leaderboard rows |
 | SSO identity (already live) | **Edge Function** | `sso-login`, unchanged |
-| Who may iframe an operator's embed (H-3) | **Cloudflare Pages Function** | per-tenant `frame-ancestors` from `gw_operators_public.domains` |
+| Who may iframe an customer's embed (H-3) | **Cloudflare Pages Function** | per-tenant `frame-ancestors` from `gw_customers_public.domains` |
 | Rendering, optimistic feedback, theming | Browser | as today |
 
 Postgres functions are not a scattered second codebase: there are **five or six of them total** (save prediction, register player, join/leave league, enter result guard), they live in committed migration files, and they are testable with the local-Postgres fixture approach the PII fix already proved.
@@ -117,7 +117,7 @@ Postgres functions are not a scattered second codebase: there are **five or six 
 ```
 apps/
   embed/          player app            (Vite + TS)
-  admin/          operator dashboard    (Vite + TS)
+  admin/          customer dashboard    (Vite + TS)
   data/           staff data manager    (Vite + TS)
   widgets/        embeddable widgets    (Vite + TS)
   marketing/      static pages
@@ -178,7 +178,7 @@ v1's claim that "RLS can't express before-kickoff" was wrong — a `WITH CHECK` 
 
 ### 4.2 Scoring becomes a stored fact
 
-Unchanged from v1 in substance, simplified in machinery. When a result is entered (by staff today, by feed or operator later), the caller invokes `score-round`:
+Unchanged from v1 in substance, simplified in machinery. When a result is entered (by staff today, by feed or customer later), the caller invokes `score-round`:
 
 ```mermaid
 flowchart LR
@@ -198,7 +198,7 @@ flowchart LR
 ### 4.3 Tenant-scoped reads and per-tenant headers
 
 - **Reads (H-2):** the embed already knows its rounds' `event_ids` — fetch only those events and only the teams they reference, with explicit columns, instead of `select * limit 10000` of the whole platform. Replace the `teamById` linear scan with a `Map`. This needs no server change at all; it is query discipline, and it turns per-pageview cost from "platform-sized" to "tenant-sized".
-- **Headers (H-3, L-7):** moving static hosting to Cloudflare Pages gives CSP/HSTS everywhere; a ~50-line Pages Function on `/embed` reads the operator's `domains` and emits `Content-Security-Policy: frame-ancestors` — the allowlist operators already maintain finally does something, and the SSO fail-open (SSO.md §10) gets closed in the same stroke.
+- **Headers (H-3, L-7):** moving static hosting to Cloudflare Pages gives CSP/HSTS everywhere; a ~50-line Pages Function on `/embed` reads the customer's `domains` and emits `Content-Security-Policy: frame-ancestors` — the allowlist customers already maintain finally does something, and the SSO fail-open (SSO.md §10) gets closed in the same stroke.
 
 ---
 
@@ -250,7 +250,7 @@ Full task breakdown with acceptance criteria: [REARCHITECTURE-PHASES.md](./REARC
 | **2 — Foundations** | pnpm + Vite + TS; extract `packages/scoring`+`theme`+`i18n` with tests-first; **kill the demo fork**; Cloudflare Pages + CI gate + Sentry + uptime; embed contract (`inline=1`, postMessage, SSO) preserved byte-for-byte | ~3 wks | M-1, M-3, M-14, L-6 |
 | **3 — Scoring & leaderboards** | `score-round` Edge Function; `points` column; `gw_leaderboards` materialised rows; paginated leaderboard reads; optimistic client scoring from the same package | ~2 wks | §5.2, M-10(part) |
 | **4 — Read path & headers** | Tenant-scoped event/team queries; explicit columns; `Map` lookup; parallel init (drop the 3s wait); per-tenant `frame-ancestors` Pages Function | ~1–2 wks | H-2, H-3, M-10, the §7.4 margin problem |
-| **5 — Sports data feed** | API-Football / SportMonks; ingest via scheduled Edge Function (Supabase cron); reconciliation UI; operators enter own results; delete dead admin modal | ~4–5 wks | H-4, the manual-entry bottleneck |
+| **5 — Sports data feed** | API-Football / SportMonks; ingest via scheduled Edge Function (Supabase cron); reconciliation UI; customers enter own results; delete dead admin modal | ~4–5 wks | H-4, the manual-entry bottleneck |
 | **6 — Surface quality** | a11y pass; GDPR delete/export + consent timestamping; SEO fixes; mode registry, delete legacy modes; i18n date locales | ~3–4 wks, parallelisable | M-4..M-7, M-13, M-15, L-4, L-5 |
 
 **Roughly 9–10 weeks to a secure, tested, observable, cheap-to-serve system (Phases 0–4).** Phases 5–6 are product investment on top, unchanged from v1. If only part gets done: **do 0 and 1** — after them the product's central promise (a prediction is made before kick-off) is true, the data is private, and nothing is misrepresenting itself to customers.
@@ -286,8 +286,8 @@ Planned, costed, explicitly not now. Each trigger is checkable evidence, not anx
 | Queues / async scoring | A single round's scoring exceeds the Edge Function budget | 1 wk |
 | R2 for media | Storage egress becomes a real invoice line despite CDN caching | days |
 | Rate limiting beyond auth defaults | Abuse observed on writes (RPCs make per-player quotas a `CHECK`-style addition) | days |
-| Audit log | An operator disputes a leaderboard, or compliance asks | 1 wk |
-| SSO/SAML for operators, SOC 2, multi-region, warehouse/BI, on-call | Same triggers as v1 | as v1 |
+| Audit log | An customer disputes a leaderboard, or compliance asks | 1 wk |
+| SSO/SAML for customers, SOC 2, multi-region, warehouse/BI, on-call | Same triggers as v1 | as v1 |
 | Kubernetes, microservices, GraphQL, event sourcing, feature-flag SaaS, frontend framework | **Probably never** | — |
 
 ---
@@ -336,7 +336,7 @@ Everything on v1's list (no Kubernetes, no microservices, no GraphQL, no event s
 
 Carried from v1 where still relevant, minus the ones v2 resolves:
 
-1. **How many operators are live, and what is matchday peak traffic?** Sizes P4's urgency and validates D9 (no cache tier yet).
+1. **How many customers are live, and what is matchday peak traffic?** Sizes P4's urgency and validates D9 (no cache tier yet).
 2. **Is Stripe intentionally in test mode?** (H-5 — still unverified.)
 3. **Which sports must the feed cover at launch?** Football is cheap; volleyball/esports are not.
 4. **Has `gw_players` ever been enumerated pre-fix?** The leak is closed, but if it was exploited, GDPR disclosure obligations may exist (assessment §15).

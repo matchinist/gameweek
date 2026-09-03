@@ -35,14 +35,14 @@ const out = `// @gameweek/i18n — generated verbatim from apps/embed/index.html
 // and the generator retires.
 //
 // Translations cover fixed UI text only — team names, prize text, round
-// labels and anything an operator typed stays exactly as entered. Language
-// is per-operator (admin panel), not per-player.
+// labels and anything an customer typed stays exactly as entered. Language
+// is per-customer (admin panel), not per-player.
 
 export const LANGS = ['en', 'tr', 'de', 'pt'];
 
 export const I18N = ${literalSource('I18N')};
 
-// NOTE: no Portuguese yet — pt operators fall back to English rules (task 6.5).
+// NOTE: no Portuguese yet — pt customers fall back to English rules (task 6.5).
 export const RULES_HTML = ${literalSource('RULES_HTML')};
 
 // Pure form of the inline t(): language is an argument instead of the page

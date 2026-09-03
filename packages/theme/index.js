@@ -1,8 +1,8 @@
-// @gameweek/theme — the operator-theming contrast guards, extracted verbatim
+// @gameweek/theme — the customer-theming contrast guards, extracted verbatim
 // from apps/embed/index.html (Phase 2.2).
 //
 // Most content sits on the card surface, not the page background. If an
-// operator picks a text colour that can't be read there (white text with
+// customer picks a text colour that can't be read there (white text with
 // white cards, say), fall back to a legible tone rather than rendering
 // invisible text.
 //

@@ -1,6 +1,6 @@
 // Per-language display names — written BEFORE the inline implementation.
 // gw_dm_* rows carry name_i18n ({lang: override}); the embed shows the
-// operator-language override and falls back to the canonical name. The
+// customer-language override and falls back to the canonical name. The
 // helper lives inline in the page and is extracted here like the
 // shadow-compare and anti-drift suites.
 import { describe, it, expect } from 'vitest';
@@ -41,6 +41,6 @@ describe('localization wiring', () => {
     // team names between EVENTS and rankingTeams, so both must localize
     // through the same map or client-side ranking scoring breaks.
     expect(html.match(/gwLocName\(/g).length).toBeGreaterThanOrEqual(5);
-    expect(html).toContain('rankingNameLoc'); // canonical->localized map for operator-typed ranking team names
+    expect(html).toContain('rankingNameLoc'); // canonical->localized map for customer-typed ranking team names
   });
 });

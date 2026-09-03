@@ -24,7 +24,7 @@ export const APP_PAGES = [
   'apps/widgets/squad-analytics/index.html', 'apps/marketing/demo/index.html',
 ];
 
-// Known user- or operator-controlled strings that must never be interpolated
+// Known user- or customer-controlled strings that must never be interpolated
 // raw into HTML. Each entry is a regex for the FORBIDDEN (unescaped) form.
 export const FORBIDDEN_PATTERNS = [
   { name: 'console.log in shipped code', re: /console\.log\(/ },
@@ -33,7 +33,7 @@ export const FORBIDDEN_PATTERNS = [
   { name: 'unescaped email interpolation', re: /\$\{currentPlayer\.email\}/ },
   { name: 'unescaped league name', re: /\$\{(league|lg)\.name\}/ },
   { name: 'unescaped league code', re: /\$\{(league|lg)\.code\}/ },
-  { name: 'unescaped operator branding', re: /\$\{(op|t)\.(company_name|logo_url)\}/ },
+  { name: 'unescaped customer branding', re: /\$\{(op|t)\.(company_name|logo_url)\}/ },
 ];
 
 export function inlineClassicScripts(html) {

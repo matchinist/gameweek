@@ -1,13 +1,13 @@
 # Single Sign-On (SSO)
 
 Host-page SSO signs a player into the embedded game using the account they
-already have on the operator's own site — no separate Gameweek registration and
-no repeated logins. It exists for operators (e.g. Shopify stores) whose visitors
+already have on the customer's own site — no separate Gameweek registration and
+no repeated logins. It exists for customers (e.g. Shopify stores) whose visitors
 are already authenticated and shouldn't have to sign in again inside the widget.
 
 This document has two halves:
 
-- **Part A — Operator integration guide** (§1–§4): safe to share with customers.
+- **Part A — Customer integration guide** (§1–§4): safe to share with customers.
   How to turn SSO on and wire it into any site, with copy-paste examples.
 - **Part B — Internal reference** (§5–§9): architecture, security model,
   deployment, the Edge Function API, and troubleshooting.
@@ -16,7 +16,7 @@ This document has two halves:
 
 ## Contents
 
-- Part A — Operator guide
+- Part A — Customer guide
   - [1. What SSO does](#1-what-sso-does)
   - [2. Turn SSO on (admin)](#2-turn-sso-on-admin)
   - [3. Add it to your site](#3-add-it-to-your-site)
@@ -31,7 +31,7 @@ This document has two halves:
 
 ---
 
-# Part A — Operator integration guide
+# Part A — Customer integration guide
 
 ## 1. What SSO does
 
@@ -42,7 +42,7 @@ signs them straight back into that same account. It works across devices and
 survives browsers clearing the embed's storage, so a returning customer never
 has to log in twice.
 
-You keep full control: SSO is opt-in per operator, and a visitor can still sign
+You keep full control: SSO is opt-in per customer, and a visitor can still sign
 in manually — a manual login always takes precedence over SSO.
 
 **Requirements at a glance**
@@ -212,7 +212,7 @@ existing static embed.
 
 ```mermaid
 sequenceDiagram
-    participant Host as Operator page
+    participant Host as Customer page
     participant JS as embed.js (loader)
     participant Game as embed iframe
     participant Fn as sso-login (Edge Fn)
@@ -223,7 +223,7 @@ sequenceDiagram
     JS->>Game: injects iframe, postMessage({type:'sso', id,email,name,sig})
     Game->>Game: checks sender origin ∈ Allowed Domains
     Game->>Fn: invoke('sso-login', {client,id,email,name,sig})
-    Fn->>Fn: look up gw_operators.sso_secret; verify HMAC (constant-time)
+    Fn->>Fn: look up gw_customers.sso_secret; verify HMAC (constant-time)
     Fn->>Auth: createUser(synthetic email) [first visit] + generateLink(magiclink)
     Fn-->>Game: { token_hash }
     Game->>Auth: verifyOtp(token_hash) → real session
@@ -237,7 +237,7 @@ Key points:
   what makes the same host user resolve to the same player on every device.
 - The auth user's email is a **synthetic, deterministic** address
   (`sso-…@sso.gameweek.cloud`), never the real one — see §6.
-- The player's **real** email is stored on `gw_players.email` so the operator's
+- The player's **real** email is stored on `gw_players.email` so the customer's
   Users list still shows a contactable address.
 
 ### Files
@@ -245,7 +245,7 @@ Key points:
 | Path | Role |
 |---|---|
 | `supabase/functions/sso-login/index.ts` | The Edge Function (verifies the signature, mints the session). |
-| `docs/legacy/supabase-sso.sql` | (applied; kept for history) Added `gw_operators.sso_enabled` / `sso_secret`, re-created `gw_operators_public` with `domains`, added the username unique index. Now captured in the `supabase/migrations/` baseline. |
+| `docs/legacy/supabase-sso.sql` | (applied; kept for history) Added `gw_customers.sso_enabled` / `sso_secret`, re-created `gw_customers_public` with `domains`, added the username unique index. Now captured in the `supabase/migrations/` baseline. |
 | `embed.js` | Reads `data-sso-*`, posts the identity into the iframe on load. |
 | `embed/index.html` | Receives the identity, origin-checks it, calls the function, verifies the token, creates/loads the player. |
 | `admin/index.html` | The Single Sign-On admin card (enable, secret, snippet, domains). |
@@ -253,29 +253,29 @@ Key points:
 ## 6. Security model
 
 **Signature verification is server-side.** The anon key cannot forge a session;
-only a signature made with the operator's `sso_secret` is accepted, and the
+only a signature made with the customer's `sso_secret` is accepted, and the
 secret is only ever read by the Edge Function (service role) — it is excluded
-from the anon-facing `gw_operators_public` view and the base table is
+from the anon-facing `gw_customers_public` view and the base table is
 anon-revoked.
 
-**Synthetic identities prevent account takeover.** Possession of an operator
+**Synthetic identities prevent account takeover.** Possession of an customer
 secret proves the secret was used — it says nothing about who owns an email
 address. So the Edge Function maps every SSO user to a namespaced synthetic
 address under `@sso.gameweek.cloud` (see §7.4) rather than their real email. A
-leaked operator secret can therefore only mint sessions inside *that operator's*
-SSO namespace — never for a real-email account (another player's, an operator's,
+leaked customer secret can therefore only mint sessions inside *that customer's*
+SSO namespace — never for a real-email account (another player's, an customer's,
 or a platform admin's). No password is ever set on these users, so the function
 is the only way in.
 
 **Origin restriction stops signature replay (login CSRF).** A valid signature is
 necessary but not sufficient: the identity must also arrive by `postMessage` from
-a page whose origin is one of the operator's **Allowed Domains**. This is what
+a page whose origin is one of the customer's **Allowed Domains**. This is what
 stops someone who can read their own valid signature from embedding the loader on
 a page they control and forcing visitors into their account. The identity is
 never read from the URL, so it also can't leak into logs/history or be put in a
 shareable link.
 
-**The origin check fails closed.** If an operator has SSO enabled but **no**
+**The origin check fails closed.** If an customer has SSO enabled but **no**
 Allowed Domains configured, the embed rejects the identity (with a console
 warning naming the fix) instead of accepting any origin. At least one Allowed
 Domain is therefore a hard requirement for SSO to function — the admin UI's
@@ -299,14 +299,14 @@ Domain is therefore a hard requirement for SSO to function — the admin UI's
 
 ## 7. Reference
 
-### 7.1 Data model (`gw_operators`)
+### 7.1 Data model (`gw_customers`)
 
 | Column | Type | Notes |
 |---|---|---|
 | `sso_enabled` | boolean, default `false` | Master switch for the client. |
-| `sso_secret` | text | HMAC key. Readable only via the operator's own RLS row and platform admins; **excluded** from `gw_operators_public`. |
+| `sso_secret` | text | HMAC key. Readable only via the customer's own RLS row and platform admins; **excluded** from `gw_customers_public`. |
 
-`gw_operators_public` additionally exposes `domains` (for the embed's origin
+`gw_customers_public` additionally exposes `domains` (for the embed's origin
 check). `gw_players` has a unique index on `(client_key, username)`.
 
 ### 7.2 Signature spec
@@ -316,7 +316,7 @@ sig = lowercase_hex( HMAC_SHA256( key = sso_secret, message = id + ":" + email )
 ```
 
 64 hex chars. The `email` is included even though `id` is the true identity, so
-the signature also binds the email the operator asserts.
+the signature also binds the email the customer asserts.
 
 ### 7.3 Edge Function API — `POST /functions/v1/sso-login`
 
@@ -336,7 +336,7 @@ Responses:
 | 401 | `{ "error": "bad_signature" }` | Signature wrong, or not 64-hex. |
 | 403 | `{ "error": "sso_not_enabled" }` | `sso_enabled` is false or no secret for this `client`. |
 | 405 | `{ "error": "method_not_allowed" }` | Non-POST. |
-| 500 | `{ "error": "server_error" }` | Operator lookup / user create / link generation failed. |
+| 500 | `{ "error": "server_error" }` | Customer lookup / user create / link generation failed. |
 
 Env vars (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`) are injected automatically
 by the Edge runtime — nothing to configure.
@@ -356,7 +356,7 @@ slugging.
 ### 7.5 Client-side behaviour (`embed/index.html`)
 
 - Identity accepted only via the `sso` `postMessage`; origin checked against
-  `operatorDomains` (loaded from `gw_operators_public.domains`).
+  `customerDomains` (loaded from `gw_customers_public.domains`).
 - Session precedence in `maybeSsoLogin()`: same SSO user → no-op; a genuine
   manual login (no `sso_client` metadata) → left alone; a different or
   foreign-tenant SSO session → signed out and replaced.
@@ -367,12 +367,12 @@ slugging.
 ## 8. Deployment
 
 Two manual steps, both independent of the (auto-deploying) static frontend. SSO
-is opt-in per operator, so pushing the frontend first is safe — it degrades to
+is opt-in per customer, so pushing the frontend first is safe — it degrades to
 normal manual login until these are done.
 
 1. **Run the SQL.** *(Done on live — kept for a from-scratch rebuild, where the
    `supabase/migrations/` baseline covers it.)* Paste `docs/legacy/supabase-sso.sql` into the Supabase SQL editor and
-   run it. It adds the columns, re-creates `gw_operators_public` with `domains`,
+   run it. It adds the columns, re-creates `gw_customers_public` with `domains`,
    and adds the `(client_key, username)` unique index.
    - The unique index errors only if duplicate usernames already exist for a
      client; dedupe and re-run if so. The column changes above it apply first.
@@ -389,13 +389,13 @@ normal manual login until these are done.
      -d '{"client":"someclient","id":"1","sig":"<64 hex>"}'
    ```
 
-Then enable SSO per operator in the admin and hand them the snippet.
+Then enable SSO per customer in the admin and hand them the snippet.
 
 ### Testing
 
-The way to test without a real store is a local "fake operator site": a page
+The way to test without a real store is a local "fake customer site": a page
 that renders the embed with a valid signature and posts it in. Serve it over
-http (a `file://` origin is rejected), point it at an operator you've enabled,
+http (a `file://` origin is rejected), point it at an customer you've enabled,
 and confirm:
 
 - `sso-login` → 200, `auth/v1/verify` → 200, `gw_players` insert → 201 (first
@@ -410,8 +410,8 @@ frame's DOM.
 
 | Symptom | Cause / fix |
 |---|---|
-| `403 sso_not_enabled` | The `client_key` isn't SSO-enabled, or you're pointing at the wrong operator. Enable it, or use the enabled operator's key. |
-| `401 bad_signature` | The secret used to sign ≠ the operator's secret, or the message wasn't exactly `id:email` lowercase-hex. |
+| `403 sso_not_enabled` | The `client_key` isn't SSO-enabled, or you're pointing at the wrong customer. Enable it, or use the enabled customer's key. |
+| `401 bad_signature` | The secret used to sign ≠ the customer's secret, or the message wasn't exactly `id:email` lowercase-hex. |
 | Console: `SSO identity ignored — … not an allowed domain` | The page's origin isn't under Allowed Domains. Add it. |
 | Console: `SSO: no Allowed Domains configured — rejecting identity` | SSO is enabled but the domain list is empty; the origin check fails closed. Add the embedding site under Allowed Domains. |
 | `500 server_error` | Usually the SQL migration hasn't run (columns missing). The columns are in the `supabase/migrations/` baseline (originally `docs/legacy/supabase-sso.sql`). |

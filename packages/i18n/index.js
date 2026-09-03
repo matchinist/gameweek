@@ -5,8 +5,8 @@
 // and the generator retires.
 //
 // Translations cover fixed UI text only — team names, prize text, round
-// labels and anything an operator typed stays exactly as entered. Language
-// is per-operator (admin panel), not per-player.
+// labels and anything an customer typed stays exactly as entered. Language
+// is per-customer (admin panel), not per-player.
 
 export const LANGS = ['en', 'tr', 'de', 'pt'];
 
@@ -253,7 +253,7 @@ export const I18N = {
   },
 };
 
-// NOTE: no Portuguese yet — pt operators fall back to English rules (task 6.5).
+// NOTE: no Portuguese yet — pt customers fall back to English rules (task 6.5).
 export const RULES_HTML = {
   en: {
     score:`<h3 style="margin-bottom:12px;">Score Predictor Rules</h3>
@@ -287,7 +287,7 @@ export const RULES_HTML = {
 • Over/Under 2.5 Goals — Will there be 3+ goals?<br>
 • Both Teams to Score — Will both teams find the net?
 </div>
-<div><strong style="color:var(--text);">Points:</strong> Each market has its own points value, set by the competition operator. A wrong pick on a market earns <strong>0 pts</strong> for that market — the others aren't affected.</div>
+<div><strong style="color:var(--text);">Points:</strong> Each market has its own points value, set by the competition customer. A wrong pick on a market earns <strong>0 pts</strong> for that market — the others aren't affected.</div>
 </div>`,
     lineup:`<h3 style="margin-bottom:12px;">Lineup Predictor Rules</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">

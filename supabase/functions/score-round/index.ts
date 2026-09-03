@@ -13,7 +13,7 @@
 // overwrites — that is the "re-score round" button's whole implementation.
 //
 // Caller must be a platform admin (gw_admins row for the JWT's auth uid).
-// Later phases widen this to the competition's own operator.
+// Later phases widen this to the competition's own customer.
 //
 // Deploy: supabase functions deploy score-round
 // (JWT verification stays ON — /data calls this through

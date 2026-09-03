@@ -113,11 +113,11 @@
       }
     }
 
-    // 2. Upsert operator row
+    // 2. Upsert customer row
     const userId = data?.user?.id || (await supa.auth.getUser()).data?.user?.id;
     if (userId) {
       const clientKey = company.toLowerCase().replace(/[^a-z0-9]/g, '') + '_' + Math.random().toString(36).slice(2, 8);
-      await supa.from('gw_operators').upsert({
+      await supa.from('gw_customers').upsert({
         id: userId,
         email,
         company_name: company,

@@ -5,7 +5,7 @@
 //   2. The seamless embed (`embed.js` + inline=1) performs the height
 //      handshake: the app posts {type:'height'} and the loader sizes the
 //      iframe and releases the reserved min-height.
-//   3. The SSO postMessage is acted on from an operator-registered origin
+//   3. The SSO postMessage is acted on from an customer-registered origin
 //      (the app calls the sso-login Edge Function) and REJECTED from any
 //      other origin (fails closed — Phase 0.10).
 //
@@ -16,11 +16,11 @@ import { test, expect } from '@playwright/test';
 
 const SUPA = 'https://mgfzqkesikfdrahherfm.supabase.co';
 
-// The fixture operator rows. `cttest` registers localhost (the stub host
+// The fixture customer rows. `cttest` registers localhost (the stub host
 // origin), `ctdenied` registers only an unrelated domain.
-const OPERATORS = {
+const CUSTOMERS = {
   cttest: { company_name: 'CT Test', logo_url: null, accent_color: null, bg_color: null, surface_color: null, text_color: null, language: 'en', domains: ['localhost'] },
-  ctdenied: { company_name: 'CT Denied', logo_url: null, accent_color: null, bg_color: null, surface_color: null, text_color: null, language: 'en', domains: ['operator-site.example'] },
+  ctdenied: { company_name: 'CT Denied', logo_url: null, accent_color: null, bg_color: null, surface_color: null, text_color: null, language: 'en', domains: ['customer-site.example'] },
 };
 
 async function interceptSupabase(context, state) {
@@ -34,11 +34,11 @@ async function interceptSupabase(context, state) {
       state.ssoLoginCalls.push(JSON.parse(route.request().postData() || '{}'));
       return route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ error: 'sso_not_enabled' }) });
     }
-    if (url.pathname.includes('/rest/v1/rpc/get_operator_public')) {
-      // enumeration hardening: the public operator row comes from a
+    if (url.pathname.includes('/rest/v1/rpc/get_customer_public')) {
+      // enumeration hardening: the public customer row comes from a
       // single-row accessor rpc, never a listable view
       const body = JSON.parse(route.request().postData() || '{}');
-      const op = OPERATORS[body.p_client_key] || null;
+      const op = CUSTOMERS[body.p_client_key] || null;
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(op ? [op] : []) });
     }
     if (url.pathname.startsWith('/rest/v1/')) {
@@ -65,7 +65,7 @@ test.describe('embed contract', () => {
     page.on('pageerror', (e) => errors.push(String(e)));
     await page.goto('http://localhost:4173/embed/?client=cttest');
     await expect(page.locator('#hdr-username')).toBeVisible();
-    await expect(page.locator('#hdr-operator-badge')).toContainText('CT Test', { timeout: 15000 });
+    await expect(page.locator('#hdr-customer-badge')).toContainText('CT Test', { timeout: 15000 });
     expect(errors).toStrictEqual([]);
   });
 

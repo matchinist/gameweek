@@ -44,7 +44,7 @@ describe('language parity', () => {
     for (const lang of ['en', 'tr', 'de']) {
       expect(Object.keys(RULES_HTML[lang]).sort(), lang).toStrictEqual(['betting', 'ranking', 'score', 'lineup'].sort());
     }
-    // Portuguese operators currently get the English rules fallback. Pinned
+    // Portuguese customers currently get the English rules fallback. Pinned
     // deliberately: adding pt rules (task 6.5) will flip this expectation,
     // which is exactly the reminder it exists to be.
     expect(RULES_HTML.pt).toBeUndefined();

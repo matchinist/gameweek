@@ -261,7 +261,7 @@ window.GW_DEMO = (function () {
     gw_dm_events: ${emit(rowsEvents)},
     gw_competitions: ${emit(rowsComps)},
     gw_rounds: ${emit(rowsRounds)},
-    gw_operators_public: [{ client_key: 'demo', language: 'en', company_name: null, logo_url: null, accent_color: null, bg_color: null, surface_color: null, text_color: null, domains: [] }],
+    gw_customers_public: [{ client_key: 'demo', language: 'en', company_name: null, logo_url: null, accent_color: null, bg_color: null, surface_color: null, text_color: null, domains: [] }],
     gw_players: ${emit(rowsPlayers)},
     gw_predictions: ${emit(rowsPreds)},
     gw_leagues: ${emit(rowsLeagues)},

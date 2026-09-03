@@ -1,6 +1,6 @@
 // Tests for the backfill report aggregation (written before report.mjs).
 // buildReport() takes [{id, kickoff}] rows and groups them by parse kind,
-// carrying the proposed kickoff_at value(s) per row so the operator can
+// carrying the proposed kickoff_at value(s) per row so the customer can
 // review every non-exact case before anything is written to the DB.
 
 import { test } from 'node:test';

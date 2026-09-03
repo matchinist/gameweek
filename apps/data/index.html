@@ -227,13 +227,13 @@ window.navTo = function(page, tournamentId){ window.__pendingNav = [page, tourna
     <div style="display:flex;align-items:center;gap:14px;">
       <div class="topnav-logo">game<span>week</span></div>
       <div class="topnav-label">DATA MANAGER</div>
-      <div class="topnav-label" id="topnav-operator" style="color:#6B7280;font-weight:400;"></div>
+      <div class="topnav-label" id="topnav-customer" style="color:#6B7280;font-weight:400;"></div>
     </div>
     <div class="topnav-links">
       <a href="/admin" class="topnav-link">← Admin</a>
       <a href="#" id="topnav-view-embed" target="_blank" class="topnav-link">View Embed ↗</a>
       <button class="topnav-link" onclick="resetClientData()" style="color:#6B7280;">Reset data</button>
-      <button class="topnav-link" onclick="signOutOperator()" style="color:#6B7280;">Sign out</button>
+      <button class="topnav-link" onclick="signOutCustomer()" style="color:#6B7280;">Sign out</button>
     </div>
   </div>
   <div class="body-area">
@@ -514,7 +514,7 @@ window.navTo = function(page, tournamentId){ window.__pendingNav = [page, tourna
   <div class="modal" style="max-width:440px;">
     <div class="modal-header"><div class="modal-title" id="i18n-names-title">Localized names</div><button class="modal-close" onclick="closeModal('modal-i18n-names')">×</button></div>
     <div class="modal-body">
-      <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;">Shown in the game and widgets when the operator uses that language; anything without an override falls back to the base name. Add languages as you need them.</div>
+      <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;">Shown in the game and widgets when the customer uses that language; anything without an override falls back to the base name. Add languages as you need them.</div>
       <div id="i18n-names-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;"></div>
       <div style="display:flex;gap:8px;align-items:center;">
         <select class="form-select" id="i18n-lang-add" style="flex:1;"></select>
@@ -874,7 +874,7 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY, {auth:{persistSession:tru
 let currentAdmin = null;
 let CLIENT_KEY = null;
 
-async function signOutOperator(){
+async function signOutCustomer(){
   await supa.auth.signOut();
   location.reload();
 }
@@ -914,7 +914,7 @@ async function scoreAffectedRounds(eid, opts){
   const ev = S.events[eid];
   if(!ev) return;
   try{
-    // Every operator round that contains this event…
+    // Every customer round that contains this event…
     const {data: rounds, error} = await supa.from('gw_rounds')
       .select('id,client_key,competition_id').contains('event_ids',[eid]);
     if(error) throw error;
@@ -1192,7 +1192,7 @@ function matchTeamByName(shortName, teams){
   return best;
 }
 
-// Holds the last parsed-and-matched preview until the operator saves it.
+// Holds the last parsed-and-matched preview until the customer saves it.
 let standingsPreviewState = null;
 
 function previewStandingsPaste(){
@@ -1701,7 +1701,7 @@ function downloadFixtureTemplate(){
 }
 
 async function resetClientData(){
-  if(!confirm('Reset ALL global data? This affects all operators. Cannot be undone.')) return;
+  if(!confirm('Reset ALL global data? This affects all customers. Cannot be undone.')) return;
   await Promise.all([
     supa.from('gw_dm_teams').delete().neq('id','__none__'),
     supa.from('gw_dm_tournaments').delete().neq('id','__none__'),
@@ -2308,10 +2308,10 @@ function renderTournamentNav(){
 async function renderCoverage(){
   if(!S.clients.length){
     try{
-      const {data,error} = await supa.from('gw_operators').select('client_key,company_name,email').order('company_name');
+      const {data,error} = await supa.from('gw_customers').select('client_key,company_name,email').order('company_name');
       if(error) throw error;
       S.clients = (data||[]).filter(o=>o.client_key).map(o=>({client_key:o.client_key, label:o.company_name||o.email||o.client_key}));
-      if(!S.clients.length) console.warn('renderCoverage: gw_operators returned no rows — check RLS allows gw_admins to read all operators.');
+      if(!S.clients.length) console.warn('renderCoverage: gw_customers returned no rows — check RLS allows gw_admins to read all customers.');
     }catch(e){
       console.error('renderCoverage clients:',e);
       toast('⚠ Could not load clients: '+e.message);
@@ -2477,8 +2477,8 @@ async function savePackageSettings(){
 }
 
 // ── CLIENTS ───────────────────────────────────────────────────────────────
-// Lists every operator with a dropdown to set their pricing package. The
-// package (gw_operators.plan) drives the limits shown on the client admin's
+// Lists every customer with a dropdown to set their pricing package. The
+// package (gw_customers.plan) drives the limits shown on the client admin's
 // Subscription page; its values live on the Package Settings page. Changing
 // it doesn't touch anything the client has already built.
 let clientsCache = [];
@@ -2490,7 +2490,7 @@ async function renderClients(){
   const list = document.getElementById('clients-list');
   list.innerHTML = '<div style="padding:14px;font-size:12px;color:var(--text-3);">Loading…</div>';
   try{
-    const {data,error} = await supa.from('gw_operators').select('client_key,company_name,email,plan').order('company_name');
+    const {data,error} = await supa.from('gw_customers').select('client_key,company_name,email,plan').order('company_name');
     if(error) throw error;
     clientsCache = data||[];
   }catch(e){
@@ -2522,7 +2522,7 @@ async function setClientPackage(clientKey, slug){
   try{
     // Keep the (currently unused) access gate consistent: Free = open,
     // any paid package = subscription required.
-    const {error} = await supa.from('gw_operators')
+    const {error} = await supa.from('gw_customers')
       .update({plan:slug, subscription_required: slug !== 'free'})
       .eq('client_key',clientKey);
     if(error) throw error;
@@ -4004,7 +4004,7 @@ async function bootDataManager(){
   currentAdmin=admin;
   CLIENT_KEY=null; // DM data is global, not tied to a client
 
-  document.getElementById('topnav-operator').textContent='· '+(admin.name||admin.email);
+  document.getElementById('topnav-customer').textContent='· '+(admin.name||admin.email);
   const embedLink = document.getElementById('topnav-view-embed');
   if(embedLink) embedLink.style.display='none'; // admin has no embed of their own
 
@@ -4134,7 +4134,7 @@ async function loadDMData(){
   (events||[]).forEach(e=>{
     // kickoffAt rides along so an untouched event re-upserted by the bulk
     // save keeps its backfilled kickoff_at instead of clobbering it — it is
-    // only recomputed when the operator actually edits the kickoff.
+    // only recomputed when the customer actually edits the kickoff.
     evMap[e.id]={homeId:e.home_id,awayId:e.away_id,kickoff:e.kickoff,kickoffAt:e.kickoff_at||null,result:e.result,status:e.status,line:e.line||2.5,lineup:e.lineup||null,scorers:e.scorers||null,providerIds:e.provider_ids||null};
   });
   S.events=evMap;

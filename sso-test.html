@@ -26,8 +26,8 @@
 </head>
 <body>
   <div class="bar">
-    <h1>Fake operator site — Gameweek SSO test</h1>
-    <p>Stands in for the operator's site. The game below signs this user in automatically, the same way a real host page would.</p>
+    <h1>Fake customer site — Gameweek SSO test</h1>
+    <p>Stands in for the customer's site. The game below signs this user in automatically, the same way a real host page would.</p>
   </div>
   <div class="panel">
     <div class="warn">
@@ -39,7 +39,7 @@
       <label>Gameweek origin</label>
       <input id="origin" value="https://www.gameweek.cloud">
 
-      <label>client_key (the operator you enabled SSO for)</label>
+      <label>client_key (the customer you enabled SSO for)</label>
       <input id="client" placeholder="your client_key" value="">
 
       <label>SSO secret (from the admin SSO card → "Show")</label>
@@ -158,7 +158,7 @@ function mount(){
   const iframe = document.createElement('iframe');
   // Classic (fixed-height) embed — simplest to drive in a test page; the SSO
   // mechanism (postMessage identity + server-side verify) is identical to the
-  // seamless embed operators use in production.
+  // seamless embed customers use in production.
   iframe.src = origin + '/embed?client=' + encodeURIComponent(client);
   iframe.addEventListener('load', function(){
     try{ iframe.contentWindow.postMessage({__gameweek:true, type:'sso', id:id, email:email, name:name, sig:sig}, origin); }catch(e){}

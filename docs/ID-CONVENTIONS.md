@@ -14,7 +14,7 @@ active customers — the one moment a wholesale id change costs nothing.
    the composite IS the identity: `client_key` (tenant slug — lives in URLs,
    localStorage keys, Sentry tags), `season_key` ('2026/27'), league `code`
    (user-facing join code), `comp_aliases` (human aliases for embed URLs —
-   use these, not raw uuids, when handing operators a `?comp=` link),
+   use these, not raw uuids, when handing customers a `?comp=` link),
    zone ids inside a season's standings.
 3. **Polymorphic/log reference columns stay `text`** even though they now
    hold uuid *strings*: `gw_predictions.event_id` (can be

@@ -52,11 +52,11 @@ Deno.serve(async (req) => {
 
   // Caller must own a workspace.
   const { data: op, error: opErr } = await admin
-    .from("gw_operators")
+    .from("gw_customers")
     .select("client_key")
     .eq("auth_id", callerId)
     .maybeSingle();
-  if (opErr) { console.error("remove-member: operator lookup:", opErr.message); return json(500, { error: "server_error" }); }
+  if (opErr) { console.error("remove-member: customer lookup:", opErr.message); return json(500, { error: "server_error" }); }
   if (!op?.client_key) return json(403, { error: "not_workspace_owner" });
 
   if (memberAuthId === callerId) return json(400, { error: "cannot_remove_self" });

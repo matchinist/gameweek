@@ -12,7 +12,7 @@
 // i.e. the PLAYER'S local timezone, so two players in different zones lock at
 // different absolute times today. The backfill must not guess silently — it
 // classifies those rows and proposes both the UTC and Europe/London readings
-// for the operator to choose from.
+// for the customer to choose from.
 //
 // Run: node --test scripts/kickoff-backfill/
 

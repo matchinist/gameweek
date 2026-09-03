@@ -7,7 +7,7 @@
 // parse-kickoff.mjs, and prints:
 //   - counts per kind
 //   - every zoneless row with its UTC and Europe/London readings (the
-//     operator must pick a policy before these are written)
+//     customer must pick a policy before these are written)
 //   - every date-only row (kickoff_at would be UTC midnight — the 30-min lock
 //     then fires at 23:30 the evening before; they deserve real times)
 //   - every unparseable row for manual fixing

@@ -74,7 +74,7 @@ done
 # Sanity: the tables the product cannot exist without.
 MISSING=$(docker exec "$CONTAINER" psql -U postgres -qtA -c "
   select string_agg(t, ', ') from unnest(array[
-    'gw_operators','gw_competitions','gw_rounds','gw_players','gw_predictions',
+    'gw_customers','gw_competitions','gw_rounds','gw_players','gw_predictions',
     'gw_leagues','gw_league_members','gw_dm_teams','gw_dm_tournaments',
     'gw_dm_events','gw_dm_players','gw_admins','gw_client_coverage'
   ]) t where to_regclass('public.'||t) is null;")

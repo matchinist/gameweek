@@ -14,7 +14,7 @@ referential integrity everywhere; RLS that scales; indexes matched to the real q
   and PostgREST table names used by shipped pages. Renames are therefore *logical* here — the
   migration keeps wire-compatible names/views wherever a rename buys nothing.
 - Supabase + PostgREST + RLS remains the platform. No second database, no per-tenant databases —
-  `operator_id` scoping + RLS is the right multi-tenancy model at this product's scale.
+  `customer_id` scoping + RLS is the right multi-tenancy model at this product's scale.
 - Everything lands via the established discipline: one CLI migration per step, docker test first,
   independently deployable, live-verified.
 
@@ -28,7 +28,7 @@ erDiagram
     ref_countries ||--o{ sd_teams : ""
     ref_countries ||--o{ sd_players : nationality
     ref_countries ||--o{ sd_venues : ""
-    ref_countries ||--o{ operators : location
+    ref_countries ||--o{ customers : location
     sd_sports ||--o{ sd_tournaments : has
     sd_tournaments ||--o{ sd_seasons : has
     sd_seasons ||--o{ sd_season_teams : enrolls
@@ -44,12 +44,12 @@ erDiagram
     providers ||--o{ sd_provider_refs : maps
     sd_provider_refs }o--|| sd_teams : "any sd entity"
 
-    %% ── TENANT (per-operator game data) ──
-    operators ||--o| subscriptions : billing
-    operators ||--o| client_coverage : scopes
-    operators ||--o{ competitions : runs
-    operators ||--o{ players : registers
-    operators ||--o{ campaigns : sponsors
+    %% ── TENANT (per-customer game data) ──
+    customers ||--o| subscriptions : billing
+    customers ||--o| client_coverage : scopes
+    customers ||--o{ competitions : runs
+    customers ||--o{ players : registers
+    customers ||--o{ campaigns : sponsors
     competitions ||--o{ game_rounds : has
     game_rounds ||--o{ game_round_fixtures : contains
     game_round_fixtures }o--|| sd_fixtures : references
@@ -58,7 +58,7 @@ erDiagram
     game_rounds ||--o{ predictions : scoped
     players ||--o{ league_members : joins
     leagues ||--o{ league_members : has
-    operators ||--o{ leagues : hosts
+    customers ||--o{ leagues : hosts
     competitions ||--o{ leaderboards : "stored standings"
     players ||--o{ leaderboards : ranked
 
@@ -70,7 +70,7 @@ erDiagram
 - **Sports data (`sd_*`)** — the shared truth about the sporting world. Written only by platform
   admins and the ingest worker. Read by everyone (scoped per tenant via coverage + the tenant
   junction, not by blanket `SELECT true`).
-- **Tenant** — everything owned by one operator, always carrying `operator_id`. This is the
+- **Tenant** — everything owned by one customer, always carrying `customer_id`. This is the
   high-volume layer and the RLS boundary.
 - **Ops** — providers, run logs, admin audit. Platform-admin/service only.
 
@@ -80,11 +80,11 @@ erDiagram
 
 | Concern | Rule |
 |---|---|
-| Internal identity & joins | `bigint GENERATED ALWAYS AS IDENTITY` on high-churn tables (predictions, leaderboards, fixtures, incidents); `uuid` where rows bind to auth identities (players, operators, admins) |
-| Public handles (URLs, embeds, API) | Short `text` codes kept as **UNIQUE columns, not PKs** — `operators.client_key`, `competitions.public_code`. Server-generated, format-CHECKed (`~ '^[a-z0-9_-]{2,40}$'`) |
+| Internal identity & joins | `bigint GENERATED ALWAYS AS IDENTITY` on high-churn tables (predictions, leaderboards, fixtures, incidents); `uuid` where rows bind to auth identities (players, customers, admins) |
+| Public handles (URLs, embeds, API) | Short `text` codes kept as **UNIQUE columns, not PKs** — `customers.client_key`, `competitions.public_code`. Server-generated, format-CHECKed (`~ '^[a-z0-9_-]{2,40}$'`) |
 | Legacy text ids (`ev…`, `tm…`, `c…`) | Preserved as `legacy_id text UNIQUE` during migration so every existing URL and stored reference keeps resolving; new rows get identity PKs only |
-| Foreign keys | Every reference is a real FK. Tenant chain: `ON DELETE CASCADE` from operators down (makes GDPR/tenant-offboarding one statement). Sports layer: `ON DELETE RESTRICT` (a team in use must not vanish) |
-| Composite tenant indexes | Lead with `operator_id bigint` (8 bytes) instead of `client_key text` — roughly halves index width on the hot tables |
+| Foreign keys | Every reference is a real FK. Tenant chain: `ON DELETE CASCADE` from customers down (makes GDPR/tenant-offboarding one statement). Sports layer: `ON DELETE RESTRICT` (a team in use must not vanish) |
+| Composite tenant indexes | Lead with `customer_id bigint` (8 bytes) instead of `client_key text` — roughly halves index width on the hot tables |
 
 ---
 
@@ -101,7 +101,7 @@ ref_countries (id smallint GENERATED ALWAYS AS IDENTITY PK,
 
 Every table that previously carried a free-text `country` column references
 `country_id → ref_countries` instead: `sd_teams`, `sd_players` (nationality), `sd_venues`,
-`sd_tournaments`, and on the tenant side `operators` (customer location — billing, tax and
+`sd_tournaments`, and on the tenant side `customers` (customer location — billing, tax and
 analytics all want it normalized). Provider country ids map through `sd_provider_refs`
 (entity `'country'`), so feeds resolve their own country codes to ours. Seeded once from
 ISO 3166-1; a tiny always-cached table, so the display join is effectively free.
@@ -183,7 +183,7 @@ Why it looks like this:
   a season phase ('Regular Season', 'Group A', 'Play-offs'); a *round* is an official matchday
   within a stage ('Gameweek 3') — a plain league is one stage with 34 rounds, a cup is several
   stages with rounds inside each (this mirrors the provider model, so ingest maps 1:1). Tenant
-  `game_rounds` stay a separate concept on purpose: an operator's game round bundles whatever
+  `game_rounds` stay a separate concept on purpose: an customer's game round bundles whatever
   fixtures they choose, which may span or subset official rounds.
 - **`sd_standings` with a nullable `round_id`** gives both the current table (what the widget
   shows) *and* per-round snapshots ("table after Gameweek 3") — the owner-requested feature the
@@ -225,42 +225,42 @@ columns are dropped once refs are backfilled.
 ## 4. Layer 2 — Tenant
 
 ```sql
-operators        (id bigint PK, client_key text UNIQUE CHECK (format), auth_id uuid → auth.users,
+customers        (id bigint PK, client_key text UNIQUE CHECK (format), auth_id uuid → auth.users,
                   company_name, email UNIQUE, language, country_id → ref_countries NULL,
                   domains text[],
                   branding jsonb,                  -- colors/logo (today: loose columns)
                   sso_secret_ref uuid → vault.secrets,
                   plan text, created_at, updated_at)
-subscriptions    (operator_id → operators UNIQUE, stripe ids, status, …)
-client_coverage  (operator_id → operators PK, tournament_ids bigint[], team_ids bigint[])
+subscriptions    (customer_id → customers UNIQUE, stripe ids, status, …)
+client_coverage  (customer_id → customers PK, tournament_ids bigint[], team_ids bigint[])
 competitions     (id bigint PK, legacy_id text UNIQUE,        -- 'c…' compat (?comp= URLs)
-                  operator_id → operators, name, mode text CHECK (mode IN
+                  customer_id → customers, name, mode text CHECK (mode IN
                     ('score','betting','ranking','lineup')),
                   status text CHECK (…), color,
                   config jsonb,                   -- mode config (scoring/markets/…); one column,
                                                   -- shape-checked per mode by trigger
                   sort int, created_at, updated_at)
 game_rounds      (id bigint PK, legacy_id text UNIQUE, competition_id → competitions,
-                  operator_id → operators,        -- denormalised tenant key for RLS/index locality
+                  customer_id → customers,        -- denormalised tenant key for RLS/index locality
                   label, status CHECK (…), sort int, prizes jsonb,
                   ranking_teams jsonb,            -- ranking-mode round config
                   created_at, updated_at)
 game_round_fixtures (round_id → game_rounds, fixture_id → sd_fixtures, sort int,
                   PK (round_id, fixture_id))      -- replaces gw_rounds.event_ids text[]
-players          (id uuid PK, operator_id → operators, auth_id uuid → auth.users,
+players          (id uuid PK, customer_id → customers, auth_id uuid → auth.users,
                   username text, email text, created_at,
-                  UNIQUE (operator_id, username))
-predictions      (id bigint PK, operator_id → operators, player_id → players,
+                  UNIQUE (customer_id, username))
+predictions      (id bigint PK, customer_id → customers, player_id → players,
                   competition_id → competitions, round_id → game_rounds,
                   fixture_id → sd_fixtures NULL,  -- NULL for round-keyed modes (ranking/lineup)
                   prediction jsonb, points int CHECK (points IS NULL OR points >= 0),
                   submitted_at, updated_at,
                   UNIQUE NULLS NOT DISTINCT (player_id, competition_id, round_id, fixture_id))
-leaderboards     (as today, but operator_id bigint + FKs to competitions/rounds/players)
-leagues          (id uuid PK, operator_id → operators, name, code, created_by → players)
+leaderboards     (as today, but customer_id bigint + FKs to competitions/rounds/players)
+leagues          (id uuid PK, customer_id → customers, name, code, created_by → players)
 league_members   (league_id → leagues, player_id → players, joined_at,
                   PK (league_id, player_id))      -- username becomes display-only (review 2.8)
-campaigns        (operator_id → operators, …)
+campaigns        (customer_id → customers, …)
 ```
 
 Notable decisions:
@@ -268,10 +268,10 @@ Notable decisions:
   `round_id + '_ranking'` sentinels (the lineup/ranking gotcha that has bitten this codebase
   repeatedly). Round-keyed modes use `fixture_id NULL`; the NULLS-NOT-DISTINCT unique keeps
   one-per-round.
-- **`operator_id` denormalised onto every tenant table** (even where derivable through the FK
+- **`customer_id` denormalised onto every tenant table** (even where derivable through the FK
   chain): it is the RLS predicate and the leading index column — deriving it per row through
   joins is exactly the per-row-policy trap the review flagged.
-- **Branding/config as jsonb**: operator branding and per-mode competition config are
+- **Branding/config as jsonb**: customer branding and per-mode competition config are
   read-whole-write-whole values — jsonb is correct there; the megablob problem was *mixed
   concerns*, not jsonb itself.
 
@@ -279,13 +279,13 @@ Notable decisions:
 
 ```sql
 -- helpers, called ONCE per statement via initplan
-CREATE FUNCTION app.current_operator_id() RETURNS bigint STABLE …   -- from JWT → operators
+CREATE FUNCTION app.current_customer_id() RETURNS bigint STABLE …   -- from JWT → customers
 CREATE FUNCTION app.current_player_ids() RETURNS SETOF uuid STABLE …
 CREATE FUNCTION app.is_platform_admin() RETURNS boolean STABLE …
 
 -- every policy follows one of four templates:
 USING (true)                                            -- public game data (competitions, leaderboards)
-USING (operator_id = (SELECT app.current_operator_id()))-- operator-owned
+USING (customer_id = (SELECT app.current_customer_id()))-- customer-owned
 USING (player_id IN (SELECT app.current_player_ids()))  -- player-owned
 USING ((SELECT app.is_platform_admin()))                -- ops layer
 ```
@@ -297,17 +297,17 @@ your rounds reference) — closing review finding 2.6 at the schema level.
 ### Index plan (tenant hot paths)
 
 ```sql
-predictions   (operator_id, competition_id, round_id)         -- score-round + leaderboards
+predictions   (customer_id, competition_id, round_id)         -- score-round + leaderboards
 predictions   (player_id, competition_id)                     -- "my picks"
-leaderboards  (operator_id, competition_id, round_id, points DESC)  -- paginated read (3.5)
+leaderboards  (customer_id, competition_id, round_id, points DESC)  -- paginated read (3.5)
 game_round_fixtures (fixture_id)                              -- "which rounds use this fixture"
 sd_fixtures   (kickoff_at) WHERE status <> 'completed'        -- ingest live/stale windows
 sd_provider_refs (provider_id, entity, external_id)           -- feed lookups (is the PK)
-players       (operator_id, username)                         -- login/uniqueness (exists today)
+players       (customer_id, username)                         -- login/uniqueness (exists today)
 ```
 
 `predictions` gets `fillfactor = 90` (scoring updates stay HOT); partitioning by
-`hash(operator_id)` is a **decision point at ~50M rows**, not a day-one structure.
+`hash(customer_id)` is a **decision point at ~50M rows**, not a day-one structure.
 
 ---
 
@@ -317,13 +317,13 @@ players       (operator_id, username)                         -- login/uniquenes
 providers        (above — token moved to Vault)
 ingest_runs      (id, run_at, provider_id → providers, trigger_source, initiated_by,
                   ok, duration_ms, stats jsonb, log jsonb, error)
-score_runs       (id, run_at, initiated_by, operator_id NULL, competition/round refs,
+score_runs       (id, run_at, initiated_by, customer_id NULL, competition/round refs,
                   ok, duration_ms, counters…, error)
-audit_log        (id bigint, at timestamptz, actor text,       -- NEW: admin/operator mutations
-                  actor_role text CHECK (…), operator_id NULL,
+audit_log        (id bigint, at timestamptz, actor text,       -- NEW: admin/customer mutations
+                  actor_role text CHECK (…), customer_id NULL,
                   entity text, entity_id text, action text CHECK (…),
                   diff jsonb)                                   -- written by triggers on
-                                                                -- operators/competitions/sd_* writes
+                                                                -- customers/competitions/sd_* writes
 api_usage        (provider_id, day date, calls int, PK (provider_id, day))
                                                                 -- rollup from ingest stats; the
                                                                 -- budget dashboard for the 2000/mo cap
@@ -345,7 +345,7 @@ keeps the live product byte-compatible at the API surface.
 | M2 | `sd_provider_refs` + backfill from `provider_ids` jsonb; ingest/mapping UI switch to it; drop jsonb columns | Multi-provider + cross-check foundation | provider work |
 | M3 | `game_round_fixtures` junction backfilled from `event_ids[]`; embed/score-round read the junction (array column kept in sync by trigger until all readers move) | Tenant-scoped fixture reads (4.1), FK integrity on rounds | Phase 4.1 |
 | M4 | `ref_countries` seed + `sd_seasons`/`sd_season_teams`/`sd_stages`/`sd_rounds`/`sd_standings` extracted from the seasons blob; /data + widgets read tables; blob becomes generated/legacy then dropped | Kills the megablob; per-round standings snapshots | after 3.5 cutover |
-| M5 | `operator_id bigint` added alongside `client_key` on tenant tables, FK'd, backfilled, indexes re-led; RLS switches to `current_operator_id()`; `client_key` remains the public handle | Narrow indexes, cascade offboarding, clean tenancy | Phase 4 |
+| M5 | `customer_id bigint` added alongside `client_key` on tenant tables, FK'd, backfilled, indexes re-led; RLS switches to `current_customer_id()`; `client_key` remains the public handle | Narrow indexes, cascade offboarding, clean tenancy | Phase 4 |
 | M6 | `league_members` re-key to `player_id`; predictions get `fixture_id` (sentinel `event_id` retired); `username` becomes display-only | Rename-safe identity | Phase 6 window |
 | M7 | Vault for provider tokens + sso_secret; `audit_log` triggers; `api_usage` rollup | Secrets + full audit story | Phase 6 |
 | M8 | `sd_fixture_incidents` from `scorers` jsonb; sd table renames/views where still worth it | Queryable match events | with lineup-mode revival |
@@ -359,8 +359,8 @@ made the leaderboard cutover safe.
 ## 7. What this buys at volume
 
 - A tenant's entire footprint is one FK cascade — export, delete, or restore a customer by
-  `operator_id` (GDPR 6.2 becomes trivial).
-- Every hot query is a leading-`operator_id` (or fixture-window) index scan; no policy evaluates
+  `customer_id` (GDPR 6.2 becomes trivial).
+- Every hot query is a leading-`customer_id` (or fixture-window) index scan; no policy evaluates
   anything per row.
 - The feed can ingest from N providers into one truth layer, disagreements surface as data
   instead of overwrites, and the API budget is a table you can chart.

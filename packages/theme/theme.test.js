@@ -2,7 +2,7 @@
 //
 // Two jobs:
 //   1. Pin the contrast-guard behaviour with golden cases. This code is the
-//     reason operator-picked colours never render invisible text; the tests
+//     reason customer-picked colours never render invisible text; the tests
 //     make that promise explicit.
 //   2. Anti-drift: the apps still carry inline copies of these functions
 //     (classic-script pages can't import modules yet — consumption arrives
@@ -49,7 +49,7 @@ describe('gwContrast', () => {
   it('documents the long-garbage quirk: ≥6 chars of non-hex yields NaN, and gwReadableText then falls through to #FFFFFF', () => {
     // Real inline behaviour, extracted unchanged: parseInt('ok',16) is NaN,
     // which flows through contrast. Harmless in practice — these functions
-    // only ever receive hex from the operator colour pickers — but pinned
+    // only ever receive hex from the customer colour pickers — but pinned
     // here so a future "fix" is a deliberate decision, not an accident.
     expect(gwContrast('oklch(0.5 0.1 200)', '#FFFFFF')).toBeNaN();
     expect(gwReadableText('#888888', 'oklch(0.5 0.1 200)')).toBe('#FFFFFF');

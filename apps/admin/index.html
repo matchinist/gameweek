@@ -246,7 +246,7 @@ tbody tr:hover td{background:var(--row-hover);}
 .score-inline .sep{font-family:var(--mono);font-size:12px;color:var(--text-3);}
 </style>
 <script>
-// The sidebar/topbar buttons use inline onclick="nav(...)", "signOutOperator()"
+// The sidebar/topbar buttons use inline onclick="nav(...)", "signOutCustomer()"
 // etc., but the real definitions live at the end of a large synchronous
 // script that also waits on render-blocking CDN bundles. A click in that
 // window threw "… is not defined" (Sentry). Stub the reachable handlers so
@@ -254,7 +254,7 @@ tbody tr:hover td{background:var(--row-hover);}
 (function(){
   window.__gwPending = null;
   var stub = function(name){ return function(){ window.__gwPending = { name: name, args: [].slice.call(arguments) }; }; };
-  ['nav','signOutOperator','toggleSidebar','closeSidebar'].forEach(function(n){ window[n] = stub(n); });
+  ['nav','signOutCustomer','toggleSidebar','closeSidebar'].forEach(function(n){ window[n] = stub(n); });
 })();
 </script>
 </head>
@@ -337,7 +337,7 @@ tbody tr:hover td{background:var(--row-hover);}
       </div>
     </div>
     <div class="topbar-right">
-      <a href="#" class="btn btn-outline btn-sm" onclick="signOutOperator();return false;" style="color:var(--text-3);">Sign out</a>
+      <a href="#" class="btn btn-outline btn-sm" onclick="signOutCustomer();return false;" style="color:var(--text-3);">Sign out</a>
       <div class="topbar-avatar" id="topbar-avatar">—</div>
     </div>
   </div>
@@ -838,9 +838,9 @@ tbody tr:hover td{background:var(--row-hover);}
                 <span style="font-size:10px;color:var(--text-3);text-align:center;">No logo</span>
               </div>
               <div style="flex:1;">
-                <input type="file" id="brand-logo-file" accept="image/*" style="display:none;" onchange="uploadOperatorLogo(this.files[0])">
+                <input type="file" id="brand-logo-file" accept="image/*" style="display:none;" onchange="uploadCustomerLogo(this.files[0])">
                 <button class="btn btn-ghost btn-sm" onclick="document.getElementById('brand-logo-file').click()">Upload logo</button>
-                <button class="btn btn-ghost btn-sm" id="brand-logo-remove" style="display:none;color:var(--red);" onclick="removeOperatorLogo()">Remove</button>
+                <button class="btn btn-ghost btn-sm" id="brand-logo-remove" style="display:none;color:var(--red);" onclick="removeCustomerLogo()">Remove</button>
               </div>
             </div>
             <div style="font-size:11px;color:var(--text-3);">PNG, JPG, or SVG. Square images work best — recommended at least 128×128px.</div>
@@ -994,7 +994,7 @@ tbody tr:hover td{background:var(--row-hover);}
 </div><!-- /main -->
 
 <!-- ── SUBSCRIPTION PAYWALL ── -->
-<!-- ── OPERATOR LOGIN OVERLAY ── -->
+<!-- ── CUSTOMER LOGIN OVERLAY ── -->
 <div id="admin-login-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:#0f1117;align-items:center;justify-content:center;padding:20px;">
   <div style="background:#fff;border-radius:14px;max-width:380px;width:100%;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
     <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;text-align:center;margin-bottom:2px;">game<span style="color:#4F46E5;">week</span></div>
@@ -1059,7 +1059,7 @@ tbody tr:hover td{background:var(--row-hover);}
     <div style="margin-top:20px;">
       <a href="#" onclick="hidePaywall();return false;" style="font-size:12px;color:var(--text-3);text-decoration:none;">Maybe later</a>
       <span style="color:var(--border);margin:0 10px;">·</span>
-      <a href="#" onclick="signOutOperator();return false;" style="font-size:12px;color:var(--text-3);text-decoration:none;">Sign out</a>
+      <a href="#" onclick="signOutCustomer();return false;" style="font-size:12px;color:var(--text-3);text-decoration:none;">Sign out</a>
     </div>
   </div>
 </div>
@@ -1534,13 +1534,13 @@ if(window.Sentry){
 // ── SUPABASE ──────────────────────────────────────────────────────────────
 const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
-const supa = supabase.createClient(SUPA_URL, SUPA_KEY, {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'gw-operator'}});
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY, {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'gw-customer'}});
 
 // ── AUTH ─────────────────────────────────────────────────────────────────
-let currentOperator = null;
+let currentCustomer = null;
 let CLIENT_KEY = null;
 
-async function signOutOperator(){
+async function signOutCustomer(){
   await supa.auth.signOut();
   window.location.href = '/';
 }
@@ -1703,7 +1703,7 @@ function nav(view, subLabel){
   if(view==='embed') renderEmbedInfo();
   if(view==='widgets'){
     // Coverage can change between visits, and dmState/coverageState may not
-    // be populated yet if the operator hasn't opened the round-builder this
+    // be populated yet if the customer hasn't opened the round-builder this
     // session — refresh first so the tournament dropdowns are accurate.
     refreshDMState().then(()=>{ renderWidgetsInfo(); renderTopScorersWidgetInfo(); renderStandingsWidgetInfo(); });
   }
@@ -1773,7 +1773,7 @@ async function renderBilling(){
 // of the billing view above so it still shows when that view has no row.
 const PACKAGE_LABELS = {free:'Free',start:'Start',growth:'Growth',scale:'Scale',enterprise:'Enterprise'};
 async function renderBillingPackage(){
-  const slug = (currentOperator && currentOperator.plan) || 'free';
+  const slug = (currentCustomer && currentCustomer.plan) || 'free';
   const nameEl = document.getElementById('billing-package-name');
   if(nameEl) nameEl.textContent = (PACKAGE_LABELS[slug] || slug) + ' package';
   const featEl = document.getElementById('billing-package-features');
@@ -1797,7 +1797,7 @@ async function renderBillingPackage(){
 }
 
 // ── TEAM (workspace members) ──────────────────────────────────────────────
-// The owner's gw_operators row is the workspace; extra people are rows in
+// The owner's gw_customers row is the workspace; extra people are rows in
 // gw_workspace_members, added via the gw_create_workspace_invite RPC and the
 // /invite page. Removal goes through the remove-workspace-member Edge
 // Function so their Supabase login is disabled too.
@@ -1827,7 +1827,7 @@ async function renderTeam(){
   const isOwner = !state.isWorkspaceMember;
   const used = members.length + invites.length;
   const atLimit = used >= limit;
-  const ownerEmail = currentOperator?.email || '—';
+  const ownerEmail = currentCustomer?.email || '—';
 
   const rows = [];
   rows.push(`<tr>
@@ -1953,7 +1953,7 @@ async function removeMember(authId, email){
 function renderDashboard(){
   // Greeting
   const nameEl = document.getElementById('dash-greeting-name');
-  if(nameEl) nameEl.textContent = currentOperator.companyName;
+  if(nameEl) nameEl.textContent = currentCustomer.companyName;
 
   // Stats from real state
   const active = state.competitions.filter(c=>c.status==='active').length;
@@ -2034,14 +2034,14 @@ function renderCompDetail(){
   const c = getComp(state.currentComp);
   const el = document.getElementById('comp-detail-content');
 
-  // Per-competition widget theme: overrides the operator's global theme when
+  // Per-competition widget theme: overrides the customer's global theme when
   // the embed is scoped to just this competition. Pickers start from the
   // competition's own colour, or the global one when it has none.
   const gTheme = {
-    accent:  currentOperator?.accent_color  || '#4F46E5',
-    bg:      currentOperator?.bg_color      || '#F7F8FA',
-    surface: currentOperator?.surface_color || '#FFFFFF',
-    text:    currentOperator?.text_color    || '#0F1117',
+    accent:  currentCustomer?.accent_color  || '#4F46E5',
+    bg:      currentCustomer?.bg_color      || '#F7F8FA',
+    surface: currentCustomer?.surface_color || '#FFFFFF',
+    text:    currentCustomer?.text_color    || '#0F1117',
   };
   const ctOn = !!(c.accentColor || c.bgColor || c.surfaceColor || c.textColor);
   const ctv = {
@@ -2677,10 +2677,10 @@ function renderBranding(){
 
 function renderBrandingColors(){
   const vals = {
-    accent: currentOperator?.accent_color || '#4F46E5',
-    bg: currentOperator?.bg_color || '#F7F8FA',
-    surface: currentOperator?.surface_color || '#FFFFFF',
-    text: currentOperator?.text_color || '#0F1117',
+    accent: currentCustomer?.accent_color || '#4F46E5',
+    bg: currentCustomer?.bg_color || '#F7F8FA',
+    surface: currentCustomer?.surface_color || '#FFFFFF',
+    text: currentCustomer?.text_color || '#0F1117',
   };
   Object.entries(vals).forEach(([key,val])=>{
     const input = document.getElementById('brand-'+key);
@@ -2691,12 +2691,12 @@ function renderBrandingColors(){
   renderBrandingPreview(vals);
 }
 
-// Shared widget-theme preview markup — used by the operator Customisation
+// Shared widget-theme preview markup — used by the customer Customisation
 // page and the per-competition theme card. `v` = {accent,bg,surface,text}.
 function widgetThemePreviewInnerHTML(v){
   const text2 = v.text+'B3', text3 = v.text+'80', border = v.text+'26';
-  const logoUrl = currentOperator?.logo_url;
-  const companyName = currentOperator?.company_name || 'Your site';
+  const logoUrl = currentCustomer?.logo_url;
+  const companyName = currentCustomer?.company_name || 'Your site';
   return `
     <div style="border-radius:12px;overflow:hidden;border:1px solid ${border};">
       <div style="background:${v.surface};padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid ${border};">
@@ -2773,7 +2773,7 @@ function applyBrandingPreset(which){
 }
 
 async function saveBrandingTheme(){
-  if(!currentOperator?.auth_id){ toast('Save your account details first'); return; }
+  if(!currentCustomer?.auth_id){ toast('Save your account details first'); return; }
   const payload = {
     accent_color: document.getElementById('brand-accent')?.value,
     bg_color: document.getElementById('brand-bg')?.value,
@@ -2782,10 +2782,10 @@ async function saveBrandingTheme(){
   };
   const btn = document.getElementById('brand-save-btn');
   if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
-  const {error} = await supa.from('gw_operators').update(payload).eq('auth_id',currentOperator.auth_id);
+  const {error} = await supa.from('gw_customers').update(payload).eq('auth_id',currentCustomer.auth_id);
   if(btn){ btn.disabled = false; btn.textContent = 'Save Theme'; }
   if(error){ toast('Save failed: '+error.message); console.error('branding theme save:',error); return; }
-  currentOperator = {...currentOperator, ...payload};
+  currentCustomer = {...currentCustomer, ...payload};
   brandingDirty = false;
   const hint = document.getElementById('brand-dirty-hint');
   if(hint) hint.style.display = 'none';
@@ -2796,7 +2796,7 @@ function renderLogoPreview(){
   const preview = document.getElementById('brand-logo-preview');
   const removeBtn = document.getElementById('brand-logo-remove');
   if(!preview) return;
-  const url = currentOperator?.logo_url;
+  const url = currentCustomer?.logo_url;
   if(url){
     preview.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:contain;padding:6px;">`;
     if(removeBtn) removeBtn.style.display='inline-block';
@@ -2807,30 +2807,30 @@ function renderLogoPreview(){
   renderBrandingPreview();
 }
 
-async function uploadOperatorLogo(file){
+async function uploadCustomerLogo(file){
   if(!file) return;
-  if(!currentOperator?.auth_id){ toast('Save your account details first'); return; }
+  if(!currentCustomer?.auth_id){ toast('Save your account details first'); return; }
   try{
     const ext = file.name.split('.').pop();
-    const path = 'logos/'+currentOperator.auth_id+'_'+Date.now()+'.'+ext;
+    const path = 'logos/'+currentCustomer.auth_id+'_'+Date.now()+'.'+ext;
     const {error:upErr} = await supa.storage.from('player-photos').upload(path, file, {contentType:file.type});
     if(upErr){ toast('Upload failed: '+upErr.message); console.error('logo upload:',upErr); return; }
     const {data:urlData} = supa.storage.from('player-photos').getPublicUrl(path);
     const logoUrl = urlData?.publicUrl;
     if(!logoUrl){ toast('Upload failed: could not get file URL'); return; }
-    const {error:dbErr} = await supa.from('gw_operators').update({logo_url:logoUrl}).eq('auth_id',currentOperator.auth_id);
+    const {error:dbErr} = await supa.from('gw_customers').update({logo_url:logoUrl}).eq('auth_id',currentCustomer.auth_id);
     if(dbErr){ toast('Save failed: '+dbErr.message); console.error('logo save:',dbErr); return; }
-    currentOperator.logo_url = logoUrl;
+    currentCustomer.logo_url = logoUrl;
     renderLogoPreview();
     toast('Logo updated');
   }catch(e){ console.error('logo upload failed:',e); toast('Upload failed: '+e.message); }
 }
 
-async function removeOperatorLogo(){
-  if(!currentOperator?.auth_id) return;
-  const {error} = await supa.from('gw_operators').update({logo_url:null}).eq('auth_id',currentOperator.auth_id);
+async function removeCustomerLogo(){
+  if(!currentCustomer?.auth_id) return;
+  const {error} = await supa.from('gw_customers').update({logo_url:null}).eq('auth_id',currentCustomer.auth_id);
   if(error){ toast('Save failed: '+error.message); return; }
-  currentOperator.logo_url = null;
+  currentCustomer.logo_url = null;
   renderLogoPreview();
   toast('Logo removed — back to default');
 }
@@ -3038,7 +3038,7 @@ async function refreshDMState(){
   dmState.teams = (teams||[]).map(t=>({id:t.id,name:t.name,short:t.short,color:t.color,logo:t.logo||''}));
   // Tournament visibility per client is now entirely owned by Coverage
   // (getDMTournaments applies that filter) — restricted_email was a single-
-  // operator-only mechanism that can't express "share this tournament across
+  // customer-only mechanism that can't express "share this tournament across
   // several clients," which Coverage needs to support.
   dmState.tournaments = (tournaments||[])
     .map(t=>({id:t.id,name:t.name,country:t.country,type:t.type,sport:t.sport||'football',color:t.color,seasons:t.seasons||{}}));
@@ -3252,7 +3252,7 @@ function updateRankingTeamPreview(prefix){
   });
 
   // Preserve current checked/unchecked state before rebuilding, so re-adding
-  // events doesn't silently re-select teams the operator already unchecked.
+  // events doesn't silently re-select teams the customer already unchecked.
   const prevState = {};
   listEl.querySelectorAll(`.${prefix}-ranking-team-cb`).forEach(cb=>{
     prevState[cb.value] = cb.checked;
@@ -3406,7 +3406,7 @@ function openEditRound(roundId){
     // For ranking: show events flow + display derived teams
     document.getElementById('edit-round-ranking-teams').style.display = 'block';
     // Seed checkbox defaults from the round's previously-saved selection,
-    // so reopening for edit doesn't silently re-check teams the operator excluded.
+    // so reopening for edit doesn't silently re-check teams the customer excluded.
     editRoundSavedTeamIds = (r.rankingTeams && r.rankingTeams.length) ? new Set(r.rankingTeams.map(t=>t.id)) : null;
     // Pre-populate events from the round
     const dmEvents = getDMEvents();
@@ -3592,10 +3592,10 @@ let compThemeDirty = false;
 
 function compThemeGlobalVals(){
   return {
-    accent:  currentOperator?.accent_color  || '#4F46E5',
-    bg:      currentOperator?.bg_color      || '#F7F8FA',
-    surface: currentOperator?.surface_color || '#FFFFFF',
-    text:    currentOperator?.text_color    || '#0F1117',
+    accent:  currentCustomer?.accent_color  || '#4F46E5',
+    bg:      currentCustomer?.bg_color      || '#F7F8FA',
+    surface: currentCustomer?.surface_color || '#FFFFFF',
+    text:    currentCustomer?.text_color    || '#0F1117',
   };
 }
 function renderCompThemePreview(){
@@ -3701,8 +3701,8 @@ async function confirmDeleteComp(){
 
   // client_key is included on every one of these as a hard safety boundary,
   // not just a convenience filter — even if an id were ever to collide
-  // between two different operators' data, this guarantees a delete can
-  // never reach past this operator's own rows, whatever mode the other
+  // between two different customers' data, this guarantees a delete can
+  // never reach past this customer's own rows, whatever mode the other
   // client's competition happens to share.
   const {error} = await supa.from('gw_competitions').delete().eq('id',id).eq('client_key',CLIENT_KEY);
   if(error){
@@ -3792,14 +3792,14 @@ function copyEmbed(){
 }
 
 // ── SINGLE SIGN-ON ────────────────────────────────────────────────────────────
-// Host-page SSO: the operator's site signs each logged-in user's identity
+// Host-page SSO: the customer's site signs each logged-in user's identity
 // with sso_secret, and the sso-login Edge Function verifies it before the
 // embed signs the player in (see docs/legacy/supabase-sso.sql for the full picture).
-// The secret lives on gw_operators, readable only through the operator's own
-// RLS-protected row — the anon-facing gw_operators_public view can't see it.
+// The secret lives on gw_customers, readable only through the customer's own
+// RLS-protected row — the anon-facing gw_customers_public view can't see it.
 
 function ssoLiquidSnippet(){
-  const secret = currentOperator?.sso_secret || 'YOUR_SSO_SECRET';
+  const secret = currentCustomer?.sso_secret || 'YOUR_SSO_SECRET';
   // The closing script tag is split so this page's own HTML parser doesn't
   // read it as the end of the admin script block (same as copyEmbed).
   return `{% if customer %}
@@ -3817,14 +3817,14 @@ function ssoLiquidSnippet(){
 function renderSsoCard(){
   const badge = document.getElementById('sso-status-badge');
   if(!badge) return;
-  const on = !!(currentOperator && currentOperator.sso_enabled && currentOperator.sso_secret);
+  const on = !!(currentCustomer && currentCustomer.sso_enabled && currentCustomer.sso_secret);
   badge.className = on ? 'badge badge-green' : 'badge badge-gray';
   badge.textContent = on ? '● Active' : '○ Off';
   document.getElementById('sso-off-block').style.display = on ? 'none' : '';
   document.getElementById('sso-on-block').style.display = on ? '' : 'none';
   if(on){
     const input = document.getElementById('sso-secret-input');
-    input.value = currentOperator.sso_secret;
+    input.value = currentCustomer.sso_secret;
     input.type = 'password';
     document.getElementById('sso-reveal-btn').textContent = 'Show';
     document.getElementById('sso-snippet-pre').textContent = ssoLiquidSnippet();
@@ -3838,21 +3838,21 @@ function newSsoSecret(){
 }
 
 async function saveSso(fields){
-  const {error} = await supa.from('gw_operators').update(fields).eq('auth_id',currentOperator.auth_id);
+  const {error} = await supa.from('gw_customers').update(fields).eq('auth_id',currentCustomer.auth_id);
   if(error){
     console.error('SSO save:', error);
     toast('Could not save SSO settings');
     return false;
   }
-  Object.assign(currentOperator, fields);
+  Object.assign(currentCustomer, fields);
   renderSsoCard();
   return true;
 }
 
 async function enableSso(){
   // Re-enabling keeps the previous secret so snippets already deployed on
-  // the operator's site keep working without an update.
-  const secret = currentOperator.sso_secret || newSsoSecret();
+  // the customer's site keep working without an update.
+  const secret = currentCustomer.sso_secret || newSsoSecret();
   if(await saveSso({sso_enabled:true, sso_secret:secret})) toast('SSO enabled');
 }
 
@@ -3874,7 +3874,7 @@ function toggleSsoSecretVisible(){
 }
 
 function copySsoSecret(){
-  navigator.clipboard.writeText(currentOperator?.sso_secret||'').then(()=>toast('Secret copied'));
+  navigator.clipboard.writeText(currentCustomer?.sso_secret||'').then(()=>toast('Secret copied'));
 }
 
 function copySsoSnippet(){
@@ -3974,7 +3974,7 @@ function tournamentDropdownOptions(selectedId){
   return covered.map(t=>`<option value="${t.id}"${t.id===selectedId?' selected':''}>${t.name}${t.country?' ('+t.country+')':''}</option>`).join('');
 }
 // Keeps the dropdown's current selection across re-renders (e.g. after the
-// operator picks a tournament, only that widget's own render should update,
+// customer picks a tournament, only that widget's own render should update,
 // not reset every dropdown back to its first option).
 function currentOrFirstTournamentId(selectId){
   const el = document.getElementById(selectId);
@@ -4653,10 +4653,10 @@ async function deleteCampaign(id){
 }
 
 async function saveDomains(){
-  if(!currentOperator?.auth_id) return false;
-  const {error} = await supa.from('gw_operators').update({domains:state.domains}).eq('auth_id',currentOperator.auth_id);
+  if(!currentCustomer?.auth_id) return false;
+  const {error} = await supa.from('gw_customers').update({domains:state.domains}).eq('auth_id',currentCustomer.auth_id);
   if(error){ console.error('saveDomains failed:',error); toast('⚠ Save failed: '+error.message); return false; }
-  currentOperator.domains = state.domains;
+  currentCustomer.domains = state.domains;
   return true;
 }
 
@@ -4736,7 +4736,7 @@ async function adminSignup(){
   const userId=data?.user?.id;
   if(userId){
     const clientKey=company.toLowerCase().replace(/[^a-z0-9]/g,'')+'_'+Math.random().toString(36).slice(2,8);
-    await supa.from('gw_operators').upsert({
+    await supa.from('gw_customers').upsert({
       id: userId,
       auth_id: userId,
       email, company_name: company,
@@ -4815,7 +4815,7 @@ function showActivationPending(){
         3. You start building competitions
       </div>
     </div>
-    <a href="#" onclick="signOutOperator();return false;" style="font-size:12px;color:var(--text-3);text-decoration:none;">Sign out</a>
+    <a href="#" onclick="signOutCustomer();return false;" style="font-size:12px;color:var(--text-3);text-decoration:none;">Sign out</a>
   `;
 }
 function startSubscription(){
@@ -4833,9 +4833,9 @@ function closeSidebar(){
 }
 
 function renderSettings(){
-  document.getElementById('settings-email').value = currentOperator?.email||'';
-  document.getElementById('settings-company').value = currentOperator?.company_name||'';
-  document.getElementById('settings-language').value = currentOperator?.language||'en';
+  document.getElementById('settings-email').value = currentCustomer?.email||'';
+  document.getElementById('settings-company').value = currentCustomer?.company_name||'';
+  document.getElementById('settings-language').value = currentCustomer?.language||'en';
 }
 
 async function saveSettingsAccount(){
@@ -4843,16 +4843,16 @@ async function saveSettingsAccount(){
   if(!newCompany){ toast('Company name cannot be empty'); return; }
   const newLanguage = document.getElementById('settings-language').value;
   const {data:{session}} = await supa.auth.getSession();
-  await supa.from('gw_operators').update({company_name:newCompany, language:newLanguage}).eq('auth_id',session.user.id);
-  currentOperator.company_name = newCompany;
-  currentOperator.language = newLanguage;
-  initOperatorChrome();
+  await supa.from('gw_customers').update({company_name:newCompany, language:newLanguage}).eq('auth_id',session.user.id);
+  currentCustomer.company_name = newCompany;
+  currentCustomer.language = newLanguage;
+  initCustomerChrome();
   toast('Account saved');
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────
-function initOperatorChrome(){
-  const name = currentOperator?.company_name || currentOperator?.email || 'Operator';
+function initCustomerChrome(){
+  const name = currentCustomer?.company_name || currentCustomer?.email || 'Customer';
   const sbCompany = document.getElementById('sidebar-company');
   if(sbCompany) sbCompany.textContent = name;
   const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -4892,28 +4892,28 @@ function initOperatorChrome(){
     return;
   }
 
-  // Load operator profile — try auth_id first, fall back to id
+  // Load customer profile — try auth_id first, fall back to id
   let op = null;
-  const res1 = await supa.from('gw_operators').select('*').eq('auth_id',session.user.id).maybeSingle();
+  const res1 = await supa.from('gw_customers').select('*').eq('auth_id',session.user.id).maybeSingle();
   op = res1.data;
   if(!op){
-    const res2 = await supa.from('gw_operators').select('*').eq('id',session.user.id).maybeSingle();
+    const res2 = await supa.from('gw_customers').select('*').eq('id',session.user.id).maybeSingle();
     op = res2.data;
   }
   if(!op){
     // Invited member? Load the workspace they were added to (its owner's
-    // gw_operators row), readable via the widened operators_read_own policy.
+    // gw_customers row), readable via the widened customers_read_own policy.
     const {data:mem} = await supa.from('gw_workspace_members').select('client_key').eq('auth_id',session.user.id).maybeSingle();
     if(mem?.client_key){
-      const {data:wsOp} = await supa.from('gw_operators').select('*').eq('client_key',mem.client_key).maybeSingle();
+      const {data:wsOp} = await supa.from('gw_customers').select('*').eq('client_key',mem.client_key).maybeSingle();
       if(wsOp){ op = wsOp; state.isWorkspaceMember = true; }
     }
   }
   if(!op){
-    // Auto-create operator row for new signups
+    // Auto-create customer row for new signups
     const email = session.user.email||'';
     const clientKey = email.split('@')[0].replace(/[^a-z0-9]/gi,'').toLowerCase()+'_'+Math.random().toString(36).slice(2,8);
-    const {data:newOp} = await supa.from('gw_operators').insert({
+    const {data:newOp} = await supa.from('gw_customers').insert({
       auth_id: session.user.id,
       email,
       company_name: email.split('@')[0],
@@ -4924,13 +4924,13 @@ function initOperatorChrome(){
     op = newOp;
   }
   if(!op){
-    console.error('GW: Could not load or create operator profile');
+    console.error('GW: Could not load or create customer profile');
     await supa.auth.signOut();
     showAdminLogin('Could not load your account. Please contact support.');
     return;
   }
-  currentOperator = op;
-  state.operatorProfile = op;
+  currentCustomer = op;
+  state.customerProfile = op;
   state.domains = op.domains||[];
   CLIENT_KEY = op.client_key;
   if(op.company_name){
@@ -5021,7 +5021,7 @@ function initOperatorChrome(){
   });
   dmState.events = evMap;
 
-  initOperatorChrome();
+  initCustomerChrome();
   renderDashboard();
 })();
 

@@ -181,23 +181,23 @@ function translateZoneLabel(label){
   return hit ? (hit[1][LANG]||hit[1].en) : label; // unrecognised custom label — show as typed
 }
 
-async function fetchOperatorTheme(){
+async function fetchCustomerTheme(){
   if(!CLIENT || CLIENT==='demo') return null;
   try{
-    const {data:ops} = await supa.rpc('get_operator_public',{p_client_key:CLIENT});
+    const {data:ops} = await supa.rpc('get_customer_public',{p_client_key:CLIENT});
     const op = (ops&&ops[0])||null;
     if(op){ try{ localStorage.setItem('gw_theme_'+CLIENT, JSON.stringify(op)); }catch(e){} }
     return op||null;
   }catch(e){
-    console.error('operator theme fetch failed:', e);
+    console.error('customer theme fetch failed:', e);
     return null;
   }
 }
 
-async function fetchOperatorLanguage(){
+async function fetchCustomerLanguage(){
   if(!CLIENT || CLIENT==='demo') return 'en';
   try{
-    const {data:ops} = await supa.rpc('get_operator_public',{p_client_key:CLIENT});
+    const {data:ops} = await supa.rpc('get_customer_public',{p_client_key:CLIENT});
     const op = (ops&&ops[0])||null;
     return (op && I18N[op.language]) ? op.language : 'en';
   }catch(e){
@@ -259,8 +259,8 @@ async function boot(){
     supa.from('gw_dm_standings').select('*').eq('tournament_id', TOURNAMENT_ID).is('round_id', null),
     supa.from('gw_dm_standing_zones').select('*').eq('tournament_id', TOURNAMENT_ID).order('sort'),
     fetchActiveSponsor(),
-    fetchOperatorTheme(),
-    fetchOperatorLanguage(),
+    fetchCustomerTheme(),
+    fetchCustomerLanguage(),
   ]);
   if(opResult) applyTheme(opResult);
   LANG = langResult || 'en';

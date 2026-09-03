@@ -10,7 +10,7 @@
 // The zoneless kind is never resolved here: the embed currently reads those
 // with new Date() in the PLAYER'S timezone, so there is no single "correct"
 // instant recorded anywhere. The backfill report shows both the UTC and the
-// Europe/London reading and the operator picks the policy.
+// Europe/London reading and the customer picks the policy.
 
 const UTC_RE = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?(Z|[+-]\d{2}(:?\d{2})?)$/;
 const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/;

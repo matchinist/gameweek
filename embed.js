@@ -1,6 +1,6 @@
 /* Gameweek seamless embed loader — https://www.gameweek.cloud
  *
- * Operators paste this instead of a fixed-height iframe:
+ * Customers paste this instead of a fixed-height iframe:
  *
  *   <div data-gameweek data-client="yourkey"></div>
  *   <script async src="https://www.gameweek.cloud/embed.js"></script>
@@ -16,7 +16,7 @@
  *   data-sso-email="a@b.com"    their email (also part of the signature)
  *   data-sso-name="Alex"        display name for first-visit account creation
  *   data-sso-sig="..."          hex HMAC-SHA256 of "id:email" with the
- *                               operator's sso_secret — verified server-side
+ *                               customer's sso_secret — verified server-side
  *
  * It still uses an iframe under the hood (the game keeps its own origin,
  * auth session, and styles), but the clunky parts are removed: the iframe is
@@ -32,8 +32,8 @@
  *   parent → iframe  {__gameweek:true, type:'sso', id, email, name, sig}
  *                    the host-site identity above, sent once per iframe load.
  *                    The app checks this message's origin against the
- *                    operator's allowed domains, so SSO only works when the
- *                    loader runs on the operator's own (registered) site.
+ *                    customer's allowed domains, so SSO only works when the
+ *                    loader runs on the customer's own (registered) site.
  */
 (function(){
   'use strict';

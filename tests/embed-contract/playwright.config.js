@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test';
 
 // Embed-contract regression tests (Phase 2.9). Two origins, like production:
 //   :4173  the built site (_site) — the app origin embed.js derives
-//   :4174  a stub "operator site" hosting the seamless embed
+//   :4174  a stub "customer site" hosting the seamless embed
 // All Supabase traffic is intercepted in the tests — CI needs no backend.
 export default defineConfig({
   testDir: '.',

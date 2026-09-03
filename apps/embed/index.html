@@ -357,7 +357,7 @@ table.lb-table{width:100%;border-collapse:collapse;}
 
 /* ── Inline (seamless script-embed) mode ──────────────────────────────────
    Activated by ?inline=1, applied pre-paint in <head>. Used by /embed.js,
-   which operators paste instead of a fixed-height iframe. The app gives up
+   which customers paste instead of a fixed-height iframe. The app gives up
    its fixed-viewport shell: the document grows to its natural content
    height, embed.js keeps the iframe the same height, and the HOST page does
    all the scrolling — so the game reads as part of the page, with no inner
@@ -387,7 +387,7 @@ html.gw-inline #toast{bottom:auto;top:calc(var(--gw-vt,0px) + var(--gw-vh,100vh)
 </style>
 <script>
 // Most content sits on the card surface, not the page background. If an
-// operator picks a text colour that can't be read there (white text with
+// customer picks a text colour that can't be read there (white text with
 // white cards, say), fall back to a legible tone rather than rendering
 // invisible text.
 function gwLum(hex){
@@ -430,7 +430,7 @@ function gwReadableText(text, surface){
 }
 </script>
 <script>
-// Apply any cached operator theme immediately, before first paint, so
+// Apply any cached customer theme immediately, before first paint, so
 // repeat visits don't flash the default light colours before the async
 // fetch (further down) resolves and applies the real theme. First-ever
 // visit for a given client still has a brief flash — there's nothing to
@@ -530,12 +530,12 @@ function gwReadableText(text, surface){
   <div id="screen-app" style="flex:1;min-height:0;display:flex;flex-direction:column;">
     <div class="app-header">
       <div class="header-top">
-        <div class="header-logo" id="hdr-logo">game<span>week</span><span id="hdr-operator-badge" style="font-family:var(--sans);font-weight:500;color:var(--text-3);font-size:11px;margin-left:6px;"></span></div>
+        <div class="header-logo" id="hdr-logo">game<span>week</span><span id="hdr-customer-badge" style="font-family:var(--sans);font-weight:500;color:var(--text-3);font-size:11px;margin-left:6px;"></span></div>
         <script>
         // Apply any cached logo the instant both logo elements exist in the
         // DOM — same idea as the theme-colour preload in <head>, so repeat
         // visits don't flash the "gameweek" wordmark before the async
-        // operator fetch (further down) resolves.
+        // customer fetch (further down) resolves.
         (function(){
           try{
             var client = new URLSearchParams(location.search).get('client') || 'demo';
@@ -545,11 +545,11 @@ function gwReadableText(text, surface){
             if(!t.logo_url) return;
             var hdrLogo = document.getElementById('hdr-logo');
             var authLogo = document.getElementById('auth-modal-logo');
-            var badge = document.getElementById('hdr-operator-badge');
+            var badge = document.getElementById('hdr-customer-badge');
             var badgeHtml = badge ? badge.outerHTML : '';
             // Local escaper: this block runs pre-paint, before the main
             // script (and its escape helper) exists, and must stay
-            // dependency-free. Operator-controlled values still can't be
+            // dependency-free. Customer-controlled values still can't be
             // trusted here — they come from localStorage.
             var esc = function(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
             if(hdrLogo) hdrLogo.innerHTML = '<img src="'+esc(t.logo_url)+'" alt="'+esc(t.company_name||'Logo')+'" style="height:40px;max-width:220px;object-fit:contain;vertical-align:middle;">'+badgeHtml;
@@ -615,9 +615,9 @@ const CLIENT_PARAM = new URLSearchParams(location.search).get('client') || 'demo
 const IS_DEMO = CLIENT_PARAM === 'demo';
 
 // ── HOST-PAGE SSO IDENTITY ────────────────────────────────────────────────
-// The user already signed in on the operator's site (e.g. their Shopify
+// The user already signed in on the customer's site (e.g. their Shopify
 // customer). It arrives ONLY as an 'sso' postMessage from /embed.js running
-// on the operator's page (listener further down) — never from the URL.
+// on the customer's page (listener further down) — never from the URL.
 // Deliberately not accepted from query params: the signature is a long-lived
 // bearer credential, and a URL transport would (a) leak it into server/CDN
 // logs, browser history and referrers, and (b) let anyone craft a shareable
@@ -626,11 +626,11 @@ const IS_DEMO = CLIENT_PARAM === 'demo';
 // the signature server-side; this holds it until then.
 let ssoIdentity = null;
 let ssoOrigin = null;        // origin of the page that posted ssoIdentity
-let operatorDomains = [];    // allowed host domains, loaded with operator theme
+let customerDomains = [];    // allowed host domains, loaded with customer theme
 // ── i18n ──────────────────────────────────────────────────────────────────
 // Pre-written translations for fixed UI text only — team names, prize text,
-// round labels, and anything else the operator typed in stay exactly as
-// entered. Language is set per-operator in their admin panel, not by players.
+// round labels, and anything else the customer typed in stay exactly as
+// entered. Language is set per-customer in their admin panel, not by players.
 let LANG = 'en';
 const I18N = {
   en: {
@@ -880,7 +880,7 @@ function t(key, vars){
   return s;
 }
 // Standard market types get a translated display name (matching the fixed
-// 1/X/2 option labels below) — an operator's own custom label is only used
+// 1/X/2 option labels below) — an customer's own custom label is only used
 // as a fallback for a market type outside the built-in three.
 const MARKET_LABEL_KEYS = {'1x2':'mkt1x2', ou25:'mktOu25', btts:'mktBtts'};
 function marketLabel(mkt){
@@ -981,7 +981,7 @@ let COMP_FILTER_INVALID = false; // set true if a comp filter was given but matc
 let COMPS=[], EVENTS={}, EVENTS_RAW={}, EVENT_GAMEWEEK={}, EVENT_TOURNAMENT={}, EVENT_TOURNAMENT_ID={}, TOURNAMENT_NAMES={};
 
 // Per-language display names: gw_dm_* rows carry name_i18n ({lang: name})
-// edited in Data Manager; show the operator-language override, fall back to
+// edited in Data Manager; show the customer-language override, fall back to
 // the canonical name. Display-only — ids and stored scoring never localize.
 function gwLocName(row, lang){
   return (row && row.name_i18n && row.name_i18n[lang]) || (row ? row.name : '') || '';
@@ -1022,7 +1022,7 @@ async function buildCompsFromRealData(){
       supa.from('gw_competitions').select('*').eq('client_key',CLIENT_PARAM),
       supa.from('gw_rounds').select('*').eq('client_key',CLIENT_PARAM).order('sort_order'),
       supa.from('gw_dm_tournaments').select('id,name,name_i18n'),
-      (async()=>{ try{ const r=await supa.rpc('get_operator_public',{p_client_key:CLIENT_PARAM}); return {data:(r.data&&r.data[0])||null}; }catch(e){ return {data:null}; } })(),
+      (async()=>{ try{ const r=await supa.rpc('get_customer_public',{p_client_key:CLIENT_PARAM}); return {data:(r.data&&r.data[0])||null}; }catch(e){ return {data:null}; } })(),
       // R2: season rounds are rows now; the mock demo client returns [] here
       // and falls through to the (still-populated) dataset blobs below.
       (async()=>{ try{ return await supa.from('gw_dm_season_rounds').select('tournament_id,season_key,id,label,event_ids').order('sort_order').limit(10000); }catch(e){ return {data:null}; } })(),
@@ -1069,7 +1069,7 @@ async function buildCompsFromRealData(){
     });
 
     const teamById = id => (teams||[]).find(t=>t.id===id);
-    // Canonical -> localized team-name map. Operator-typed names (ranking
+    // Canonical -> localized team-name map. Customer-typed names (ranking
     // team lists) localize through the SAME map as EVENTS below, so
     // client-side ranking scoring — which matches teams BY NAME — sees
     // consistent names on both sides whether or not an override exists.
@@ -1093,7 +1093,7 @@ async function buildCompsFromRealData(){
 
     (compsRows||[]).forEach(c=>{
       if(c.status!=='active') return;
-      if(c.mode==='lms') return; // Last Man Standing has been fully retired — this hides it even for operators who already had one running
+      if(c.mode==='lms') return; // Last Man Standing has been fully retired — this hides it even for customers who already had one running
       let cRounds;
       if(c.mode==='lineup' && c.lineup_config?.teamId){
         const lTeamId = c.lineup_config.teamId;
@@ -1461,7 +1461,7 @@ async function doLogout(){
 // ── HOST-PAGE SSO SIGN-IN ─────────────────────────────────────────────────────
 // Silent sign-in with the identity the host site vouches for (ssoIdentity,
 // parsed near CLIENT_PARAM). The sso-login Edge Function checks the HMAC
-// signature against the operator's sso_secret and answers with a one-shot
+// signature against the customer's sso_secret and answers with a one-shot
 // magic-link token_hash; verifyOtp turns that into a real Supabase session —
 // required because RLS is keyed to auth.uid(), and what makes the same host
 // user resolve to the same player on every device. Browsers that wipe
@@ -1486,7 +1486,7 @@ async function maybeSsoLogin(){
   if(!ssoIdentity || !ssoInitDone || ssoBusy || ssoSuppressed || ssoHandled) return;
   const identity = ssoIdentity;
   if(!identity.id || !identity.sig) return;
-  // Only act on an identity vouched for by the operator's own site (see
+  // Only act on an identity vouched for by the customer's own site (see
   // ssoOriginAllowed). Rejecting it here — before any session change — is
   // what stops a captured signature replayed from an attacker-controlled
   // page from switching the current viewer's account.
@@ -1534,7 +1534,7 @@ async function maybeSsoLogin(){
     await finishSsoLogin(verified.session, identity);
   }catch(e){
     // SSO failing must never break the embed — fall back to the normal
-    // sign-in UI and leave a trace for the operator's console.
+    // sign-in UI and leave a trace for the customer's console.
     ssoHandled=true;
     console.warn('[Gameweek] SSO sign-in failed:', e?.message||e);
   }finally{
@@ -1556,7 +1556,7 @@ async function ensureSsoPlayer(session, identity){
   // First visit: create the player row. Username comes from the host-provided
   // name, cleaned to the charset manual registration enforces and deduped
   // with a suffix when taken. The row stores the player's REAL email (the
-  // auth user's is a synthetic @sso.gameweek.cloud address) so the operator's
+  // auth user's is a synthetic @sso.gameweek.cloud address) so the customer's
   // Users list keeps showing addresses they can actually contact.
   // The email later lands in profile-view markup, so hold host-provided
   // values to the same shape manual registration enforces before storing.
@@ -1586,12 +1586,12 @@ async function ensureSsoPlayer(session, identity){
 }
 
 // Identity arrives from the parent page — /embed.js posts it after mount. The
-// sender's origin is captured and checked against the operator's allowed
+// sender's origin is captured and checked against the customer's allowed
 // domains before we act on it (in maybeSsoLogin, once those have loaded). A
 // valid signature is necessary but not sufficient: on its own it would let
 // anyone who can read their own rendered signature embed this loader on a
 // page they control and force visitors into their account, so we additionally
-// require the message to come from the operator's real site — the only place
+// require the message to come from the customer's real site — the only place
 // that legitimately renders the *current viewer's* identity.
 window.addEventListener('message', (e)=>{
   const d=e.data;
@@ -1602,9 +1602,9 @@ window.addEventListener('message', (e)=>{
   maybeSsoLogin();
 });
 
-// Is `origin` one of the operator's configured embed domains? Domains are
+// Is `origin` one of the customer's configured embed domains? Domains are
 // stored as free text (bare hostnames, or occasionally a full URL), so match
-// leniently on hostname, allowing subdomains. When the operator has set no
+// leniently on hostname, allowing subdomains. When the customer has set no
 // domains we FAIL CLOSED: accepting any origin would leave the login-CSRF
 // vector above open on this client, so SSO stays inert until at least one
 // Allowed Domain is configured in the admin.
@@ -1612,11 +1612,11 @@ function ssoOriginAllowed(origin){
   if(!origin) return false;
   let host;
   try{ host=new URL(origin).hostname.toLowerCase(); }catch(e){ return false; }
-  if(!operatorDomains.length){
+  if(!customerDomains.length){
     console.warn('[Gameweek] SSO: no Allowed Domains configured — rejecting identity from '+origin+'. Add your site under Allowed Domains in the admin to enable SSO.');
     return false;
   }
-  return operatorDomains.some(raw=>{
+  return customerDomains.some(raw=>{
     let d=String(raw||'').trim().toLowerCase();
     if(!d) return false;
     try{ if(d.includes('://')) d=new URL(d).hostname; }catch(e){}
@@ -1757,10 +1757,10 @@ function renderCompTabs(){
   const el=document.getElementById('comp-tabs');
   const wrap=document.getElementById('comp-tabs-wrap');
   const scopeEl=document.getElementById('comp-scope-text');
-  // Zero competitions (a fresh operator, or none active): hide the switcher
+  // Zero competitions (a fresh customer, or none active): hide the switcher
   // and let renderPredict show its "no competitions yet" empty state. This
   // used to crash on COMPS[currentCompIdx].color, which aborted init before
-  // ssoInitDone — silently disabling host-page SSO for exactly the operators
+  // ssoInitDone — silently disabling host-page SSO for exactly the customers
   // most likely to be mid-onboarding.
   if(!COMPS.length){
     if(wrap) wrap.style.display='none';
@@ -3227,7 +3227,7 @@ function teamBadge(logo,name){
 
 // A nationality flag before a competitor's name. Only the demo dataset
 // carries team.country today (tennis players) — live gw_dm_teams has no
-// such column, so this renders nothing for real operators.
+// such column, so this renders nothing for real customers.
 function flagImg(cc){
   if(!cc||!/^[a-z]{2}$/i.test(cc))return'';
   const c=cc.toLowerCase();
@@ -5027,7 +5027,7 @@ const RULES_HTML = {
 • Over/Under 2.5 Goals — Will there be 3+ goals?<br>
 • Both Teams to Score — Will both teams find the net?
 </div>
-<div><strong style="color:var(--text);">Points:</strong> Each market has its own points value, set by the competition operator. A wrong pick on a market earns <strong>0 pts</strong> for that market — the others aren't affected.</div>
+<div><strong style="color:var(--text);">Points:</strong> Each market has its own points value, set by the competition customer. A wrong pick on a market earns <strong>0 pts</strong> for that market — the others aren't affected.</div>
 </div>`,
     lineup:`<h3 style="margin-bottom:12px;">Lineup Predictor Rules</h3>
 <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;line-height:1.6;color:var(--text-2);">
@@ -5319,14 +5319,14 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
       try{
         // Single-row accessor (enumeration hardening 2026-09): one rpc call
         // returns all nine public columns — theme, identity AND the SSO
-        // domains allowlist — and the operator roster is no longer listable.
-        const {data:opRows} = await supa.rpc('get_operator_public',{p_client_key:CLIENT_PARAM});
+        // domains allowlist — and the customer roster is no longer listable.
+        const {data:opRows} = await supa.rpc('get_customer_public',{p_client_key:CLIENT_PARAM});
         const op = (opRows&&opRows[0])||null;
-        if(Array.isArray(op?.domains)) operatorDomains = op.domains;
+        if(Array.isArray(op?.domains)) customerDomains = op.domains;
 
         // When the embed is scoped to exactly ONE competition, that
         // competition's own widget theme (set on its detail page) wins,
-        // falling back per-colour to the operator's global theme. For "All"
+        // falling back per-colour to the customer's global theme. For "All"
         // or multiple competitions, only the global theme applies.
         const singleComp = (COMP_FILTER.length === 1 && COMPS.length === 1) ? COMPS[0] : null;
         const ct = singleComp && singleComp.theme || {};
@@ -5338,7 +5338,7 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
         };
 
         if(op){
-          document.getElementById('hdr-operator-badge').textContent='· '+op.company_name;
+          document.getElementById('hdr-customer-badge').textContent='· '+op.company_name;
           if(op.logo_url){
             const logoEl = document.getElementById('hdr-logo');
             if(logoEl) logoEl.innerHTML = `<img src="${escapeHtmlLineup(op.logo_url)}" alt="${escapeHtmlLineup(op.company_name||'Logo')}" style="height:40px;max-width:220px;object-fit:contain;vertical-align:middle;">`;
@@ -5435,7 +5435,7 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
     var h = Math.ceil(root.scrollHeight);
     if(!h || h===lastH) return;
     lastH = h;
-    // targetOrigin '*' is deliberate: the host is an arbitrary operator
+    // targetOrigin '*' is deliberate: the host is an arbitrary customer
     // domain we can't know here, and a height in px is not sensitive.
     try{ parent.postMessage({__gameweek:true,type:'height',height:h},'*'); }catch(e){}
   }

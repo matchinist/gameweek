@@ -15,8 +15,8 @@ There is (almost — see [§11.1](#111-the-first-server-side-component-sso)) no 
 ```mermaid
 flowchart TB
     subgraph visitors["People"]
-        player["Player<br/><i>on operator's website</i>"]
-        operator["Operator<br/><i>customer</i>"]
+        player["Player<br/><i>on customer's website</i>"]
+        customer["Customer<br/><i>customer</i>"]
         staff["Gameweek staff<br/><i>platform admin</i>"]
         prospect["Prospect<br/><i>evaluating</i>"]
     end
@@ -25,7 +25,7 @@ flowchart TB
         direction LR
         embed["/embed<br/><b>player app</b><br/>5,066 lines"]
         widgets["/widgets/*<br/>standings · top-scorers<br/>squad-analytics"]
-        admin["/admin<br/><b>operator dashboard</b><br/>4,009 lines"]
+        admin["/admin<br/><b>customer dashboard</b><br/>4,009 lines"]
         data["/data<br/><b>data manager</b><br/>3,059 lines"]
         marketing["/ · /demo · /contact<br/>/privacy · /terms"]
         authpages["/welcome · /reset<br/>/reset-password"]
@@ -45,11 +45,11 @@ flowchart TB
 
     player -->|iframe| embed
     player -->|iframe| widgets
-    operator --> admin
+    customer --> admin
     staff --> data
     prospect --> marketing
     player -.->|email link| authpages
-    operator -.->|email link| authpages
+    customer -.->|email link| authpages
 
     embed --> pg
     embed --> auth
@@ -106,10 +106,10 @@ erDiagram
     GW_DM_TEAMS       ||--o{ GW_DM_EVENTS : "home_id / away_id"
     GW_DM_TEAMS       ||--o{ GW_DM_PLAYERS : "team_id"
 
-    GW_OPERATORS    ||--o{ GW_COMPETITIONS : client_key
-    GW_OPERATORS    ||--o{ GW_PLAYERS      : client_key
-    GW_OPERATORS    ||--o{ GW_CAMPAIGNS    : client_key
-    GW_OPERATORS    ||--|| GW_CLIENT_COVERAGE : client_key
+    GW_CUSTOMERS    ||--o{ GW_COMPETITIONS : client_key
+    GW_CUSTOMERS    ||--o{ GW_PLAYERS      : client_key
+    GW_CUSTOMERS    ||--o{ GW_CAMPAIGNS    : client_key
+    GW_CUSTOMERS    ||--|| GW_CLIENT_COVERAGE : client_key
     GW_COMPETITIONS ||--o{ GW_ROUNDS       : competition_id
     GW_ROUNDS       ||--o{ GW_PREDICTIONS  : round_id
     GW_PLAYERS      ||--o{ GW_PREDICTIONS  : player_id
@@ -148,7 +148,7 @@ erDiagram
         text nationality
         text photo_url
     }
-    GW_OPERATORS {
+    GW_CUSTOMERS {
         uuid auth_id FK
         text client_key UK
         text company_name
@@ -222,7 +222,7 @@ erDiagram
 |---|---|---|---|
 | **Global** | `gw_dm_teams`, `gw_dm_tournaments`, `gw_dm_events`, `gw_dm_players` | Gameweek staff, in `/data` | nothing — **no tenant key exists** |
 | **Bridge** | `gw_client_coverage` | Gameweek staff, in `/data` | `client_key` |
-| **Tenant** | `gw_operators`, `gw_competitions`, `gw_rounds`, `gw_players`, `gw_predictions`, `gw_campaigns` | Operators in `/admin`, players in `/embed` | `client_key` |
+| **Tenant** | `gw_customers`, `gw_competitions`, `gw_rounds`, `gw_players`, `gw_predictions`, `gw_campaigns` | Customers in `/admin`, players in `/embed` | `client_key` |
 | **Platform** | `gw_admins`, `gw_billing_current` | out of band | — |
 
 The global layer having no `client_key` is the root of the load problem in §6: a tenant's page cannot filter it in the database, so it downloads all of it.
@@ -249,7 +249,7 @@ flowchart LR
     end
 
     subgraph tenant["Tenant layer"]
-        ops[(gw_operators)]
+        ops[(gw_customers)]
         comps[(gw_competitions)]
         rounds[(gw_rounds)]
         players[(gw_players)]
@@ -311,19 +311,19 @@ flowchart LR
 
 `gw_predictions` is the only table an unprivileged end user can write, which makes it the system's entire integrity surface.
 
-\* `/admin` → `gw_dm_events` is the one edge that does not fire in practice. Its only write is `admin:1951`, which sits inside the result-entry modal that has no call site and would throw if it were reached — see §6.3 of the assessment. Operators cannot enter results; all fixture and result writes go through `/data`.
+\* `/admin` → `gw_dm_events` is the one edge that does not fire in practice. Its only write is `admin:1951`, which sits inside the result-entry modal that has no call site and would throw if it were reached — see §6.3 of the assessment. Customers cannot enter results; all fixture and result writes go through `/data`.
 
 ---
 
 ## 5. Session isolation
 
-Each surface constructs its Supabase client with a distinct `storageKey`, so an operator who also plays on their own embed never has one session overwrite the other.
+Each surface constructs its Supabase client with a distinct `storageKey`, so an customer who also plays on their own embed never has one session overwrite the other.
 
 ```mermaid
 flowchart TB
     subgraph browser["One browser, one localStorage"]
         k1["gw-player"]
-        k2["gw-operator"]
+        k2["gw-customer"]
         k3["gw-admin"]
     end
 
@@ -333,11 +333,11 @@ flowchart TB
     data["/data"] --> k3
 
     k1 --> g1{"row in gw_players<br/>auth_id + client_key"}
-    k2 --> g2{"row in gw_operators<br/>auth_id"}
+    k2 --> g2{"row in gw_customers<br/>auth_id"}
     k3 --> g3{"row in gw_admins<br/>auth_id"}
 
     g1 -->|yes| p1["Player session"]
-    g2 -->|yes| p2["Operator session"]
+    g2 -->|yes| p2["Customer session"]
     g2 -->|no| p2b["Row auto-created<br/>on first login"]
     g3 -->|yes| p3["Platform admin session"]
     g3 -->|no| p3b["Access refused<br/><i>UI only — the database<br/>still accepts writes</i>"]
@@ -345,7 +345,7 @@ flowchart TB
     style p3b fill:#fdf0ee,stroke:#a3201a,stroke-width:2px
 ```
 
-Accounts are **per-embed, not per-platform**: the same email registering on two operators' sites produces two separate `gw_players` rows against one Supabase Auth user. The `/data` gate is enforced in the page, not in the database.
+Accounts are **per-embed, not per-platform**: the same email registering on two customers' sites produces two separate `gw_players` rows against one Supabase Auth user. The `/data` gate is enforced in the page, not in the database.
 
 ---
 
@@ -376,7 +376,7 @@ sequenceDiagram
         B->>DB: gw_dm_tournaments id,name,seasons
         B->>DB: gw_competitions where client_key
         B->>DB: gw_rounds where client_key
-        B->>DB: gw_operators.language where client_key
+        B->>DB: gw_customers.language where client_key
     end
     DB-->>B: entire platform fixture pool
 
@@ -389,7 +389,7 @@ sequenceDiagram
     end
 
     opt client ≠ demo
-        B->>DB: gw_operators theme columns
+        B->>DB: gw_customers theme columns
         B->>LS: write gw_theme_{client}
     end
 
@@ -487,7 +487,7 @@ https://www.gameweek.cloud/embed?client=<client_key>&comp=<id,id,...>
 | `client` | no — defaults to `demo` | Selects the tenant. Drives theme, language, competitions, player scope. |
 | `comp` | no | Comma-separated competition IDs. Narrows the embed; when it resolves to exactly one, the competition tab strip is hidden. An unmatched value renders a "competition not found" state. |
 
-Widgets take `client`, and `standings` additionally accepts `tournament` and `season`. The operator copies the generated `<iframe>` from `/admin` → Embed.
+Widgets take `client`, and `standings` additionally accepts `tournament` and `season`. The customer copies the generated `<iframe>` from `/admin` → Embed.
 
 ---
 
@@ -497,14 +497,14 @@ Widgets take `client`, and `standings` additionally accepts `tournament` and `se
 |---|---:|---|---|
 | `embed/index.html` | 5,066 | yes — 8 tables | The product |
 | `demo/index.html` | 4,289 | **no** | Hardcoded data; hand-maintained fork of `embed` |
-| `admin/index.html` | 4,009 | yes — 10 tables | Operator dashboard |
+| `admin/index.html` | 4,009 | yes — 10 tables | Customer dashboard |
 | `data/index.html` | 3,059 | yes — 7 tables | Platform data manager; the only place results are entered |
 | `index.html` | 517 | no | Marketing homepage; JSON-LD, GA |
 | `cs2fantasy/index.html` | — | no | **Orphaned** — unlinked, crawlable |
 | `widgets/squad-analytics/` | — | yes — 5 tables | Embeddable |
 | `widgets/top-scorers/` | — | yes — 5 tables | Embeddable |
 | `widgets/standings/` | — | yes — 4 tables | Embeddable, renders sponsor banner |
-| `welcome/index.html` | — | yes — writes `gw_operators` | Post-signup setup |
+| `welcome/index.html` | — | yes — writes `gw_customers` | Post-signup setup |
 | `reset-password/index.html` | — | auth only | The live reset target |
 | `reset/index.html` | — | auth only | **Orphaned** — superseded |
 | `pricingtest/index.html` | — | no | **Orphaned** — the only page with prices |
@@ -522,7 +522,7 @@ Thirteen commits landed after the baseline. Four of them change the architecture
 
 ### 11.1 The first server-side component: SSO
 
-`supabase/functions/sso-login/index.ts` is a Supabase Edge Function — the repository's first and only trusted server-side code. It verifies an HMAC-SHA256 signature made with the operator's `sso_secret` and mints a real Supabase session for a **synthetic** auth user (`sso-…@sso.gameweek.cloud`), so players already signed in on the operator's site (e.g. Shopify) enter the game without registering. Deployed manually (`supabase functions deploy sso-login`), not by the Pages workflow.
+`supabase/functions/sso-login/index.ts` is a Supabase Edge Function — the repository's first and only trusted server-side code. It verifies an HMAC-SHA256 signature made with the customer's `sso_secret` and mints a real Supabase session for a **synthetic** auth user (`sso-…@sso.gameweek.cloud`), so players already signed in on the customer's site (e.g. Shopify) enter the game without registering. Deployed manually (`supabase functions deploy sso-login`), not by the Pages workflow.
 
 Full design: [SSO.md](./SSO.md). Two structural consequences:
 
@@ -531,14 +531,14 @@ Full design: [SSO.md](./SSO.md). Two structural consequences:
 
 ### 11.2 Seamless script embed
 
-`embed.js` (repo root) is a loader operators paste instead of a fixed-height iframe. It injects `/embed?…&inline=1`, receives content-height reports by `postMessage`, streams the visible viewport band back (`--gw-vt`/`--gw-vh` pin overlays), and forwards the SSO identity. The postMessage protocol (`height`, `scroll-top`, `viewport`, `sso`) is now a **public integration contract** — operators embed this script once and never update it, so it must stay backwards-compatible.
+`embed.js` (repo root) is a loader customers paste instead of a fixed-height iframe. It injects `/embed?…&inline=1`, receives content-height reports by `postMessage`, streams the visible viewport band back (`--gw-vt`/`--gw-vh` pin overlays), and forwards the SSO identity. The postMessage protocol (`height`, `scroll-top`, `viewport`, `sso`) is now a **public integration contract** — customers embed this script once and never update it, so it must stay backwards-compatible.
 
 ### 11.3 RLS lockdown of PII (applied and verified in production)
 
-The assessment's C-3 (player emails world-readable) was confirmed live — and worse: `gw_operators` also leaked `email` and Stripe IDs to the anon key. Fixed 2026-08-28 and verified in production:
+The assessment's C-3 (player emails world-readable) was confirmed live — and worse: `gw_customers` also leaked `email` and Stripe IDs to the anon key. Fixed 2026-08-28 and verified in production:
 
-- `gw_operators_public` — a security-definer view exposing only branding columns (+ `domains` for the SSO origin check). The embed and standings widget now read branding from it.
-- Base tables `gw_operators` / `gw_players` locked to owner + platform admins; all anon access revoked.
+- `gw_customers_public` — a security-definer view exposing only branding columns (+ `domains` for the SSO origin check). The embed and standings widget now read branding from it.
+- Base tables `gw_customers` / `gw_players` locked to owner + platform admins; all anon access revoked.
 - `supabase-migration.sql` updated to match; standalone idempotent version in `supabase-rls-pii-fix.sql` (parts a/b for zero-downtime order).
 - New unique index `gw_players(client_key, username)` closes the username TOCTOU race.
 
@@ -564,4 +564,4 @@ League names are escaped on render (`escapeHtmlLineup`) — the new code has bet
 
 ---
 
-*Traced from the repository at `f25d78a`; addendum §11 reflects `a06b055` (2026-08-28). Table access was derived by enumerating `supa.from(...)` calls per file; RLS behaviour is inferred from `supabase-migration.sql` plus the applied `supabase-rls-pii-fix.sql`, and for `gw_operators`/`gw_players` was verified against production. Line numbers in §1–§10 refer to the baseline commit.*
+*Traced from the repository at `f25d78a`; addendum §11 reflects `a06b055` (2026-08-28). Table access was derived by enumerating `supa.from(...)` calls per file; RLS behaviour is inferred from `supabase-migration.sql` plus the applied `supabase-rls-pii-fix.sql`, and for `gw_customers`/`gw_players` was verified against production. Line numbers in §1–§10 refer to the baseline commit.*
