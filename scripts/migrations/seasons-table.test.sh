@@ -54,8 +54,8 @@ for f in "${ALL[@]}"; do
     docker exec -i "$CONTAINER" psql -q -U postgres -v ON_ERROR_STOP=1 <<'SQL'
 -- post-R3 shape: seasons hold only their keys
 insert into gw_dm_tournaments (id, name, seasons) values
-  ('t_a', 'League A', '{"2026/27": {}, "2025/26": {}}'::jsonb),
-  ('t_b', 'League B', '{"2026/27": {}}'::jsonb);
+  ('c0000000-0000-0000-0000-000000000003', 'League A', '{"2026/27": {}, "2025/26": {}}'::jsonb),
+  ('c0000000-0000-0000-0000-000000000004', 'League B', '{"2026/27": {}}'::jsonb);
 SQL
   fi
   docker cp "$f" "$CONTAINER:/tmp/mig.sql" >/dev/null
@@ -85,18 +85,18 @@ OTHER=00000000-0000-0000-0000-0000000000bb
 
 check "backfill created season rows per tournament" \
   "$(docker exec "$CONTAINER" psql -U postgres -qtA -c \
-    "select tournament_id || ':' || string_agg(season_key, '+' order by season_key) from gw_dm_seasons where tournament_id in ('t_a','t_b') group by tournament_id order by tournament_id;" | paste -sd, -)" \
-  "t_a:2025/26+2026/27,t_b:2026/27"
+    "select tournament_id || ':' || string_agg(season_key, '+' order by season_key) from gw_dm_seasons where tournament_id in ('c0000000-0000-0000-0000-000000000003','c0000000-0000-0000-0000-000000000004') group by tournament_id order by tournament_id;" | paste -sd, -)" \
+  "c0000000-0000-0000-0000-000000000003:2025/26+2026/27,c0000000-0000-0000-0000-000000000004:2026/27"
 check "the seasons blob column is gone" \
   "$(docker exec "$CONTAINER" psql -U postgres -qtA -c \
     "select count(*) from information_schema.columns where table_name='gw_dm_tournaments' and column_name='seasons';")" "0"
 check "anon reads seasons (embed and widgets hydrate logged out)" \
-  "$(sql_as anon "select count(*) from gw_dm_seasons where tournament_id in ('t_a','t_b');")" "3"
+  "$(sql_as anon "select count(*) from gw_dm_seasons where tournament_id in ('c0000000-0000-0000-0000-000000000003','c0000000-0000-0000-0000-000000000004');")" "3"
 check "admin creates and deletes a season" \
-  "$(sql_as $ADMIN "insert into gw_dm_seasons (tournament_id,season_key) values ('t_a','2027/28'); delete from gw_dm_seasons where tournament_id='t_a' and season_key='2025/26'; select count(*) from gw_dm_seasons where tournament_id='t_a';")" "2"
+  "$(sql_as $ADMIN "insert into gw_dm_seasons (tournament_id,season_key) values ('c0000000-0000-0000-0000-000000000003','2027/28'); delete from gw_dm_seasons where tournament_id='c0000000-0000-0000-0000-000000000003' and season_key='2025/26'; select count(*) from gw_dm_seasons where tournament_id='c0000000-0000-0000-0000-000000000003';")" "2"
 check "non-admin write refused" \
-  "$(sql_as $OTHER "insert into gw_dm_seasons (tournament_id,season_key) values ('t_a','evil');")" "ERR"
+  "$(sql_as $OTHER "insert into gw_dm_seasons (tournament_id,season_key) values ('c0000000-0000-0000-0000-000000000003','evil');")" "ERR"
 check "duplicate season refused" \
-  "$(sql_as $ADMIN "insert into gw_dm_seasons (tournament_id,season_key) values ('t_a','2026/27');")" "ERR"
+  "$(sql_as $ADMIN "insert into gw_dm_seasons (tournament_id,season_key) values ('c0000000-0000-0000-0000-000000000003','2026/27');")" "ERR"
 
 [ "$FAILED" -eq 0 ] && echo "ALL GREEN" || { echo "FAILURES"; exit 1; }

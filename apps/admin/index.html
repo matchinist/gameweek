@@ -1615,13 +1615,10 @@ const modeChip  = {lms:'LMS', score:'SCORE', betting:'BET', ranking:'RANKING', l
 function getEvent(id){ return state.events.find(e=>e.id===id); }
 function getComp(id){ return state.competitions.find(c=>c.id===id); }
 function uid(){
-  // crypto.randomUUID() is effectively collision-proof and available in all
-  // modern browsers; the previous 6-character Math.random() id had enough
-  // collision risk across many operators' data that two different accounts
-  // could end up with the same competition/round id — which is how deleting
-  // one operator's competition was able to delete another's.
-  if(window.crypto && typeof window.crypto.randomUUID==='function') return window.crypto.randomUUID().replace(/-/g,'').slice(0,12);
-  return Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,10);
+  // Entity ids are uuids as of the 2026-09 id standardisation — generated
+  // client-side (the bulk-save architecture depends on that) and inserted
+  // into uuid columns, so this must return a REAL uuid, not a slice.
+  return crypto.randomUUID();
 }
 
 function fmtDt(dt){
@@ -2444,7 +2441,7 @@ function buildRoundsFromTournament(tournamentId){
   const season = tournament?.seasons?.[CURRENT_SEASON];
   const gwRounds = season?.rounds||[];
   return gwRounds.map(r=>({
-    id: 'r'+uid(),
+    id: uid(),
     label: r.label,
     deadline: r.deadline||'',
     eventIds: [...(r.eventIds||[])],
@@ -2626,7 +2623,7 @@ async function createComp(){
     lineupConfig = { teamId, teamName: team?.name||'', tournamentIds };
   }
   const c = {
-    id: 'c'+uid(), name, mode, sport: bettingSport||scoreSport, scoring, markets, rankingConfig, lineupConfig, rouletteConfig,
+    id: uid(), name, mode, sport: bettingSport||scoreSport, scoring, markets, rankingConfig, lineupConfig, rouletteConfig,
     longTerm: false, scopeText: document.getElementById('new-comp-scope')?.value.trim()||'',
     status: 'draft', color: mode==='lineup'?'#0EA5E9':'#8B5CF6', users: 0, predictions: 0, rounds: []
   };
@@ -3331,7 +3328,7 @@ async function createRound(){
     const kickoffs = roundAddedEvents.map(e=>dmEvents[e.id]?.kickoff).filter(Boolean).map(k=>new Date(k).getTime());
     const deadline = kickoffs.length ? new Date(Math.min(...kickoffs)-2*60*60*1000).toISOString().slice(0,16) : '';
     const r = {
-      id:'r'+uid(), label:name, status:'open', deadline,
+      id:uid(), label:name, status:'open', deadline,
       rankingTeams, eventIds:roundAddedEvents.map(e=>e.id),
       prizes: getCleanPrizes('new-round')
     };
@@ -3355,7 +3352,7 @@ async function createRound(){
   const deadline = kickoffs.length ? new Date(Math.min(...kickoffs)-2*60*60*1000).toISOString().slice(0,16) : '';
   const tNames = [...new Set(roundAddedEvents.map(e=>e.tName))];
   const r = {
-    id:'r'+uid(), label:name, status:'open', deadline,
+    id:uid(), label:name, status:'open', deadline,
     tournamentIds:[], tournamentNames:tNames,
     eventIds: roundAddedEvents.map(e=>e.id),
     prizes: getCleanPrizes('new-round')
@@ -4626,7 +4623,7 @@ async function saveCampaign(){
     toast('Campaign updated');
   } else {
     const {error} = await supa.from('gw_campaigns').insert({
-      id: 'camp'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+      id: uid(),
       client_key: CLIENT_KEY, type, brand_name, logo_url, widget_keys, status:'active',
     });
     if(error){ toast('Save failed: '+error.message); console.error('campaign insert:',error); return; }

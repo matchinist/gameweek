@@ -1663,9 +1663,9 @@ async function confirmFixtureImport(){
   if(!st || st.unmatchedTeamNames.length) return;
   const season = getSeasonData(S.activeTournamentId, S.activeSeason);
   st.rounds.forEach(r=>{
-    const roundId = 'r'+uid();
+    const roundId = uid();
     const eventIds = r.matches.map(m=>{
-      const eid = 'ev'+uid();
+      const eid = uid();
       S.events[eid] = {
         homeId: m.homeTeamId, awayId: m.awayTeamId,
         // Import kickoffs are already ISO UTC instants (excelSerialToDate
@@ -1713,7 +1713,10 @@ async function resetClientData(){
   location.reload();
 }
 
-function uid(){return 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
+function uid(){
+  // Entity ids are uuids as of the 2026-09 id standardisation.
+  return crypto.randomUUID();
+}
 function getTeam(id){return S.teams.find(t=>t.id===id);}
 function getTournament(id){return S.tournaments.find(t=>t.id===id);}
 function abbr(name){return name.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();}
@@ -2664,7 +2667,7 @@ function createTeam(){
   const color=document.getElementById('ct-color').value;
   const logo=document.getElementById('ct-logo').value.trim();
   const sport=document.getElementById('ct-sport').value||'football';
-  S.teams.push({id:'tm'+uid(),name,short,color,logo,sport});
+  S.teams.push({id:uid(),name,short,color,logo,sport});
   closeModal('modal-create-team');
   document.getElementById('ct-name').value='';
   document.getElementById('ct-short').value='';
@@ -3063,7 +3066,7 @@ function pmApply(){
       if(tm&&smId!=null){ tm.providerIds=Object.assign({},tm.providerIds,{[pid]:smId}); }
       return existingId;
     }
-    const id='tm'+uid();
+    const id=uid();
     S.teams.push({id,name:name||('Team '+smId),short:(short||String(name||'').slice(0,3)).toUpperCase().slice(0,5),color:'#4F46E5',logo:image||'',sport:'football',providerIds:smId!=null?{[pid]:smId}:null});
     teamsCreated++;
     return id;
@@ -3086,7 +3089,7 @@ function pmApply(){
     } else if(r.action==='create'){
       const homeId=ensureTeam(r.homeTeam,r.fx.homeSmId,r.fx.homeName,r.fx.homeShort,r.fx.homeImage);
       const awayId=ensureTeam(r.awayTeam,r.fx.awaySmId,r.fx.awayName,r.fx.awayShort,r.fx.awayImage);
-      const eid='ev'+uid();
+      const eid=uid();
       S.events[eid]={homeId,awayId,kickoff:r.fx.startingAt||'',kickoffAt:r.fx.startingAt||null,result:null,status:'upcoming',line:2.5,providerIds:{[pid]:r.fx.smId}};
       if(season){ [homeId,awayId].forEach(id=>{ if(!season.teamIds.includes(id)) season.teamIds.push(id); }); }
       created++;
@@ -3436,14 +3439,14 @@ function generateRounds(){
   const count=parseInt(document.getElementById('gen-count').value)||38;
   const season=getSeasonData(S.activeTournamentId,S.activeSeason);
   season.rounds=[];
-  for(let i=1;i<=count;i++)season.rounds.push({id:'r'+uid(),label:`${prefix} ${i}`,deadline:'',eventIds:[]});
+  for(let i=1;i<=count;i++)season.rounds.push({id:uid(),label:`${prefix} ${i}`,deadline:'',eventIds:[]});
   S.openRounds.clear();save();renderTournamentView();switchTTab('rounds');toast(count+' rounds generated');
 }
 
 function addRound(){
   const season=getSeasonData(S.activeTournamentId,S.activeSeason);
   const num=season.rounds.length+1;
-  const r={id:'r'+uid(),label:'Round '+num,deadline:'',eventIds:[]};
+  const r={id:uid(),label:'Round '+num,deadline:'',eventIds:[]};
   season.rounds.push(r);S.openRounds.add(r.id);
   save();renderTournamentView();switchTTab('rounds');toast('Round added');
 }
@@ -3499,7 +3502,7 @@ function addEventToRound(roundId){
     const parsed=new Date(kickoffRaw);
     if(!isNaN(parsed.getTime())) kickoff=parsed.toISOString();
   }
-  const eid='ev'+uid();
+  const eid=uid();
   // kickoff is already a frozen UTC instant here, so kickoff_at is the same
   // value — both fields are written until 1.7 retires the text column.
   S.events[eid]={homeId,awayId,kickoff,kickoffAt:kickoff||null,result:null,status:'upcoming',line:2.5};
@@ -3911,7 +3914,7 @@ function removeEventFromRound(eid){
 function createTournament(){
   const name=document.getElementById('nt-name').value.trim();
   if(!name){toast('Enter tournament name');return;}
-  const t={id:'t'+uid(),name,country:document.getElementById('nt-country').value.trim()||'—',type:document.getElementById('nt-type').value,sport:document.getElementById('nt-sport').value||'football',color:'#4F46E5',seasons:{'2026/27':{teamIds:[],rounds:[]}}};
+  const t={id:uid(),name,country:document.getElementById('nt-country').value.trim()||'—',type:document.getElementById('nt-type').value,sport:document.getElementById('nt-sport').value||'football',color:'#4F46E5',seasons:{'2026/27':{teamIds:[],rounds:[]}}};
   S.tournaments.push(t);closeModal('modal-create-tournament');
   document.getElementById('nt-name').value='';document.getElementById('nt-country').value='';
   save();renderTournamentNav();navTo('tournament',t.id);toast(name+' created');

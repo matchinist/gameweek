@@ -164,7 +164,7 @@ async function runSportmonks(service: SupabaseClient, provider: ProviderRow, man
             const teamIdFor = async (smId: number, name: string | null, short: string | null, image: string | null) => {
               const known = teamBySmId[String(smId)];
               if (known) return known;
-              const id = "tm" + crypto.randomUUID().replace(/-/g, "").slice(0, 9);
+              const id = crypto.randomUUID();
               const { error } = await service.from("gw_dm_teams").insert({
                 id, name: name || `Team ${smId}`, short: (short || (name || "").slice(0, 3)).toUpperCase().slice(0, 5),
                 color: "#4F46E5", logo: image || "", sport: "football",
@@ -178,7 +178,7 @@ async function runSportmonks(service: SupabaseClient, provider: ProviderRow, man
             };
             const homeId = await teamIdFor(p.homeSmId, p.homeName, p.homeShort, p.homeImage);
             const awayId = await teamIdFor(p.awaySmId, p.awayName, p.awayShort, p.awayImage);
-            const evId = "ev" + crypto.randomUUID().replace(/-/g, "").slice(0, 9);
+            const evId = crypto.randomUUID();
             const { error: insErr } = await service.from("gw_dm_events").insert({
               id: evId, home_id: homeId, away_id: awayId,
               kickoff: p.startingAt || "", kickoff_at: p.startingAt, status: "upcoming", line: 2.5,

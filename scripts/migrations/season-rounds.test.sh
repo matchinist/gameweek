@@ -54,12 +54,12 @@ SQL
 for f in "${ALL[@]}"; do
   if [[ "$f" == *season_rounds* ]]; then
     docker exec -i "$CONTAINER" psql -q -U postgres -v ON_ERROR_STOP=1 <<'SQL'
-insert into gw_dm_tournaments (id, name, seasons) values ('t_sl', 'Super Lig', '{
+insert into gw_dm_tournaments (id, name, seasons) values ('c0000000-0000-0000-0000-000000000001', 'Super Lig', '{
   "2026-27": {
     "teamIds": ["tmA","tmB"],
     "rounds": [
-      {"id":"r_a","label":"Round 1","deadline":"","eventIds":["ev1","ev2"]},
-      {"id":"r_b","label":"Round 2","deadline":"2026-09-06","eventIds":["ev3"]}
+      {"id":"d0000000-0000-0000-0000-000000000001","label":"Round 1","deadline":"","eventIds":["b0000000-0000-0000-0000-000000000001","b0000000-0000-0000-0000-000000000002"]},
+      {"id":"d0000000-0000-0000-0000-000000000002","label":"Round 2","deadline":"2026-09-06","eventIds":["b0000000-0000-0000-0000-000000000003"]}
     ]
   }
 }'::jsonb);
@@ -92,16 +92,16 @@ OTHER=00000000-0000-0000-0000-0000000000bb
 
 check "backfill migrated rounds with order and event membership" \
   "$(docker exec "$CONTAINER" psql -U postgres -qtA -c \
-    "select string_agg(id || ':' || label || ':' || sort_order || ':' || array_to_string(event_ids,'+') || ':' || deadline, ',' order by sort_order) from gw_dm_season_rounds where tournament_id='t_sl' and season_key='2026-27';")" \
-  "r_a:Round 1:0:ev1+ev2:,r_b:Round 2:1:ev3:2026-09-06"
+    "select string_agg(id::text || ':' || label || ':' || sort_order || ':' || array_to_string(event_ids,'+') || ':' || deadline, ',' order by sort_order) from gw_dm_season_rounds where tournament_id='c0000000-0000-0000-0000-000000000001' and season_key='2026-27';")" \
+  "d0000000-0000-0000-0000-000000000001:Round 1:0:b0000000-0000-0000-0000-000000000001+b0000000-0000-0000-0000-000000000002:,d0000000-0000-0000-0000-000000000002:Round 2:1:b0000000-0000-0000-0000-000000000003:2026-09-06"
 check "season survives as a gw_dm_seasons row (blob column retires in R4)" \
   "$(docker exec "$CONTAINER" psql -U postgres -qtA -c \
-    "select string_agg(season_key, ',') from gw_dm_seasons where tournament_id='t_sl';")" \
+    "select string_agg(season_key, ',') from gw_dm_seasons where tournament_id='c0000000-0000-0000-0000-000000000001';")" \
   "2026-27"
 check "anon reads rounds (embed builds gameweek labels logged out)" \
   "$(sql_as anon "select count(*) from gw_dm_season_rounds;")" "2"
 check "admin rewrites a season's rounds" \
-  "$(sql_as $ADMIN "delete from gw_dm_season_rounds where tournament_id='t_sl'; insert into gw_dm_season_rounds (id,tournament_id,season_key,label,sort_order,event_ids) values ('r_c','t_sl','2026-27','Round X',0,'{ev9}'); select count(*) || ':' || max(label) from gw_dm_season_rounds;")" "1:Round X"
+  "$(sql_as $ADMIN "delete from gw_dm_season_rounds where tournament_id='c0000000-0000-0000-0000-000000000001'; insert into gw_dm_season_rounds (id,tournament_id,season_key,label,sort_order,event_ids) values ('d0000000-0000-0000-0000-000000000003','c0000000-0000-0000-0000-000000000001','2026-27','Round X',0,'{b0000000-0000-0000-0000-000000000009}'); select count(*) || ':' || max(label) from gw_dm_season_rounds;")" "1:Round X"
 check "non-admin write refused" \
   "$(sql_as $OTHER "insert into gw_dm_season_rounds (id,tournament_id,season_key,label) values ('evil','t','s','x');")" "ERR"
 

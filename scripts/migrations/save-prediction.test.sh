@@ -67,10 +67,10 @@ insert into gw_players (id, auth_id, client_key, username, email) values
   ('11111111-0000-0000-0000-000000000001','00000000-0000-0000-0000-0000000000a1','clientA','alice','a@t.io'),
   ('11111111-0000-0000-0000-000000000002','00000000-0000-0000-0000-0000000000b1','clientB','bob','b@t.io');
 insert into gw_dm_events (id, home_id, away_id, kickoff, kickoff_at) values
-  ('ev_open',     'h','a','', now() + interval '2 hours'),
-  ('ev_soon',     'h','a','', now() + interval '10 minutes'),
-  ('ev_boundary', 'h','a','', now() + interval '30 minutes'),
-  ('ev_no_ko',    'h','a','', null);
+  ('b0000000-0000-0000-0000-000000000001',     'a0000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-000000000002','', now() + interval '2 hours'),
+  ('b0000000-0000-0000-0000-000000000002',     'a0000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-000000000002','', now() + interval '10 minutes'),
+  ('b0000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-000000000002','', now() + interval '30 minutes'),
+  ('b0000000-0000-0000-0000-000000000004',    'a0000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-000000000002','', null);
 SQL
 
 FAILED=0
@@ -97,34 +97,34 @@ expect_ok() {
 q() { docker exec "$CONTAINER" psql -U postgres -qtA -c "$1"; }
 
 echo "== callers =="
-expect_err "anon cannot call"                        "$(call anon clientA ev_open '{"value":"1-0"}')" "permission denied"
-expect_err "authenticated without player row"        "$(call $ALICE clientB ev_open '{"value":"1-0"}')" "not_registered"
-expect_err "wrong tenant (bob into clientA)"         "$(call $BOB clientA ev_open '{"value":"1-0"}')" "not_registered"
+expect_err "anon cannot call"                        "$(call anon clientA b0000000-0000-0000-0000-000000000001 '{"value":"1-0"}')" "permission denied"
+expect_err "authenticated without player row"        "$(call $ALICE clientB b0000000-0000-0000-0000-000000000001 '{"value":"1-0"}')" "not_registered"
+expect_err "wrong tenant (bob into clientA)"         "$(call $BOB clientA b0000000-0000-0000-0000-000000000001 '{"value":"1-0"}')" "not_registered"
 
 echo "== deadline =="
-expect_ok  "open event accepted"                     "$(call $ALICE clientA ev_open '{"value":"2-1"}')"
-expect_err "10 minutes before kickoff is locked"     "$(call $ALICE clientA ev_soon '{"value":"1-1"}')" "locked"
-expect_err "exactly at the 30-min boundary is locked" "$(call $ALICE clientA ev_boundary '{"value":"1-1"}')" "locked"
+expect_ok  "open event accepted"                     "$(call $ALICE clientA b0000000-0000-0000-0000-000000000001 '{"value":"2-1"}')"
+expect_err "10 minutes before kickoff is locked"     "$(call $ALICE clientA b0000000-0000-0000-0000-000000000002 '{"value":"1-1"}')" "locked"
+expect_err "exactly at the 30-min boundary is locked" "$(call $ALICE clientA b0000000-0000-0000-0000-000000000003 '{"value":"1-1"}')" "locked"
 expect_ok  "event with no kickoff row (lineup/ranking round id) accepted" \
   "$(call $ALICE clientA round_lineup_1 '{"players":[1,2,3]}')"
 
 echo "== row contents =="
-GOT=$(q "select username || '|' || client_key || '|' || (prediction->>'value') from gw_predictions where event_id='ev_open';")
+GOT=$(q "select username || '|' || client_key || '|' || (prediction->>'value') from gw_predictions where event_id='b0000000-0000-0000-0000-000000000001';")
 if [ "$GOT" = "alice|clientA|2-1" ]; then echo "PASS  username set from gw_players, tenant + prediction stored"
 else echo "FAIL  row contents: got '$GOT'"; FAILED=1; fi
 
 echo "== upsert =="
-expect_ok  "second save updates, not duplicates"     "$(call $ALICE clientA ev_open '{"value":"3-0"}')"
-N=$(q "select count(*) from gw_predictions where event_id='ev_open';")
-V=$(q "select prediction->>'value' from gw_predictions where event_id='ev_open';")
+expect_ok  "second save updates, not duplicates"     "$(call $ALICE clientA b0000000-0000-0000-0000-000000000001 '{"value":"3-0"}')"
+N=$(q "select count(*) from gw_predictions where event_id='b0000000-0000-0000-0000-000000000001';")
+V=$(q "select prediction->>'value' from gw_predictions where event_id='b0000000-0000-0000-0000-000000000001';")
 if [ "$N" = "1" ] && [ "$V" = "3-0" ]; then echo "PASS  upsert keeps one row with the new value"
 else echo "FAIL  upsert: count=$N value=$V"; FAILED=1; fi
 
 echo "== locked update attempt =="
-q "update gw_dm_events set kickoff_at = now() + interval '5 minutes' where id='ev_open';" >/dev/null
+q "update gw_dm_events set kickoff_at = now() + interval '5 minutes' where id='b0000000-0000-0000-0000-000000000001';" >/dev/null
 expect_err "existing prediction cannot be changed after lock" \
-  "$(call $ALICE clientA ev_open '{"value":"9-9"}')" "locked"
-V2=$(q "select prediction->>'value' from gw_predictions where event_id='ev_open';")
+  "$(call $ALICE clientA b0000000-0000-0000-0000-000000000001 '{"value":"9-9"}')" "locked"
+V2=$(q "select prediction->>'value' from gw_predictions where event_id='b0000000-0000-0000-0000-000000000001';")
 if [ "$V2" = "3-0" ]; then echo "PASS  locked row unchanged"
 else echo "FAIL  locked row was modified: $V2"; FAILED=1; fi
 

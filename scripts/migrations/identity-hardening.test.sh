@@ -78,11 +78,11 @@ insert into gw_players (id, auth_id, client_key, username, email) values
   ('11111111-0000-0000-0000-000000000001','00000000-0000-0000-0000-0000000000a1','clientA','alice','a@t.io'),
   ('11111111-0000-0000-0000-000000000002','00000000-0000-0000-0000-0000000000b1','clientA','bob','b@t.io');
 insert into gw_leagues (id, client_key, name, code, created_by) values
-  ('lgA','clientA','A league','CODEA','alice');
+  ('e0000000-0000-0000-0000-000000000001','clientA','A league','CODEA','alice');
 -- legacy membership rows: alice matches a player; ghost does not
 insert into gw_league_members (league_id, username) values
-  ('lgA','alice'),
-  ('lgA','ghost_no_player');
+  ('e0000000-0000-0000-0000-000000000001','alice'),
+  ('e0000000-0000-0000-0000-000000000001','ghost_no_player');
 SQL
 
 for f in "${FROM[@]}"; do
@@ -122,13 +122,13 @@ N=$(q "select email from gw_players where username='bob';")
 
 echo "== league membership by player_id =="
 expect_ok  "bob joins with own player_id + username" \
-  "$(as $BOB "insert into gw_league_members (league_id, username, player_id) values ('lgA','bob','$P_BOB')")"
+  "$(as $BOB "insert into gw_league_members (league_id, username, player_id) values ('e0000000-0000-0000-0000-000000000001','bob','$P_BOB')")"
 expect_err "join with someone else's player_id blocked" \
-  "$(as $ALICE "insert into gw_league_members (league_id, username, player_id) values ('lgA','alice','$P_BOB')")" "row-level security"
+  "$(as $ALICE "insert into gw_league_members (league_id, username, player_id) values ('e0000000-0000-0000-0000-000000000001','alice','$P_BOB')")" "row-level security"
 expect_err "join with own player_id but spoofed username blocked" \
-  "$(as $BOB "delete from gw_league_members where username='bob'; insert into gw_league_members (league_id, username, player_id) values ('lgA','alice','$P_BOB')")" "row-level security"
+  "$(as $BOB "delete from gw_league_members where username='bob'; insert into gw_league_members (league_id, username, player_id) values ('e0000000-0000-0000-0000-000000000001','alice','$P_BOB')")" "row-level security"
 expect_err "join without player_id blocked (legacy insert path closed)" \
-  "$(as $BOB "insert into gw_league_members (league_id, username, player_id) values ('lgA','bob2',null)")" "row-level security"
+  "$(as $BOB "insert into gw_league_members (league_id, username, player_id) values ('e0000000-0000-0000-0000-000000000001','bob2',null)")" "row-level security"
 GOT=$(as $BOB "delete from gw_league_members where player_id='$P_ALICE' returning 1")
 N=$(q "select count(*) from gw_league_members where username='alice';")
 [ "$N" = "1" ] && echo "PASS  cannot delete another player's membership" || { echo "FAIL  alice's membership deleted"; FAILED=1; }

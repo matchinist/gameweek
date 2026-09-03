@@ -57,7 +57,7 @@ insert into auth.users (id) values ('00000000-0000-0000-0000-0000000000a1');
 insert into gw_players (id, auth_id, client_key, username, email) values
   ('11111111-0000-0000-0000-000000000001','00000000-0000-0000-0000-0000000000a1','clientA','alice','a@t.io');
 insert into gw_dm_events (id, home_id, away_id, kickoff, kickoff_at) values
-  ('ev_open','h','a','', now() + interval '2 hours');
+  ('b0000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-000000000002','', now() + interval '2 hours');
 SQL
 
 FAILED=0
@@ -76,17 +76,17 @@ expect_err() { if echo "$2" | grep -q "$3"; then echo "PASS  $1"; else echo "FAI
 expect_ok()  { if echo "$2" | grep -qi "error"; then echo "FAIL  $1 — unexpected error: $(echo "$2" | head -1)"; FAILED=1; else echo "PASS  $1"; fi; }
 
 expect_err "authenticated direct insert denied at grant level" \
-  "$(as $ALICE "insert into gw_predictions (client_key,player_id,username,competition_id,round_id,event_id,prediction) values ('clientA','$P_ALICE','alice','c1','r1','ev_open','{}')")" \
+  "$(as $ALICE "insert into gw_predictions (client_key,player_id,username,competition_id,round_id,event_id,prediction) values ('clientA','$P_ALICE','alice','c1','r1','b0000000-0000-0000-0000-000000000001','{}')")" \
   "permission denied for table gw_predictions"
 expect_err "anon direct insert denied" \
-  "$(as anon "insert into gw_predictions (client_key,player_id,username,competition_id,round_id,event_id,prediction) values ('clientA','$P_ALICE','alice','c1','r1','ev_open','{}')")" \
+  "$(as anon "insert into gw_predictions (client_key,player_id,username,competition_id,round_id,event_id,prediction) values ('clientA','$P_ALICE','alice','c1','r1','b0000000-0000-0000-0000-000000000001','{}')")" \
   "permission denied for table gw_predictions"
 expect_ok  "RPC write still works" \
-  "$(as $ALICE "select save_prediction('clientA','c1','r1','ev_open','{\"value\":\"1-0\"}'::jsonb)")"
+  "$(as $ALICE "select save_prediction('clientA','c1','r1','b0000000-0000-0000-0000-000000000001','{\"value\":\"1-0\"}'::jsonb)")"
 expect_err "authenticated direct update denied" \
   "$(as $ALICE "update gw_predictions set prediction='{}'::jsonb where player_id='$P_ALICE'")" \
   "permission denied for table gw_predictions"
-V=$(q "select prediction->>'value' from gw_predictions where event_id='ev_open';")
+V=$(q "select prediction->>'value' from gw_predictions where event_id='b0000000-0000-0000-0000-000000000001';")
 [ "$V" = "1-0" ] && echo "PASS  RPC row landed intact" || { echo "FAIL  RPC row: '$V'"; FAILED=1; }
 GRANTS=$(q "select string_agg(privilege_type, ',' order by privilege_type) from information_schema.role_table_grants where table_name='gw_predictions' and grantee='authenticated';")
 echo "$GRANTS" | grep -q "DELETE" && echo "PASS  DELETE grant kept (admin cleanup path)" || { echo "FAIL  grants now: $GRANTS"; FAILED=1; }

@@ -53,8 +53,13 @@ SQL
 for f in "${ALL[@]}"; do
   if [[ "$f" == *season_teams* ]]; then
     docker exec -i "$CONTAINER" psql -q -U postgres -v ON_ERROR_STOP=1 <<'SQL'
-insert into gw_dm_tournaments (id, name, seasons) values ('t_pool', 'Pool Cup', '{
-  "2026-27": { "teamIds": ["tmB","tmA","tmC"] },
+insert into gw_dm_teams (id, name, short, color) values
+  ('a0000000-0000-0000-0000-000000000001','Team A','TA','#111'),
+  ('a0000000-0000-0000-0000-000000000002','Team B','TB','#222'),
+  ('a0000000-0000-0000-0000-000000000003','Team C','TC','#333'),
+  ('a0000000-0000-0000-0000-000000000004','Team Z','TZ','#444');
+insert into gw_dm_tournaments (id, name, seasons) values ('c0000000-0000-0000-0000-000000000002', 'Pool Cup', '{
+  "2026-27": { "teamIds": ["a0000000-0000-0000-0000-000000000002","a0000000-0000-0000-0000-000000000001","a0000000-0000-0000-0000-000000000003"] },
   "2025-26": { "teamIds": [] }
 }'::jsonb);
 SQL
@@ -86,19 +91,19 @@ OTHER=00000000-0000-0000-0000-0000000000bb
 
 check "backfill preserved pool membership and array order" \
   "$(docker exec "$CONTAINER" psql -U postgres -qtA -c \
-    "select string_agg(team_id, ',' order by sort) from gw_dm_season_teams where tournament_id='t_pool' and season_key='2026-27';")" \
-  "tmB,tmA,tmC"
+    "select string_agg(team_id::text, ',' order by sort) from gw_dm_season_teams where tournament_id='c0000000-0000-0000-0000-000000000002' and season_key='2026-27';")" \
+  "a0000000-0000-0000-0000-000000000002,a0000000-0000-0000-0000-000000000001,a0000000-0000-0000-0000-000000000003"
 check "both seasons survive as gw_dm_seasons rows (blob column retires in R4)" \
   "$(docker exec "$CONTAINER" psql -U postgres -qtA -c \
-    "select string_agg(season_key, ',' order by season_key) from gw_dm_seasons where tournament_id='t_pool';")" \
+    "select string_agg(season_key, ',' order by season_key) from gw_dm_seasons where tournament_id='c0000000-0000-0000-0000-000000000002';")" \
   "2025-26,2026-27"
 check "anon reads pools (widgets scope by season teams logged out)" \
   "$(sql_as anon "select count(*) from gw_dm_season_teams;")" "3"
 check "admin rewrites a pool" \
-  "$(sql_as $ADMIN "delete from gw_dm_season_teams where tournament_id='t_pool'; insert into gw_dm_season_teams (tournament_id,season_key,team_id,sort) values ('t_pool','2026-27','tmZ',0); select count(*) || ':' || max(team_id) from gw_dm_season_teams;")" "1:tmZ"
+  "$(sql_as $ADMIN "delete from gw_dm_season_teams where tournament_id='c0000000-0000-0000-0000-000000000002'; insert into gw_dm_season_teams (tournament_id,season_key,team_id,sort) values ('c0000000-0000-0000-0000-000000000002','2026-27','a0000000-0000-0000-0000-000000000004',0); select count(*) || ':' || max(team_id::text) from gw_dm_season_teams;")" "1:a0000000-0000-0000-0000-000000000004"
 check "non-admin write refused" \
-  "$(sql_as $OTHER "insert into gw_dm_season_teams (tournament_id,season_key,team_id) values ('t','s','evil');")" "ERR"
+  "$(sql_as $OTHER "insert into gw_dm_season_teams (tournament_id,season_key,team_id) values ('c0000000-0000-0000-0000-000000000009','s','a0000000-0000-0000-0000-000000000009');")" "ERR"
 check "duplicate membership refused" \
-  "$(sql_as $ADMIN "insert into gw_dm_season_teams (tournament_id,season_key,team_id) values ('t_pool','2026-27','tmA');")" "ERR"
+  "$(sql_as $ADMIN "insert into gw_dm_season_teams (tournament_id,season_key,team_id) values ('c0000000-0000-0000-0000-000000000002','2026-27','a0000000-0000-0000-0000-000000000001');")" "ERR"
 
 [ "$FAILED" -eq 0 ] && echo "ALL GREEN" || { echo "FAILURES"; exit 1; }

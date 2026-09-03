@@ -70,16 +70,16 @@ insert into gw_players (id, auth_id, client_key, username, email) values
   ('11111111-0000-0000-0000-000000000001','00000000-0000-0000-0000-0000000000a1','clientA','alice','a@t.io'),
   ('11111111-0000-0000-0000-000000000002','00000000-0000-0000-0000-0000000000b1','clientA','bob','b@t.io');
 insert into gw_dm_events (id, home_id, away_id, kickoff, kickoff_at) values
-  ('ev_locked', 'h','a','', now() - interval '1 hour'),
-  ('ev_open',   'h','a','', now() + interval '2 hours'),
-  ('ev_noko',   'h','a','', null);
+  ('b0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-000000000002','', now() - interval '1 hour'),
+  ('b0000000-0000-0000-0000-000000000003',   'a0000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-000000000002','', now() + interval '2 hours'),
+  ('b0000000-0000-0000-0000-000000000002',   'a0000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-000000000002','', null);
 insert into gw_predictions (client_key, player_id, username, competition_id, round_id, event_id, prediction) values
-  ('clientA','11111111-0000-0000-0000-000000000001','alice','c1','r1','ev_locked','{"value":"1-0"}'),
-  ('clientA','11111111-0000-0000-0000-000000000001','alice','c1','r1','ev_open','{"value":"2-0"}'),
-  ('clientA','11111111-0000-0000-0000-000000000001','alice','c1','r1','ev_noko','{"value":"3-0"}'),
+  ('clientA','11111111-0000-0000-0000-000000000001','alice','c1','r1','b0000000-0000-0000-0000-000000000001','{"value":"1-0"}'),
+  ('clientA','11111111-0000-0000-0000-000000000001','alice','c1','r1','b0000000-0000-0000-0000-000000000003','{"value":"2-0"}'),
+  ('clientA','11111111-0000-0000-0000-000000000001','alice','c1','r1','b0000000-0000-0000-0000-000000000002','{"value":"3-0"}'),
   ('clientA','11111111-0000-0000-0000-000000000001','alice','c1','r1','round_lineup_1','{"players":[1]}'),
-  ('clientA','11111111-0000-0000-0000-000000000002','bob','c1','r1','ev_locked','{"value":"0-1"}'),
-  ('clientA','11111111-0000-0000-0000-000000000002','bob','c1','r1','ev_open','{"value":"0-2"}');
+  ('clientA','11111111-0000-0000-0000-000000000002','bob','c1','r1','b0000000-0000-0000-0000-000000000001','{"value":"0-1"}'),
+  ('clientA','11111111-0000-0000-0000-000000000002','bob','c1','r1','b0000000-0000-0000-0000-000000000003','{"value":"0-2"}');
 SQL
 
 FAILED=0
@@ -101,11 +101,11 @@ check() { local label="$1" got="$2" want="$3"
 # alice: all her own rows + bob's LOCKED row only
 check "alice sees own rows + others' locked rows only" \
   "$(seen $ALICE)" \
-  "alice:ev_locked,alice:ev_noko,alice:ev_open,alice:round_lineup_1,bob:ev_locked"
+  "alice:b0000000-0000-0000-0000-000000000001,alice:b0000000-0000-0000-0000-000000000002,alice:b0000000-0000-0000-0000-000000000003,alice:round_lineup_1,bob:b0000000-0000-0000-0000-000000000001"
 
 # anon: locked-event rows + round-keyed rows (public leaderboards)
 check "anon sees locked-event + round-keyed rows only" \
   "$(seen anon)" \
-  "alice:ev_locked,alice:round_lineup_1,bob:ev_locked"
+  "alice:b0000000-0000-0000-0000-000000000001,alice:round_lineup_1,bob:b0000000-0000-0000-0000-000000000001"
 
 [ "$FAILED" -eq 0 ] && echo "ALL GREEN" || { echo "FAILURES"; exit 1; }

@@ -61,16 +61,16 @@ SQL
 for f in "${ALL[@]}"; do
   if [[ "$f" == *standings_tables* ]]; then
     docker exec -i "$CONTAINER" psql -q -U postgres -v ON_ERROR_STOP=1 <<'SQL'
-insert into gw_dm_tournaments (id, name, seasons) values ('t_sl', 'Super Lig', '{
+insert into gw_dm_tournaments (id, name, seasons) values ('c0000000-0000-0000-0000-000000000001', 'Super Lig', '{
   "2026-27": {
-    "teamIds": ["tmA","tmB"],
+    "teamIds": ["a0000000-0000-0000-0000-000000000001","a0000000-0000-0000-0000-000000000002"],
     "rounds": [],
     "standings": {
       "updatedAt": "2026-09-01T10:00:00Z",
       "zones": [{"id":"z1","name":"Champions League","color":"#22c55e"}],
       "rows": [
-        {"rank":1,"name":"Galatasaray","teamId":"tmA","played":3,"w":3,"d":0,"l":0,"gf":8,"ga":2,"diff":6,"pts":9,"zoneId":"z1"},
-        {"rank":2,"name":"Fenerbahce","teamId":"tmB","played":3,"w":2,"d":1,"l":0,"gf":6,"ga":3,"diff":3,"pts":7,"zoneId":null}
+        {"rank":1,"name":"Galatasaray","teamId":"a0000000-0000-0000-0000-000000000001","played":3,"w":3,"d":0,"l":0,"gf":8,"ga":2,"diff":6,"pts":9,"zoneId":"z1"},
+        {"rank":2,"name":"Fenerbahce","teamId":"a0000000-0000-0000-0000-000000000002","played":3,"w":2,"d":1,"l":0,"gf":6,"ga":3,"diff":3,"pts":7,"zoneId":null}
       ]
     }
   },
@@ -106,23 +106,23 @@ OTHER=00000000-0000-0000-0000-0000000000bb
 
 check "backfill migrated blob rows" \
   "$(docker exec "$CONTAINER" psql -U postgres -qtA -c \
-    "select string_agg(rank || ':' || name || ':' || pts || ':' || coalesce(zone_id,'-'), ',' order by rank) from gw_dm_standings where tournament_id='t_sl' and season_key='2026-27' and round_id is null;")" \
+    "select string_agg(rank || ':' || name || ':' || pts || ':' || coalesce(zone_id,'-'), ',' order by rank) from gw_dm_standings where tournament_id='c0000000-0000-0000-0000-000000000001' and season_key='2026-27' and round_id is null;")" \
   "1:Galatasaray:9:z1,2:Fenerbahce:7:-"
 check "backfill migrated zones" \
   "$(docker exec "$CONTAINER" psql -U postgres -qtA -c \
-    "select zone_id || ':' || name from gw_dm_standing_zones where tournament_id='t_sl';")" \
+    "select zone_id || ':' || name from gw_dm_standing_zones where tournament_id='c0000000-0000-0000-0000-000000000001';")" \
   "z1:Champions League"
 check "both seasons survive as gw_dm_seasons rows (blob column retires in R4)" \
   "$(docker exec "$CONTAINER" psql -U postgres -qtA -c \
-    "select string_agg(season_key, ',' order by season_key) from gw_dm_seasons where tournament_id='t_sl';")" \
+    "select string_agg(season_key, ',' order by season_key) from gw_dm_seasons where tournament_id='c0000000-0000-0000-0000-000000000001';")" \
   "2025-26,2026-27"
 check "anon reads standings (widgets render logged out)" \
   "$(sql_as anon "select count(*) from gw_dm_standings;")" "2"
 check "admin replaces the table" \
-  "$(sql_as $ADMIN "delete from gw_dm_standings where tournament_id='t_sl'; insert into gw_dm_standings (tournament_id,season_key,rank,name,pts) values ('t_sl','2026-27',1,'Besiktas',12); select count(*) || ':' || max(name) from gw_dm_standings;")" "1:Besiktas"
+  "$(sql_as $ADMIN "delete from gw_dm_standings where tournament_id='c0000000-0000-0000-0000-000000000001'; insert into gw_dm_standings (tournament_id,season_key,rank,name,pts) values ('c0000000-0000-0000-0000-000000000001','2026-27',1,'Besiktas',12); select count(*) || ':' || max(name) from gw_dm_standings;")" "1:Besiktas"
 check "non-admin write refused" \
   "$(sql_as $OTHER "insert into gw_dm_standings (tournament_id,season_key,rank,name) values ('x','s',1,'evil');")" "ERR"
 check "duplicate rank in the same current-table scope refused (nulls not distinct)" \
-  "$(sql_as service_role "insert into gw_dm_standings (tournament_id,season_key,rank,name) values ('t_sl','2026-27',1,'dupe');")" "ERR"
+  "$(sql_as service_role "insert into gw_dm_standings (tournament_id,season_key,rank,name) values ('c0000000-0000-0000-0000-000000000001','2026-27',1,'dupe');")" "ERR"
 
 [ "$FAILED" -eq 0 ] && echo "ALL GREEN" || { echo "FAILURES"; exit 1; }

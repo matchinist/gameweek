@@ -58,16 +58,16 @@ SQL
 for f in "${ALL[@]}"; do
   if [[ "$f" == *schema_hardening* ]]; then
     docker exec -i "$CONTAINER" psql -q -U postgres -v ON_ERROR_STOP=1 <<'SQL'
-insert into gw_dm_teams (id, name, short, color) values ('tmX','Xteam','X','#111'), ('tmY','Yteam','Y','#222');
-insert into gw_dm_players (id, team_id, full_name) values ('plX','tmX','Player X');
-insert into gw_dm_tournaments (id, name) values ('t_h','Hard Cup');
-insert into gw_dm_seasons (tournament_id, season_key) values ('t_h','2026/27');
-insert into gw_dm_season_rounds (id, tournament_id, season_key, label, sort_order, event_ids) values ('r_h','t_h','2026/27','Round 1',0,'{}');
-insert into gw_dm_season_teams (tournament_id, season_key, team_id) values ('t_h','2026/27','tmX');
-insert into gw_dm_standing_zones (tournament_id, season_key, zone_id, name) values ('t_h','2026/27','z1','CL');
-insert into gw_dm_standings (tournament_id, season_key, rank, team_id, name, pts, zone_id) values ('t_h','2026/27',1,'tmX','Xteam',9,'z1');
+insert into gw_dm_teams (id, name, short, color) values ('a0000000-0000-0000-0000-000000000005','Xteam','X','#111'), ('a0000000-0000-0000-0000-000000000006','Yteam','Y','#222');
+insert into gw_dm_players (id, team_id, full_name) values ('90000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-000000000005','Player X');
+insert into gw_dm_tournaments (id, name) values ('c0000000-0000-0000-0000-000000000005','Hard Cup');
+insert into gw_dm_seasons (tournament_id, season_key) values ('c0000000-0000-0000-0000-000000000005','2026/27');
+insert into gw_dm_season_rounds (id, tournament_id, season_key, label, sort_order, event_ids) values ('d0000000-0000-0000-0000-000000000005','c0000000-0000-0000-0000-000000000005','2026/27','Round 1',0,'{}');
+insert into gw_dm_season_teams (tournament_id, season_key, team_id) values ('c0000000-0000-0000-0000-000000000005','2026/27','a0000000-0000-0000-0000-000000000005');
+insert into gw_dm_standing_zones (tournament_id, season_key, zone_id, name) values ('c0000000-0000-0000-0000-000000000005','2026/27','z1','CL');
+insert into gw_dm_standings (tournament_id, season_key, rank, team_id, name, pts, zone_id) values ('c0000000-0000-0000-0000-000000000005','2026/27',1,'a0000000-0000-0000-0000-000000000005','Xteam',9,'z1');
 -- an orphan the migration must sweep before constraints go on
-insert into gw_dm_season_teams (tournament_id, season_key, team_id) values ('t_h','2026/27','tm_GONE');
+insert into gw_dm_season_teams (tournament_id, season_key, team_id) values ('c0000000-0000-0000-0000-000000000005','2026/27','a0000000-0000-0000-0000-000000000007');
 SQL
   fi
   docker cp "$f" "$CONTAINER:/tmp/mig.sql" >/dev/null
@@ -82,23 +82,24 @@ check() { local label="$1" got="$2" want="$3"
 q() { docker exec "$CONTAINER" psql -U postgres -qtA -c "$1" 2>/dev/null | tail -1 || echo ERR; }
 
 check "orphan pool row swept before constraints" \
-  "$(q "select count(*) from gw_dm_season_teams where team_id='tm_GONE';")" "0"
+  "$(q "select count(*) from gw_dm_season_teams where team_id='a0000000-0000-0000-0000-000000000007';")" "0"
 check "deleting a tournament cascades the whole season graph" \
-  "$(q "delete from gw_dm_tournaments where id='t_h'; select (select count(*) from gw_dm_seasons where tournament_id='t_h') + (select count(*) from gw_dm_season_rounds where tournament_id='t_h') + (select count(*) from gw_dm_season_teams where tournament_id='t_h') + (select count(*) from gw_dm_standings where tournament_id='t_h') + (select count(*) from gw_dm_standing_zones where tournament_id='t_h');")" "0"
+  "$(q "delete from gw_dm_tournaments where id='c0000000-0000-0000-0000-000000000005'; select (select count(*) from gw_dm_seasons where tournament_id='c0000000-0000-0000-0000-000000000005') + (select count(*) from gw_dm_season_rounds where tournament_id='c0000000-0000-0000-0000-000000000005') + (select count(*) from gw_dm_season_teams where tournament_id='c0000000-0000-0000-0000-000000000005') + (select count(*) from gw_dm_standings where tournament_id='c0000000-0000-0000-0000-000000000005') + (select count(*) from gw_dm_standing_zones where tournament_id='c0000000-0000-0000-0000-000000000005');")" "0"
 docker exec -i "$CONTAINER" psql -q -U postgres -v ON_ERROR_STOP=1 <<'SQL'
-insert into gw_dm_tournaments (id, name) values ('t_h','Hard Cup');
-insert into gw_dm_seasons (tournament_id, season_key) values ('t_h','2026/27');
-insert into gw_dm_season_teams (tournament_id, season_key, team_id) values ('t_h','2026/27','tmX');
-insert into gw_dm_standings (tournament_id, season_key, rank, team_id, name, pts) values ('t_h','2026/27',1,'tmX','Xteam',9);
+insert into gw_dm_tournaments (id, name) values ('c0000000-0000-0000-0000-000000000005','Hard Cup');
+insert into gw_dm_seasons (tournament_id, season_key) values ('c0000000-0000-0000-0000-000000000005','2026/27');
+insert into gw_dm_season_teams (tournament_id, season_key, team_id) values ('c0000000-0000-0000-0000-000000000005','2026/27','a0000000-0000-0000-0000-000000000005');
+insert into gw_dm_standings (tournament_id, season_key, rank, team_id, name, pts) values ('c0000000-0000-0000-0000-000000000005','2026/27',1,'a0000000-0000-0000-0000-000000000005','Xteam',9);
 SQL
 check "deleting a team cascades players + pool rows, standings keep the name (team_id nulled)" \
-  "$(q "delete from gw_dm_teams where id='tmX'; select (select count(*) from gw_dm_players where id='plX')::text || ':' || (select count(*) from gw_dm_season_teams where team_id='tmX')::text || ':' || (select name || '/' || coalesce(team_id,'-') from gw_dm_standings where tournament_id='t_h' and rank=1);")" \
+  "$(q "delete from gw_dm_teams where id='a0000000-0000-0000-0000-000000000005'; select (select count(*) from gw_dm_players where id='90000000-0000-0000-0000-000000000001')::text || ':' || (select count(*) from gw_dm_season_teams where team_id='a0000000-0000-0000-0000-000000000005')::text || ':' || (select name || '/' || coalesce(team_id::text,'-') from gw_dm_standings where tournament_id='c0000000-0000-0000-0000-000000000005' and rank=1);")" \
   "0:0:Xteam/-"
 check "inserting a pool row for a missing season is refused" \
-  "$(docker exec "$CONTAINER" psql -U postgres -qtA -v ON_ERROR_STOP=1 -c "insert into gw_dm_season_teams (tournament_id,season_key,team_id) values ('t_h','1999/00','tmY');" >/dev/null 2>&1 && echo OK || echo ERR)" "ERR"
-check "machine-id columns use binary collation" \
-  "$(q "select count(*) from information_schema.columns where table_schema='public' and collation_name='C' and (table_name,column_name) in (('gw_dm_teams','id'),('gw_dm_tournaments','id'),('gw_dm_seasons','tournament_id'),('gw_dm_season_rounds','id'),('gw_dm_season_teams','team_id'),('gw_dm_standings','team_id'),('gw_dm_players','team_id'),('gw_dm_events','home_id'));")" "8"
-check "gw_dm_events.id deliberately unchanged (policy-referenced)" \
-  "$(q "select coalesce(collation_name,'default') from information_schema.columns where table_name='gw_dm_events' and column_name='id';")" "default"
+  "$(docker exec "$CONTAINER" psql -U postgres -qtA -v ON_ERROR_STOP=1 -c "insert into gw_dm_season_teams (tournament_id,season_key,team_id) values ('c0000000-0000-0000-0000-000000000005','1999/00','a0000000-0000-0000-0000-000000000006');" >/dev/null 2>&1 && echo OK || echo ERR)" "ERR"
+# The COLLATE "C" optimisation was superseded the same day by the uuid id
+# standard — these columns are uuid now, which is the stronger form of the
+# same fix (binary comparison, no collation at all).
+check "machine-id columns ended up uuid (collation optimisation superseded)" \
+  "$(q "select count(*) from information_schema.columns where table_schema='public' and data_type='uuid' and (table_name,column_name) in (('gw_dm_teams','id'),('gw_dm_tournaments','id'),('gw_dm_seasons','tournament_id'),('gw_dm_season_rounds','id'),('gw_dm_season_teams','team_id'),('gw_dm_standings','team_id'),('gw_dm_players','team_id'),('gw_dm_events','home_id'));")" "8"
 
 [ "$FAILED" -eq 0 ] && echo "ALL GREEN" || { echo "FAILURES"; exit 1; }

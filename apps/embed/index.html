@@ -4534,7 +4534,7 @@ function closeLeagueModal(){
   const wrap=document.getElementById('league-modal-wrap');
   if(wrap) wrap.innerHTML='';
 }
-function genLeagueId(){ return 'lg'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function genLeagueId(){ return crypto.randomUUID(); } // gw_leagues.id is uuid (2026-09 id standard)
 function genLeagueCode(){ return Math.random().toString(36).slice(2,8).toUpperCase(); }
 
 async function submitCreateLeague(){
