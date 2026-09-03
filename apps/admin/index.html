@@ -1842,7 +1842,7 @@ async function renderTeam(){
     rows.push(`<tr>
       <td>${escapeHtml(mm.email||'—')}</td>
       <td><span class="badge badge-blue">Member</span></td>
-      <td style="text-align:right;">${isOwner ? `<button class="btn btn-danger btn-sm" onclick="removeMember('${escapeHtml(mm.auth_id)}','${escapeHtml(mm.email||'')}')">Remove</button>` : ''}</td>
+      <td style="text-align:right;">${isOwner ? `<button class="btn btn-danger btn-sm" data-auth-id="${escapeHtml(mm.auth_id)}" data-email="${escapeHtml(mm.email||'')}" onclick="removeMember(this.dataset.authId,this.dataset.email)">Remove</button>` : ''}</td>
     </tr>`);
   });
   invites.forEach(inv=>{
