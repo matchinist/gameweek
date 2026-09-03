@@ -1008,6 +1008,7 @@ async function buildCompsFromRealData(){
       {data:roundsRows},
       {data:tournamentRows},
       {data:opRow},
+      {data:seasonRoundRows},
     ] = await Promise.all([
       supa.from('gw_dm_teams').select('*').limit(10000),
       // No limit() here silently truncates at Supabase's default 1000-row cap once
@@ -1022,9 +1023,27 @@ async function buildCompsFromRealData(){
       supa.from('gw_rounds').select('*').eq('client_key',CLIENT_PARAM).order('sort_order'),
       supa.from('gw_dm_tournaments').select('id,name,seasons'),
       (async()=>{ try{ return await supa.from('gw_operators_public').select('language').eq('client_key',CLIENT_PARAM).maybeSingle(); }catch(e){ return {data:null}; } })(),
+      // R2: season rounds are rows now; the mock demo client returns [] here
+      // and falls through to the (still-populated) dataset blobs below.
+      (async()=>{ try{ return await supa.from('gw_dm_season_rounds').select('tournament_id,season_key,id,label,event_ids').order('sort_order').limit(10000); }catch(e){ return {data:null}; } })(),
     ]);
     LANG = (opRow && I18N[opRow.language]) ? opRow.language : 'en';
     applyTranslations();
+
+    // Stitch table rounds back into the seasons shape the code below reads;
+    // blob rounds only survive as the pre-migration/demo fallback.
+    {
+      const byScope={};
+      (seasonRoundRows||[]).forEach(r=>{
+        const k=r.tournament_id+'|'+r.season_key;
+        (byScope[k]=byScope[k]||[]).push({id:r.id,label:r.label,eventIds:r.event_ids||[]});
+      });
+      (tournamentRows||[]).forEach(t=>{
+        Object.entries(t.seasons||{}).forEach(([key,season])=>{
+          season.rounds = byScope[t.id+'|'+key] || season.rounds || [];
+        });
+      });
+    }
 
     // Gameweek labels for lineup mode come straight from Data Manager's own
     // round structure (e.g. a round the admin named "Gameweek 4"), not from

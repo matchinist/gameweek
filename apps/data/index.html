@@ -1013,8 +1013,18 @@ async function save(){
     }
     if(S.tournaments.length){
       const {error:e2} = await supa.from('gw_dm_tournaments')
-        .upsert(S.tournaments.map(t=>({id:t.id,name:t.name,country:t.country||'',type:t.type||'league',sport:t.sport||'football',color:t.color||'#4F46E5',seasons:t.seasons||{},name_i18n:t.nameI18n??null,provider_ids:t.providerIds??null})),{onConflict:'id'});
+        .upsert(S.tournaments.map(t=>({id:t.id,name:t.name,country:t.country||'',type:t.type||'league',sport:t.sport||'football',color:t.color||'#4F46E5',seasons:stripMigratedSeasonKeys(t.seasons),name_i18n:t.nameI18n??null,provider_ids:t.providerIds??null})),{onConflict:'id'});
       if(e2){ toast('Save failed: '+e2.message); console.error('tournaments save:',e2); return false; }
+      // rounds are rows now (R2): mirror the in-memory state wholesale — the
+      // same last-writer-wins semantics the blob always had
+      const roundRows=[];
+      S.tournaments.forEach(t=>{ Object.entries(t.seasons||{}).forEach(([key,se])=>{ (se.rounds||[]).forEach((r,i)=>{ roundRows.push({id:r.id,tournament_id:t.id,season_key:key,label:r.label,deadline:r.deadline||'',sort_order:i,event_ids:r.eventIds||[]}); }); }); });
+      const {error:eRd}=await supa.from('gw_dm_season_rounds').delete().in('tournament_id',S.tournaments.map(t=>t.id));
+      if(eRd){ toast('Save failed: '+eRd.message); console.error('season rounds clear:',eRd); return false; }
+      if(roundRows.length){
+        const {error:eRi}=await supa.from('gw_dm_season_rounds').insert(roundRows);
+        if(eRi){ toast('Save failed: '+eRi.message); console.error('season rounds save:',eRi); return false; }
+      }
     }
     const evArr = Object.entries(S.events).map(([id,ev])=>({
       id, home_id:ev.homeId, away_id:ev.awayId,
@@ -1677,6 +1687,7 @@ async function resetClientData(){
   await Promise.all([
     supa.from('gw_dm_teams').delete().neq('id','__none__'),
     supa.from('gw_dm_tournaments').delete().neq('id','__none__'),
+    supa.from('gw_dm_season_rounds').delete().neq('id','__none__'),
     supa.from('gw_dm_events').delete().neq('id','__none__'),
   ]);
   location.reload();
@@ -3896,6 +3907,9 @@ function deleteTournament(id){
   if(!confirm('Delete "'+getTournament(id).name+'" and all its seasons?'))return;
   S.tournaments=S.tournaments.filter(x=>x.id!==id);
   supa.from('gw_dm_tournaments').delete().eq('id',id).then(()=>{});
+  supa.from('gw_dm_season_rounds').delete().eq('tournament_id',id).then(()=>{});
+  supa.from('gw_dm_standings').delete().eq('tournament_id',id).then(()=>{});
+  supa.from('gw_dm_standing_zones').delete().eq('tournament_id',id).then(()=>{});
   save();renderTournamentNav();navTo('teams');toast('Tournament deleted');
 }
 
@@ -4001,13 +4015,38 @@ async function dmLogin(){
   bootDataManager();
 }
 
+// R2: season rounds live in gw_dm_season_rounds; stitch them back into the
+// in-memory seasons shape at load so the whole editing surface keeps its
+// existing code. Blob rounds are only the pre-migration fallback.
+function stitchSeasonRounds(tournaments, roundRows){
+  const byScope={};
+  (roundRows||[]).forEach(r=>{
+    const k=r.tournament_id+'|'+r.season_key;
+    (byScope[k]=byScope[k]||[]).push({id:r.id,label:r.label,deadline:r.deadline||'',eventIds:r.event_ids||[]});
+  });
+  (tournaments||[]).forEach(t=>{
+    Object.entries(t.seasons||{}).forEach(([key,season])=>{
+      season.rounds = byScope[t.id+'|'+key] || season.rounds || [];
+    });
+  });
+}
+// The blob keeps everything EXCEPT what already moved to tables (R1
+// standings, R2 rounds) — stripping on save stops resurrecting them.
+function stripMigratedSeasonKeys(seasons){
+  const out={};
+  Object.entries(seasons||{}).forEach(([k,se])=>{ const {rounds,standings,...rest}=se; out[k]=rest; });
+  return out;
+}
+
 async function loadDMData(){
   // Load global DM data (shared — no client_key filter)
-  const [{data:teams},{data:tournaments},{data:events}] = await Promise.all([
+  const [{data:teams},{data:tournaments},{data:events},{data:seasonRoundRows}] = await Promise.all([
     supa.from('gw_dm_teams').select('*'),
     supa.from('gw_dm_tournaments').select('*'),
     supa.from('gw_dm_events').select('*'),
+    supa.from('gw_dm_season_rounds').select('*').order('sort_order').limit(10000),
   ]);
+  stitchSeasonRounds(tournaments, seasonRoundRows);
 
   // ── MIGRATE from localStorage if Supabase is empty ──────────────────────
   // If a user has data in the old localStorage format but nothing in Supabase,
