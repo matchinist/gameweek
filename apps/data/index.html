@@ -190,6 +190,15 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .dm-lineup-slot-empty{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px dashed rgba(255,255,255,0.8);background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.9);font-size:16px;}
 .dm-lineup-slot-label{font-size:8px;font-weight:800;letter-spacing:0.3px;color:#fff;background:rgba(20,20,40,0.55);padding:1.5px 5px;border-radius:4px;white-space:nowrap;max-width:66px;overflow:hidden;text-overflow:ellipsis;}
 </style>
+<script>
+// The sidebar nav buttons use inline onclick="navTo(...)", but the real
+// navTo is defined at the end of a ~4000-line synchronous script that also
+// waits on render-blocking CDN bundles. A click during that window threw
+// "navTo is not defined" (Sentry). Stub it so an early click is remembered
+// and replayed once the app has booted.
+window.__pendingNav = null;
+window.navTo = function(page, tournamentId){ window.__pendingNav = [page, tournamentId]; };
+</script>
 </head>
 <body>
 
@@ -852,7 +861,9 @@ if(window.Sentry){
   Sentry.setTag('app','data');
 }
 </script>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+<!-- defer: ~900 KB, only used by import/export actions, never at boot — so it
+     no longer blocks the main script (which defines navTo) from running. -->
+<script defer src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
 <script>
 // ── SUPABASE ──────────────────────────────────────────────────────────────
 const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
@@ -4014,6 +4025,13 @@ async function loadDMData(){
 
 // Start
 bootDataManager();
+
+// Replay a nav click that landed before this script defined the real navTo.
+if(window.__pendingNav){
+  const [p, t] = window.__pendingNav;
+  window.__pendingNav = null;
+  try{ navTo(p, t); }catch(e){ console.error('pending navTo replay failed:', e); }
+}
 </script>
 </body>
 </html>
