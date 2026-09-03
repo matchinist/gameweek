@@ -2429,6 +2429,7 @@ function renderLineupPredictor(comp){
   if(comp.lineupConfig?.teamId) loadTeamSquad(comp.lineupConfig.teamId);
   const ri = selectedRound[currentCompIdx]??0;
   const round = comp.rounds[ri]||comp.rounds[0];
+  if(!round) return `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">${t('noRoundsYet')}</div></div>`;
   // If nothing's loaded yet for this round (no DB-reconstructed save, no in-session
   // picks), check for an unsaved local draft from before a refresh and restore it.
   if(!lineupPicks[round.id]){
@@ -3821,9 +3822,11 @@ async function submitRanking(roundId){
 
 // ── LEADERBOARD ───────────────────────────────────────────────────────────
 function renderPredictionsPane(comp){
+  // No rounds means nothing to predict yet — bail before any mode-specific
+  // renderer (the lineup one dereferences comp.rounds[0] straight away).
+  if(!comp.rounds.length) return `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">${t('noRoundsYet')}</div></div>`;
   if(comp.mode==='lineup') return renderLineupPredictor(comp);
   const ri=selectedRound[currentCompIdx];
-  if(!comp.rounds.length) return `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">${t('noRoundsYet')}</div></div>`;
   const round=comp.rounds[ri]; if(!round) return '';
   let events=(round.eventIds||[]).map(id=>({id,...EVENTS[id],tournament:EVENT_TOURNAMENT[id]||(round.tournamentNames||[])[0]||''})).filter(e=>e.home);
   // Every created round is now listed in the dropdown (not just current and
