@@ -90,12 +90,14 @@ check "get_customer_public serves the single row to anon" \
 # browser-cached embeds; 20260904020000 drops it (owner call, same day).
 check "old get_operator_public is gone (wrapper dropped)" \
   "$(q "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and proname='get_operator_public';")" "0"
-check "gw_my_client_key recompiled against gw_customers" \
-  "$(docker exec "$CONTAINER" psql -U postgres -qtA -v ON_ERROR_STOP=1 -c "begin; set local role authenticated; set local \"request.jwt.claim.sub\" = '00000000-0000-0000-0000-0000000000cc'; select gw_my_client_key(); rollback;" | tail -1)" "renacme"
+# gw_my_client_key was superseded by gw_my_client_id in the client_id
+# migration; the identity it resolves is the same customer
+check "gw_my_client_id resolves the signed-in owner's customer" \
+  "$(docker exec "$CONTAINER" psql -U postgres -qtA -v ON_ERROR_STOP=1 -c "begin; set local role authenticated; set local \"request.jwt.claim.sub\" = '00000000-0000-0000-0000-0000000000cc'; select gw_my_client_id() = (select id from gw_customers where client_key='renacme'); rollback;" | tail -1)" "t"
 check "gw_workspace_invite_info recompiled (joins gw_customers for the company name)" \
   "$(as_anon "select gw_workspace_invite_info('tok-ren-1')->>'company_name';")" "Ren Acme"
-check "gw_admin_users_limit recompiled (executes without error)" \
-  "$(q "select gw_admin_users_limit('renacme') >= 0;")" "t"
+check "gw_admin_users_limit recompiled (executes without error; uuid form since client_id)" \
+  "$(q "select gw_admin_users_limit((select id from gw_customers where client_key='renacme')) >= 0;")" "t"
 check "customer reads own row through the renamed policy" \
   "$(docker exec "$CONTAINER" psql -U postgres -qtA -v ON_ERROR_STOP=1 -c "begin; set local role authenticated; set local \"request.jwt.claim.sub\" = '00000000-0000-0000-0000-0000000000cc'; select count(*) from gw_customers; rollback;" | tail -1)" "1"
 # Phase 0 revoked anon's grant on the table, so the probe errors ("blocked")

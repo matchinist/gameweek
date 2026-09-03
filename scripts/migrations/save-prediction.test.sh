@@ -63,9 +63,12 @@ docker exec -i "$CONTAINER" psql -q -U postgres -v ON_ERROR_STOP=1 <<'SQL'
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-0000000000a1'),
   ('00000000-0000-0000-0000-0000000000b1');
-insert into gw_players (id, auth_id, client_key, username, email) values
-  ('11111111-0000-0000-0000-000000000001','00000000-0000-0000-0000-0000000000a1','clientA','alice','a@t.io'),
-  ('11111111-0000-0000-0000-000000000002','00000000-0000-0000-0000-0000000000b1','clientB','bob','b@t.io');
+-- tenants are now rows in gw_customers; players reference them by client_id
+insert into gw_customers (client_key, email, company_name) values
+  ('clientA','a-owner@t.io','Client A'), ('clientB','b-owner@t.io','Client B');
+insert into gw_players (id, auth_id, client_id, username, email) values
+  ('11111111-0000-0000-0000-000000000001','00000000-0000-0000-0000-0000000000a1',(select id from gw_customers where client_key='clientA'),'alice','a@t.io'),
+  ('11111111-0000-0000-0000-000000000002','00000000-0000-0000-0000-0000000000b1',(select id from gw_customers where client_key='clientB'),'bob','b@t.io');
 insert into gw_dm_events (id, home_id, away_id, kickoff, kickoff_at) values
   ('b0000000-0000-0000-0000-000000000001',     'a0000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-000000000002','', now() + interval '2 hours'),
   ('b0000000-0000-0000-0000-000000000002',     'a0000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-000000000002','', now() + interval '10 minutes'),
@@ -109,7 +112,7 @@ expect_ok  "event with no kickoff row (lineup/ranking round id) accepted" \
   "$(call $ALICE clientA round_lineup_1 '{"players":[1,2,3]}')"
 
 echo "== row contents =="
-GOT=$(q "select username || '|' || client_key || '|' || (prediction->>'value') from gw_predictions where event_id='b0000000-0000-0000-0000-000000000001';")
+GOT=$(q "select p.username || '|' || c.client_key || '|' || (p.prediction->>'value') from gw_predictions p join gw_customers c on c.id=p.client_id where p. event_id='b0000000-0000-0000-0000-000000000001';")
 if [ "$GOT" = "alice|clientA|2-1" ]; then echo "PASS  username set from gw_players, tenant + prediction stored"
 else echo "FAIL  row contents: got '$GOT'"; FAILED=1; fi
 

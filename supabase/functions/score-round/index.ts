@@ -68,17 +68,21 @@ Deno.serve(async (req: Request) => {
   }
 
   // ── input ───────────────────────────────────────────────────────────────
-  let body: { client_key?: string; competition_id?: string; round_id?: string };
+  let body: { client_id?: string; competition_id?: string; round_id?: string };
   try { body = await req.json(); } catch { return json(400, { error: "invalid JSON body" }); }
-  const { client_key, competition_id, round_id } = body;
-  if (!client_key || !competition_id || !round_id) {
-    return json(400, { error: "client_key, competition_id and round_id are required" });
+  const { client_id, competition_id, round_id } = body;
+  if (!client_id || !competition_id || !round_id) {
+    return json(400, { error: "client_id, competition_id and round_id are required" });
   }
 
   // Everything past this point is an admin acting on a concrete scope —
-  // exactly what the audit trail exists to record.
+  // exactly what the audit trail exists to record. Audit rows keep the
+  // human-readable client_key (history survives tenant deletion), so the
+  // id is resolved back to its key once here.
+  const { data: customerRow } = await service
+    .from("gw_customers").select("client_key").eq("id", client_id).maybeSingle();
   const startedAt = Date.now();
-  const auditBase = { initiated_by: initiatedBy, client_key, competition_id, round_id };
+  const auditBase = { initiated_by: initiatedBy, client_key: customerRow?.client_key || client_id, competition_id, round_id };
   const logRun = async (fields: Record<string, unknown>) => {
     const { error } = await service.from("gw_score_runs")
       .insert({ ...auditBase, duration_ms: Date.now() - startedAt, ...fields });
@@ -91,10 +95,10 @@ Deno.serve(async (req: Request) => {
 
   // ── load ────────────────────────────────────────────────────────────────
   const [{ data: comp }, { data: rounds }, { data: predictions }] = await Promise.all([
-    service.from("gw_competitions").select("*").eq("client_key", client_key).eq("id", competition_id).maybeSingle(),
-    service.from("gw_rounds").select("*").eq("client_key", client_key).eq("competition_id", competition_id),
+    service.from("gw_competitions").select("*").eq("client_id", client_id).eq("id", competition_id).maybeSingle(),
+    service.from("gw_rounds").select("*").eq("client_id", client_id).eq("competition_id", competition_id),
     service.from("gw_predictions").select("id,player_id,username,round_id,event_id,prediction,points")
-      .eq("client_key", client_key).eq("competition_id", competition_id).limit(100000),
+      .eq("client_id", client_id).eq("competition_id", competition_id).limit(100000),
   ]);
   if (!comp) return await fail(404, "competition not found");
   if (!SCOREABLE_MODES.includes(comp.mode)) return await fail(400, `mode ${comp.mode} is not scoreable`, comp.mode);
@@ -142,17 +146,17 @@ Deno.serve(async (req: Request) => {
   }
 
   // ── write: leaderboard scopes (upsert current, delete departed) ─────────
-  const scope = { client_key, competition_id };
+  const scope = { client_id, competition_id };
   const writeScope = async (rows: Array<Record<string, unknown>>, roundIdOrNull: string | null) => {
     const payload = rows.map((r) => ({ ...scope, round_id: roundIdOrNull, ...r, updated_at: new Date().toISOString() }));
     if (payload.length) {
       const { error } = await service.from("gw_leaderboards")
-        .upsert(payload, { onConflict: "client_key,competition_id,round_id,player_id" });
+        .upsert(payload, { onConflict: "client_id,competition_id,round_id,player_id" });
       if (error) throw new Error(`leaderboard upsert failed: ${error.message}`);
     }
     // players who no longer have predictions in this scope (deleted rows)
     let del = service.from("gw_leaderboards").delete()
-      .eq("client_key", client_key).eq("competition_id", competition_id);
+      .eq("client_id", client_id).eq("competition_id", competition_id);
     del = roundIdOrNull === null ? del.is("round_id", null) : del.eq("round_id", roundIdOrNull);
     if (payload.length) del = del.not("player_id", "in", `(${rows.map((r) => `"${r.player_id}"`).join(",")})`);
     const { error: delErr } = await del;

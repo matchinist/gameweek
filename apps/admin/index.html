@@ -1539,6 +1539,7 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY, {auth:{persistSession:tru
 // ── AUTH ─────────────────────────────────────────────────────────────────
 let currentCustomer = null;
 let CLIENT_KEY = null;
+let CLIENT_ID  = null; // gw_customers.id — the tenant key every gw_* table uses since the client_id migration
 
 async function signOutCustomer(){
   await supa.auth.signOut();
@@ -1568,7 +1569,7 @@ async function saveAdminState(){
     // Upsert competitions
     if(state.competitions.length){
       const compRows = state.competitions.map(c=>({
-        id:c.id, client_key:CLIENT_KEY, name:c.name, mode:c.mode, sport:c.sport||null,
+        id:c.id, client_id:CLIENT_ID, name:c.name, mode:c.mode, sport:c.sport||null,
         color:c.color, status:c.status, long_term:c.longTerm||false,
         scoring:c.scoring||null, markets:c.markets||null,
         ranking_config:c.rankingConfig||null,
@@ -1587,7 +1588,7 @@ async function saveAdminState(){
     // Upsert all rounds across all competitions
     const allRounds = state.competitions.flatMap((c,ci)=>
       (c.rounds||[]).map((r,ri)=>({
-        id:r.id, competition_id:c.id, client_key:CLIENT_KEY,
+        id:r.id, competition_id:c.id, client_id:CLIENT_ID,
         label:r.label, status:r.status, deadline:r.deadline||'',
         event_ids:r.eventIds||[], tournament_ids:r.tournamentIds||[],
         tournament_names:r.tournamentNames||[], sort_order:ri,
@@ -1732,7 +1733,7 @@ async function renderBilling(){
   try{
     // Fetch billing data from Supabase view
     const {data:bill} = await supa.from('gw_billing_current')
-      .select('*').eq('client_key',CLIENT_KEY).single();
+      .select('*').eq('client_id',CLIENT_ID).single(); // the view exposes both client_id and client_key
 
     if(!bill) return;
 
@@ -1811,9 +1812,9 @@ async function renderTeam(){
   let members = [], invites = [], limit = 0;
   try{
     const [m, i, lim] = await Promise.all([
-      supa.from('gw_workspace_members').select('auth_id,email,created_at').eq('client_key', CLIENT_KEY),
-      supa.from('gw_workspace_invites').select('id,email,token,created_at').eq('client_key', CLIENT_KEY).is('accepted_at', null),
-      supa.rpc('gw_admin_users_limit', { p_client_key: CLIENT_KEY }),
+      supa.from('gw_workspace_members').select('auth_id,email,created_at').eq('client_id', CLIENT_ID),
+      supa.from('gw_workspace_invites').select('id,email,token,created_at').eq('client_id', CLIENT_ID).is('accepted_at', null),
+      supa.rpc('gw_admin_users_limit', { p_client_id: CLIENT_ID }),
     ]);
     members = m.data || [];
     invites = i.data || [];
@@ -3015,7 +3016,7 @@ async function refreshDMState(){
     supa.from('gw_dm_teams').select('*'),
     supa.from('gw_dm_tournaments').select('*'),
     supa.from('gw_dm_events').select('*'),
-    supa.from('gw_client_coverage').select('*').eq('client_key',CLIENT_KEY).maybeSingle(),
+    supa.from('gw_client_coverage').select('*').eq('client_id',CLIENT_ID).maybeSingle(),
     supa.from('gw_dm_season_rounds').select('*').order('sort_order').limit(10000),
     supa.from('gw_dm_season_teams').select('*').order('sort').limit(20000),
     supa.from('gw_dm_seasons').select('*').limit(10000),
@@ -3469,7 +3470,7 @@ async function saveRoundEdit(){
   // Lineup Predictor doesn't use this modal at all.
   if(['score','betting','ranking'].includes(comp.mode)){
     try{
-      const {data:existingPreds} = await supa.from('gw_predictions').select('username,player_id').eq('round_id',rid).eq('client_key',CLIENT_KEY);
+      const {data:existingPreds} = await supa.from('gw_predictions').select('username,player_id').eq('round_id',rid).eq('client_id',CLIENT_ID);
       if(existingPreds && existingPreds.length){
         const players = new Set(existingPreds.map(p=>p.username||p.player_id));
         const ok = confirm(`${players.size} player${players.size===1?' has':'s have'} already predicted this round. Changing its events${comp.mode==='ranking'?'/teams':''} now could mean their picks no longer match what's actually being scored — they won't be notified of the change.\n\nSave anyway?`);
@@ -3674,7 +3675,7 @@ async function deleteComp(id){
   const roundCount = (comp.rounds||[]).length;
   let summary = `${roundCount} round${roundCount===1?'':'s'}.`;
   try{
-    const {data:preds} = await supa.from('gw_predictions').select('username,player_id').eq('competition_id',id).eq('client_key',CLIENT_KEY);
+    const {data:preds} = await supa.from('gw_predictions').select('username,player_id').eq('competition_id',id).eq('client_id',CLIENT_ID);
     if(preds && preds.length){
       const players = new Set(preds.map(p=>p.username||p.player_id));
       summary = `${roundCount} round${roundCount===1?'':'s'}, and ${players.size} player${players.size===1?' has':'s have'} already predicted — ${players.size===1?'their':'all their'} picks will be lost.`;
@@ -3699,21 +3700,21 @@ async function confirmDeleteComp(){
   const btn = document.getElementById('del-comp-confirm-btn');
   btn.disabled = true; btn.textContent = 'Deleting…';
 
-  // client_key is included on every one of these as a hard safety boundary,
+  // client_id is included on every one of these as a hard safety boundary,
   // not just a convenience filter — even if an id were ever to collide
   // between two different customers' data, this guarantees a delete can
   // never reach past this customer's own rows, whatever mode the other
   // client's competition happens to share.
-  const {error} = await supa.from('gw_competitions').delete().eq('id',id).eq('client_key',CLIENT_KEY);
+  const {error} = await supa.from('gw_competitions').delete().eq('id',id).eq('client_id',CLIENT_ID);
   if(error){
     console.error('deleteComp failed:',error);
     toast('⚠ Delete failed: '+error.message);
     btn.disabled = false; btn.textContent = 'Delete permanently';
     return;
   }
-  const {error:roundsErr} = await supa.from('gw_rounds').delete().eq('competition_id',id).eq('client_key',CLIENT_KEY);
+  const {error:roundsErr} = await supa.from('gw_rounds').delete().eq('competition_id',id).eq('client_id',CLIENT_ID);
   if(roundsErr) console.error('deleteComp rounds cleanup failed:',roundsErr); // competition is already gone; don't block on this
-  const {error:predsErr} = await supa.from('gw_predictions').delete().eq('competition_id',id).eq('client_key',CLIENT_KEY);
+  const {error:predsErr} = await supa.from('gw_predictions').delete().eq('competition_id',id).eq('client_id',CLIENT_ID);
   if(predsErr) console.error('deleteComp predictions cleanup failed:',predsErr); // same — don't block, but surface it in console for follow-up
 
   state.competitions = state.competitions.filter(c=>c.id!==id);
@@ -4016,8 +4017,8 @@ async function loadUsers(force){
   renderUsers();
   try{
     const [{data:players, error:pErr}, {data:preds}] = await Promise.all([
-      supa.from('gw_players').select('*').eq('client_key',CLIENT_KEY),
-      supa.from('gw_predictions').select('username,player_id').eq('client_key',CLIENT_KEY),
+      supa.from('gw_players').select('*').eq('client_id',CLIENT_ID),
+      supa.from('gw_predictions').select('username,player_id').eq('client_id',CLIENT_ID),
     ]);
     if(pErr) throw pErr;
     const byName = {}, byId = {};
@@ -4171,7 +4172,7 @@ async function loadEngagementAnalytics(compId){
 
   const {data: preds, error} = await supa.from('gw_predictions')
     .select('username,player_id,round_id,event_id')
-    .eq('client_key', CLIENT_KEY)
+    .eq('client_id', CLIENT_ID)
     .eq('competition_id', compId)
     .in('round_id', relevantRounds.map(r=>r.id));
   if(error){
@@ -4443,7 +4444,7 @@ async function loadRetentionAnalytics(compId){
   }
   const {data, error} = await supa.from('gw_predictions')
     .select('username,player_id,round_id')
-    .eq('client_key',CLIENT_KEY)
+    .eq('client_id',CLIENT_ID)
     .eq('competition_id',compId)
     .in('round_id',roundIds);
   if(token!==retentionLoadToken) return;
@@ -4526,7 +4527,7 @@ const CAMPAIGN_WIDGET_OPTIONS = [
 const CAMPAIGN_TYPE_LABELS = { widget_sponsorship: 'Sponsorship for Widgets' };
 
 async function loadCampaigns(){
-  const {data, error} = await supa.from('gw_campaigns').select('*').eq('client_key',CLIENT_KEY).order('created_at',{ascending:false});
+  const {data, error} = await supa.from('gw_campaigns').select('*').eq('client_id',CLIENT_ID).order('created_at',{ascending:false});
   if(error){ console.error('loadCampaigns:',error); toast('Couldn\'t load campaigns: '+error.message); return; }
   state.campaigns = data||[];
   renderCampaignsList();
@@ -4624,7 +4625,7 @@ async function saveCampaign(){
   } else {
     const {error} = await supa.from('gw_campaigns').insert({
       id: uid(),
-      client_key: CLIENT_KEY, type, brand_name, logo_url, widget_keys, status:'active',
+      client_id: CLIENT_ID, type, brand_name, logo_url, widget_keys, status:'active',
     });
     if(error){ toast('Save failed: '+error.message); console.error('campaign insert:',error); return; }
     toast('Campaign added');
@@ -4903,9 +4904,9 @@ function initCustomerChrome(){
   if(!op){
     // Invited member? Load the workspace they were added to (its owner's
     // gw_customers row), readable via the widened customers_read_own policy.
-    const {data:mem} = await supa.from('gw_workspace_members').select('client_key').eq('auth_id',session.user.id).maybeSingle();
-    if(mem?.client_key){
-      const {data:wsOp} = await supa.from('gw_customers').select('*').eq('client_key',mem.client_key).maybeSingle();
+    const {data:mem} = await supa.from('gw_workspace_members').select('client_id').eq('auth_id',session.user.id).maybeSingle();
+    if(mem?.client_id){
+      const {data:wsOp} = await supa.from('gw_customers').select('*').eq('id',mem.client_id).maybeSingle();
       if(wsOp){ op = wsOp; state.isWorkspaceMember = true; }
     }
   }
@@ -4933,6 +4934,7 @@ function initCustomerChrome(){
   state.customerProfile = op;
   state.domains = op.domains||[];
   CLIENT_KEY = op.client_key;
+  CLIENT_ID = op.id;
   if(op.company_name){
     const nameEl = document.getElementById('sidebar-company-name');
     if(nameEl) nameEl.textContent = op.company_name;
@@ -4942,8 +4944,8 @@ function initCustomerChrome(){
 
   // Load competitions + rounds from Supabase
   const [{data:comps},{data:rounds}] = await Promise.all([
-    supa.from('gw_competitions').select('*').eq('client_key',CLIENT_KEY),
-    supa.from('gw_rounds').select('*').eq('client_key',CLIENT_KEY).order('sort_order'),
+    supa.from('gw_competitions').select('*').eq('client_id',CLIENT_ID),
+    supa.from('gw_rounds').select('*').eq('client_id',CLIENT_ID).order('sort_order'),
   ]);
   state.competitions = (comps||[]).map(c=>({
     id:c.id, name:c.name, mode:c.mode, sport:c.sport||null, color:c.color, status:c.status,
@@ -4973,7 +4975,7 @@ function initCustomerChrome(){
   try{
     const {data:usageRows} = await supa.from('gw_predictions')
       .select('competition_id,username,player_id')
-      .eq('client_key',CLIENT_KEY);
+      .eq('client_id',CLIENT_ID);
     const byComp = {}; // competition_id -> {users:Set, predictions:count}
     (usageRows||[]).forEach(r=>{
       if(!byComp[r.competition_id]) byComp[r.competition_id] = {users:new Set(), predictions:0};
@@ -4987,12 +4989,12 @@ function initCustomerChrome(){
     });
   }catch(e){ console.error('usage aggregation failed:', e); }
 
-  // Load global DM data (shared across all clients — no client_key filter)
+  // Load global DM data (shared across all clients — no tenant filter)
   const [{data:teams},{data:tournaments},{data:events},{data:coverage},{data:dmSeasonRounds},{data:dmSeasonTeams},{data:dmSeasons}] = await Promise.all([
     supa.from('gw_dm_teams').select('*'),
     supa.from('gw_dm_tournaments').select('*'),
     supa.from('gw_dm_events').select('*'),
-    supa.from('gw_client_coverage').select('*').eq('client_key',CLIENT_KEY).maybeSingle(),
+    supa.from('gw_client_coverage').select('*').eq('client_id',CLIENT_ID).maybeSingle(),
     supa.from('gw_dm_season_rounds').select('*').order('sort_order').limit(10000),
     supa.from('gw_dm_season_teams').select('*').order('sort').limit(20000),
     supa.from('gw_dm_seasons').select('*').limit(10000),

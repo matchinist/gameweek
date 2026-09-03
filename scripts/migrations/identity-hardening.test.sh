@@ -74,6 +74,10 @@ docker exec -i "$CONTAINER" psql -q -U postgres -v ON_ERROR_STOP=1 <<'SQL'
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-0000000000a1'),
   ('00000000-0000-0000-0000-0000000000b1');
+-- this seed runs BEFORE the uuid/rename/client_id migrations, so the
+-- operator-era table name and client_key columns are correct here; a
+-- customer row must exist or the client_id backfill sweeps these as orphans
+insert into gw_operators (client_key, email, company_name) values ('clientA','a-owner@t.io','Client A');
 insert into gw_players (id, auth_id, client_key, username, email) values
   ('11111111-0000-0000-0000-000000000001','00000000-0000-0000-0000-0000000000a1','clientA','alice','a@t.io'),
   ('11111111-0000-0000-0000-000000000002','00000000-0000-0000-0000-0000000000b1','clientA','bob','b@t.io');
@@ -112,7 +116,7 @@ GOT=$(q "select player_id is null from gw_league_members where username='ghost_n
 
 echo "== gw_players immutability =="
 expect_ok  "email update allowed"          "$(as $ALICE "update gw_players set email='new@t.io' where auth_id=auth.uid()")"
-expect_err "client_key change blocked"     "$(as $ALICE "update gw_players set client_key='clientB' where auth_id=auth.uid()")" "identity_immutable"
+expect_err "client_id change blocked"      "$(as $ALICE "update gw_players set client_id='00000000-0000-0000-0000-00000000beef' where auth_id=auth.uid()")" "identity_immutable"
 expect_err "username change blocked"       "$(as $ALICE "update gw_players set username='alice2' where auth_id=auth.uid()")" "identity_immutable"
 expect_err "auth_id change blocked"        "$(as $ALICE "update gw_players set auth_id='$BOB' where auth_id=auth.uid()")" "identity_immutable"
 GOT=$(as $ALICE "update gw_players set email='x@t.io' where username='bob' returning 1")

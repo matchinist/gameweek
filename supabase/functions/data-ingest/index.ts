@@ -262,21 +262,21 @@ const ADAPTERS: Record<string, (service: SupabaseClient, provider: ProviderRow, 
 // through score-round (service-to-service; the audit shows service:ingest).
 async function scoreAffectedRounds(service: SupabaseClient, updatedEventIds: string[], log: LogLine[]): Promise<number> {
   if (!updatedEventIds.length) return 0;
-  const scopes: Array<{ client_key: string; competition_id: string; round_id: string }> = [];
+  const scopes: Array<{ client_id: string; competition_id: string; round_id: string }> = [];
   const { data: rounds } = await service.from("gw_rounds")
-    .select("id,client_key,competition_id,event_ids")
+    .select("id,client_id,competition_id,event_ids")
     .overlaps("event_ids", updatedEventIds);
-  (rounds || []).forEach((r: { id: string; client_key: string; competition_id: string }) =>
-    scopes.push({ client_key: r.client_key, competition_id: r.competition_id, round_id: r.id }));
+  (rounds || []).forEach((r: { id: string; client_id: string; competition_id: string }) =>
+    scopes.push({ client_id: r.client_id, competition_id: r.competition_id, round_id: r.id }));
   const { data: lineupComps } = await service.from("gw_competitions")
-    .select("id,client_key,lineup_config").eq("mode", "lineup").eq("status", "active");
+    .select("id,client_id,lineup_config").eq("mode", "lineup").eq("status", "active");
   const { data: updatedEvents } = await service.from("gw_dm_events")
     .select("id,home_id,away_id").in("id", updatedEventIds);
-  (lineupComps || []).forEach((c: { id: string; client_key: string; lineup_config?: { teamId?: string } }) => {
+  (lineupComps || []).forEach((c: { id: string; client_id: string; lineup_config?: { teamId?: string } }) => {
     const tid = c.lineup_config?.teamId;
     (updatedEvents || []).forEach((e: { id: string; home_id: string; away_id: string }) => {
       if (tid && (tid === e.home_id || tid === e.away_id))
-        scopes.push({ client_key: c.client_key, competition_id: c.id, round_id: e.id });
+        scopes.push({ client_id: c.client_id, competition_id: c.id, round_id: e.id });
     });
   });
   const url = Deno.env.get("SUPABASE_URL")!;
@@ -289,7 +289,7 @@ async function scoreAffectedRounds(service: SupabaseClient, updatedEventIds: str
       body: JSON.stringify(s),
     });
     if (r.ok) scored++;
-    else log.push({ level: "error", msg: `score-round ${s.client_key}/${s.round_id}: HTTP ${r.status}` });
+    else log.push({ level: "error", msg: `score-round ${s.client_id}/${s.round_id}: HTTP ${r.status}` });
   }
   return scored;
 }

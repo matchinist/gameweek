@@ -54,14 +54,16 @@ done
 
 docker exec -i "$CONTAINER" psql -q -U postgres -v ON_ERROR_STOP=1 <<'SQL'
 insert into auth.users (id) values ('00000000-0000-0000-0000-0000000000a1');
-insert into gw_players (id, auth_id, client_key, username, email) values
-  ('11111111-0000-0000-0000-000000000001','00000000-0000-0000-0000-0000000000a1','clientA','alice','a@t.io');
+insert into gw_customers (client_key, email, company_name) values ('clientA','a-owner@t.io','Client A');
+insert into gw_players (id, auth_id, client_id, username, email) values
+  ('11111111-0000-0000-0000-000000000001','00000000-0000-0000-0000-0000000000a1',(select id from gw_customers where client_key='clientA'),'alice','a@t.io');
 insert into gw_dm_events (id, home_id, away_id, kickoff, kickoff_at) values
   ('b0000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-000000000002','', now() + interval '2 hours');
 SQL
 
 FAILED=0
 ALICE=00000000-0000-0000-0000-0000000000a1
+CID=$(docker exec "$CONTAINER" psql -U postgres -qtA -c "select id from gw_customers where client_key='clientA';")
 P_ALICE=11111111-0000-0000-0000-000000000001
 
 as() {
@@ -76,10 +78,10 @@ expect_err() { if echo "$2" | grep -q "$3"; then echo "PASS  $1"; else echo "FAI
 expect_ok()  { if echo "$2" | grep -qi "error"; then echo "FAIL  $1 — unexpected error: $(echo "$2" | head -1)"; FAILED=1; else echo "PASS  $1"; fi; }
 
 expect_err "authenticated direct insert denied at grant level" \
-  "$(as $ALICE "insert into gw_predictions (client_key,player_id,username,competition_id,round_id,event_id,prediction) values ('clientA','$P_ALICE','alice','c1','r1','b0000000-0000-0000-0000-000000000001','{}')")" \
+  "$(as $ALICE "insert into gw_predictions (client_id,player_id,username,competition_id,round_id,event_id,prediction) values ('$CID','$P_ALICE','alice','c1','r1','b0000000-0000-0000-0000-000000000001','{}')")" \
   "permission denied for table gw_predictions"
 expect_err "anon direct insert denied" \
-  "$(as anon "insert into gw_predictions (client_key,player_id,username,competition_id,round_id,event_id,prediction) values ('clientA','$P_ALICE','alice','c1','r1','b0000000-0000-0000-0000-000000000001','{}')")" \
+  "$(as anon "insert into gw_predictions (client_id,player_id,username,competition_id,round_id,event_id,prediction) values ('$CID','$P_ALICE','alice','c1','r1','b0000000-0000-0000-0000-000000000001','{}')")" \
   "permission denied for table gw_predictions"
 expect_ok  "RPC write still works" \
   "$(as $ALICE "select save_prediction('clientA','c1','r1','b0000000-0000-0000-0000-000000000001','{\"value\":\"1-0\"}'::jsonb)")"

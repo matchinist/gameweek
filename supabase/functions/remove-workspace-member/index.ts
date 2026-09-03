@@ -53,11 +53,11 @@ Deno.serve(async (req) => {
   // Caller must own a workspace.
   const { data: op, error: opErr } = await admin
     .from("gw_customers")
-    .select("client_key")
+    .select("id")
     .eq("auth_id", callerId)
     .maybeSingle();
   if (opErr) { console.error("remove-member: customer lookup:", opErr.message); return json(500, { error: "server_error" }); }
-  if (!op?.client_key) return json(403, { error: "not_workspace_owner" });
+  if (!op?.id) return json(403, { error: "not_workspace_owner" });
 
   if (memberAuthId === callerId) return json(400, { error: "cannot_remove_self" });
 
@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
   const { data: member, error: memErr } = await admin
     .from("gw_workspace_members")
     .select("auth_id")
-    .eq("client_key", op.client_key)
+    .eq("client_id", op.id)
     .eq("auth_id", memberAuthId)
     .maybeSingle();
   if (memErr) { console.error("remove-member: member lookup:", memErr.message); return json(500, { error: "server_error" }); }
@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
   // Belt-and-braces in case the cascade lagged.
   await admin.from("gw_workspace_members")
     .delete()
-    .eq("client_key", op.client_key)
+    .eq("client_id", op.id)
     .eq("auth_id", memberAuthId);
 
   return json(200, { removed: true });

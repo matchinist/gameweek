@@ -886,8 +886,8 @@ const S={
   activePage:'teams', activeTournamentId:null, activeSeason:'2026/27',
   editingTeamId:null, openRounds:new Set(),
   teams:[], tournaments:[], events:{},
-  clients:[], // [{client_key, label}] — loaded once for the coverage picker
-  coverageClientKey:null, coverageTournamentIds:new Set(), coverageTeamIds:new Set(),
+  clients:[], // [{id, client_key, label}] — loaded once for the coverage picker
+  coverageClientId:null, coverageTournamentIds:new Set(), coverageTeamIds:new Set(),
   packageSettings:{}, // setting_key -> { <package slug>: <value> } (gw_package_settings)
 };
 
@@ -916,17 +916,17 @@ async function scoreAffectedRounds(eid, opts){
   try{
     // Every customer round that contains this event…
     const {data: rounds, error} = await supa.from('gw_rounds')
-      .select('id,client_key,competition_id').contains('event_ids',[eid]);
+      .select('id,client_id,competition_id').contains('event_ids',[eid]);
     if(error) throw error;
-    const scopes = (rounds||[]).map(r=>({client_key:r.client_key, competition_id:r.competition_id, round_id:r.id}));
+    const scopes = (rounds||[]).map(r=>({client_id:r.client_id, competition_id:r.competition_id, round_id:r.id}));
     // …plus lineup competitions tracking either team — their "round" IS the
     // fixture (round_id = event id), so they never appear in gw_rounds.
     const {data: lineupComps} = await supa.from('gw_competitions')
-      .select('id,client_key,lineup_config').eq('mode','lineup').eq('status','active');
+      .select('id,client_id,lineup_config').eq('mode','lineup').eq('status','active');
     (lineupComps||[]).forEach(c=>{
       const tid=c.lineup_config?.teamId;
       if(tid && (tid===ev.homeId || tid===ev.awayId))
-        scopes.push({client_key:c.client_key, competition_id:c.id, round_id:eid});
+        scopes.push({client_id:c.client_id, competition_id:c.id, round_id:eid});
     });
     if(!scopes.length){ if(explicit) toast('No competition rounds use this event'); return; }
     const results = await Promise.all(scopes.map(s=>supa.functions.invoke('score-round',{body:s})));
@@ -951,20 +951,20 @@ async function backfillAllScores(){
   setBtn('Collecting…',true);
   try{
     const [{data:rounds,error:e1},{data:lineupComps,error:e2}] = await Promise.all([
-      supa.from('gw_rounds').select('id,client_key,competition_id,event_ids').limit(10000),
-      supa.from('gw_competitions').select('id,client_key,lineup_config').eq('mode','lineup').eq('status','active'),
+      supa.from('gw_rounds').select('id,client_id,competition_id,event_ids').limit(10000),
+      supa.from('gw_competitions').select('id,client_id,lineup_config').eq('mode','lineup').eq('status','active'),
     ]);
     if(e1) throw e1; if(e2) throw e2;
     const scopes=[];
     (rounds||[]).forEach(r=>{
       if((r.event_ids||[]).some(id=>S.events[id]?.result))
-        scopes.push({client_key:r.client_key, competition_id:r.competition_id, round_id:r.id});
+        scopes.push({client_id:r.client_id, competition_id:r.competition_id, round_id:r.id});
     });
     (lineupComps||[]).forEach(c=>{
       const tid=c.lineup_config?.teamId; if(!tid) return;
       Object.entries(S.events).forEach(([eid,ev])=>{
         if((ev.homeId===tid||ev.awayId===tid) && (ev.result||ev.lineup))
-          scopes.push({client_key:c.client_key, competition_id:c.id, round_id:eid});
+          scopes.push({client_id:c.client_id, competition_id:c.id, round_id:eid});
       });
     });
     if(!scopes.length){ toast('Nothing to score'); setBtn('Score all rounds',false); return; }
@@ -2308,9 +2308,9 @@ function renderTournamentNav(){
 async function renderCoverage(){
   if(!S.clients.length){
     try{
-      const {data,error} = await supa.from('gw_customers').select('client_key,company_name,email').order('company_name');
+      const {data,error} = await supa.from('gw_customers').select('id,client_key,company_name,email').order('company_name');
       if(error) throw error;
-      S.clients = (data||[]).filter(o=>o.client_key).map(o=>({client_key:o.client_key, label:o.company_name||o.email||o.client_key}));
+      S.clients = (data||[]).filter(o=>o.client_key).map(o=>({id:o.id, client_key:o.client_key, label:o.company_name||o.email||o.client_key}));
       if(!S.clients.length) console.warn('renderCoverage: gw_customers returned no rows — check RLS allows gw_admins to read all customers.');
     }catch(e){
       console.error('renderCoverage clients:',e);
@@ -2320,19 +2320,19 @@ async function renderCoverage(){
   const sel = document.getElementById('coverage-client-select');
   const prevVal = sel.value;
   sel.innerHTML = (S.clients.length ? '<option value="">— choose a client —</option>' : '<option value="">No clients found — check console</option>') +
-    S.clients.map(c=>`<option value="${c.client_key}">${c.label}</option>`).join('');
+    S.clients.map(c=>`<option value="${c.id}">${c.label}</option>`).join('');
   if(prevVal){ sel.value=prevVal; loadCoverageForClient(prevVal); }
   else { document.getElementById('coverage-body').style.display='none'; }
 }
 
-async function loadCoverageForClient(clientKey){
-  if(!clientKey){ document.getElementById('coverage-body').style.display='none'; return; }
-  S.coverageClientKey = clientKey;
+async function loadCoverageForClient(clientId){
+  if(!clientId){ document.getElementById('coverage-body').style.display='none'; return; }
+  S.coverageClientId = clientId;
   document.getElementById('coverage-body').style.display='block';
   document.getElementById('coverage-tournaments-list').innerHTML = '<div style="padding:10px;font-size:12px;color:var(--text-3);">Loading…</div>';
   document.getElementById('coverage-teams-list').innerHTML = '';
   try{
-    const {data} = await supa.from('gw_client_coverage').select('*').eq('client_key',clientKey).maybeSingle();
+    const {data} = await supa.from('gw_client_coverage').select('*').eq('client_id',clientId).maybeSingle();
     S.coverageTournamentIds = new Set(data?.tournament_ids||[]);
     S.coverageTeamIds = new Set(data?.team_ids||[]);
   }catch(e){
@@ -2369,16 +2369,16 @@ function toggleCoverageId(kind, id, checked){
 }
 
 async function saveCoverage(){
-  if(!S.coverageClientKey) return;
+  if(!S.coverageClientId) return;
   const btn = document.getElementById('coverage-save-btn');
   btn.disabled = true; btn.textContent = 'Saving…';
   try{
     const {error} = await supa.from('gw_client_coverage').upsert({
-      client_key: S.coverageClientKey,
+      client_id: S.coverageClientId,
       tournament_ids: [...S.coverageTournamentIds],
       team_ids: [...S.coverageTeamIds],
       updated_at: new Date().toISOString(),
-    }, {onConflict:'client_key'});
+    }, {onConflict:'client_id'});
     if(error) throw error;
     toast('Coverage saved');
   }catch(e){

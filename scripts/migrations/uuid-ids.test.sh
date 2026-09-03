@@ -71,6 +71,9 @@ insert into gw_dm_season_rounds (id, tournament_id, season_key, label, sort_orde
   ('srOLD','tOLD','2026/27','GW 1',0,'{evLOCKED,evOPEN,evGONE}');
 insert into gw_dm_season_teams (tournament_id, season_key, team_id) values ('tOLD','2026/27','tmHOME');
 insert into gw_dm_standings (tournament_id, season_key, rank, team_id, name, pts) values ('tOLD','2026/27',1,'tmHOME','Homers',3);
+-- a tenant row must exist for clientA (the later client_id migration
+-- sweeps tenant rows whose key matches no customer); operator-era name here
+insert into gw_operators (client_key, email, company_name) values ('clientA','a-owner@t.io','Client A');
 insert into gw_competitions (id, client_key, name, mode, lineup_config) values
   ('cSCORE','clientA','Score Comp','score', null),
   ('cLINE','clientA','Lineup Comp','lineup', '{"teamId":"tmHOME","tournamentIds":["tOLD"]}');

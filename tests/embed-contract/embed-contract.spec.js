@@ -19,8 +19,8 @@ const SUPA = 'https://mgfzqkesikfdrahherfm.supabase.co';
 // The fixture customer rows. `cttest` registers localhost (the stub host
 // origin), `ctdenied` registers only an unrelated domain.
 const CUSTOMERS = {
-  cttest: { company_name: 'CT Test', logo_url: null, accent_color: null, bg_color: null, surface_color: null, text_color: null, language: 'en', domains: ['localhost'] },
-  ctdenied: { company_name: 'CT Denied', logo_url: null, accent_color: null, bg_color: null, surface_color: null, text_color: null, language: 'en', domains: ['customer-site.example'] },
+  cttest: { id: 'a0000000-0000-4000-8000-00000000c001', company_name: 'CT Test', logo_url: null, accent_color: null, bg_color: null, surface_color: null, text_color: null, language: 'en', domains: ['localhost'] },
+  ctdenied: { id: 'a0000000-0000-4000-8000-00000000c002', company_name: 'CT Denied', logo_url: null, accent_color: null, bg_color: null, surface_color: null, text_color: null, language: 'en', domains: ['customer-site.example'] },
 };
 
 async function interceptSupabase(context, state) {

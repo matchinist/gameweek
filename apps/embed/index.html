@@ -613,6 +613,17 @@ const CLIENT_PARAM = new URLSearchParams(location.search).get('client') || 'demo
 // with a bundled dataset, and NEVER touches the real backend. Real clients
 // load zero extra bytes.
 const IS_DEMO = CLIENT_PARAM === 'demo';
+// Tenant tables are keyed by gw_customers.id (uuid) since the client_id
+// migration; the URL still carries the client_key slug. The id arrives with
+// the get_customer_public call the app already makes — and is cached in the
+// theme blob so repeat visits can start their tenant queries in parallel
+// instead of waiting for that rpc.
+let CLIENT_ID = null;
+try{
+  const _c=(new URLSearchParams(location.search).get('comp')||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const _k=_c.length===1?('gw_theme_'+CLIENT_PARAM+'__'+_c[0]):('gw_theme_'+CLIENT_PARAM);
+  const _t=JSON.parse(localStorage.getItem(_k)||'null')||{}; CLIENT_ID=_t.client_id||_t.id||null;
+}catch(e){}
 
 // ── HOST-PAGE SSO IDENTITY ────────────────────────────────────────────────
 // The user already signed in on the customer's site (e.g. their Shopify
@@ -1001,6 +1012,11 @@ function fmtKickoff(dt){
 async function buildCompsFromRealData(){
   COMPS=[]; EVENTS={}; EVENTS_RAW={}; EVENT_GAMEWEEK={}; EVENT_TOURNAMENT={}; EVENT_TOURNAMENT_ID={}; TOURNAMENT_NAMES={};
   try{
+    // The customer row resolves the tenant id every other query needs.
+    // With a cached id (any repeat visit) everything below runs in parallel;
+    // a first visit waits one round-trip for it.
+    const opFetch = (async()=>{ try{ const r=await supa.rpc('get_customer_public',{p_client_key:CLIENT_PARAM}); return {data:(r.data&&r.data[0])||null}; }catch(e){ return {data:null}; } })();
+    if(!CLIENT_ID) CLIENT_ID = ((await opFetch).data||{}).id || null;
     const [
       {data:teams},
       {data:evRows},
@@ -1013,20 +1029,21 @@ async function buildCompsFromRealData(){
       supa.from('gw_dm_teams').select('*').limit(10000),
       // No limit() here silently truncates at Supabase's default 1000-row cap once
       // the platform's total event count (across every client) crosses that line —
-      // this table has no client_key column to filter by, so every client page
+      // this table has no tenant column to filter by, so every client page
       // currently pulls the entire shared event pool. Raised the cap as an
       // immediate fix; the real long-term fix is scoping this query to only the
       // event ids this client's rounds actually reference, plus a separate
       // team-filtered query for lineup-mode competitions.
       supa.from('gw_dm_events').select('*').limit(10000),
-      supa.from('gw_competitions').select('*').eq('client_key',CLIENT_PARAM),
-      supa.from('gw_rounds').select('*').eq('client_key',CLIENT_PARAM).order('sort_order'),
+      supa.from('gw_competitions').select('*').eq('client_id',CLIENT_ID),
+      supa.from('gw_rounds').select('*').eq('client_id',CLIENT_ID).order('sort_order'),
       supa.from('gw_dm_tournaments').select('id,name,name_i18n'),
-      (async()=>{ try{ const r=await supa.rpc('get_customer_public',{p_client_key:CLIENT_PARAM}); return {data:(r.data&&r.data[0])||null}; }catch(e){ return {data:null}; } })(),
+      opFetch,
       // R2: season rounds are rows now; the mock demo client returns [] here
       // and falls through to the (still-populated) dataset blobs below.
       (async()=>{ try{ return await supa.from('gw_dm_season_rounds').select('tournament_id,season_key,id,label,event_ids').order('sort_order').limit(10000); }catch(e){ return {data:null}; } })(),
     ]);
+    CLIENT_ID = (opRow && opRow.id) || CLIENT_ID;
     LANG = (opRow && I18N[opRow.language]) ? opRow.language : 'en';
     applyTranslations();
 
@@ -1212,7 +1229,7 @@ async function buildCompsFromRealData(){
 }
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
-let currentPlayer=null; // {id, auth_id, username, email, client_key}
+let currentPlayer=null; // {id, auth_id, username, email, client_id}
 let rankingSubmitted={}; // tracks which ranking predictions are genuinely saved to the DB, vs an unsaved local default shown for the drag-to-reorder UI
 let authModalMouseDownTarget=null; // tracks where a mousedown started, so a text-selection drag that ends outside the modal doesn't get treated as a click-to-close
 let preds={};
@@ -1324,7 +1341,7 @@ async function doRegister(){
 
   // Check username not taken in this embed
   const {data:existing} = await supa.from('gw_players')
-    .select('id').eq('client_key',CLIENT_PARAM).eq('username',username).single();
+    .select('id').eq('client_id',CLIENT_ID).eq('username',username).single();
   if(existing){ resetBtn(btn); showAuthError(t('errUsernameTaken')); return; }
 
   // Create Supabase Auth user
@@ -1333,7 +1350,7 @@ async function doRegister(){
 
   // Create player profile
   const {data:player, error:playerErr} = await supa.from('gw_players')
-    .insert({auth_id:authData.user.id, client_key:CLIENT_PARAM, username, email})
+    .insert({auth_id:authData.user.id, client_id:CLIENT_ID, username, email})
     .select().single();
   if(playerErr){
     resetBtn(btn);
@@ -1359,7 +1376,7 @@ async function doLogin(){
 
   // Fetch player profile
   const {data:player, error:playerErr} = await supa.from('gw_players')
-    .select('*').eq('auth_id',authData.user.id).eq('client_key',CLIENT_PARAM).single();
+    .select('*').eq('auth_id',authData.user.id).eq('client_id',CLIENT_ID).single();
   if(playerErr||!player){
     resetBtn(btn);
     // The email/password were correct — this account just doesn't have a
@@ -1551,7 +1568,7 @@ async function finishSsoLogin(session, identity){
 
 async function ensureSsoPlayer(session, identity){
   const {data:existing} = await supa.from('gw_players').select('*')
-    .eq('auth_id',session.user.id).eq('client_key',CLIENT_PARAM).single();
+    .eq('auth_id',session.user.id).eq('client_id',CLIENT_ID).single();
   if(existing) return existing;
   // First visit: create the player row. Username comes from the host-provided
   // name, cleaned to the charset manual registration enforces and deduped
@@ -1571,10 +1588,10 @@ async function ensureSsoPlayer(session, identity){
     const suffix = attempt===0 ? '' : attempt<5 ? '_'+(attempt+1) : '_'+Math.floor(1000+Math.random()*9000);
     const username = base.slice(0,24-suffix.length)+suffix;
     const {data:taken} = await supa.from('gw_players').select('id')
-      .eq('client_key',CLIENT_PARAM).eq('username',username).single();
+      .eq('client_id',CLIENT_ID).eq('username',username).single();
     if(taken) continue;
     const {data:player, error} = await supa.from('gw_players')
-      .insert({auth_id:session.user.id, client_key:CLIENT_PARAM, username, email:safeEmail})
+      .insert({auth_id:session.user.id, client_id:CLIENT_ID, username, email:safeEmail})
       .select().single();
     if(player) return player;
     // A duplicate here means we lost a race on the username — try the next
@@ -1630,7 +1647,7 @@ async function loadPlayerPreds(){
   if(!currentPlayer) return;
   const {data} = await supa.from('gw_predictions')
     .select('event_id,prediction')
-    .eq('client_key',CLIENT_PARAM)
+    .eq('client_id',CLIENT_ID)
     .eq('player_id',currentPlayer.id);
   preds={};
   rankingSubmitted={};
@@ -2411,7 +2428,7 @@ async function loadLineupRank(roundId, teamId, myPts){
   try{
     const {data:allPreds,error} = await supa.from('gw_predictions')
       .select('username,prediction')
-      .eq('client_key',CLIENT_PARAM)
+      .eq('client_id',CLIENT_ID)
       .eq('round_id',roundId);
     if(error||!allPreds||!allPreds.length) return;
 
@@ -2743,7 +2760,7 @@ async function loadAndRenderLineupLeaderboard(comp){
   try{
     const {data:allPredsRaw,error} = await supa.from('gw_predictions')
       .select('username,player_id,prediction')
-      .eq('client_key',CLIENT_PARAM)
+      .eq('client_id',CLIENT_ID)
       .eq('competition_id',comp.id)
       .eq('round_id',round.id);
     if(error) throw error;
@@ -2813,7 +2830,7 @@ async function computeLineupOverallTotals(comp){
 
   const {data:allPreds,error} = await supa.from('gw_predictions')
     .select('username,player_id,prediction,round_id')
-    .eq('client_key',CLIENT_PARAM)
+    .eq('client_id',CLIENT_ID)
     .eq('competition_id',comp.id)
     .in('round_id', rounds.map(r=>r.id));
   if(error) throw error;
@@ -2902,7 +2919,7 @@ async function openLineupPredHistory(uEnc){
 
     const {data:allPreds,error} = await supa.from('gw_predictions')
       .select('username,player_id,prediction,round_id')
-      .eq('client_key',CLIENT_PARAM)
+      .eq('client_id',CLIENT_ID)
       .eq('competition_id',comp.id)
       .in('round_id', rounds.map(r=>r.id));
     if(error) throw error;
@@ -4347,7 +4364,7 @@ async function shadowCompareLeaderboard(comp, roundId, clientRows){
   shadowComparedScopes.add(key);
   try{
     let q = supa.from('gw_leaderboards').select('username,points,correct,total')
-      .eq('client_key',CLIENT_PARAM).eq('competition_id',comp.id);
+      .eq('client_id',CLIENT_ID).eq('competition_id',comp.id);
     q = roundId ? q.eq('round_id',roundId) : q.is('round_id',null);
     const {data:storedRows,error} = await q;
     if(error) return;
@@ -4380,7 +4397,7 @@ async function fetchLeagueMemberUsernames(leagueId){
 async function fetchMyLeaguesData(comp){
   const [{totals}, myMemberships] = await Promise.all([
     comp.mode==='lineup' ? computeLineupOverallTotals(comp).then(r=>({totals: Object.fromEntries(Object.entries(r.totals).map(([u,pts])=>[u,{pts}]))})) : computeOverallTotals(comp),
-    currentPlayer ? supa.from('gw_league_members').select('league_id, gw_leagues(id,name,code,client_key)').eq('player_id', currentPlayer.id) : Promise.resolve({data:[]}),
+    currentPlayer ? supa.from('gw_league_members').select('league_id, gw_leagues(id,name,code,client_id)').eq('player_id', currentPlayer.id) : Promise.resolve({data:[]}),
   ]);
   const rankOf = (usernames)=>{
     const rows = Object.entries(totals)
@@ -4394,7 +4411,7 @@ async function fetchMyLeaguesData(comp){
 
   const general = { id:'general', name:t('generalLeague'), isGeneral:true, code:null, ...rankOf(null) };
 
-  const memberRows = (myMemberships?.data||[]).filter(m=>m.gw_leagues && m.gw_leagues.client_key===CLIENT_PARAM);
+  const memberRows = (myMemberships?.data||[]).filter(m=>m.gw_leagues && m.gw_leagues.client_id===CLIENT_ID);
   const privateLeagues = await Promise.all(memberRows.map(async m=>{
     const league = m.gw_leagues;
     const {data:members} = await supa.from('gw_league_members').select('username').eq('league_id', league.id);
@@ -4543,7 +4560,7 @@ async function submitCreateLeague(){
   if(!name){ toast(t('leagueName')+'?'); return; }
   if(!currentPlayer) return;
   const id=genLeagueId(), code=genLeagueCode();
-  const {error}=await supa.from('gw_leagues').insert({id, client_key:CLIENT_PARAM, name, code, created_by:currentPlayer.username});
+  const {error}=await supa.from('gw_leagues').insert({id, client_id:CLIENT_ID, name, code, created_by:currentPlayer.username});
   if(error){ toast('Could not create league'); console.error('createLeague:',error); return; }
   // Membership is keyed by player_id (Phase 1.8); username rides along for display.
   const {error:memberErr}=await supa.from('gw_league_members').insert({league_id:id, username:currentPlayer.username, player_id:currentPlayer.id});
@@ -4560,7 +4577,7 @@ async function submitJoinLeague(){
   const code=(input?.value||'').trim().toUpperCase();
   if(!code){ toast(t('leagueCode')+'?'); return; }
   if(!currentPlayer) return;
-  const {data:league,error}=await supa.from('gw_leagues').select('id,name').eq('client_key',CLIENT_PARAM).eq('code',code).maybeSingle();
+  const {data:league,error}=await supa.from('gw_leagues').select('id,name').eq('client_id',CLIENT_ID).eq('code',code).maybeSingle();
   if(error || !league){ toast(t('invalidCode')); return; }
   const {data:existing}=await supa.from('gw_league_members').select('username').eq('league_id',league.id).eq('player_id',currentPlayer.id).maybeSingle();
   if(existing){ closeLeagueModal(); toast(t('leagueJoined')); const comp=COMPS[currentCompIdx]; const target=document.getElementById('lb-content'); if(target&&comp) await renderLeaguesListScreen(comp,target); return; }
@@ -4607,7 +4624,7 @@ async function loadAndRenderLeaderboard(comp){
   try{
     const {data:allPredsRaw,error}=await supa.from('gw_predictions')
       .select('username,player_id,event_id,prediction')
-      .eq('client_key',CLIENT_PARAM)
+      .eq('client_id',CLIENT_ID)
       .eq('competition_id',comp.id)
       .eq('round_id',round.id);
     if(error) throw error;
@@ -4751,7 +4768,7 @@ async function computeOverallTotals(comp){
   if(!rounds.length) return {totals:{}, overallHist:null, allPreds:[], rounds};
   const {data:allPreds,error}=await supa.from('gw_predictions')
     .select('username,player_id,event_id,round_id,prediction')
-    .eq('client_key',CLIENT_PARAM)
+    .eq('client_id',CLIENT_ID)
     .eq('competition_id',comp.id)
     .in('round_id', rounds.map(r=>r.id));
   if(error) throw error;
@@ -5213,7 +5230,7 @@ async function renderProfile(){
     const isActive=comp.rounds.some(r=>r.status==='open');
     // Fetch player's total points and rank
     try{
-      const {data:allPreds}=await supa.from('gw_predictions').select('username,player_id,event_id,prediction').eq('client_key',CLIENT_PARAM).eq('competition_id',comp.id);
+      const {data:allPreds}=await supa.from('gw_predictions').select('username,player_id,event_id,prediction').eq('client_id',CLIENT_ID).eq('competition_id',comp.id);
       if(!allPreds||!allPreds.length)continue;
 
       // Calculate points per player
@@ -5311,7 +5328,7 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
     await buildCompsFromRealData();
 
     if(session){
-      const {data:player} = await supa.from('gw_players').select('*').eq('auth_id',session.user.id).eq('client_key',CLIENT_PARAM).single();
+      const {data:player} = await supa.from('gw_players').select('*').eq('auth_id',session.user.id).eq('client_id',CLIENT_ID).single();
       if(player){ currentPlayer=player; try{ await loadPlayerPreds(); }catch(e){} }
     }
 
@@ -5322,6 +5339,7 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
         // domains allowlist — and the customer roster is no longer listable.
         const {data:opRows} = await supa.rpc('get_customer_public',{p_client_key:CLIENT_PARAM});
         const op = (opRows&&opRows[0])||null;
+        CLIENT_ID = op?.id || CLIENT_ID;
         if(Array.isArray(op?.domains)) customerDomains = op.domains;
 
         // When the embed is scoped to exactly ONE competition, that
@@ -5384,6 +5402,7 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
               accent_color: theme.accent_color, bg_color: theme.bg_color,
               surface_color: theme.surface_color, text_color: theme.text_color,
               logo_url: op?.logo_url||null, company_name: op?.company_name||null,
+              client_id: op?.id||null,
             }));
           }catch(e){}
         }

@@ -66,20 +66,21 @@ docker exec -i "$CONTAINER" psql -q -U postgres -v ON_ERROR_STOP=1 <<'SQL'
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-0000000000a1'),
   ('00000000-0000-0000-0000-0000000000b1');
-insert into gw_players (id, auth_id, client_key, username, email) values
-  ('11111111-0000-0000-0000-000000000001','00000000-0000-0000-0000-0000000000a1','clientA','alice','a@t.io'),
-  ('11111111-0000-0000-0000-000000000002','00000000-0000-0000-0000-0000000000b1','clientA','bob','b@t.io');
+insert into gw_customers (client_key, email, company_name) values ('clientA','a-owner@t.io','Client A');
+insert into gw_players (id, auth_id, client_id, username, email) values
+  ('11111111-0000-0000-0000-000000000001','00000000-0000-0000-0000-0000000000a1',(select id from gw_customers where client_key='clientA'),'alice','a@t.io'),
+  ('11111111-0000-0000-0000-000000000002','00000000-0000-0000-0000-0000000000b1',(select id from gw_customers where client_key='clientA'),'bob','b@t.io');
 insert into gw_dm_events (id, home_id, away_id, kickoff, kickoff_at) values
   ('b0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-000000000002','', now() - interval '1 hour'),
   ('b0000000-0000-0000-0000-000000000003',   'a0000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-000000000002','', now() + interval '2 hours'),
   ('b0000000-0000-0000-0000-000000000002',   'a0000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-000000000002','', null);
-insert into gw_predictions (client_key, player_id, username, competition_id, round_id, event_id, prediction) values
-  ('clientA','11111111-0000-0000-0000-000000000001','alice','c1','r1','b0000000-0000-0000-0000-000000000001','{"value":"1-0"}'),
-  ('clientA','11111111-0000-0000-0000-000000000001','alice','c1','r1','b0000000-0000-0000-0000-000000000003','{"value":"2-0"}'),
-  ('clientA','11111111-0000-0000-0000-000000000001','alice','c1','r1','b0000000-0000-0000-0000-000000000002','{"value":"3-0"}'),
-  ('clientA','11111111-0000-0000-0000-000000000001','alice','c1','r1','round_lineup_1','{"players":[1]}'),
-  ('clientA','11111111-0000-0000-0000-000000000002','bob','c1','r1','b0000000-0000-0000-0000-000000000001','{"value":"0-1"}'),
-  ('clientA','11111111-0000-0000-0000-000000000002','bob','c1','r1','b0000000-0000-0000-0000-000000000003','{"value":"0-2"}');
+insert into gw_predictions (client_id, player_id, username, competition_id, round_id, event_id, prediction) values
+  ((select id from gw_customers where client_key='clientA'),'11111111-0000-0000-0000-000000000001','alice','c1','r1','b0000000-0000-0000-0000-000000000001','{"value":"1-0"}'),
+  ((select id from gw_customers where client_key='clientA'),'11111111-0000-0000-0000-000000000001','alice','c1','r1','b0000000-0000-0000-0000-000000000003','{"value":"2-0"}'),
+  ((select id from gw_customers where client_key='clientA'),'11111111-0000-0000-0000-000000000001','alice','c1','r1','b0000000-0000-0000-0000-000000000002','{"value":"3-0"}'),
+  ((select id from gw_customers where client_key='clientA'),'11111111-0000-0000-0000-000000000001','alice','c1','r1','round_lineup_1','{"players":[1]}'),
+  ((select id from gw_customers where client_key='clientA'),'11111111-0000-0000-0000-000000000002','bob','c1','r1','b0000000-0000-0000-0000-000000000001','{"value":"0-1"}'),
+  ((select id from gw_customers where client_key='clientA'),'11111111-0000-0000-0000-000000000002','bob','c1','r1','b0000000-0000-0000-0000-000000000003','{"value":"0-2"}');
 SQL
 
 FAILED=0

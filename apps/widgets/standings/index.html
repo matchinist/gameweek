@@ -181,11 +181,14 @@ function translateZoneLabel(label){
   return hit ? (hit[1][LANG]||hit[1].en) : label; // unrecognised custom label — show as typed
 }
 
+let CLIENT_ID = null; // gw_customers.id — tenant key for gw_* tables since the client_id migration
+
 async function fetchCustomerTheme(){
   if(!CLIENT || CLIENT==='demo') return null;
   try{
     const {data:ops} = await supa.rpc('get_customer_public',{p_client_key:CLIENT});
     const op = (ops&&ops[0])||null;
+    CLIENT_ID = op?.id || CLIENT_ID;
     if(op){ try{ localStorage.setItem('gw_theme_'+CLIENT, JSON.stringify(op)); }catch(e){} }
     return op||null;
   }catch(e){
@@ -199,6 +202,7 @@ async function fetchCustomerLanguage(){
   try{
     const {data:ops} = await supa.rpc('get_customer_public',{p_client_key:CLIENT});
     const op = (ops&&ops[0])||null;
+    CLIENT_ID = op?.id || CLIENT_ID;
     return (op && I18N[op.language]) ? op.language : 'en';
   }catch(e){
     return 'en';
@@ -229,8 +233,14 @@ function sponsorBannerHtml(campaign){
 async function fetchActiveSponsor(){
   if(!CLIENT) return null;
   try{
+    // campaigns key by client_id; resolve it here if the theme fetch hasn't yet
+    if(!CLIENT_ID){
+      const {data:ops} = await supa.rpc('get_customer_public',{p_client_key:CLIENT});
+      CLIENT_ID = (ops&&ops[0]&&ops[0].id)||null;
+    }
+    if(!CLIENT_ID) return null;
     const {data} = await supa.from('gw_campaigns').select('brand_name,logo_url,widget_keys')
-      .eq('client_key', CLIENT).eq('status','active').eq('type','widget_sponsorship');
+      .eq('client_id', CLIENT_ID).eq('status','active').eq('type','widget_sponsorship');
     return (data||[]).find(c=>(c.widget_keys||[]).includes('standings')) || null;
   }catch(e){
     console.error('sponsor fetch failed:', e);

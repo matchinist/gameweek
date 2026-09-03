@@ -81,10 +81,10 @@ check "domains ride along (SSO origin gate)" \
   "$(as_anon "select domains::text from get_customer_public('acme_x1');")" '["acme.io"]'
 check "unknown client returns nothing, not an error" \
   "$(as_anon "select coalesce(count(*)::text,'ERR') from get_customer_public('nope');")" "0"
-check "the accessor exposes exactly the nine safe columns" \
+check "the accessor exposes exactly the safe columns (plus the id, since client_id)" \
   "$(docker exec "$CONTAINER" psql -U postgres -qtA -c \
     "select array_to_string(proargnames[2:], ',') from pg_proc where proname='get_customer_public';")" \
-  "client_key,company_name,logo_url,language,accent_color,bg_color,surface_color,text_color,domains"
+  "id,client_key,company_name,logo_url,language,accent_color,bg_color,surface_color,text_color,domains"
 check "sso_secret and email stay unreachable through it" \
   "$(as_anon "select sso_secret from get_customer_public('acme_x1');")" "ERR"
 

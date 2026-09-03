@@ -95,8 +95,12 @@ async function boot(){
     return;
   }
   try{
+    // coverage keys by client_id — resolve it from the same public accessor
+    // the theme uses; an unknown client degrades to null coverage (show all)
+    let clientId=null;
+    try{ const {data:ops}=await supa.rpc('get_customer_public',{p_client_key:CLIENT_KEY}); clientId=(ops&&ops[0]&&ops[0].id)||null; }catch(e){}
     const [{data:coverage}, {data:tournaments}, {data:teams}, {data:events}, {data:seasonTeamRows}] = await Promise.all([
-      supa.from('gw_client_coverage').select('*').eq('client_key',CLIENT_KEY).maybeSingle(),
+      clientId ? supa.from('gw_client_coverage').select('*').eq('client_id',clientId).maybeSingle() : Promise.resolve({data:null}),
       supa.from('gw_dm_tournaments').select('*'),
       supa.from('gw_dm_teams').select('*'),
       supa.from('gw_dm_events').select('*'),

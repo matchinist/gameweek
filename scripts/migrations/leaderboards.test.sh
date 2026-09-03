@@ -81,13 +81,17 @@ check "gw_predictions.points exists, int, nullable" \
 
 # ── seed leaderboard rows as the service path would ────────────────────────
 docker exec -i "$CONTAINER" psql -q -U postgres -v ON_ERROR_STOP=1 <<'SQL'
-insert into gw_leaderboards (client_key, competition_id, round_id, player_id, username, points, correct, total) values
-  ('clientA','c1','r1','11111111-0000-0000-0000-000000000001','alice',12,3,4),
-  ('clientA','c1',null,'11111111-0000-0000-0000-000000000001','alice',19,6,8),
-  ('clientA','c1',null,'11111111-0000-0000-0000-000000000002','bob',14,6,8);
+insert into gw_customers (client_key, email, company_name) values ('clientA','a-owner@t.io','Client A');
+insert into gw_leaderboards (client_id, competition_id, round_id, player_id, username, points, correct, total)
+select c.id, v.* from gw_customers c, (values
+  ('c1','r1','11111111-0000-0000-0000-000000000001'::uuid,'alice',12,3,4),
+  ('c1',null,'11111111-0000-0000-0000-000000000001'::uuid,'alice',19,6,8),
+  ('c1',null,'11111111-0000-0000-0000-000000000002'::uuid,'bob',14,6,8)) v
+where c.client_key='clientA';
 SQL
 
 # ── reads: public for anon and authenticated ───────────────────────────────
+CID=$(docker exec "$CONTAINER" psql -U postgres -qtA -c "select id from gw_leaderboards limit 1;" >/dev/null; docker exec "$CONTAINER" psql -U postgres -qtA -c "select client_id from gw_leaderboards limit 1;")
 check "anon reads leaderboards" \
   "$(sql_as anon "select count(*) from gw_leaderboards;")" "3"
 check "authenticated reads leaderboards" \
@@ -95,9 +99,9 @@ check "authenticated reads leaderboards" \
 
 # ── writes: every client-side verb refused ─────────────────────────────────
 check "anon insert refused" \
-  "$(sql_as anon "insert into gw_leaderboards (client_key,competition_id,round_id,player_id,username,points) values ('x','c',null,'11111111-0000-0000-0000-000000000009','mallory',999);")" "ERR"
+  "$(sql_as anon "insert into gw_leaderboards (client_id,competition_id,round_id,player_id,username,points) values ('99999999-0000-0000-0000-000000000099','c',null,'11111111-0000-0000-0000-000000000009','mallory',999);")" "ERR"
 check "authenticated insert refused" \
-  "$(sql_as authenticated "insert into gw_leaderboards (client_key,competition_id,round_id,player_id,username,points) values ('x','c',null,'11111111-0000-0000-0000-000000000009','mallory',999);")" "ERR"
+  "$(sql_as authenticated "insert into gw_leaderboards (client_id,competition_id,round_id,player_id,username,points) values ('99999999-0000-0000-0000-000000000099','c',null,'11111111-0000-0000-0000-000000000009','mallory',999);")" "ERR"
 check "authenticated update refused" \
   "$(sql_as authenticated "update gw_leaderboards set points=999;")" "ERR"
 check "authenticated delete refused" \
@@ -107,12 +111,12 @@ check "authenticated cannot write gw_predictions.points" \
 
 # ── service role writes (the score-round path) ─────────────────────────────
 check "service_role upserts a round row" \
-  "$(sql_as service_role "insert into gw_leaderboards (client_key,competition_id,round_id,player_id,username,points) values ('clientA','c1','r1','11111111-0000-0000-0000-000000000001','alice',15) on conflict (client_key,competition_id,round_id,player_id) do update set points=excluded.points, updated_at=now(); select points from gw_leaderboards where round_id='r1';")" "15"
+  "$(sql_as service_role "insert into gw_leaderboards (client_id,competition_id,round_id,player_id,username,points) values ('$CID','c1','r1','11111111-0000-0000-0000-000000000001','alice',15) on conflict (client_id,competition_id,round_id,player_id) do update set points=excluded.points, updated_at=now(); select points from gw_leaderboards where round_id='r1';")" "15"
 
 # ── the overall scope (round_id null) must upsert, not stack ───────────────
 check "duplicate overall row refused (nulls not distinct)" \
-  "$(sql_as service_role "insert into gw_leaderboards (client_key,competition_id,round_id,player_id,username,points) values ('clientA','c1',null,'11111111-0000-0000-0000-000000000001','alice',20);")" "ERR"
+  "$(sql_as service_role "insert into gw_leaderboards (client_id,competition_id,round_id,player_id,username,points) values ('$CID','c1',null,'11111111-0000-0000-0000-000000000001','alice',20);")" "ERR"
 check "service_role upserts the overall row in place" \
-  "$(sql_as service_role "insert into gw_leaderboards (client_key,competition_id,round_id,player_id,username,points) values ('clientA','c1',null,'11111111-0000-0000-0000-000000000001','alice',21) on conflict (client_key,competition_id,round_id,player_id) do update set points=excluded.points, updated_at=now(); select count(*) || ':' || max(points) from gw_leaderboards where round_id is null and username='alice';")" "1:21"
+  "$(sql_as service_role "insert into gw_leaderboards (client_id,competition_id,round_id,player_id,username,points) values ('$CID','c1',null,'11111111-0000-0000-0000-000000000001','alice',21) on conflict (client_id,competition_id,round_id,player_id) do update set points=excluded.points, updated_at=now(); select count(*) || ':' || max(points) from gw_leaderboards where round_id is null and username='alice';")" "1:21"
 
 [ "$FAILED" -eq 0 ] && echo "ALL GREEN" || { echo "FAILURES"; exit 1; }
