@@ -97,7 +97,8 @@ begin
     raise exception 'PACKAGE_LIMIT';   -- the admin UI turns this into an upgrade prompt
   end if;
 
-  v_token := encode(gen_random_bytes(24), 'hex');
+  -- 64 hex chars from two UUIDs — no pgcrypto/extensions-schema dependency.
+  v_token := replace(gen_random_uuid()::text, '-', '') || replace(gen_random_uuid()::text, '-', '');
   insert into public.gw_workspace_invites (client_key, email, token, invited_by)
     values (v_client, v_email, v_token, auth.uid())
     returning id into v_id;
