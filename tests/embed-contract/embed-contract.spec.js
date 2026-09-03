@@ -34,17 +34,12 @@ async function interceptSupabase(context, state) {
       state.ssoLoginCalls.push(JSON.parse(route.request().postData() || '{}'));
       return route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ error: 'sso_not_enabled' }) });
     }
-    if (url.pathname.includes('/rest/v1/gw_operators_public')) {
-      const m = (url.searchParams.get('client_key') || '').match(/eq\.(.+)/);
-      const op = OPERATORS[m?.[1]] || null;
-      const sel = url.searchParams.get('select') || '';
-      const row = op ? Object.fromEntries(sel.split(',').map(k => [k, op[k] ?? null])) : null;
-      if (wantsObject) {
-        return op
-          ? route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(row) })
-          : route.fulfill({ status: 406, contentType: 'application/json', body: JSON.stringify({ message: 'no rows' }) });
-      }
-      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(op ? [row] : []) });
+    if (url.pathname.includes('/rest/v1/rpc/get_operator_public')) {
+      // enumeration hardening: the public operator row comes from a
+      // single-row accessor rpc, never a listable view
+      const body = JSON.parse(route.request().postData() || '{}');
+      const op = OPERATORS[body.p_client_key] || null;
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(op ? [op] : []) });
     }
     if (url.pathname.startsWith('/rest/v1/')) {
       return wantsObject

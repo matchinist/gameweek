@@ -81,6 +81,9 @@ window.GW_DEMO = (function () {
       from: function (t) { return new Builder(t); },
       rpc: function (fn, args) {
         return Promise.resolve().then(function () {
+          if (fn === 'get_operator_public') {
+            return { data: DB.gw_operators_public.filter(function (o) { return o.client_key === args.p_client_key; }), error: null };
+          }
           if (fn !== 'save_prediction') return { data: null, error: { message: 'demo: unknown rpc' } };
           var ev = DB.gw_dm_events.filter(function (e) { return e.id === args.p_event_id; })[0];
           if (ev && ev.kickoff_at && Date.now() >= Date.parse(ev.kickoff_at) - 30 * 60e3) {
