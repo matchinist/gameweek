@@ -1562,6 +1562,8 @@ async function saveAdminState(){
         overall_prizes:c.overallPrizes||null,
         comp_aliases:c.aliases||[],
         scope_text:c.scopeText||null,
+        accent_color:c.accentColor||null, bg_color:c.bgColor||null,
+        surface_color:c.surfaceColor||null, text_color:c.textColor||null,
         users:c.users||0, predictions:c.predictions||0
       }));
       const {error:e1} = await supa.from('gw_competitions').upsert(compRows,{onConflict:'id'});
@@ -1866,6 +1868,27 @@ function renderCompDetail(){
   const c = getComp(state.currentComp);
   const el = document.getElementById('comp-detail-content');
 
+  // Per-competition widget theme: overrides the operator's global theme when
+  // the embed is scoped to just this competition. Pickers start from the
+  // competition's own colour, or the global one when it has none.
+  const gTheme = {
+    accent:  currentOperator?.accent_color  || '#4F46E5',
+    bg:      currentOperator?.bg_color      || '#F7F8FA',
+    surface: currentOperator?.surface_color || '#FFFFFF',
+    text:    currentOperator?.text_color    || '#0F1117',
+  };
+  const ctOn = !!(c.accentColor || c.bgColor || c.surfaceColor || c.textColor);
+  const ctv = {
+    accent:  c.accentColor  || gTheme.accent,
+    bg:      c.bgColor      || gTheme.bg,
+    surface: c.surfaceColor || gTheme.surface,
+    text:    c.textColor    || gTheme.text,
+  };
+  const ctFields = [
+    ['accent','Accent Colour'], ['bg','Page Background'],
+    ['surface','Card Background'], ['text','Text Colour'],
+  ];
+
   el.innerHTML = `
   <div class="page-header">
     <div>
@@ -2001,6 +2024,35 @@ function renderCompDetail(){
         </div>
       </div>
 
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-header"><span class="card-title">Widget Theme</span></div>
+        <div class="card-body">
+          <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;">
+            Colours for the embed when it points at just this competition (Embed &amp; Integration → select this one). With "All" or several competitions embedded, your global Customisation theme is used instead.
+          </div>
+          <label style="display:flex;align-items:center;gap:9px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:12px;">
+            <input type="checkbox" id="comp-theme-override" ${ctOn?'checked':''} onchange="toggleCompThemeOverride(this.checked)" style="width:15px;height:15px;accent-color:var(--accent);">
+            Override the global theme for this competition
+          </label>
+          <div id="comp-theme-fields" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;opacity:${ctOn?1:0.5};">
+            ${ctFields.map(([k,label])=>`
+              <div class="form-group">
+                <label class="form-label">${label}</label>
+                <div class="color-row">
+                  <input type="color" class="color-input" id="comp-theme-${k}" value="${ctv[k]}" ${ctOn?'':'disabled'} oninput="stageCompThemeColor('${k}',this.value)">
+                  <span id="comp-theme-${k}-hex" style="font-family:var(--mono);font-size:12px;color:var(--text-2);">${ctv[k]}</span>
+                </div>
+              </div>`).join('')}
+          </div>
+          <div style="font-size:11px;color:var(--text-3);margin:10px 0 8px;">Secondary text, borders, and tints are generated automatically from these four — same as the global theme.</div>
+          <div id="comp-theme-preview" style="border-radius:12px;padding:16px;margin-top:4px;"></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:14px;">
+            <button class="btn btn-primary btn-sm" id="comp-theme-save-btn" onclick="saveCompTheme()">Save Theme</button>
+            <span id="comp-theme-dirty" style="display:none;font-size:11.5px;color:var(--amber);">Unsaved changes</span>
+          </div>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-header"><span class="card-title">Status</span></div>
         <div class="card-body">
@@ -2017,6 +2069,8 @@ function renderCompDetail(){
   </div>`;
   prizeState['overall'] = (c.overallPrizes&&c.overallPrizes.length) ? JSON.parse(JSON.stringify(c.overallPrizes)) : defaultPrizes();
   renderPrizesEditor('overall');
+  compThemeDirty = false;
+  renderCompThemePreview();
   // Hide New Round buttons only for lineup mode
   ['new-round-btn-header','new-round-btn-card'].forEach(bid=>{
     const b=document.getElementById(bid);
@@ -2471,20 +2525,13 @@ function renderBrandingColors(){
   renderBrandingPreview(vals);
 }
 
-function renderBrandingPreview(vals){
-  const el = document.getElementById('brand-preview');
-  if(!el) return;
-  const v = vals || {
-    accent: document.getElementById('brand-accent')?.value || '#4F46E5',
-    bg: document.getElementById('brand-bg')?.value || '#F7F8FA',
-    surface: document.getElementById('brand-surface')?.value || '#FFFFFF',
-    text: document.getElementById('brand-text')?.value || '#0F1117',
-  };
+// Shared widget-theme preview markup — used by the operator Customisation
+// page and the per-competition theme card. `v` = {accent,bg,surface,text}.
+function widgetThemePreviewInnerHTML(v){
   const text2 = v.text+'B3', text3 = v.text+'80', border = v.text+'26';
   const logoUrl = currentOperator?.logo_url;
   const companyName = currentOperator?.company_name || 'Your site';
-  el.style.background = v.bg;
-  el.innerHTML = `
+  return `
     <div style="border-radius:12px;overflow:hidden;border:1px solid ${border};">
       <div style="background:${v.surface};padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid ${border};">
         ${logoUrl
@@ -2504,6 +2551,19 @@ function renderBrandingPreview(vals){
         </div>
       </div>
     </div>`;
+}
+
+function renderBrandingPreview(vals){
+  const el = document.getElementById('brand-preview');
+  if(!el) return;
+  const v = vals || {
+    accent: document.getElementById('brand-accent')?.value || '#4F46E5',
+    bg: document.getElementById('brand-bg')?.value || '#F7F8FA',
+    surface: document.getElementById('brand-surface')?.value || '#FFFFFF',
+    text: document.getElementById('brand-text')?.value || '#0F1117',
+  };
+  el.style.background = v.bg;
+  el.innerHTML = widgetThemePreviewInnerHTML(v);
 }
 
 // Colour edits only update the on-screen preview + pickers as the person
@@ -3331,6 +3391,72 @@ async function saveCompSettings(){
   toast('Changes saved');
 }
 
+// ── PER-COMPETITION WIDGET THEME ──────────────────────────────────────────
+let compThemeDirty = false;
+
+function compThemeGlobalVals(){
+  return {
+    accent:  currentOperator?.accent_color  || '#4F46E5',
+    bg:      currentOperator?.bg_color      || '#F7F8FA',
+    surface: currentOperator?.surface_color || '#FFFFFF',
+    text:    currentOperator?.text_color    || '#0F1117',
+  };
+}
+function renderCompThemePreview(){
+  const el = document.getElementById('comp-theme-preview');
+  if(!el) return;
+  const on = document.getElementById('comp-theme-override')?.checked;
+  const g = compThemeGlobalVals();
+  const v = !on ? g : {
+    accent:  document.getElementById('comp-theme-accent')?.value  || g.accent,
+    bg:      document.getElementById('comp-theme-bg')?.value      || g.bg,
+    surface: document.getElementById('comp-theme-surface')?.value || g.surface,
+    text:    document.getElementById('comp-theme-text')?.value    || g.text,
+  };
+  el.style.background = v.bg;
+  el.innerHTML = widgetThemePreviewInnerHTML(v);
+}
+function markCompThemeDirty(){
+  compThemeDirty = true;
+  const h = document.getElementById('comp-theme-dirty');
+  if(h) h.style.display = 'inline';
+}
+function stageCompThemeColor(key, val){
+  const hex = document.getElementById('comp-theme-'+key+'-hex');
+  if(hex) hex.textContent = val;
+  renderCompThemePreview();
+  markCompThemeDirty();
+}
+function toggleCompThemeOverride(on){
+  const wrap = document.getElementById('comp-theme-fields');
+  if(wrap){
+    wrap.style.opacity = on ? 1 : 0.5;
+    wrap.querySelectorAll('input').forEach(i=>{ i.disabled = !on; });
+  }
+  renderCompThemePreview();
+  markCompThemeDirty();
+}
+async function saveCompTheme(){
+  const c = getComp(state.currentComp);
+  const on = document.getElementById('comp-theme-override')?.checked;
+  if(on){
+    c.accentColor  = document.getElementById('comp-theme-accent')?.value  || null;
+    c.bgColor      = document.getElementById('comp-theme-bg')?.value      || null;
+    c.surfaceColor = document.getElementById('comp-theme-surface')?.value || null;
+    c.textColor    = document.getElementById('comp-theme-text')?.value    || null;
+  } else {
+    c.accentColor = c.bgColor = c.surfaceColor = c.textColor = null;
+  }
+  const btn = document.getElementById('comp-theme-save-btn');
+  if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
+  const ok = await saveAdminState();
+  if(btn){ btn.disabled = false; btn.textContent = 'Save Theme'; }
+  if(!ok) return; // saveAdminState already toasted the failure
+  compThemeDirty = false;
+  renderCompDetail();
+  toast(on ? 'Competition theme saved' : 'Competition theme cleared — using the global theme');
+}
+
 async function setCompStatus(id,status){
   getComp(id).status=status;
   const ok = await saveAdminState();
@@ -3610,6 +3736,20 @@ function renderEmbedCompFilter(){
       ${c.name}
     </label>`;
   });
+
+  // Which widget theme this embed will use: a single selected competition
+  // picks up its own theme (if it has one); "All" or several fall back to
+  // the global Customisation theme.
+  const single = embedFilterComps && embedFilterComps.length === 1
+    ? state.competitions.find(c=>c.id===embedFilterComps[0]) : null;
+  const singleHasTheme = single && (single.accentColor||single.bgColor||single.surfaceColor||single.textColor);
+  const themeNote = single
+    ? (singleHasTheme
+        ? `<strong style="color:var(--text-2);">${single.name}</strong>’s own widget theme`
+        : `your global widget theme &mdash; ${single.name} has no theme of its own yet`)
+    : 'your global widget theme';
+  html += `<div style="font-size:11.5px;color:var(--text-3);margin-top:8px;padding:8px 8px 0;border-top:1px solid var(--border);">Theme in this embed: ${themeNote}</div>`;
+
   el.innerHTML = html;
   updateEmbedCodeDisplay();
 }
@@ -4608,6 +4748,8 @@ function initOperatorChrome(){
     overallPrizes:c.overall_prizes||null,
     aliases:c.comp_aliases||[],
     scopeText:c.scope_text||'',
+    accentColor:c.accent_color||null, bgColor:c.bg_color||null,
+    surfaceColor:c.surface_color||null, textColor:c.text_color||null,
     users:0, predictions:0, // placeholders — overwritten just below with real counts
     rounds: (rounds||[]).filter(r=>r.competition_id===c.id).map(r=>({
       id:r.id, label:r.label, status:r.status, deadline:r.deadline||'',

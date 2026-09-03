@@ -437,8 +437,13 @@ function gwReadableText(text, surface){
 // preload yet — but every visit after that is instant and correct.
 (function(){
   try{
-    var client = new URLSearchParams(location.search).get('client') || 'demo';
-    var cached = localStorage.getItem('gw_theme_'+client);
+    var params = new URLSearchParams(location.search);
+    var client = params.get('client') || 'demo';
+    // Match the cache key the async theme apply writes: client-only, unless
+    // the embed is scoped to exactly one competition (then client + comp id).
+    var comps = (params.get('comp')||'').split(',').map(function(s){return s.trim();}).filter(Boolean);
+    var key = comps.length === 1 ? ('gw_theme_'+client+'__'+comps[0]) : ('gw_theme_'+client);
+    var cached = localStorage.getItem(key);
     if(!cached) return;
     var t = JSON.parse(cached);
     var root = document.documentElement.style;
@@ -1165,6 +1170,12 @@ async function buildCompsFromRealData(){
         overallPrizes:c.overall_prizes||null,
         aliases:c.comp_aliases||[],
         scopeText:c.scope_text||'',
+        theme:{
+          accent_color:  c.accent_color  || null,
+          bg_color:      c.bg_color      || null,
+          surface_color: c.surface_color || null,
+          text_color:    c.text_color    || null,
+        },
         rounds:cRounds,
         tournamentNames:[...new Set(cRounds.flatMap(r=>r.tournamentNames||[]).filter(Boolean))]
       });
@@ -5297,6 +5308,20 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
           if(Array.isArray(dm?.domains)) operatorDomains = dm.domains;
         }catch(e){}
         const {data:op} = await supa.from('gw_operators_public').select('company_name,logo_url,accent_color,bg_color,surface_color,text_color').eq('client_key',CLIENT_PARAM).single();
+
+        // When the embed is scoped to exactly ONE competition, that
+        // competition's own widget theme (set on its detail page) wins,
+        // falling back per-colour to the operator's global theme. For "All"
+        // or multiple competitions, only the global theme applies.
+        const singleComp = (COMP_FILTER.length === 1 && COMPS.length === 1) ? COMPS[0] : null;
+        const ct = singleComp && singleComp.theme || {};
+        const theme = {
+          accent_color:  ct.accent_color  || op?.accent_color  || null,
+          bg_color:      ct.bg_color      || op?.bg_color      || null,
+          surface_color: ct.surface_color || op?.surface_color || null,
+          text_color:    ct.text_color    || op?.text_color    || null,
+        };
+
         if(op){
           document.getElementById('hdr-operator-badge').textContent='· '+op.company_name;
           if(op.logo_url){
@@ -5305,39 +5330,45 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
             const authLogoEl = document.getElementById('auth-modal-logo');
             if(authLogoEl) authLogoEl.innerHTML = `<img src="${escapeHtmlLineup(op.logo_url)}" alt="${escapeHtmlLineup(op.company_name||'Logo')}" style="height:46px;max-width:240px;object-fit:contain;">`;
           }
-          // Operator-level widget theme, set in the admin's Branding page.
-          // Only 4 colours are configured directly (accent, page bg, card
-          // surface, text) — everything else (secondary/tertiary text,
-          // borders, the accent tint) is derived from those via alpha
-          // blending, so the whole component library stays coherent
-          // without needing 8+ individual pickers. Falls back to the
-          // built-in :root defaults for anything unset.
+        }
+        if(op || singleComp){
+          // Widget theme. Only 4 colours are configured directly (accent,
+          // page bg, card surface, text) — everything else (secondary /
+          // tertiary text, borders, the accent tint) is derived from those
+          // via alpha blending, so the whole component library stays
+          // coherent. Falls back to the built-in :root defaults for anything
+          // unset.
           const root = document.documentElement.style;
-          if(op.accent_color){
-            root.setProperty('--accent', op.accent_color);
-            root.setProperty('--accent-2', op.accent_color);
-            root.setProperty('--accent-light', op.accent_color+'1A'); // ~10% alpha
-            root.setProperty('--on-accent', gwReadableText('#FFFFFF', op.accent_color));
+          if(theme.accent_color){
+            root.setProperty('--accent', theme.accent_color);
+            root.setProperty('--accent-2', theme.accent_color);
+            root.setProperty('--accent-light', theme.accent_color+'1A'); // ~10% alpha
+            root.setProperty('--on-accent', gwReadableText('#FFFFFF', theme.accent_color));
           }
-          if(op.bg_color) root.setProperty('--bg', op.bg_color);
-          if(op.surface_color) root.setProperty('--white', op.surface_color);
-          gwApplySemantics(root, op.surface_color || '#FFFFFF');
-          if(op.text_color){
+          if(theme.bg_color) root.setProperty('--bg', theme.bg_color);
+          if(theme.surface_color) root.setProperty('--white', theme.surface_color);
+          gwApplySemantics(root, theme.surface_color || '#FFFFFF');
+          if(theme.text_color){
             // Legibility guard: content sits on cards, so check the text
             // colour against the surface rather than the page background.
-            const txt = gwReadableText(op.text_color, op.surface_color || '#FFFFFF');
+            const txt = gwReadableText(theme.text_color, theme.surface_color || '#FFFFFF');
             root.setProperty('--text', txt);
             root.setProperty('--text-2', txt+'B3'); // ~70% alpha
             root.setProperty('--text-3', txt+'80'); // ~50% alpha
             root.setProperty('--border', txt+'26'); // ~15% alpha
           }
-          // Cache for next visit's pre-paint script (see <head>), so the
-          // flash of default colours only ever happens once per client.
+          // Cache for next visit's pre-paint script (see <head>). Keyed by
+          // client, plus the single competition id when scoped to one, so a
+          // themed competition and the global theme don't overwrite each
+          // other's cache.
           try{
-            localStorage.setItem('gw_theme_'+CLIENT_PARAM, JSON.stringify({
-              accent_color: op.accent_color||null, bg_color: op.bg_color||null,
-              surface_color: op.surface_color||null, text_color: op.text_color||null,
-              logo_url: op.logo_url||null, company_name: op.company_name||null,
+            const key = COMP_FILTER.length === 1
+              ? 'gw_theme_'+CLIENT_PARAM+'__'+COMP_FILTER[0]
+              : 'gw_theme_'+CLIENT_PARAM;
+            localStorage.setItem(key, JSON.stringify({
+              accent_color: theme.accent_color, bg_color: theme.bg_color,
+              surface_color: theme.surface_color, text_color: theme.text_color,
+              logo_url: op?.logo_url||null, company_name: op?.company_name||null,
             }));
           }catch(e){}
         }
