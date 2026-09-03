@@ -248,6 +248,18 @@ tbody tr:hover td{background:var(--row-hover);}
 .score-inline input:focus{border-color:var(--accent);}
 .score-inline .sep{font-family:var(--mono);font-size:12px;color:var(--text-3);}
 </style>
+<script>
+// The sidebar/topbar buttons use inline onclick="nav(...)", "signOutOperator()"
+// etc., but the real definitions live at the end of a large synchronous
+// script that also waits on render-blocking CDN bundles. A click in that
+// window threw "… is not defined" (Sentry). Stub the reachable handlers so
+// an early click is remembered and replayed once the app has booted.
+(function(){
+  window.__gwPending = null;
+  var stub = function(name){ return function(){ window.__gwPending = { name: name, args: [].slice.call(arguments) }; }; };
+  ['nav','signOutOperator','toggleSidebar','closeSidebar'].forEach(function(n){ window[n] = stub(n); });
+})();
+</script>
 </head>
 <body>
 
@@ -4986,6 +4998,16 @@ function initOperatorChrome(){
   initOperatorChrome();
   renderDashboard();
 })();
+
+// Replay a sidebar/topbar click that landed before this script defined the
+// real handlers (the function declarations above have already overwritten
+// the early stubs from <head>).
+if(window.__gwPending && typeof window[window.__gwPending.name] === 'function'){
+  const pend = window.__gwPending;
+  window.__gwPending = null;
+  try{ window[pend.name].apply(null, pend.args); }
+  catch(e){ console.error('pending handler replay failed:', e); }
+}
 </script>
 </body>
 </html>
