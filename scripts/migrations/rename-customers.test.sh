@@ -86,8 +86,10 @@ check "the view revoke survived the rename (anon still cannot dump it)" \
   "$(docker exec "$CONTAINER" psql -U postgres -qtA -v ON_ERROR_STOP=1 -c "begin; set local role anon; select count(*) from gw_customers_public; rollback;" >/dev/null 2>&1 && echo OK || echo ERR)" "ERR"
 check "get_customer_public serves the single row to anon" \
   "$(as_anon "select company_name || ':' || language || ':' || accent_color || ':' || domains::text from get_customer_public('renacme');")" 'Ren Acme:tr:#abc123:["acme.example"]'
-check "old get_operator_public still answers (compat wrapper for cached embeds)" \
-  "$(as_anon "select company_name from get_operator_public('renacme');")" "Ren Acme"
+# The rename migration created a compat wrapper under the old rpc name for
+# browser-cached embeds; 20260904020000 drops it (owner call, same day).
+check "old get_operator_public is gone (wrapper dropped)" \
+  "$(q "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and proname='get_operator_public';")" "0"
 check "gw_my_client_key recompiled against gw_customers" \
   "$(docker exec "$CONTAINER" psql -U postgres -qtA -v ON_ERROR_STOP=1 -c "begin; set local role authenticated; set local \"request.jwt.claim.sub\" = '00000000-0000-0000-0000-0000000000cc'; select gw_my_client_key(); rollback;" | tail -1)" "renacme"
 check "gw_workspace_invite_info recompiled (joins gw_customers for the company name)" \

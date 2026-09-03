@@ -1,0 +1,163 @@
+- generic [ref=f35e2]:
+  - generic [ref=f35e3]:
+    - generic [ref=f35e4]:
+      - generic [ref=f35e5]: Type
+      - combobox [ref=f35e6] [cursor=pointer]:
+        - option "Predictor" [selected]
+        - option "Widgets"
+    - generic [ref=f35e7]:
+      - generic [ref=f35e8]: Sport
+      - combobox [ref=f35e9] [cursor=pointer]:
+        - option "Football" [selected]
+        - option "Volleyball"
+        - option "Tennis"
+    - generic [ref=f35e10]:
+      - generic [ref=f35e11]: Feature
+      - combobox [ref=f35e12] [cursor=pointer]:
+        - option "Score Predictor" [selected]
+        - option "Betting Markets"
+        - option "Ranking"
+        - option "Lineup Predictor"
+        - option "Soccer Roulette"
+  - iframe [ref=f35e15]:
+    - generic [ref=f36e3]:
+      - generic [ref=f36e5]:
+        - generic [ref=f36e6]: gameweek
+        - generic [ref=f36e7] [cursor=pointer]:
+          - generic [ref=f36e8]: DE
+          - generic [ref=f36e9]: demo_user
+      - generic [ref=f36e12]:
+        - generic [ref=f36e13]:
+          - generic [ref=f36e14]:
+            - heading "Predict the exact score" [level=1] [ref=f36e15]
+            - button "Rules" [ref=f36e16] [cursor=pointer]
+          - generic [ref=f36e18]:
+            - generic [ref=f36e19]:
+              - generic [ref=f36e20]: 5 pts
+              - generic [ref=f36e21]: Exact score
+            - generic [ref=f36e22]:
+              - generic [ref=f36e23]: 2 pts
+              - generic [ref=f36e24]: Right result
+            - generic [ref=f36e25]:
+              - generic [ref=f36e26]: 1 pt
+              - generic [ref=f36e27]: Total goals
+          - generic [ref=f36e28]:
+            - combobox [ref=f36e29] [cursor=pointer]:
+              - option "Gameweek 1"
+              - option "Gameweek 2"
+              - option "Gameweek 3" [selected]
+            - generic [ref=f36e30]:
+              - button "Predictions" [ref=f36e31] [cursor=pointer]
+              - button "Leagues" [ref=f36e32] [cursor=pointer]
+          - generic [ref=f36e33]:
+            - generic [ref=f36e34]: ⏱
+            - generic [ref=f36e35]: Events lock 30 min before kick-off time
+            - generic [ref=f36e36]: 3 / 6 set
+        - generic [ref=f36e37]:
+          - generic [ref=f36e39]:
+            - generic [ref=f36e40]:
+              - generic [ref=f36e41]:
+                - generic [ref=f36e42]: Premier League
+                - generic [ref=f36e43]: 05 Sept · 16:00
+              - generic [ref=f36e44]:
+                - generic [ref=f36e45]:
+                  - img "Arsenal" [ref=f36e47]
+                  - generic [ref=f36e48]: Arsenal
+                - generic [ref=f36e49]:
+                  - spinbutton "0" [ref=f36e50]: "3"
+                  - generic [ref=f36e51]: –
+                  - spinbutton "0" [ref=f36e52]
+                - generic [ref=f36e53]:
+                  - generic [ref=f36e54]: Wolves
+                  - img "Wolves" [ref=f36e56]
+            - generic [ref=f36e57]: Enter scores above ↑
+          - generic [ref=f36e60]:
+            - generic [ref=f36e61]:
+              - generic [ref=f36e62]:
+                - generic [ref=f36e63]: Premier League
+                - generic [ref=f36e64]: 05 Sept · 18:07
+              - generic [ref=f36e65]:
+                - generic [ref=f36e66]:
+                  - img "Man City" [ref=f36e68]
+                  - generic [ref=f36e69]: Man City
+                - generic [ref=f36e70]:
+                  - spinbutton "0" [ref=f36e71]: "2"
+                  - generic [ref=f36e72]: –
+                  - spinbutton "0" [ref=f36e73]
+                - generic [ref=f36e74]:
+                  - generic [ref=f36e75]: Chelsea
+                  - img "Chelsea" [ref=f36e77]
+            - generic [ref=f36e78]: Enter scores above ↑
+          - generic [ref=f36e81]:
+            - generic [ref=f36e82]:
+              - generic [ref=f36e83]:
+                - generic [ref=f36e84]: Premier League
+                - generic [ref=f36e85]: 05 Sept · 16:14
+              - generic [ref=f36e86]:
+                - generic [ref=f36e87]:
+                  - img "Liverpool" [ref=f36e89]
+                  - generic [ref=f36e90]: Liverpool
+                - generic [ref=f36e91]:
+                  - spinbutton "0" [ref=f36e92]: "1"
+                  - generic [ref=f36e93]: –
+                  - spinbutton "0" [ref=f36e94]
+                - generic [ref=f36e95]:
+                  - generic [ref=f36e96]: Man Utd
+                  - img "Man Utd" [ref=f36e98]
+            - generic [ref=f36e99]: Enter scores above ↑
+          - generic [ref=f36e102]:
+            - generic [ref=f36e103]:
+              - generic [ref=f36e104]:
+                - generic [ref=f36e105]: Premier League
+                - generic [ref=f36e106]: 05 Sept · 18:21
+              - generic [ref=f36e107]:
+                - generic [ref=f36e108]:
+                  - img "Chelsea" [ref=f36e110]
+                  - generic [ref=f36e111]: Chelsea
+                - generic [ref=f36e112]:
+                  - spinbutton "0" [ref=f36e113]
+                  - generic [ref=f36e114]: –
+                  - spinbutton "0" [ref=f36e115]
+                - generic [ref=f36e116]:
+                  - generic [ref=f36e117]: Spurs
+                  - img "Spurs" [ref=f36e119]
+            - generic [ref=f36e120]: Enter scores above ↑
+          - generic [ref=f36e123]:
+            - generic [ref=f36e124]:
+              - generic [ref=f36e125]:
+                - generic [ref=f36e126]: Premier League
+                - generic [ref=f36e127]: 05 Sept · 16:28
+              - generic [ref=f36e128]:
+                - generic [ref=f36e129]:
+                  - img "Wolves" [ref=f36e131]
+                  - generic [ref=f36e132]: Wolves
+                - generic [ref=f36e133]:
+                  - spinbutton "0" [ref=f36e134]
+                  - generic [ref=f36e135]: –
+                  - spinbutton "0" [ref=f36e136]
+                - generic [ref=f36e137]:
+                  - generic [ref=f36e138]: Man City
+                  - img "Man City" [ref=f36e140]
+            - generic [ref=f36e141]: Enter scores above ↑
+          - generic [ref=f36e144]:
+            - generic [ref=f36e145]:
+              - generic [ref=f36e146]:
+                - generic [ref=f36e147]: Premier League
+                - generic [ref=f36e148]: 05 Sept · 18:05
+              - generic [ref=f36e149]:
+                - generic [ref=f36e150]:
+                  - img "Aston Villa" [ref=f36e152]
+                  - generic [ref=f36e153]: Aston Villa
+                - generic [ref=f36e154]:
+                  - spinbutton "0" [ref=f36e155]
+                  - generic [ref=f36e156]: –
+                  - spinbutton "0" [ref=f36e157]
+                - generic [ref=f36e158]:
+                  - generic [ref=f36e159]: Newcastle
+                  - img "Newcastle" [ref=f36e161]
+            - generic [ref=f36e162]: Enter scores above ↑
+        - button "Save Predictions (3/6)"
+  - generic [ref=f35e16]:
+    - text: This is a live demo with sample data — nothing is saved.
+    - link "Get Gameweek for your site →" [ref=f35e17] [cursor=pointer]:
+      - /url: https://www.gameweek.cloud
