@@ -94,10 +94,10 @@ check "backfill migrated rounds with order and event membership" \
   "$(docker exec "$CONTAINER" psql -U postgres -qtA -c \
     "select string_agg(id || ':' || label || ':' || sort_order || ':' || array_to_string(event_ids,'+') || ':' || deadline, ',' order by sort_order) from gw_dm_season_rounds where tournament_id='t_sl' and season_key='2026-27';")" \
   "r_a:Round 1:0:ev1+ev2:,r_b:Round 2:1:ev3:2026-09-06"
-check "blob rounds stripped, season survives" \
+check "season survives as a gw_dm_seasons row (blob column retires in R4)" \
   "$(docker exec "$CONTAINER" psql -U postgres -qtA -c \
-    "select (seasons->'2026-27' ? 'rounds')::text || ':' || (seasons ? '2026-27')::text from gw_dm_tournaments where id='t_sl';")" \
-  "false:true"
+    "select string_agg(season_key, ',') from gw_dm_seasons where tournament_id='t_sl';")" \
+  "2026-27"
 check "anon reads rounds (embed builds gameweek labels logged out)" \
   "$(sql_as anon "select count(*) from gw_dm_season_rounds;")" "2"
 check "admin rewrites a season's rounds" \

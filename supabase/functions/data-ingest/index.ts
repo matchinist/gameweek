@@ -198,7 +198,7 @@ async function runSportmonks(service: SupabaseClient, provider: ProviderRow, man
     // table can't move otherwise) or when a human explicitly ran the sync.
     if (stats.results_updated > 0 || manual) {
       const { data: mappedTs } = await service.from("gw_dm_tournaments")
-        .select("id,name,seasons,provider_ids").not(`provider_ids->${provider.id}`, "is", null);
+        .select("id,name,provider_ids").not(`provider_ids->${provider.id}`, "is", null);
       const { data: teamRows2 } = await service.from("gw_dm_teams")
         .select("id,name,provider_ids").not(`provider_ids->${provider.id}`, "is", null);
       const teamBySmId2: Record<string, { id: string; name: string }> = {};

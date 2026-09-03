@@ -1021,7 +1021,7 @@ async function buildCompsFromRealData(){
       supa.from('gw_dm_events').select('*').limit(10000),
       supa.from('gw_competitions').select('*').eq('client_key',CLIENT_PARAM),
       supa.from('gw_rounds').select('*').eq('client_key',CLIENT_PARAM).order('sort_order'),
-      supa.from('gw_dm_tournaments').select('id,name,seasons'),
+      supa.from('gw_dm_tournaments').select('id,name,name_i18n'),
       (async()=>{ try{ return await supa.from('gw_operators_public').select('language').eq('client_key',CLIENT_PARAM).maybeSingle(); }catch(e){ return {data:null}; } })(),
       // R2: season rounds are rows now; the mock demo client returns [] here
       // and falls through to the (still-populated) dataset blobs below.
@@ -1030,19 +1030,17 @@ async function buildCompsFromRealData(){
     LANG = (opRow && I18N[opRow.language]) ? opRow.language : 'en';
     applyTranslations();
 
-    // Stitch table rounds back into the seasons shape the code below reads;
-    // blob rounds only survive as the pre-migration/demo fallback.
+    // R4: the seasons blob is gone — build the seasons shape the walk below
+    // reads entirely from the season-rounds rows (the only part the embed
+    // uses). The demo's mock returns no rows, so demo tournaments simply
+    // have no seasons to walk — exactly as before.
     {
-      const byScope={};
+      const byT={};
       (seasonRoundRows||[]).forEach(r=>{
-        const k=r.tournament_id+'|'+r.season_key;
-        (byScope[k]=byScope[k]||[]).push({id:r.id,label:r.label,eventIds:r.event_ids||[]});
+        const seasons=(byT[r.tournament_id]=byT[r.tournament_id]||{});
+        (seasons[r.season_key]=seasons[r.season_key]||{rounds:[]}).rounds.push({id:r.id,label:r.label,eventIds:r.event_ids||[]});
       });
-      (tournamentRows||[]).forEach(t=>{
-        Object.entries(t.seasons||{}).forEach(([key,season])=>{
-          season.rounds = byScope[t.id+'|'+key] || season.rounds || [];
-        });
-      });
+      (tournamentRows||[]).forEach(t=>{ t.seasons = byT[t.id] || {}; });
     }
 
     // Gameweek labels for lineup mode come straight from Data Manager's own

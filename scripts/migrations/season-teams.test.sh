@@ -88,10 +88,10 @@ check "backfill preserved pool membership and array order" \
   "$(docker exec "$CONTAINER" psql -U postgres -qtA -c \
     "select string_agg(team_id, ',' order by sort) from gw_dm_season_teams where tournament_id='t_pool' and season_key='2026-27';")" \
   "tmB,tmA,tmC"
-check "blob teamIds stripped, seasons survive" \
+check "both seasons survive as gw_dm_seasons rows (blob column retires in R4)" \
   "$(docker exec "$CONTAINER" psql -U postgres -qtA -c \
-    "select (seasons->'2026-27' ? 'teamIds')::text || ':' || (seasons ? '2025-26')::text from gw_dm_tournaments where id='t_pool';")" \
-  "false:true"
+    "select string_agg(season_key, ',' order by season_key) from gw_dm_seasons where tournament_id='t_pool';")" \
+  "2025-26,2026-27"
 check "anon reads pools (widgets scope by season teams logged out)" \
   "$(sql_as anon "select count(*) from gw_dm_season_teams;")" "3"
 check "admin rewrites a pool" \

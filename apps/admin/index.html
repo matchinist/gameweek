@@ -3014,14 +3014,21 @@ function stitchSeasonRounds(tournaments, roundRows, teamRows){
 
 async function refreshDMState(){
   if(!CLIENT_KEY) return;
-  const [{data:teams},{data:tournaments},{data:events},{data:coverage},{data:dmSeasonRounds},{data:dmSeasonTeams}] = await Promise.all([
+  const [{data:teams},{data:tournaments},{data:events},{data:coverage},{data:dmSeasonRounds},{data:dmSeasonTeams},{data:dmSeasons}] = await Promise.all([
     supa.from('gw_dm_teams').select('*'),
     supa.from('gw_dm_tournaments').select('*'),
     supa.from('gw_dm_events').select('*'),
     supa.from('gw_client_coverage').select('*').eq('client_key',CLIENT_KEY).maybeSingle(),
     supa.from('gw_dm_season_rounds').select('*').order('sort_order').limit(10000),
     supa.from('gw_dm_season_teams').select('*').order('sort').limit(20000),
+    supa.from('gw_dm_seasons').select('*').limit(10000),
   ]);
+  // R4: the seasons column is gone — rebuild the shape from gw_dm_seasons keys
+  (tournaments||[]).forEach(t=>{ t.seasons={}; });
+  (dmSeasons||[]).forEach(r=>{
+    const t=(tournaments||[]).find(x=>x.id===r.tournament_id);
+    if(t) t.seasons[r.season_key]={teamIds:[],rounds:[]};
+  });
   stitchSeasonRounds(tournaments, dmSeasonRounds, dmSeasonTeams);
   if(coverage){
     coverageState.tournamentIds = new Set(coverage.tournament_ids||[]);
@@ -4984,14 +4991,21 @@ function initOperatorChrome(){
   }catch(e){ console.error('usage aggregation failed:', e); }
 
   // Load global DM data (shared across all clients — no client_key filter)
-  const [{data:teams},{data:tournaments},{data:events},{data:coverage},{data:dmSeasonRounds},{data:dmSeasonTeams}] = await Promise.all([
+  const [{data:teams},{data:tournaments},{data:events},{data:coverage},{data:dmSeasonRounds},{data:dmSeasonTeams},{data:dmSeasons}] = await Promise.all([
     supa.from('gw_dm_teams').select('*'),
     supa.from('gw_dm_tournaments').select('*'),
     supa.from('gw_dm_events').select('*'),
     supa.from('gw_client_coverage').select('*').eq('client_key',CLIENT_KEY).maybeSingle(),
     supa.from('gw_dm_season_rounds').select('*').order('sort_order').limit(10000),
     supa.from('gw_dm_season_teams').select('*').order('sort').limit(20000),
+    supa.from('gw_dm_seasons').select('*').limit(10000),
   ]);
+  // R4: the seasons column is gone — rebuild the shape from gw_dm_seasons keys
+  (tournaments||[]).forEach(t=>{ t.seasons={}; });
+  (dmSeasons||[]).forEach(r=>{
+    const t=(tournaments||[]).find(x=>x.id===r.tournament_id);
+    if(t) t.seasons[r.season_key]={teamIds:[],rounds:[]};
+  });
   stitchSeasonRounds(tournaments, dmSeasonRounds, dmSeasonTeams);
   if(coverage){
     coverageState.tournamentIds = new Set(coverage.tournament_ids||[]);

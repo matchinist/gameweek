@@ -1013,8 +1013,17 @@ async function save(){
     }
     if(S.tournaments.length){
       const {error:e2} = await supa.from('gw_dm_tournaments')
-        .upsert(S.tournaments.map(t=>({id:t.id,name:t.name,country:t.country||'',type:t.type||'league',sport:t.sport||'football',color:t.color||'#4F46E5',seasons:stripMigratedSeasonKeys(t.seasons),name_i18n:t.nameI18n??null,provider_ids:t.providerIds??null})),{onConflict:'id'});
+        .upsert(S.tournaments.map(t=>({id:t.id,name:t.name,country:t.country||'',type:t.type||'league',sport:t.sport||'football',color:t.color||'#4F46E5',name_i18n:t.nameI18n??null,provider_ids:t.providerIds??null})),{onConflict:'id'});
       if(e2){ toast('Save failed: '+e2.message); console.error('tournaments save:',e2); return false; }
+      // seasons themselves are rows now (R4): mirror the keys first
+      const seasonRows=[];
+      S.tournaments.forEach(t=>{ Object.keys(t.seasons||{}).forEach(key=>{ seasonRows.push({tournament_id:t.id,season_key:key}); }); });
+      const {error:eSd}=await supa.from('gw_dm_seasons').delete().in('tournament_id',S.tournaments.map(t=>t.id));
+      if(eSd){ toast('Save failed: '+eSd.message); console.error('seasons clear:',eSd); return false; }
+      if(seasonRows.length){
+        const {error:eSi}=await supa.from('gw_dm_seasons').insert(seasonRows);
+        if(eSi){ toast('Save failed: '+eSi.message); console.error('seasons save:',eSi); return false; }
+      }
       // rounds are rows now (R2): mirror the in-memory state wholesale — the
       // same last-writer-wins semantics the blob always had
       const roundRows=[];
@@ -1698,6 +1707,7 @@ async function resetClientData(){
     supa.from('gw_dm_tournaments').delete().neq('id','__none__'),
     supa.from('gw_dm_season_rounds').delete().neq('id','__none__'),
     supa.from('gw_dm_season_teams').delete().neq('team_id','__none__'),
+    supa.from('gw_dm_seasons').delete().neq('tournament_id','__none__'),
     supa.from('gw_dm_events').delete().neq('id','__none__'),
   ]);
   location.reload();
@@ -3919,6 +3929,7 @@ function deleteTournament(id){
   supa.from('gw_dm_tournaments').delete().eq('id',id).then(()=>{});
   supa.from('gw_dm_season_rounds').delete().eq('tournament_id',id).then(()=>{});
   supa.from('gw_dm_season_teams').delete().eq('tournament_id',id).then(()=>{});
+  supa.from('gw_dm_seasons').delete().eq('tournament_id',id).then(()=>{});
   supa.from('gw_dm_standings').delete().eq('tournament_id',id).then(()=>{});
   supa.from('gw_dm_standing_zones').delete().eq('tournament_id',id).then(()=>{});
   save();renderTournamentNav();navTo('teams');toast('Tournament deleted');
@@ -4046,23 +4057,23 @@ function stitchSeasonRounds(tournaments, roundRows, teamRows){
     });
   });
 }
-// The blob keeps everything EXCEPT what already moved to tables (R1
-// standings, R2 rounds) — stripping on save stops resurrecting them.
-function stripMigratedSeasonKeys(seasons){
-  const out={};
-  Object.entries(seasons||{}).forEach(([k,se])=>{ const {rounds,standings,teamIds,...rest}=se; out[k]=rest; });
-  return out;
-}
-
 async function loadDMData(){
   // Load global DM data (shared — no client_key filter)
-  const [{data:teams},{data:tournaments},{data:events},{data:seasonRoundRows},{data:seasonTeamRows}] = await Promise.all([
+  const [{data:teams},{data:tournaments},{data:events},{data:seasonRoundRows},{data:seasonTeamRows},{data:seasonRows}] = await Promise.all([
     supa.from('gw_dm_teams').select('*'),
     supa.from('gw_dm_tournaments').select('*'),
     supa.from('gw_dm_events').select('*'),
     supa.from('gw_dm_season_rounds').select('*').order('sort_order').limit(10000),
     supa.from('gw_dm_season_teams').select('*').order('sort').limit(20000),
+    supa.from('gw_dm_seasons').select('*').limit(10000),
   ]);
+  // R4: the seasons column is gone — reconstruct the in-memory shape from
+  // gw_dm_seasons keys plus the R1-R3 tables.
+  (tournaments||[]).forEach(t=>{ t.seasons={}; });
+  (seasonRows||[]).forEach(r=>{
+    const t=(tournaments||[]).find(x=>x.id===r.tournament_id);
+    if(t) t.seasons[r.season_key]={teamIds:[],rounds:[]};
+  });
   stitchSeasonRounds(tournaments, seasonRoundRows, seasonTeamRows);
 
   // ── MIGRATE from localStorage if Supabase is empty ──────────────────────
@@ -4088,7 +4099,7 @@ async function loadDMData(){
             const localT = JSON.parse(localStorage.getItem(key)||'[]');
             if(localT.length){
               await supa.from('gw_dm_tournaments').upsert(
-                localT.map(t=>({id:t.id,name:t.name,country:t.country||'',type:t.type||'league',color:t.color||'#4F46E5',seasons:t.seasons||{}})),
+                localT.map(t=>({id:t.id,name:t.name,country:t.country||'',type:t.type||'league',color:t.color||'#4F46E5'})),
                 {onConflict:'id'}
               );
             }
