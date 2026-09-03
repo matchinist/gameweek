@@ -1,21 +1,20 @@
 #!/usr/bin/env bash
-# DB redesign phase R2 test — written BEFORE the migration.
+# DB redesign phase R3 test — written BEFORE the migration.
 #
-# Season rounds move out of the gw_dm_tournaments.seasons blob into
-# gw_dm_season_rounds (one row per round; event membership stays a text[]
-# column, mirroring the per-client gw_rounds table's design). The migration
-# backfills every blob round (array order -> sort_order) then strips the
-# rounds key; apps hydrate the in-memory seasons shape from the table.
+# Season team pools move out of the gw_dm_tournaments.seasons blob into
+# gw_dm_season_teams (one row per team per season, array order preserved via
+# sort). Backfill + strip, dm-family RLS; apps hydrate season.teamIds at
+# load; widgets read the table directly with blob fallback.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 MIGRATIONS_DIR="$REPO_ROOT/supabase/migrations"
-CONTAINER=gw-seasonrounds-test-pg
+CONTAINER=gw-seasonteams-test-pg
 
 shopt -s nullglob
 ALL=("$MIGRATIONS_DIR"/*.sql)
-if ! compgen -G "$MIGRATIONS_DIR/*season_rounds*.sql" >/dev/null; then
-  echo "FAIL: no season_rounds migration found" >&2
+if ! compgen -G "$MIGRATIONS_DIR/*season_teams*.sql" >/dev/null; then
+  echo "FAIL: no season_teams migration found" >&2
   exit 1
 fi
 
@@ -52,16 +51,11 @@ grant usage on schema auth to anon, authenticated, service_role;
 SQL
 
 for f in "${ALL[@]}"; do
-  if [[ "$f" == *season_rounds* ]]; then
+  if [[ "$f" == *season_teams* ]]; then
     docker exec -i "$CONTAINER" psql -q -U postgres -v ON_ERROR_STOP=1 <<'SQL'
-insert into gw_dm_tournaments (id, name, seasons) values ('t_sl', 'Super Lig', '{
-  "2026-27": {
-    "teamIds": ["tmA","tmB"],
-    "rounds": [
-      {"id":"r_a","label":"Round 1","deadline":"","eventIds":["ev1","ev2"]},
-      {"id":"r_b","label":"Round 2","deadline":"2026-09-06","eventIds":["ev3"]}
-    ]
-  }
+insert into gw_dm_tournaments (id, name, seasons) values ('t_pool', 'Pool Cup', '{
+  "2026-27": { "teamIds": ["tmB","tmA","tmC"] },
+  "2025-26": { "teamIds": [] }
 }'::jsonb);
 SQL
   fi
@@ -90,19 +84,21 @@ sql_as() {
 ADMIN=00000000-0000-0000-0000-0000000000ad
 OTHER=00000000-0000-0000-0000-0000000000bb
 
-check "backfill migrated rounds with order and event membership" \
+check "backfill preserved pool membership and array order" \
   "$(docker exec "$CONTAINER" psql -U postgres -qtA -c \
-    "select string_agg(id || ':' || label || ':' || sort_order || ':' || array_to_string(event_ids,'+') || ':' || deadline, ',' order by sort_order) from gw_dm_season_rounds where tournament_id='t_sl' and season_key='2026-27';")" \
-  "r_a:Round 1:0:ev1+ev2:,r_b:Round 2:1:ev3:2026-09-06"
-check "blob rounds stripped, season survives" \
+    "select string_agg(team_id, ',' order by sort) from gw_dm_season_teams where tournament_id='t_pool' and season_key='2026-27';")" \
+  "tmB,tmA,tmC"
+check "blob teamIds stripped, seasons survive" \
   "$(docker exec "$CONTAINER" psql -U postgres -qtA -c \
-    "select (seasons->'2026-27' ? 'rounds')::text || ':' || (seasons ? '2026-27')::text from gw_dm_tournaments where id='t_sl';")" \
+    "select (seasons->'2026-27' ? 'teamIds')::text || ':' || (seasons ? '2025-26')::text from gw_dm_tournaments where id='t_pool';")" \
   "false:true"
-check "anon reads rounds (embed builds gameweek labels logged out)" \
-  "$(sql_as anon "select count(*) from gw_dm_season_rounds;")" "2"
-check "admin rewrites a season's rounds" \
-  "$(sql_as $ADMIN "delete from gw_dm_season_rounds where tournament_id='t_sl'; insert into gw_dm_season_rounds (id,tournament_id,season_key,label,sort_order,event_ids) values ('r_c','t_sl','2026-27','Round X',0,'{ev9}'); select count(*) || ':' || max(label) from gw_dm_season_rounds;")" "1:Round X"
+check "anon reads pools (widgets scope by season teams logged out)" \
+  "$(sql_as anon "select count(*) from gw_dm_season_teams;")" "3"
+check "admin rewrites a pool" \
+  "$(sql_as $ADMIN "delete from gw_dm_season_teams where tournament_id='t_pool'; insert into gw_dm_season_teams (tournament_id,season_key,team_id,sort) values ('t_pool','2026-27','tmZ',0); select count(*) || ':' || max(team_id) from gw_dm_season_teams;")" "1:tmZ"
 check "non-admin write refused" \
-  "$(sql_as $OTHER "insert into gw_dm_season_rounds (id,tournament_id,season_key,label) values ('evil','t','s','x');")" "ERR"
+  "$(sql_as $OTHER "insert into gw_dm_season_teams (tournament_id,season_key,team_id) values ('t','s','evil');")" "ERR"
+check "duplicate membership refused" \
+  "$(sql_as $ADMIN "insert into gw_dm_season_teams (tournament_id,season_key,team_id) values ('t_pool','2026-27','tmA');")" "ERR"
 
 [ "$FAILED" -eq 0 ] && echo "ALL GREEN" || { echo "FAILURES"; exit 1; }

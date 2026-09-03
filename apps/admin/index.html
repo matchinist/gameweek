@@ -2994,29 +2994,35 @@ function updateRankingTeamCount(){
 
 // R2: season rounds live in gw_dm_season_rounds — stitch them back into
 // the in-memory seasons shape (blob rounds only as pre-migration fallback).
-function stitchSeasonRounds(tournaments, roundRows){
-  const byScope={};
+function stitchSeasonRounds(tournaments, roundRows, teamRows){
+  const byScope={}, teamsByScope={};
   (roundRows||[]).forEach(r=>{
     const k=r.tournament_id+'|'+r.season_key;
     (byScope[k]=byScope[k]||[]).push({id:r.id,label:r.label,deadline:r.deadline||'',eventIds:r.event_ids||[]});
   });
+  (teamRows||[]).forEach(r=>{
+    const k=r.tournament_id+'|'+r.season_key;
+    (teamsByScope[k]=teamsByScope[k]||[]).push(r.team_id);
+  });
   (tournaments||[]).forEach(t=>{
     Object.entries(t.seasons||{}).forEach(([key,season])=>{
       season.rounds = byScope[t.id+'|'+key] || season.rounds || [];
+      season.teamIds = teamsByScope[t.id+'|'+key] || season.teamIds || [];
     });
   });
 }
 
 async function refreshDMState(){
   if(!CLIENT_KEY) return;
-  const [{data:teams},{data:tournaments},{data:events},{data:coverage},{data:dmSeasonRounds}] = await Promise.all([
+  const [{data:teams},{data:tournaments},{data:events},{data:coverage},{data:dmSeasonRounds},{data:dmSeasonTeams}] = await Promise.all([
     supa.from('gw_dm_teams').select('*'),
     supa.from('gw_dm_tournaments').select('*'),
     supa.from('gw_dm_events').select('*'),
     supa.from('gw_client_coverage').select('*').eq('client_key',CLIENT_KEY).maybeSingle(),
     supa.from('gw_dm_season_rounds').select('*').order('sort_order').limit(10000),
+    supa.from('gw_dm_season_teams').select('*').order('sort').limit(20000),
   ]);
-  stitchSeasonRounds(tournaments, dmSeasonRounds);
+  stitchSeasonRounds(tournaments, dmSeasonRounds, dmSeasonTeams);
   if(coverage){
     coverageState.tournamentIds = new Set(coverage.tournament_ids||[]);
     coverageState.teamIds = new Set(coverage.team_ids||[]);
@@ -4978,14 +4984,15 @@ function initOperatorChrome(){
   }catch(e){ console.error('usage aggregation failed:', e); }
 
   // Load global DM data (shared across all clients — no client_key filter)
-  const [{data:teams},{data:tournaments},{data:events},{data:coverage},{data:dmSeasonRounds}] = await Promise.all([
+  const [{data:teams},{data:tournaments},{data:events},{data:coverage},{data:dmSeasonRounds},{data:dmSeasonTeams}] = await Promise.all([
     supa.from('gw_dm_teams').select('*'),
     supa.from('gw_dm_tournaments').select('*'),
     supa.from('gw_dm_events').select('*'),
     supa.from('gw_client_coverage').select('*').eq('client_key',CLIENT_KEY).maybeSingle(),
     supa.from('gw_dm_season_rounds').select('*').order('sort_order').limit(10000),
+    supa.from('gw_dm_season_teams').select('*').order('sort').limit(20000),
   ]);
-  stitchSeasonRounds(tournaments, dmSeasonRounds);
+  stitchSeasonRounds(tournaments, dmSeasonRounds, dmSeasonTeams);
   if(coverage){
     coverageState.tournamentIds = new Set(coverage.tournament_ids||[]);
     coverageState.teamIds = new Set(coverage.team_ids||[]);

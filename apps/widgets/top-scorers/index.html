@@ -95,11 +95,12 @@ async function boot(){
     return;
   }
   try{
-    const [{data:coverage}, {data:tournaments}, {data:teams}, {data:events}] = await Promise.all([
+    const [{data:coverage}, {data:tournaments}, {data:teams}, {data:events}, {data:seasonTeamRows}] = await Promise.all([
       supa.from('gw_client_coverage').select('*').eq('client_key',CLIENT_KEY).maybeSingle(),
       supa.from('gw_dm_tournaments').select('*'),
       supa.from('gw_dm_teams').select('*'),
       supa.from('gw_dm_events').select('*'),
+      supa.from('gw_dm_season_teams').select('*').eq('season_key',SEASON),
     ]);
 
     const tourIds = coverage?.tournament_ids ? new Set(coverage.tournament_ids) : null;
@@ -110,7 +111,12 @@ async function boot(){
                 || (tournaments||[]).find(t => (t.name||'').toLowerCase().includes(LEAGUE_NAME_MATCH));
 
     let leagueTeamIds = new Set();
-    if(league && league.seasons && league.seasons[SEASON]){
+    // Season pools are rows now (DB redesign R3); the blob path below only
+    // covers the pre-migration window.
+    if(league){
+      (seasonTeamRows||[]).filter(r=>r.tournament_id===league.id).forEach(r=>leagueTeamIds.add(r.team_id));
+    }
+    if(leagueTeamIds.size===0 && league && league.seasons && league.seasons[SEASON]){
       (league.seasons[SEASON].teamIds||[]).forEach(id=>leagueTeamIds.add(id));
     }
     if(leagueTeamIds.size===0 && teamIds){ teamIds.forEach(id=>leagueTeamIds.add(id)); }

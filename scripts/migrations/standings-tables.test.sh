@@ -112,10 +112,10 @@ check "backfill migrated zones" \
   "$(docker exec "$CONTAINER" psql -U postgres -qtA -c \
     "select zone_id || ':' || name from gw_dm_standing_zones where tournament_id='t_sl';")" \
   "z1:Champions League"
-check "blob standings stripped, other season data intact" \
+check "blob standings stripped, both seasons survive" \
   "$(docker exec "$CONTAINER" psql -U postgres -qtA -c \
-    "select (seasons->'2026-27' ? 'standings')::text || ':' || jsonb_array_length(seasons->'2026-27'->'teamIds') || ':' || (seasons ? '2025-26')::text from gw_dm_tournaments where id='t_sl';")" \
-  "false:2:true"
+    "select (seasons->'2026-27' ? 'standings')::text || ':' || (seasons ? '2026-27')::text || ':' || (seasons ? '2025-26')::text from gw_dm_tournaments where id='t_sl';")" \
+  "false:true:true"
 check "anon reads standings (widgets render logged out)" \
   "$(sql_as anon "select count(*) from gw_dm_standings;")" "2"
 check "admin replaces the table" \

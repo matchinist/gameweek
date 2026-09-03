@@ -1025,6 +1025,15 @@ async function save(){
         const {error:eRi}=await supa.from('gw_dm_season_rounds').insert(roundRows);
         if(eRi){ toast('Save failed: '+eRi.message); console.error('season rounds save:',eRi); return false; }
       }
+      // season team pools are rows too (R3) — same wholesale mirror
+      const poolRows=[];
+      S.tournaments.forEach(t=>{ Object.entries(t.seasons||{}).forEach(([key,se])=>{ (se.teamIds||[]).forEach((tid,i)=>{ poolRows.push({tournament_id:t.id,season_key:key,team_id:tid,sort:i}); }); }); });
+      const {error:ePd}=await supa.from('gw_dm_season_teams').delete().in('tournament_id',S.tournaments.map(t=>t.id));
+      if(ePd){ toast('Save failed: '+ePd.message); console.error('season teams clear:',ePd); return false; }
+      if(poolRows.length){
+        const {error:ePi}=await supa.from('gw_dm_season_teams').insert(poolRows);
+        if(ePi){ toast('Save failed: '+ePi.message); console.error('season teams save:',ePi); return false; }
+      }
     }
     const evArr = Object.entries(S.events).map(([id,ev])=>({
       id, home_id:ev.homeId, away_id:ev.awayId,
@@ -1688,6 +1697,7 @@ async function resetClientData(){
     supa.from('gw_dm_teams').delete().neq('id','__none__'),
     supa.from('gw_dm_tournaments').delete().neq('id','__none__'),
     supa.from('gw_dm_season_rounds').delete().neq('id','__none__'),
+    supa.from('gw_dm_season_teams').delete().neq('team_id','__none__'),
     supa.from('gw_dm_events').delete().neq('id','__none__'),
   ]);
   location.reload();
@@ -3908,6 +3918,7 @@ function deleteTournament(id){
   S.tournaments=S.tournaments.filter(x=>x.id!==id);
   supa.from('gw_dm_tournaments').delete().eq('id',id).then(()=>{});
   supa.from('gw_dm_season_rounds').delete().eq('tournament_id',id).then(()=>{});
+  supa.from('gw_dm_season_teams').delete().eq('tournament_id',id).then(()=>{});
   supa.from('gw_dm_standings').delete().eq('tournament_id',id).then(()=>{});
   supa.from('gw_dm_standing_zones').delete().eq('tournament_id',id).then(()=>{});
   save();renderTournamentNav();navTo('teams');toast('Tournament deleted');
@@ -4018,15 +4029,20 @@ async function dmLogin(){
 // R2: season rounds live in gw_dm_season_rounds; stitch them back into the
 // in-memory seasons shape at load so the whole editing surface keeps its
 // existing code. Blob rounds are only the pre-migration fallback.
-function stitchSeasonRounds(tournaments, roundRows){
-  const byScope={};
+function stitchSeasonRounds(tournaments, roundRows, teamRows){
+  const byScope={}, teamsByScope={};
   (roundRows||[]).forEach(r=>{
     const k=r.tournament_id+'|'+r.season_key;
     (byScope[k]=byScope[k]||[]).push({id:r.id,label:r.label,deadline:r.deadline||'',eventIds:r.event_ids||[]});
   });
+  (teamRows||[]).forEach(r=>{
+    const k=r.tournament_id+'|'+r.season_key;
+    (teamsByScope[k]=teamsByScope[k]||[]).push(r.team_id);
+  });
   (tournaments||[]).forEach(t=>{
     Object.entries(t.seasons||{}).forEach(([key,season])=>{
       season.rounds = byScope[t.id+'|'+key] || season.rounds || [];
+      season.teamIds = teamsByScope[t.id+'|'+key] || season.teamIds || [];
     });
   });
 }
@@ -4034,19 +4050,20 @@ function stitchSeasonRounds(tournaments, roundRows){
 // standings, R2 rounds) — stripping on save stops resurrecting them.
 function stripMigratedSeasonKeys(seasons){
   const out={};
-  Object.entries(seasons||{}).forEach(([k,se])=>{ const {rounds,standings,...rest}=se; out[k]=rest; });
+  Object.entries(seasons||{}).forEach(([k,se])=>{ const {rounds,standings,teamIds,...rest}=se; out[k]=rest; });
   return out;
 }
 
 async function loadDMData(){
   // Load global DM data (shared — no client_key filter)
-  const [{data:teams},{data:tournaments},{data:events},{data:seasonRoundRows}] = await Promise.all([
+  const [{data:teams},{data:tournaments},{data:events},{data:seasonRoundRows},{data:seasonTeamRows}] = await Promise.all([
     supa.from('gw_dm_teams').select('*'),
     supa.from('gw_dm_tournaments').select('*'),
     supa.from('gw_dm_events').select('*'),
     supa.from('gw_dm_season_rounds').select('*').order('sort_order').limit(10000),
+    supa.from('gw_dm_season_teams').select('*').order('sort').limit(20000),
   ]);
-  stitchSeasonRounds(tournaments, seasonRoundRows);
+  stitchSeasonRounds(tournaments, seasonRoundRows, seasonTeamRows);
 
   // ── MIGRATE from localStorage if Supabase is empty ──────────────────────
   // If a user has data in the old localStorage format but nothing in Supabase,
