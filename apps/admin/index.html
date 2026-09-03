@@ -3902,6 +3902,7 @@ async function loadEngagementAnalytics(compId){
         <div class="stat-card-sub">Every event, every round</div>
       </div>
     </div>
+    ${renderEngagementTimeline(roundStats)}
     <div class="card">
       <div class="card-header"><span class="card-title">Rounds</span></div>
       ${roundStats.map(r=>`
@@ -3913,6 +3914,78 @@ async function loadEngagementAnalytics(compId){
             <div class="engagement-round-metric"><strong>${r.predictedAll}</strong> predicted all events</div>
           </div>
         </div>`).join('')}
+    </div>`;
+}
+
+// Line chart: participant count per round, drawn as inline SVG (no library).
+// Every round is spaced evenly across a fixed-width viewBox, so a longer
+// season just packs the points closer together. Single series — identity is
+// in the card title, and the Rounds list below doubles as the table view.
+function renderEngagementTimeline(roundStats){
+  if(!roundStats || roundStats.length < 2) return '';
+  const W = 820, H = 260;
+  const padL = 46, padR = 18, padT = 18, padB = 38;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+  const n = roundStats.length;
+
+  const rawMax = Math.max(0, ...roundStats.map(r=>r.participants));
+  // Nice upper bound with a little headroom above the peak.
+  const niceMax = (m=>{
+    if(m <= 0) return 4;
+    const pow = Math.pow(10, Math.floor(Math.log10(m)));
+    const u = m / pow;
+    const step = pow * (u <= 2 ? 0.5 : u <= 5 ? 1 : 2);
+    return Math.max(step, Math.ceil((m * 1.08) / step) * step);
+  })(rawMax);
+
+  const xAt = i => padL + (i * plotW) / (n - 1);
+  const yAt = v => padT + plotH - (v / niceMax) * plotH;
+
+  const gridN = 4;
+  const grid = Array.from({length:gridN+1}, (_,g)=>{
+    const gv = niceMax * g / gridN;
+    const gy = yAt(gv).toFixed(1);
+    return `<line class="gwc-grid" x1="${padL}" y1="${gy}" x2="${W-padR}" y2="${gy}"/>`
+      + `<text class="gwc-lbl" x="${padL-8}" y="${(+gy+3.5).toFixed(1)}" text-anchor="end">${Math.round(gv)}</text>`;
+  }).join('');
+
+  // Thin out x-axis numbers when there are many rounds; always keep first & last.
+  const every = Math.max(1, Math.ceil(n / 14));
+  const xTicks = roundStats.map((r,i)=>
+    (i === 0 || i === n-1 || i % every === 0)
+      ? `<text class="gwc-lbl" x="${xAt(i).toFixed(1)}" y="${H-padB+16}" text-anchor="middle">${i+1}</text>`
+      : ''
+  ).join('');
+
+  const linePts = roundStats.map((r,i)=>`${xAt(i).toFixed(1)},${yAt(r.participants).toFixed(1)}`).join(' ');
+  const dots = roundStats.map((r,i)=>{
+    const cx = xAt(i).toFixed(1), cy = yAt(r.participants).toFixed(1);
+    const label = escapeHtml(r.label || ('Round ' + (i+1)));
+    const title = `${label} — ${r.participants} participant${r.participants===1?'':'s'}`;
+    return `<circle cx="${cx}" cy="${cy}" r="12" fill="transparent"><title>${title}</title></circle>`
+      + `<circle class="gwc-dot" cx="${cx}" cy="${cy}" r="4"/>`;
+  }).join('');
+
+  return `
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-header"><span class="card-title">Participants over rounds</span></div>
+      <div class="card-body">
+        <svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Line chart of participant count per round">
+          <style>
+            .gwc-grid{stroke:var(--border);stroke-width:1}
+            .gwc-line{fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+            .gwc-dot{fill:var(--accent);stroke:var(--white);stroke-width:1.5}
+            .gwc-lbl{fill:var(--text-3);font-size:10px;font-family:var(--mono)}
+          </style>
+          ${grid}
+          <line class="gwc-grid" x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+plotH}"/>
+          <polyline class="gwc-line" points="${linePts}"/>
+          ${dots}
+          ${xTicks}
+          <text class="gwc-lbl" x="${padL + plotW/2}" y="${H-4}" text-anchor="middle">Round</text>
+        </svg>
+      </div>
     </div>`;
 }
 
