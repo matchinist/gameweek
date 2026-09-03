@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Join a workspace — Gameweek</title>
+<meta name="robots" content="noindex">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.js" integrity="sha384-ysv13JVP3fufiEXfjML9OdCa/rRbMJvUBOWyor82wfuK8INNZAvmbxHgKIHi+oqz" crossorigin="anonymous"></script>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#F6F5FB;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;color:#0F1117;}
+  .logo{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:22px;font-weight:700;margin-bottom:28px;}
+  .logo span{color:#4F46E5;}
+  .card{background:#fff;border:1px solid #E5E7EB;border-radius:16px;padding:34px 30px;width:100%;max-width:420px;}
+  .card-title{font-size:18px;font-weight:800;margin-bottom:6px;}
+  .card-sub{font-size:13px;color:#6B7280;margin-bottom:24px;line-height:1.55;}
+  .card-sub strong{color:#0F1117;}
+  label{font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px;}
+  input{width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:10px 13px;font-size:14px;color:#0F1117;outline:none;margin-bottom:16px;transition:border-color .15s;}
+  input:focus{border-color:#4F46E5;}
+  input:disabled{background:#F9FAFB;color:#9CA3AF;}
+  .btn{width:100%;background:#4F46E5;color:#fff;border:none;border-radius:8px;padding:13px;font-family:'JetBrains Mono',ui-monospace,monospace;font-weight:700;font-size:14px;cursor:pointer;transition:background .15s;}
+  .btn:hover:not(:disabled){background:#3730A3;}
+  .btn:disabled{background:#E5E7EB;color:#9CA3AF;cursor:default;}
+  .msg{font-size:12.5px;border-radius:8px;padding:10px 12px;margin-bottom:16px;display:none;line-height:1.5;}
+  .msg.err{color:#B91C1C;background:#FEE2E2;}
+  .msg.ok{color:#166534;background:#DCFCE7;}
+  .msg.visible{display:block;}
+  .hint{font-size:11px;color:#9CA3AF;margin:-10px 0 16px;}
+  .center{text-align:center;}
+  .center .success-icon{font-size:38px;margin-bottom:10px;}
+  .already{font-size:12px;color:#6B7280;text-align:center;margin-top:16px;}
+  .already a{color:#4F46E5;text-decoration:none;font-weight:600;}
+</style>
+</head>
+<body>
+
+<div class="logo">game<span>week</span></div>
+
+<div class="card">
+  <div id="state-loading" class="center" style="padding:20px 0;">
+    <div class="card-sub" style="margin:0;">Checking your invite…</div>
+  </div>
+
+  <div id="state-invalid" style="display:none;">
+    <div class="card-title">This invite can't be used</div>
+    <div class="card-sub" id="invalid-reason">The link is invalid or has already been used. Ask whoever invited you to send a fresh one.</div>
+    <a class="btn" href="/admin" style="display:block;text-align:center;text-decoration:none;">Go to sign in</a>
+  </div>
+
+  <div id="state-form" style="display:none;">
+    <div class="card-title">Join the workspace</div>
+    <div class="card-sub">You've been invited to <strong id="ws-name">a Gameweek workspace</strong>. Create a password to join — you'll have the same admin access as everyone else on the team.</div>
+
+    <div id="msg" class="msg"></div>
+
+    <label>Email</label>
+    <input type="email" id="email" disabled autocomplete="username">
+
+    <label>Choose a password</label>
+    <input type="password" id="password" placeholder="At least 8 characters" minlength="8" autocomplete="new-password" onkeydown="if(event.key==='Enter')accept()">
+    <p class="hint">Min. 8 characters.</p>
+
+    <button class="btn" id="go-btn" onclick="accept()">Join workspace →</button>
+    <div class="already">Already have a Gameweek login with this email? <a href="#" onclick="event.preventDefault();accept(true)">Use it to join</a></div>
+  </div>
+
+  <div id="state-done" class="center" style="display:none;">
+    <div class="success-icon">✓</div>
+    <div class="card-title">You're in!</div>
+    <div class="card-sub">Taking you to the dashboard…</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  const SUPA_URL = 'https://mgfzqkesikfdrahherfm.supabase.co';
+  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZnpxa2VzaWtmZHJhaGhlcmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjA5ODAsImV4cCI6MjA5NTAzNjk4MH0.uzhqaPtsEE-dthbpv1tl6krZj7FidfTblV_7ilcAxFI';
+  // Same storageKey as /admin so the session we create here is the one the
+  // dashboard picks up on redirect.
+  const supa = supabase.createClient(SUPA_URL, SUPA_KEY, { auth: { persistSession: true, storageKey: 'gw-operator' } });
+
+  const token = new URLSearchParams(location.search).get('token') || '';
+  const $ = id => document.getElementById(id);
+  function show(which){ ['loading','invalid','form','done'].forEach(s => $('state-'+s).style.display = s===which ? '' : 'none'); }
+  function msg(text, kind){ const m = $('msg'); m.textContent = text; m.className = 'msg visible ' + (kind||'err'); }
+  function clearMsg(){ $('msg').className = 'msg'; }
+
+  let inviteEmail = '';
+
+  async function init(){
+    if(!token){ show('invalid'); return; }
+    try{
+      const { data, error } = await supa.rpc('gw_workspace_invite_info', { p_token: token });
+      if(error) throw error;
+      if(!data || !data.valid){
+        $('invalid-reason').textContent = 'This invite link is invalid or has already been used. Ask whoever invited you to send a fresh one.';
+        show('invalid'); return;
+      }
+      inviteEmail = data.email || '';
+      $('email').value = inviteEmail;
+      $('ws-name').textContent = data.company_name || 'a Gameweek workspace';
+      show('form');
+    }catch(e){
+      console.error('invite info:', e);
+      $('invalid-reason').textContent = 'Could not load this invite. Check your connection and try the link again.';
+      show('invalid');
+    }
+  }
+
+  window.accept = async function(existingOnly){
+    clearMsg();
+    const btn = $('go-btn');
+    const password = $('password').value;
+    if(!existingOnly && (!password || password.length < 8)){ msg('Password must be at least 8 characters.'); return; }
+    btn.disabled = true; btn.textContent = 'Joining…';
+    try{
+      if(!existingOnly){
+        const { error: suErr } = await supa.auth.signUp({ email: inviteEmail, password });
+        // "already registered" is fine — fall through to sign-in.
+        if(suErr && !/already registered|already.*exists/i.test(suErr.message || '')){
+          throw suErr;
+        }
+      }
+      const { error: siErr } = await supa.auth.signInWithPassword({ email: inviteEmail, password: password || '' });
+      if(siErr){
+        if(existingOnly || /invalid login credentials/i.test(siErr.message || '')){
+          msg('That email already has a Gameweek account. Enter its password above, then press “Use it to join”.');
+        } else {
+          throw siErr;
+        }
+        btn.disabled = false; btn.textContent = 'Join workspace →';
+        return;
+      }
+      const { error: acErr } = await supa.rpc('gw_accept_workspace_invite', { p_token: token });
+      if(acErr) throw acErr;
+      show('done');
+      await new Promise(r => setTimeout(r, 700));
+      location.href = '/admin';
+    }catch(e){
+      console.error('accept:', e);
+      msg((e && e.message) ? e.message : 'Something went wrong. Please try again.');
+      btn.disabled = false; btn.textContent = 'Join workspace →';
+    }
+  };
+
+  init();
+})();
+</script>
+</body>
+</html>

@@ -302,6 +302,9 @@ tbody tr:hover td{background:var(--row-hover);}
 
   <div class="sidebar-section">
     <div class="sidebar-section-label">Account</div>
+    <button class="nav-item" onclick="nav('team')">
+      <span class="ni-icon">🤝</span> Team
+    </button>
     <button class="nav-item" onclick="nav('billing')">
       <span class="ni-icon">💳</span> Subscription
     </button>
@@ -895,6 +898,17 @@ tbody tr:hover td{background:var(--row-hover);}
         </div>
 
       </div>
+    </div>
+
+    <!-- TEAM -->
+    <div class="view" id="view-team">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Team</div>
+          <div class="page-sub" style="font-size:15px;">Invite other people into this workspace. Everyone you add gets the same admin access.</div>
+        </div>
+      </div>
+      <div id="team-content" style="max-width:760px;"></div>
     </div>
 
     <!-- BILLING -->
@@ -1540,6 +1554,7 @@ const state = {
   events: [],
   domains: [],
   campaigns: [],
+  isWorkspaceMember: false, // true when the signed-in user was invited, not the owner
 };
 
 // DM data loaded into memory so round modal stays synchronous
@@ -1677,7 +1692,7 @@ function nav(view, subLabel){
   });
 
   // breadcrumb
-  const labels = {dashboard:'Dashboard','comp-detail':'Competitions','competitions':'Competitions',embed:'Embed & Integration',settings:'Settings',branding:'Customisation',billing:'Subscription',widgets:'Widgets',users:'Users',monetization:'Monetization'};
+  const labels = {dashboard:'Dashboard','comp-detail':'Competitions','competitions':'Competitions',embed:'Embed & Integration',settings:'Settings',branding:'Customisation',billing:'Subscription',team:'Team',widgets:'Widgets',users:'Users',monetization:'Monetization'};
   let bc = '';
   if(view==='comp-detail' && subLabel){
     bc = `<span>Competitions</span><span class="sep">/</span><span class="current">${subLabel}</span>`;
@@ -1712,6 +1727,7 @@ function nav(view, subLabel){
   if(view==='settings') renderSettings();
   if(view==='branding') renderBranding();
   if(view==='billing') renderBilling();
+  if(view==='team') renderTeam();
 }
 
 async function renderBilling(){
@@ -1780,6 +1796,159 @@ async function renderBillingPackage(){
   }catch(e){
     console.error('renderBillingPackage:',e);
     featEl.innerHTML = `<div style="font-size:12px;color:var(--red);">Could not load package limits.</div>`;
+  }
+}
+
+// ── TEAM (workspace members) ──────────────────────────────────────────────
+// The owner's gw_operators row is the workspace; extra people are rows in
+// gw_workspace_members, added via the gw_create_workspace_invite RPC and the
+// /invite page. Removal goes through the remove-workspace-member Edge
+// Function so their Supabase login is disabled too.
+const INVITE_BASE = 'https://www.gameweek.cloud/invite?token=';
+
+async function renderTeam(){
+  const el = document.getElementById('team-content');
+  if(!el) return;
+  el.innerHTML = `<div class="card"><div class="card-body" style="color:var(--text-3);font-size:12px;">Loading…</div></div>`;
+
+  let members = [], invites = [], limit = 0;
+  try{
+    const [m, i, lim] = await Promise.all([
+      supa.from('gw_workspace_members').select('auth_id,email,created_at').eq('client_key', CLIENT_KEY),
+      supa.from('gw_workspace_invites').select('id,email,token,created_at').eq('client_key', CLIENT_KEY).is('accepted_at', null),
+      supa.rpc('gw_admin_users_limit', { p_client_key: CLIENT_KEY }),
+    ]);
+    members = m.data || [];
+    invites = i.data || [];
+    limit   = Number(lim.data) || 0;
+  }catch(e){
+    console.error('renderTeam:', e);
+    el.innerHTML = `<div class="card"><div class="card-body" style="color:var(--red);font-size:12px;">Could not load team members.</div></div>`;
+    return;
+  }
+
+  const isOwner = !state.isWorkspaceMember;
+  const used = members.length + invites.length;
+  const atLimit = used >= limit;
+  const ownerEmail = currentOperator?.email || '—';
+
+  const rows = [];
+  rows.push(`<tr>
+    <td>${escapeHtml(ownerEmail)}</td>
+    <td><span class="badge badge-green">Owner</span></td>
+    <td style="text-align:right;color:var(--text-3);">—</td>
+  </tr>`);
+  members.forEach(mm=>{
+    rows.push(`<tr>
+      <td>${escapeHtml(mm.email||'—')}</td>
+      <td><span class="badge badge-blue">Member</span></td>
+      <td style="text-align:right;">${isOwner ? `<button class="btn btn-danger btn-sm" onclick="removeMember('${escapeHtml(mm.auth_id)}','${escapeHtml(mm.email||'')}')">Remove</button>` : ''}</td>
+    </tr>`);
+  });
+  invites.forEach(inv=>{
+    const link = INVITE_BASE + encodeURIComponent(inv.token);
+    rows.push(`<tr>
+      <td>${escapeHtml(inv.email)}</td>
+      <td><span class="badge badge-amber">Invite pending</span></td>
+      <td style="text-align:right;white-space:nowrap;">
+        ${isOwner ? `<button class="btn btn-outline btn-sm" onclick="copyInviteLink('${escapeHtml(inv.token)}')">Copy link</button>
+        <button class="btn btn-ghost btn-sm" style="color:var(--red);" onclick="cancelInvite('${escapeHtml(inv.id)}')">Cancel</button>` : ''}
+      </td>
+    </tr>`);
+  });
+
+  const inviteCard = isOwner ? `
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header"><span class="card-title">Invite a member</span></div>
+      <div class="card-body">
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;">
+          Add someone by email. You'll get a one-time link to send them — they set their own password and land straight in this workspace.
+        </div>
+        ${atLimit ? `
+          <div style="font-size:12.5px;color:var(--amber);background:var(--amber-light);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-weight:600;">
+            You've used all ${limit} member seat${limit===1?'':'s'} on your package. Upgrade your package to add more, or remove a member to free a seat.
+          </div>` : ''}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <input class="form-input" id="team-invite-email" type="email" placeholder="name@company.com" ${atLimit?'disabled':''} style="flex:1;min-width:200px;" onkeydown="if(event.key==='Enter')inviteMember()" />
+          <button class="btn btn-primary" id="team-invite-btn" ${atLimit?'disabled':''} onclick="inviteMember()">Create invite</button>
+        </div>
+        <div id="team-invite-msg" style="font-size:12px;margin-top:10px;display:none;"></div>
+      </div>
+    </div>` : `
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-body" style="font-size:12.5px;color:var(--text-2);">
+        You're a member of this workspace. Only the workspace owner can invite or remove people.
+      </div>
+    </div>`;
+
+  el.innerHTML = `
+    ${inviteCard}
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Members</span>
+        <span style="font-size:12px;color:var(--text-3);">${used} of ${limit} seat${limit===1?'':'s'} used${used>=limit&&limit>0?' · full':''}</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Email</th><th>Role</th><th style="text-align:right;">&nbsp;</th></tr></thead>
+          <tbody>${rows.join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+async function inviteMember(){
+  const input = document.getElementById('team-invite-email');
+  const btn = document.getElementById('team-invite-btn');
+  const msgEl = document.getElementById('team-invite-msg');
+  const email = (input?.value || '').trim().toLowerCase();
+  const showMsg = (text, color) => { if(msgEl){ msgEl.textContent = text; msgEl.style.color = color; msgEl.style.display = 'block'; } };
+  if(!email){ showMsg('Enter an email address.', 'var(--red)'); return; }
+  if(btn){ btn.disabled = true; btn.textContent = 'Creating…'; }
+  try{
+    const { data, error } = await supa.rpc('gw_create_workspace_invite', { p_email: email });
+    if(error) throw error;
+    if(input) input.value = '';
+    const link = INVITE_BASE + encodeURIComponent(data.token);
+    try{ await navigator.clipboard.writeText(link); toast('Invite created — link copied to clipboard'); }
+    catch(e){ toast('Invite created'); }
+    await renderTeam();
+  }catch(e){
+    console.error('inviteMember:', e);
+    const raw = (e && e.message) || '';
+    if(/PACKAGE_LIMIT/.test(raw)){
+      showMsg('Your package has no member seats left. Upgrade your package to invite more people.', 'var(--amber)');
+    } else {
+      showMsg(raw || 'Could not create the invite.', 'var(--red)');
+    }
+    if(btn){ btn.disabled = false; btn.textContent = 'Create invite'; }
+  }
+}
+
+async function copyInviteLink(token){
+  const link = INVITE_BASE + encodeURIComponent(token);
+  try{ await navigator.clipboard.writeText(link); toast('Invite link copied'); }
+  catch(e){ toast('Could not copy — link: ' + link); }
+}
+
+async function cancelInvite(id){
+  if(!confirm('Cancel this invite? The link will stop working.')) return;
+  const { error } = await supa.from('gw_workspace_invites').delete().eq('id', id);
+  if(error){ toast('Could not cancel: ' + error.message); return; }
+  toast('Invite cancelled');
+  renderTeam();
+}
+
+async function removeMember(authId, email){
+  if(!confirm(`Remove ${email || 'this member'}? They will be signed out and won't be able to log in to Gameweek again.`)) return;
+  try{
+    const { error } = await supa.functions.invoke('remove-workspace-member', { body: { member_auth_id: authId } });
+    if(error) throw error;
+    toast('Member removed');
+    renderTeam();
+  }catch(e){
+    console.error('removeMember:', e);
+    toast('Could not remove member: ' + ((e && e.message) || 'unknown error'));
   }
 }
 
@@ -4702,6 +4871,15 @@ function initOperatorChrome(){
   if(!op){
     const res2 = await supa.from('gw_operators').select('*').eq('id',session.user.id).maybeSingle();
     op = res2.data;
+  }
+  if(!op){
+    // Invited member? Load the workspace they were added to (its owner's
+    // gw_operators row), readable via the widened operators_read_own policy.
+    const {data:mem} = await supa.from('gw_workspace_members').select('client_key').eq('auth_id',session.user.id).maybeSingle();
+    if(mem?.client_key){
+      const {data:wsOp} = await supa.from('gw_operators').select('*').eq('client_key',mem.client_key).maybeSingle();
+      if(wsOp){ op = wsOp; state.isWorkspaceMember = true; }
+    }
   }
   if(!op){
     // Auto-create operator row for new signups

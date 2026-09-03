@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'node:path';
 
-const pages = ['contact', 'privacy', 'terms', 'pricingtest', 'cs2fantasy', 'welcome', 'reset', 'reset-password', 'demo'];
+const pages = ['contact', 'privacy', 'terms', 'pricingtest', 'cs2fantasy', 'welcome', 'reset', 'reset-password', 'demo', 'invite'];
 
 export default defineConfig({
   build: {
