@@ -113,9 +113,9 @@ Unchanged from v1 in substance. The largest business constraint is that every fi
 
 | # | Task |
 |---|---|
-| 5.1 | ☐ Choose provider (API-Football / SportMonks — startup-priced); confirm coverage for the sports operators actually run (open question #3). |
-| 5.2 | ☐ **Reconciliation UI first** in `/data`: map provider team/fixture IDs onto existing `gw_dm_*` rows; review-and-approve, not auto-overwrite; manual override stays forever. |
-| 5.3 | ☐ Scheduled ingest via Supabase scheduled Edge Function / `pg_cron`: fixtures, kickoffs (`kickoff_at` native), results, lineups, scorers → each result triggers `score-round`. |
+| 5.1 | ☒ Choose provider (API-Football / SportMonks — startup-priced); confirm coverage for the sports operators actually run (open question #3). |
+| 5.2 | ☒ **Reconciliation UI first** in `/data`: map provider team/fixture IDs onto existing `gw_dm_*` rows; review-and-approve, not auto-overwrite; manual override stays forever. |
+| 5.3 | ☒ Scheduled ingest via Supabase scheduled Edge Function / `pg_cron`: fixtures, kickoffs (`kickoff_at` native), results, lineups, scorers → each result triggers `score-round`. |
 | 5.4 | ☐ **Operators enter results for their own competitions** (H-4): real UI in `/admin` guarded by an operator-ownership policy; delete the dead result modal and its `state.events` remnants. |
 
 **Exit:** football results land and score without a human; onboarding an operator adds no data-entry load.
@@ -144,6 +144,7 @@ Leave Supabase · Hono API tier · KV/edge caching · Queues · R2 · rate limit
 
 | Date | Phase.Task | Note |
 |---|---|---|
+| 2026-09-03 | 5.1–5.3 (retro-ticked) | Delivered during the SportMonks track: provider chosen (SportMonks Starter, as a dynamic gw_providers registry), reconciliation shipped as the 🔗 Provider mapping + Fetch & match review flow (owner-verified on live Süper Lig data), scheduled ingest live via pg_cron → data-ingest with automatic scoring — the phase exit criterion ("football results land and score without a human") met and observed in production. Remaining in Phase 5: 5.4 operators enter their own results. |
 | 2026-09-03 | DB redesign R4 — **REDESIGN COMPLETE** | Season keys → `gw_dm_seasons`; `gw_dm_tournaments.seasons` jsonb **column dropped** (backfill sweeps the R1-R3 tables too so nothing orphans). Apps rebuild the in-memory shape from tables (/data + /admin hydrate keys then stitch; embed derives it from season-round rows alone — and its tournaments select now includes `name_i18n`, fixing tournament overrides never rendering in the embed); standings widget blob fallback removed; worker select cleaned; save() sends no jsonb season data. All 4 docker migration tests green post-drop; replay 27 tables/59 policies. Live: 23 season rows / 21 tournaments, column gone, embed + standings widget verified. Row-shaped data now fully relational; jsonb only where document-shaped. |
 | 2026-09-03 | DB redesign R3 | Season team pools → `gw_dm_season_teams` (pk scope+team, array order via sort). Backfill+strip; hydration extended in /data + /admin; save() mirrors pool rows; widgets table-first with blob fallback; embed untouched. R1/R2 docker tests' final-state assertions updated for the moving blob. Live: 231 rows / 19 tournaments, 0 teamIds keys left, anon widget reads verified. Blob now carries only empty season keys — R4 retires it. |
 | 2026-09-03 | DB redesign R2 | Season rounds → `gw_dm_season_rounds` (row per round, event_ids text[] mirroring gw_rounds; sort_order from array order). Backfill+strip migration (docker-tested RED-first); adoption via HYDRATION — /data, /admin and the embed stitch table rows back into the in-memory seasons shape at load, so ~15 /data mutation sites + admin's event picker + the embed's EVENT_GAMEWEEK build kept their code; only /data save() changed (strips migrated keys from the blob payload, mirrors rounds rows). Demo falls back to dataset blobs (mock returns []). Live-verified: PL backfilled 3 seasons × 38 rounds × 380 events, 0 blob rounds left, wpet embed hydrates 2000 mappings. |
