@@ -4940,6 +4940,20 @@ function initCustomerChrome(){
     }
   }
   if(!op){
+    // A pending invite means this person belongs in someone else's
+    // workspace. Auto-creating a workspace here would shadow the
+    // membership forever — the by-auth_id lookup above wins on every
+    // later login — so stop and point them at their invite link instead.
+    // (RLS lets only the owner read invites; the definer rpc reveals just
+    // the caller's own pending invite, by verified email.)
+    try{
+      const {data:pending} = await supa.rpc('gw_my_pending_invite');
+      if(pending && pending.company_name){
+        await supa.auth.signOut();
+        showAdminLogin(`You've been invited to ${pending.company_name}'s workspace. Open the invite link you were sent to join it — if you've lost the link, ask the workspace owner to copy it again from their Team page.`);
+        return;
+      }
+    }catch(e){ /* guard only — signup proceeds if the rpc is unreachable */ }
     // Auto-create customer row for new signups
     const email = session.user.email||'';
     const clientKey = email.split('@')[0].replace(/[^a-z0-9]/gi,'').toLowerCase()+'_'+Math.random().toString(36).slice(2,8);

@@ -9,6 +9,7 @@ Gameweek is built for sports media companies, betting affiliate sites, fan commu
 - Customers sign up, brand the widget with their own colors and logo, and embed it on their website — either as a seamless script embed that auto-sizes to its content and scrolls with the page, or as a classic fixed-height iframe.
 - Site visitors create a free account, make predictions on upcoming fixtures, and see their results and points on a leaderboard.
 - Customers manage everything (competitions, fixtures, results, teams, players) from an admin dashboard — no coding required after the initial embed.
+- Workspaces support multiple admin users: each pricing package includes a number of admin seats, the workspace owner invites members by email, and invited members get access to that customer's admin panel only.
 
 ## Game modes
 
