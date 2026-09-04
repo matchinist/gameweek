@@ -102,10 +102,16 @@ CID=$(q "select id from gw_customers where client_key='pkgco';")
 
 check "packages carry admin_users; the five known slugs exist" \
   "$(q "select count(*) from gw_packages where slug in ('free','start','growth','scale','enterprise');")-$(q "select count(*) from information_schema.columns where table_name='gw_packages' and column_name='admin_users';")" "5-1"
-check "the pricing-sheet fields exist on gw_packages" \
-  "$(q "select count(*) from information_schema.columns where table_name='gw_packages' and column_name in ('description','games','languages','customisation','widgets','sponsor_slots','import_migration','support','addon_tournament','addon_domain','addon_mau_1000','addon_language');")" "12"
-check "sheet values seeded (Starter rename, growth widgets, scale add-on domain price)" \
-  "$(q "select (select name from gw_packages where slug='start') || '|' || (select widgets from gw_packages where slug='growth') || '|' || (select addon_domain from gw_packages where slug='scale');")" "Starter|Advanced – Top Scorers & Squad Analytics|50"
+check "typed package fields exist with the right types (text-blob columns gone)" \
+  "$(q "select count(*) from information_schema.columns where table_name='gw_packages' and ((column_name,data_type) in (('core_games','smallint'),('premium_games','smallint'),('basic_widgets','boolean'),('advanced_widgets','boolean'),('monthly_report','boolean'),('customisation_id','uuid'),('support_id','uuid')) or (column_name='analytics' and data_type='USER-DEFINED'));")-$(q "select count(*) from information_schema.columns where table_name='gw_packages' and column_name in ('description','games','customisation','widgets','support','user_analytics');")" "8-0"
+check "sheet mapping seeded through the typed fields and lookups" \
+  "$(q "select (select core_games||':'||analytics||':'||monthly_report from gw_packages where slug='free') || '|' || (select co.name from gw_packages p join gw_customisation_options co on co.id=p.customisation_id where p.slug='growth') || '|' || (select st.csm||':'||st.response_sla from gw_packages p join gw_support_tiers st on st.id=p.support_id where p.slug='scale') || '|' || (select premium_games||':'||advanced_widgets from gw_packages where slug='enterprise');")" "1:basic:true|Yes – Custom CSS|true:1|999:true"
+check "the analytics enum rejects values outside basic/advanced" \
+  "$(docker exec "$CONTAINER" psql -U postgres -qtA -v ON_ERROR_STOP=1 -c "update gw_packages set analytics='gold' where slug='free';" >/dev/null 2>&1 && echo OK || echo ERR)" "ERR"
+check "a lookup option in use cannot be deleted (FK RESTRICT)" \
+  "$(docker exec "$CONTAINER" psql -U postgres -qtA -v ON_ERROR_STOP=1 -c "delete from gw_customisation_options where name='Yes – Custom CSS';" >/dev/null 2>&1 && echo OK || echo ERR)" "ERR"
+check "signed-in customers can read the lookup tables (billing card), anon cannot" \
+  "$(docker exec "$CONTAINER" psql -U postgres -qtA -v ON_ERROR_STOP=1 -c "begin; set local role authenticated; select count(*)>=4 from gw_support_tiers; rollback;" 2>/dev/null | tail -1)-$(docker exec "$CONTAINER" psql -U postgres -qtA -v ON_ERROR_STOP=1 -c "begin; set local role anon; select count(*) from gw_support_tiers; rollback;" >/dev/null 2>&1 && echo OK || echo ERR)" "t-ERR"
 check "a new customer lands on the Free package via the default trigger" \
   "$(q "select p.slug from gw_customers c join gw_packages p on p.id=c.package_id where c.client_key='pkgco';")" "free"
 docker exec "$CONTAINER" psql -q -U postgres -v ON_ERROR_STOP=1 -c \

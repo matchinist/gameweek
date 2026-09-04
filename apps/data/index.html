@@ -407,6 +407,28 @@ window.navTo = function(page, tournamentId){ window.__pendingNav = [page, tourna
               <div id="packages-table-wrap" style="overflow-x:auto;"></div>
             </div>
           </div>
+          <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:16px;margin-top:16px;align-items:start;">
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Customisation options</span>
+                <button class="btn btn-ghost btn-sm" onclick="addLookupRow('customisationOptions')">+ Add</button>
+              </div>
+              <div class="card-body">
+                <div id="custopts-wrap"></div>
+                <button class="btn btn-primary btn-sm" id="custopts-save-btn" style="margin-top:10px;" onclick="saveLookup('customisationOptions')">Save options</button>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Support tiers</span>
+                <button class="btn btn-ghost btn-sm" onclick="addLookupRow('supportTiers')">+ Add</button>
+              </div>
+              <div class="card-body">
+                <div id="supptiers-wrap" style="overflow-x:auto;"></div>
+                <button class="btn btn-primary btn-sm" id="supptiers-save-btn" style="margin-top:10px;" onclick="saveLookup('supportTiers')">Save tiers</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -2409,21 +2431,23 @@ const PACKAGE_FIELDS = [
   {key:'flat_fee',        label:'Flat fee',    type:'num',    w:'90px'},
   {key:'price_per_mau',   label:'Price / MAU', type:'num',    w:'90px'},
   {key:'price_text',      label:'Price text',  type:'text',   w:'120px', hint:'shown instead of the price, e.g. “Get in Touch” (blank = show the number)'},
-  {key:'description',     label:'Best fit for', type:'text',  w:'220px', hint:'positioning blurb shown under the price'},
   {key:'included_mau',    label:'MAU',         type:'int',    w:'90px'},
-  {key:'games',           label:'Games',       type:'text',   w:'160px', hint:'game-library tier, e.g. “any 2 Core Games”'},
+  {key:'core_games',      label:'Core games',  type:'int',    w:'70px', hint:'null = none · 999 = full core library'},
+  {key:'premium_games',   label:'Premium games', type:'int',  w:'70px', hint:'null = none · 999 = full premium library'},
   {key:'tournaments',     label:'Tournaments', type:'int',    w:'80px'},
   {key:'languages',       label:'Languages',   type:'int',    w:'80px'},
   {key:'admin_users',     label:'Admin users', type:'int',    w:'80px'},
   {key:'allowed_domains', label:'Domains',     type:'int',    w:'80px'},
   {key:'sso',             label:'SSO',         type:'bool'},
-  {key:'customisation',   label:'Customisation', type:'text', w:'150px'},
+  {key:'customisation_id',label:'Customisation', type:'fk', optionsFrom:'customisationOptions'},
   {key:'gameweek_logo',   label:'GW logo',     type:'bool'},
-  {key:'widgets',         label:'Widgets',     type:'text',   w:'170px'},
+  {key:'basic_widgets',   label:'Basic widgets', type:'bool'},
+  {key:'advanced_widgets',label:'Adv. widgets', type:'bool'},
   {key:'sponsor_slots',   label:'Sponsor slots', type:'bool'},
-  {key:'user_analytics',  label:'Analytics',   type:'text',   w:'140px'},
+  {key:'analytics',       label:'Analytics',   type:'select', options:['basic','advanced']},
+  {key:'monthly_report',  label:'Monthly report', type:'bool'},
   {key:'import_migration',label:'Import',      type:'bool'},
-  {key:'support',         label:'Support',     type:'text',   w:'160px'},
+  {key:'support_id',      label:'Support',     type:'fk', optionsFrom:'supportTiers'},
   {key:'addon_tournament',label:'+Tournament $', type:'num',  w:'90px', hint:'blank = not offered (or already unlimited)'},
   {key:'addon_domain',    label:'+Domain $',   type:'num',    w:'80px'},
   {key:'addon_mau_1000',  label:'+1k MAU $',   type:'num',    w:'80px'},
@@ -2432,9 +2456,15 @@ const PACKAGE_FIELDS = [
 let packagesDeleted = new Set();
 
 async function loadPackages(){
-  const {data,error} = await supa.from('gw_packages').select('*').order('sort_order').order('name');
+  const [{data,error}, co, st] = await Promise.all([
+    supa.from('gw_packages').select('*').order('sort_order').order('name'),
+    supa.from('gw_customisation_options').select('*').order('sort_order').order('name'),
+    supa.from('gw_support_tiers').select('*').order('sort_order').order('name'),
+  ]);
   if(error) throw error;
   S.packages = data || [];
+  S.customisationOptions = co.data || [];
+  S.supportTiers = st.data || [];
   // client counts per package, so the grid can show usage and block deleting
   // a package still assigned to a client
   const {data:custs} = await supa.from('gw_customers').select('package_id');
@@ -2448,6 +2478,7 @@ async function renderPackages(){
   const wrap = document.getElementById('packages-table-wrap');
   wrap.innerHTML = '<div style="padding:14px;font-size:12px;color:var(--text-3);">Loading…</div>';
   packagesDeleted = new Set();
+  lookupsDeleted = { customisationOptions:new Set(), supportTiers:new Set() };
   try{
     await loadPackages();
   }catch(e){
@@ -2456,6 +2487,8 @@ async function renderPackages(){
     return;
   }
   renderPackagesGrid();
+  renderLookup('customisationOptions');
+  renderLookup('supportTiers');
 }
 
 function packageCell(field, row){
@@ -2463,6 +2496,12 @@ function packageCell(field, row){
   const attrs = `data-id="${row.id}" data-field="${field.key}"`;
   if(field.type === 'bool')
     return `<td style="text-align:center;"><input type="checkbox" ${attrs} ${v?'checked':''}></td>`;
+  if(field.type === 'fk'){
+    const list = S[field.optionsFrom] || [];
+    const opts = ['<option value="">—</option>', ...list.map(o=>
+      `<option value="${o.id}"${v===o.id?' selected':''}>${escHtml(o.name)}</option>`)].join('');
+    return `<td><select class="form-select" ${attrs}>${opts}</select></td>`;
+  }
   if(field.type === 'select'){
     const opts = ['', ...(field.options||[])].map(o=>
       `<option value="${o}"${String(v??'')===o?' selected':''}>${o===''?'—':o}</option>`).join('');
@@ -2501,11 +2540,12 @@ function addPackageRow(){
   const nextOrder = S.packages.reduce((m,p)=>Math.max(m, p.sort_order||0), -1) + 1;
   S.packages.push({
     id: uid(), slug:'', name:'', sort_order: nextOrder, is_active:true,
-    flat_fee:0, price_per_mau:0, price_text:null, description:null,
-    included_mau:null, games:null, tournaments:null, languages:null,
-    admin_users:null, allowed_domains:null, user_analytics:null,
-    sso:false, customisation:null, gameweek_logo:false, widgets:null,
-    sponsor_slots:false, import_migration:false, support:null,
+    flat_fee:0, price_per_mau:0, price_text:null,
+    included_mau:null, core_games:null, premium_games:null,
+    tournaments:null, languages:null, admin_users:null, allowed_domains:null,
+    sso:false, customisation_id:null, gameweek_logo:false,
+    basic_widgets:false, advanced_widgets:false, sponsor_slots:false,
+    analytics:null, monthly_report:false, import_migration:false, support_id:null,
     addon_tournament:null, addon_domain:null, addon_mau_1000:null, addon_language:null,
     _new:true,
   });
@@ -2530,13 +2570,108 @@ function collectPackagesFromGrid(){
     const row = byId[el.dataset.id]; if(!row) return;
     const f = PACKAGE_FIELDS.find(x=>x.key===el.dataset.field); if(!f) return;
     if(f.type==='bool') row[f.key] = el.checked;
-    else if(f.type==='select') row[f.key] = el.value || null;
+    else if(f.type==='select' || f.type==='fk') row[f.key] = el.value || null;
     else if(f.type==='int' || f.type==='num'){
       const raw=(el.value||'').trim();
       row[f.key] = raw==='' ? null : Number(raw);
     } else row[f.key] = (el.value||'').trim();
   });
   return S.packages;
+}
+
+// ── package option lists (lookup tables the grid's FK selects draw from) ──
+// Same CRUD shape as the packages grid: edit in place, deletions collected,
+// one Save per list. Deleting an option a package still points at fails on
+// the FK RESTRICT and surfaces as a toast.
+const LOOKUPS = {
+  customisationOptions: {
+    table:'gw_customisation_options', wrap:'custopts-wrap', btn:'custopts-save-btn',
+    fields:[{key:'name',type:'text'},{key:'sort_order',type:'int'}],
+    blank:()=>({id:uid(), name:'', sort_order:(S.customisationOptions||[]).length, _new:true}),
+  },
+  supportTiers: {
+    table:'gw_support_tiers', wrap:'supptiers-wrap', btn:'supptiers-save-btn',
+    fields:[{key:'name',type:'text'},{key:'email',type:'bool'},{key:'response_sla',type:'int'},{key:'shared_channel',type:'bool'},{key:'csm',type:'bool'},{key:'sort_order',type:'int'}],
+    blank:()=>({id:uid(), name:'', email:true, response_sla:null, shared_channel:false, csm:false, sort_order:(S.supportTiers||[]).length, _new:true}),
+  },
+};
+const LOOKUP_HEADERS = {
+  name:'Name', email:'Email', response_sla:'SLA (h)', shared_channel:'Shared channel', csm:'CSM', sort_order:'Order',
+};
+let lookupsDeleted = { customisationOptions:new Set(), supportTiers:new Set() };
+
+function renderLookup(listKey){
+  const cfg = LOOKUPS[listKey];
+  const wrap = document.getElementById(cfg.wrap);
+  if(!wrap) return;
+  const rows = S[listKey] || [];
+  if(!rows.length){ wrap.innerHTML = '<div style="font-size:12px;color:var(--text-3);">Nothing defined yet.</div>'; return; }
+  const head = '<tr>' + cfg.fields.map(f=>`<th>${LOOKUP_HEADERS[f.key]||f.key}</th>`).join('') + '<th></th></tr>';
+  const body = rows.map(r=>{
+    const cells = cfg.fields.map(f=>{
+      const attrs = `data-lookup="${listKey}" data-id="${r.id}" data-field="${f.key}"`;
+      if(f.type==='bool') return `<td style="text-align:center;"><input type="checkbox" ${attrs} ${r[f.key]?'checked':''}></td>`;
+      const v = (r[f.key]===null||r[f.key]===undefined) ? '' : String(r[f.key]);
+      return `<td><input class="form-input" type="${f.type==='int'?'number':'text'}" value="${escHtml(v)}" ${attrs} style="${f.key==='name'?'min-width:150px;':'width:60px;'}" placeholder="—"></td>`;
+    }).join('');
+    return `<tr>${cells}<td style="text-align:center;"><button class="btn btn-ghost btn-xs" onclick="deleteLookupRow('${listKey}','${r.id}')" title="Delete">✕</button></td></tr>`;
+  }).join('');
+  wrap.innerHTML = `<table class="pkg-table pkg-crud"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+}
+function addLookupRow(listKey){
+  (S[listKey] = S[listKey] || []).push(LOOKUPS[listKey].blank());
+  renderLookup(listKey);
+}
+function deleteLookupRow(listKey, id){
+  const rows = S[listKey] || [];
+  const row = rows.find(r=>r.id===id);
+  if(row && !row._new) lookupsDeleted[listKey].add(id);
+  S[listKey] = rows.filter(r=>r.id!==id);
+  renderLookup(listKey);
+}
+function collectLookup(listKey){
+  const cfg = LOOKUPS[listKey];
+  const byId = Object.fromEntries((S[listKey]||[]).map(r=>[r.id, r]));
+  document.querySelectorAll(`[data-lookup="${listKey}"]`).forEach(el=>{
+    const row = byId[el.dataset.id]; if(!row) return;
+    const f = cfg.fields.find(x=>x.key===el.dataset.field); if(!f) return;
+    if(f.type==='bool') row[f.key] = el.checked;
+    else if(f.type==='int'){ const raw=(el.value||'').trim(); row[f.key] = raw==='' ? null : Number(raw); }
+    else row[f.key] = (el.value||'').trim();
+  });
+  return S[listKey]||[];
+}
+async function saveLookup(listKey){
+  const cfg = LOOKUPS[listKey];
+  const btn = document.getElementById(cfg.btn);
+  const rows = collectLookup(listKey);
+  for(const r of rows){ if(!r.name){ toast('Every entry needs a name'); return; } }
+  if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
+  try{
+    const payload = rows.map(r=>{
+      const o = { id:r.id };
+      cfg.fields.forEach(f=>{ o[f.key] = f.key==='sort_order' ? (Number(r.sort_order)||0) : r[f.key]; });
+      return o;
+    });
+    const {error} = await supa.from(cfg.table).upsert(payload, {onConflict:'id'});
+    if(error) throw error;
+    if(lookupsDeleted[listKey].size){
+      const {error:delErr} = await supa.from(cfg.table).delete().in('id', [...lookupsDeleted[listKey]]);
+      if(delErr) throw delErr; // FK RESTRICT: still referenced by a package
+      lookupsDeleted[listKey] = new Set();
+    }
+    toast('Saved');
+    await loadPackages();       // refresh both lists and the grid's selects
+    renderPackagesGrid();
+    renderLookup('customisationOptions');
+    renderLookup('supportTiers');
+  }catch(e){
+    console.error('saveLookup:',e);
+    const msg = /foreign key|violates/i.test(e.message||'') ? 'Still used by a package — repoint the package first.' : e.message;
+    toast('⚠ Could not save: '+msg);
+  }finally{
+    if(btn){ btn.disabled=false; btn.textContent = listKey==='supportTiers' ? 'Save tiers' : 'Save options'; }
+  }
 }
 
 async function savePackages(){
@@ -2555,13 +2690,15 @@ async function savePackages(){
     const payload = rows.map(r=>({
       id:r.id, slug:r.slug, name:r.name, sort_order:Number(r.sort_order)||0,
       is_active:!!r.is_active, flat_fee:Number(r.flat_fee)||0, price_per_mau:Number(r.price_per_mau)||0,
-      price_text:r.price_text||null, description:r.description||null,
-      included_mau:r.included_mau, games:r.games||null, tournaments:r.tournaments,
-      languages:r.languages, admin_users:r.admin_users,
-      allowed_domains:r.allowed_domains, user_analytics:r.user_analytics||null,
-      sso:!!r.sso, customisation:r.customisation||null, gameweek_logo:!!r.gameweek_logo,
-      widgets:r.widgets||null, sponsor_slots:!!r.sponsor_slots,
-      import_migration:!!r.import_migration, support:r.support||null,
+      price_text:r.price_text||null,
+      included_mau:r.included_mau, core_games:r.core_games, premium_games:r.premium_games,
+      tournaments:r.tournaments, languages:r.languages, admin_users:r.admin_users,
+      allowed_domains:r.allowed_domains,
+      sso:!!r.sso, customisation_id:r.customisation_id||null, gameweek_logo:!!r.gameweek_logo,
+      basic_widgets:!!r.basic_widgets, advanced_widgets:!!r.advanced_widgets,
+      sponsor_slots:!!r.sponsor_slots, analytics:r.analytics||null,
+      monthly_report:!!r.monthly_report, import_migration:!!r.import_migration,
+      support_id:r.support_id||null,
       addon_tournament:r.addon_tournament, addon_domain:r.addon_domain,
       addon_mau_1000:r.addon_mau_1000, addon_language:r.addon_language,
       updated_at:new Date().toISOString(),

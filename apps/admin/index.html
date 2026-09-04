@@ -1777,20 +1777,41 @@ async function renderBilling(){
 // Show the human-facing limits/features from its typed columns.
 const PACKAGE_FEATURE_ROWS = [
   ['included_mau',    'Monthly Active Users', 'num'],
-  ['games',           'Games',                'text'],
+  ['_games',          'Games',                'text'],
   ['tournaments',     'Tournaments',          'num'],
   ['languages',       'Languages',            'num'],
   ['admin_users',     'Admin Users',          'num'],
   ['allowed_domains', 'Allowed Domains',      'num'],
   ['sso',             'SSO',                  'bool'],
-  ['customisation',   'Customisation',        'text'],
-  ['widgets',         'Widgets',              'text'],
+  ['_customisation',  'Customisation',        'text'],
+  ['_widgets',        'Widgets',              'text'],
   ['sponsor_slots',   'Sponsor slots',        'bool'],
-  ['user_analytics',  'Analytics',            'text'],
+  ['_analytics',      'Analytics',            'text'],
   ['import_migration','Data import',          'bool'],
-  ['support',         'Support',              'text'],
+  ['_support',        'Support',              'text'],
   ['gameweek_logo',   'GameWeek logo',        'bool'],
 ];
+// The typed columns (client_id-era redesign) render through small derived
+// labels: 999 means "full library"/unlimited by grid convention, and the
+// customisation/support labels come from their lookup tables via the
+// embedded FK select below.
+function packageDerivedLabels(pkg){
+  const lib = (n, tier) => n === 999 ? `Full ${tier} library` : `${n} ${tier}`;
+  const games = [];
+  if(pkg.core_games) games.push(lib(pkg.core_games, 'core'));
+  if(pkg.premium_games) games.push(lib(pkg.premium_games, 'premium'));
+  pkg._games = games.join(' + ') || null;
+  const widgets = [];
+  if(pkg.basic_widgets) widgets.push('Basic');
+  if(pkg.advanced_widgets) widgets.push('Advanced');
+  pkg._widgets = widgets.join(' + ') || null;
+  pkg._analytics = pkg.analytics
+    ? pkg.analytics.charAt(0).toUpperCase() + pkg.analytics.slice(1) + (pkg.monthly_report ? ' + monthly report' : '')
+    : (pkg.monthly_report ? 'Monthly report' : null);
+  pkg._customisation = pkg.gw_customisation_options?.name || null;
+  pkg._support = pkg.gw_support_tiers?.name || null;
+  return pkg;
+}
 async function renderBillingPackage(){
   const nameEl = document.getElementById('billing-package-name');
   const featEl = document.getElementById('billing-package-features');
@@ -1798,8 +1819,8 @@ async function renderBillingPackage(){
     const pkgId = currentCustomer && currentCustomer.package_id;
     let pkg = null;
     if(pkgId){
-      const {data} = await supa.from('gw_packages').select('*').eq('id', pkgId).maybeSingle();
-      pkg = data;
+      const {data} = await supa.from('gw_packages').select('*, gw_customisation_options(name), gw_support_tiers(name)').eq('id', pkgId).maybeSingle();
+      pkg = data ? packageDerivedLabels(data) : null;
     }
     if(nameEl) nameEl.textContent = (pkg ? pkg.name : 'Free') + ' package';
     // Price: an optional price_text (e.g. "Get in Touch") wins over the
