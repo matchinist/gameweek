@@ -974,6 +974,7 @@ tbody tr:hover td{background:var(--row-hover);}
         <div class="card-body">
           <div style="margin-bottom:4px;">
             <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;" id="billing-package-name">—</div>
+            <div style="font-family:var(--mono);font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px;" id="billing-package-price"></div>
             <div style="font-size:12px;color:var(--text-3);">Assigned by the Gameweek team — contact us to move packages.</div>
           </div>
           <div class="divider"></div>
@@ -1794,6 +1795,19 @@ async function renderBillingPackage(){
       pkg = data;
     }
     if(nameEl) nameEl.textContent = (pkg ? pkg.name : 'Free') + ' package';
+    // Price: an optional price_text (e.g. "Get in Touch") wins over the
+    // number; otherwise show the flat fee, or "Free" when there's no fee.
+    const priceEl = document.getElementById('billing-package-price');
+    if(priceEl){
+      let priceLabel = '';
+      if(pkg){
+        const txt = (pkg.price_text || '').trim();
+        if(txt) priceLabel = txt;
+        else if(Number(pkg.flat_fee) > 0) priceLabel = '$' + Number(pkg.flat_fee) + '/mo';
+        else priceLabel = 'Free';
+      }
+      priceEl.textContent = priceLabel;
+    }
     if(!featEl) return;
     if(!pkg){ featEl.innerHTML = `<div style="font-size:12px;color:var(--text-3);">No package assigned yet.</div>`; return; }
     featEl.innerHTML = PACKAGE_FEATURE_ROWS.map(([key,label,type])=>{

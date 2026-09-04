@@ -2408,6 +2408,7 @@ const PACKAGE_FIELDS = [
   {key:'is_active',       label:'Active',      type:'bool'},
   {key:'flat_fee',        label:'Flat fee',    type:'num',    w:'90px'},
   {key:'price_per_mau',   label:'Price / MAU', type:'num',    w:'90px'},
+  {key:'price_text',      label:'Price text',  type:'text',   w:'120px', hint:'shown instead of the price, e.g. “Get in Touch” (blank = show the number)'},
   {key:'included_mau',    label:'MAU',         type:'int',    w:'90px'},
   {key:'tournaments',     label:'Tournaments', type:'int',    w:'80px'},
   {key:'admin_users',     label:'Admin users', type:'int',    w:'80px'},
@@ -2488,7 +2489,7 @@ function addPackageRow(){
   const nextOrder = S.packages.reduce((m,p)=>Math.max(m, p.sort_order||0), -1) + 1;
   S.packages.push({
     id: uid(), slug:'', name:'', sort_order: nextOrder, is_active:true,
-    flat_fee:0, price_per_mau:0, included_mau:null, tournaments:null,
+    flat_fee:0, price_per_mau:0, price_text:null, included_mau:null, tournaments:null,
     admin_users:null, allowed_domains:null, user_analytics:null,
     sso:false, gameweek_logo:false, _new:true,
   });
@@ -2538,6 +2539,7 @@ async function savePackages(){
     const payload = rows.map(r=>({
       id:r.id, slug:r.slug, name:r.name, sort_order:Number(r.sort_order)||0,
       is_active:!!r.is_active, flat_fee:Number(r.flat_fee)||0, price_per_mau:Number(r.price_per_mau)||0,
+      price_text:r.price_text||null,
       included_mau:r.included_mau, tournaments:r.tournaments, admin_users:r.admin_users,
       allowed_domains:r.allowed_domains, user_analytics:r.user_analytics||null,
       sso:!!r.sso, gameweek_logo:!!r.gameweek_logo, updated_at:new Date().toISOString(),

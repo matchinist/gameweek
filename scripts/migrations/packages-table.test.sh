@@ -109,6 +109,10 @@ check "typed columns exist with the right types" \
   "admin_users:integer,allowed_domains:integer,flat_fee:numeric,gameweek_logo:boolean,included_mau:integer,is_active:boolean,name:text,price_per_mau:numeric,slug:text,sort_order:integer,sso:boolean,tournaments:integer,user_analytics:text"
 check "slug is unique" \
   "$(q "select count(*) from pg_constraint where conrelid='public.gw_packages'::regclass and contype='u';")" "1"
+check "price_text is an optional (nullable text) display override, null by default" \
+  "$(q "select data_type||'/'||is_nullable||'/'||(select count(*) from gw_packages where price_text is not null)::text from information_schema.columns where table_name='gw_packages' and column_name='price_text';")" "text/YES/0"
+check "price_text can hold a label like 'Get in Touch'" \
+  "$(q "update gw_packages set price_text='Get in Touch' where slug='enterprise'; select price_text from gw_packages where slug='enterprise';")" "Get in Touch"
 check "numeric limits backfilled from the jsonb (growth: mau 5000, tournaments 10, admin_users 3)" \
   "$(q "select included_mau||'/'||tournaments||'/'||admin_users from gw_packages where slug='growth';")" "5000/10/3"
 check "enum + boolean features backfilled (growth: analytics Advanced, sso true; free: gameweek_logo true, sso false)" \
