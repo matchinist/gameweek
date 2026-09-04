@@ -2556,6 +2556,10 @@ async function savePackages(){
     console.error('savePackages:',e);
     const msg = /foreign key|violates/i.test(e.message||'') ? 'A package is still assigned to a client — reassign them first.' : e.message;
     toast('⚠ Could not save: '+msg);
+  }finally{
+    // The button lives in the page HEADER, which renderPackages() doesn't
+    // rebuild — resetting it only in the error path left a successful save
+    // stuck on "Saving…" forever.
     if(btn){ btn.disabled=false; btn.textContent='Save changes'; }
   }
 }
