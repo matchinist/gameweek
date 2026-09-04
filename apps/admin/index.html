@@ -1777,11 +1777,18 @@ async function renderBilling(){
 // Show the human-facing limits/features from its typed columns.
 const PACKAGE_FEATURE_ROWS = [
   ['included_mau',    'Monthly Active Users', 'num'],
+  ['games',           'Games',                'text'],
   ['tournaments',     'Tournaments',          'num'],
+  ['languages',       'Languages',            'num'],
   ['admin_users',     'Admin Users',          'num'],
   ['allowed_domains', 'Allowed Domains',      'num'],
-  ['user_analytics',  'User Analytics',       'text'],
   ['sso',             'SSO',                  'bool'],
+  ['customisation',   'Customisation',        'text'],
+  ['widgets',         'Widgets',              'text'],
+  ['sponsor_slots',   'Sponsor slots',        'bool'],
+  ['user_analytics',  'Analytics',            'text'],
+  ['import_migration','Data import',          'bool'],
+  ['support',         'Support',              'text'],
   ['gameweek_logo',   'GameWeek logo',        'bool'],
 ];
 async function renderBillingPackage(){

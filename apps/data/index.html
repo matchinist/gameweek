@@ -2409,13 +2409,25 @@ const PACKAGE_FIELDS = [
   {key:'flat_fee',        label:'Flat fee',    type:'num',    w:'90px'},
   {key:'price_per_mau',   label:'Price / MAU', type:'num',    w:'90px'},
   {key:'price_text',      label:'Price text',  type:'text',   w:'120px', hint:'shown instead of the price, e.g. “Get in Touch” (blank = show the number)'},
+  {key:'description',     label:'Best fit for', type:'text',  w:'220px', hint:'positioning blurb shown under the price'},
   {key:'included_mau',    label:'MAU',         type:'int',    w:'90px'},
+  {key:'games',           label:'Games',       type:'text',   w:'160px', hint:'game-library tier, e.g. “any 2 Core Games”'},
   {key:'tournaments',     label:'Tournaments', type:'int',    w:'80px'},
+  {key:'languages',       label:'Languages',   type:'int',    w:'80px'},
   {key:'admin_users',     label:'Admin users', type:'int',    w:'80px'},
   {key:'allowed_domains', label:'Domains',     type:'int',    w:'80px'},
-  {key:'user_analytics',  label:'Analytics',   type:'select', options:['Basic','Advanced']},
   {key:'sso',             label:'SSO',         type:'bool'},
+  {key:'customisation',   label:'Customisation', type:'text', w:'150px'},
   {key:'gameweek_logo',   label:'GW logo',     type:'bool'},
+  {key:'widgets',         label:'Widgets',     type:'text',   w:'170px'},
+  {key:'sponsor_slots',   label:'Sponsor slots', type:'bool'},
+  {key:'user_analytics',  label:'Analytics',   type:'text',   w:'140px'},
+  {key:'import_migration',label:'Import',      type:'bool'},
+  {key:'support',         label:'Support',     type:'text',   w:'160px'},
+  {key:'addon_tournament',label:'+Tournament $', type:'num',  w:'90px', hint:'blank = not offered (or already unlimited)'},
+  {key:'addon_domain',    label:'+Domain $',   type:'num',    w:'80px'},
+  {key:'addon_mau_1000',  label:'+1k MAU $',   type:'num',    w:'80px'},
+  {key:'addon_language',  label:'+Language $', type:'num',    w:'80px'},
 ];
 let packagesDeleted = new Set();
 
@@ -2489,9 +2501,13 @@ function addPackageRow(){
   const nextOrder = S.packages.reduce((m,p)=>Math.max(m, p.sort_order||0), -1) + 1;
   S.packages.push({
     id: uid(), slug:'', name:'', sort_order: nextOrder, is_active:true,
-    flat_fee:0, price_per_mau:0, price_text:null, included_mau:null, tournaments:null,
+    flat_fee:0, price_per_mau:0, price_text:null, description:null,
+    included_mau:null, games:null, tournaments:null, languages:null,
     admin_users:null, allowed_domains:null, user_analytics:null,
-    sso:false, gameweek_logo:false, _new:true,
+    sso:false, customisation:null, gameweek_logo:false, widgets:null,
+    sponsor_slots:false, import_migration:false, support:null,
+    addon_tournament:null, addon_domain:null, addon_mau_1000:null, addon_language:null,
+    _new:true,
   });
   S.packageClientCounts = S.packageClientCounts || {};
   renderPackagesGrid();
@@ -2539,10 +2555,16 @@ async function savePackages(){
     const payload = rows.map(r=>({
       id:r.id, slug:r.slug, name:r.name, sort_order:Number(r.sort_order)||0,
       is_active:!!r.is_active, flat_fee:Number(r.flat_fee)||0, price_per_mau:Number(r.price_per_mau)||0,
-      price_text:r.price_text||null,
-      included_mau:r.included_mau, tournaments:r.tournaments, admin_users:r.admin_users,
+      price_text:r.price_text||null, description:r.description||null,
+      included_mau:r.included_mau, games:r.games||null, tournaments:r.tournaments,
+      languages:r.languages, admin_users:r.admin_users,
       allowed_domains:r.allowed_domains, user_analytics:r.user_analytics||null,
-      sso:!!r.sso, gameweek_logo:!!r.gameweek_logo, updated_at:new Date().toISOString(),
+      sso:!!r.sso, customisation:r.customisation||null, gameweek_logo:!!r.gameweek_logo,
+      widgets:r.widgets||null, sponsor_slots:!!r.sponsor_slots,
+      import_migration:!!r.import_migration, support:r.support||null,
+      addon_tournament:r.addon_tournament, addon_domain:r.addon_domain,
+      addon_mau_1000:r.addon_mau_1000, addon_language:r.addon_language,
+      updated_at:new Date().toISOString(),
     }));
     const {error} = await supa.from('gw_packages').upsert(payload,{onConflict:'id'});
     if(error) throw error;

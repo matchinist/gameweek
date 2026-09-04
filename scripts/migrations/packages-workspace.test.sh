@@ -102,6 +102,10 @@ CID=$(q "select id from gw_customers where client_key='pkgco';")
 
 check "packages carry admin_users; the five known slugs exist" \
   "$(q "select count(*) from gw_packages where slug in ('free','start','growth','scale','enterprise');")-$(q "select count(*) from information_schema.columns where table_name='gw_packages' and column_name='admin_users';")" "5-1"
+check "the pricing-sheet fields exist on gw_packages" \
+  "$(q "select count(*) from information_schema.columns where table_name='gw_packages' and column_name in ('description','games','languages','customisation','widgets','sponsor_slots','import_migration','support','addon_tournament','addon_domain','addon_mau_1000','addon_language');")" "12"
+check "sheet values seeded (Starter rename, growth widgets, scale add-on domain price)" \
+  "$(q "select (select name from gw_packages where slug='start') || '|' || (select widgets from gw_packages where slug='growth') || '|' || (select addon_domain from gw_packages where slug='scale');")" "Starter|Advanced – Top Scorers & Squad Analytics|50"
 check "a new customer lands on the Free package via the default trigger" \
   "$(q "select p.slug from gw_customers c join gw_packages p on p.id=c.package_id where c.client_key='pkgco';")" "free"
 docker exec "$CONTAINER" psql -q -U postgres -v ON_ERROR_STOP=1 -c \
