@@ -1772,28 +1772,43 @@ async function renderBilling(){
 // Assigned package name + its per-setting values, read straight from
 // gw_package_settings (Data Manager → Package Settings). Runs independently
 // of the billing view above so it still shows when that view has no row.
-const PACKAGE_LABELS = {free:'Free',start:'Start',growth:'Growth',scale:'Scale',enterprise:'Enterprise'};
+// The customer's package is a row in gw_packages (FK gw_customers.package_id).
+// Show the human-facing limits/features from its typed columns.
+const PACKAGE_FEATURE_ROWS = [
+  ['included_mau',    'Monthly Active Users', 'num'],
+  ['tournaments',     'Tournaments',          'num'],
+  ['admin_users',     'Admin Users',          'num'],
+  ['allowed_domains', 'Allowed Domains',      'num'],
+  ['user_analytics',  'User Analytics',       'text'],
+  ['sso',             'SSO',                  'bool'],
+  ['gameweek_logo',   'GameWeek logo',        'bool'],
+];
 async function renderBillingPackage(){
-  const slug = (currentCustomer && currentCustomer.plan) || 'free';
   const nameEl = document.getElementById('billing-package-name');
-  if(nameEl) nameEl.textContent = (PACKAGE_LABELS[slug] || slug) + ' package';
   const featEl = document.getElementById('billing-package-features');
-  if(!featEl) return;
   try{
-    const {data:pkgRows} = await supa.from('gw_package_settings')
-      .select('setting_key,label,values,sort_order').order('sort_order');
-    const rows = pkgRows || [];
-    featEl.innerHTML = rows.length ? rows.map(r=>{
-      const raw = (r.values || {})[slug];
-      const shown = (raw === undefined || raw === null || raw === '') ? '—' : String(raw);
+    const pkgId = currentCustomer && currentCustomer.package_id;
+    let pkg = null;
+    if(pkgId){
+      const {data} = await supa.from('gw_packages').select('*').eq('id', pkgId).maybeSingle();
+      pkg = data;
+    }
+    if(nameEl) nameEl.textContent = (pkg ? pkg.name : 'Free') + ' package';
+    if(!featEl) return;
+    if(!pkg){ featEl.innerHTML = `<div style="font-size:12px;color:var(--text-3);">No package assigned yet.</div>`; return; }
+    featEl.innerHTML = PACKAGE_FEATURE_ROWS.map(([key,label,type])=>{
+      const v = pkg[key];
+      let shown;
+      if(type==='bool') shown = v ? 'Yes' : 'No';
+      else shown = (v===undefined || v===null || v==='') ? '—' : String(v);
       return `<div style="display:flex;justify-content:space-between;gap:12px;font-size:13px;">
-        <span style="color:var(--text-2);">${escapeHtml(r.label)}</span>
+        <span style="color:var(--text-2);">${escapeHtml(label)}</span>
         <span style="font-family:var(--mono);font-weight:700;color:var(--text);">${escapeHtml(shown)}</span>
       </div>`;
-    }).join('') : `<div style="font-size:12px;color:var(--text-3);">No package limits configured yet.</div>`;
+    }).join('');
   }catch(e){
     console.error('renderBillingPackage:',e);
-    featEl.innerHTML = `<div style="font-size:12px;color:var(--red);">Could not load package limits.</div>`;
+    if(featEl) featEl.innerHTML = `<div style="font-size:12px;color:var(--red);">Could not load package limits.</div>`;
   }
 }
 
@@ -4742,8 +4757,8 @@ async function adminSignup(){
       auth_id: userId,
       email, company_name: company,
       client_key: clientKey,
-      plan: 'free',
       is_admin: false
+      // package_id defaults to Free via the gw_customers_default_package trigger
     },{onConflict:'id'});
   }
 
@@ -4919,8 +4934,8 @@ function initCustomerChrome(){
       email,
       company_name: email.split('@')[0],
       client_key: clientKey,
-      plan: 'free',
       is_admin: false,
+      // package_id defaults to Free via the gw_customers_default_package trigger
     }).select().single();
     op = newOp;
   }

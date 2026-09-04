@@ -122,7 +122,7 @@
         email,
         company_name: company,
         client_key: clientKey,
-        plan: 'free',
+        // package_id defaults to Free via the gw_customers_default_package trigger
       }, { onConflict: 'id' });
     }
 

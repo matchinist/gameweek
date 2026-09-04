@@ -177,6 +177,12 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .pkg-table .pkg-setting-hint{font-size:11px;color:var(--text-3);margin-top:2px;}
 .pkg-table td .form-input{width:100%;padding:6px 8px;font-size:12px;font-family:var(--mono);text-align:right;}
 .pkg-table td .form-select{width:100%;padding:6px 8px;font-size:12px;font-family:var(--mono);}
+/* CRUD grid: packages are rows, fields are columns */
+.pkg-crud td,.pkg-crud th{padding:7px 8px;text-align:center;white-space:nowrap;}
+.pkg-crud td:first-child{text-align:left;background:transparent;}
+.pkg-crud td .form-input{min-width:56px;text-align:left;}
+.pkg-crud td .form-input[type=number]{text-align:right;}
+.pkg-crud .pkg-del-locked{opacity:.5;cursor:not-allowed;}
 .view{display:none;}.view.active{display:block;}
 ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 #toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:white;font-family:var(--mono);font-size:11px;padding:9px 16px;border-radius:6px;z-index:999;transform:translateY(60px);transition:transform 0.2s;pointer-events:none;}
@@ -263,7 +269,7 @@ window.navTo = function(page, tournamentId){ window.__pendingNav = [page, tourna
             <span class="ni-icon">📡</span> Ingest
           </button>
           <button class="nav-item" id="nav-packages" onclick="navTo('packages')">
-            <span class="ni-icon">📦</span> Package Settings
+            <span class="ni-icon">📦</span> Pricing Packages
           </button>
         </div>
         <div class="sidebar-section">
@@ -394,8 +400,8 @@ window.navTo = function(page, tournamentId){ window.__pendingNav = [page, tourna
         <div class="view" id="view-packages">
           <div class="card">
             <div class="card-header">
-              <span class="card-title">Package Settings</span>
-              <span style="font-size:11px;color:var(--text-3);">Packages are columns · each setting is a row — add more settings over time</span>
+              <span class="card-title">Pricing packages</span>
+              <span style="font-size:11px;color:var(--text-3);">Each package is a row · add, edit or remove them, then Save</span>
             </div>
             <div class="card-body">
               <div id="packages-table-wrap" style="overflow-x:auto;"></div>
@@ -888,7 +894,7 @@ const S={
   teams:[], tournaments:[], events:{},
   clients:[], // [{id, client_key, label}] — loaded once for the coverage picker
   coverageClientId:null, coverageTournamentIds:new Set(), coverageTeamIds:new Set(),
-  packageSettings:{}, // setting_key -> { <package slug>: <value> } (gw_package_settings)
+  packages:[], packageClientCounts:{}, // gw_packages rows + per-package client counts
 };
 
 // ── SAVE TO SUPABASE ─────────────────────────────────────────────────────
@@ -2148,9 +2154,10 @@ function navTo(page,tournamentId){
   } else if(page==='packages'){
     document.getElementById('nav-packages').classList.add('active');
     document.getElementById('view-packages').classList.add('active');
-    document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">Package Settings</div></div>'+
-      '<div id="main-header-actions"><button class="btn btn-primary btn-sm" id="packages-save-btn" onclick="savePackageSettings()">Save changes</button></div>';
-    renderPackageSettings();
+    document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">Pricing Packages</div></div>'+
+      '<div id="main-header-actions"><button class="btn btn-ghost btn-sm" onclick="addPackageRow()">+ Add package</button>'+
+      '<button class="btn btn-primary btn-sm" id="packages-save-btn" onclick="savePackages()">Save changes</button></div>';
+    renderPackages();
   }
 }
 
@@ -2388,114 +2395,188 @@ async function saveCoverage(){
   btn.disabled = false; btn.textContent = 'Save coverage';
 }
 
-// ── PACKAGE SETTINGS ──────────────────────────────────────────────────────
-// The platform's pricing packages are the COLUMNS; every configurable value
-// is a ROW, stored one-row-per-setting in gw_package_settings (values jsonb
-// = { <package slug>: <value> }). To add another setting later, push an
-// entry to PACKAGE_SETTING_DEFS — the grid, the save path and the upsert all
-// key off this list. `type:'number'` (default) renders a number input;
-// `type:'select'` renders a dropdown of `options` (blank = not set).
-const PACKAGES = [
-  ['free','Free'], ['start','Start'], ['growth','Growth'], ['scale','Scale'], ['enterprise','Enterprise'],
+// ── PRICING PACKAGES ────────────────────────────────────────────────────────
+// Each pricing package is now a ROW in gw_packages (id uuid, slug, name,
+// pricing + typed limits/features) — not the old one-row-per-setting jsonb
+// pivot. This page is full CRUD over that table: add, edit and remove
+// packages. PACKAGE_FIELDS drives the grid, the read-back and the upsert; add
+// a product feature by adding a column + a migration, then an entry here.
+const PACKAGE_FIELDS = [
+  {key:'name',            label:'Name',        type:'text',   w:'130px'},
+  {key:'slug',            label:'Slug',        type:'text',   w:'110px', hint:'stable code handle'},
+  {key:'sort_order',      label:'Order',       type:'int',    w:'62px'},
+  {key:'is_active',       label:'Active',      type:'bool'},
+  {key:'flat_fee',        label:'Flat fee',    type:'num',    w:'90px'},
+  {key:'price_per_mau',   label:'Price / MAU', type:'num',    w:'90px'},
+  {key:'included_mau',    label:'MAU',         type:'int',    w:'90px'},
+  {key:'tournaments',     label:'Tournaments', type:'int',    w:'80px'},
+  {key:'admin_users',     label:'Admin users', type:'int',    w:'80px'},
+  {key:'allowed_domains', label:'Domains',     type:'int',    w:'80px'},
+  {key:'user_analytics',  label:'Analytics',   type:'select', options:['Basic','Advanced']},
+  {key:'sso',             label:'SSO',         type:'bool'},
+  {key:'gameweek_logo',   label:'GW logo',     type:'bool'},
 ];
-const PACKAGE_SETTING_DEFS = [
-  {key:'monthly_active_users', label:'Monthly Active Users', hint:'MAU included in each package', type:'number'},
-  {key:'tournaments', label:'Tournaments', hint:'Number of tournaments included in each package', type:'number'},
-  {key:'admin_users', label:'Admin Users', hint:'Number of admin seats included in each package', type:'number'},
-  {key:'allowed_domains', label:'Allowed Domains', hint:'Number of allowed domains included in each package', type:'number'},
-  {key:'user_analytics', label:'User Analytics', hint:'Analytics depth available to the client', type:'select', options:['Basic','Advanced']},
-  {key:'sso', label:'SSO', hint:'Host-page single sign-on available to the client', type:'select', options:['Yes','No']},
-  {key:'gameweek_logo', label:'GameWeek logo', hint:'Show the "Powered by GameWeek" logo in the client\'s embed', type:'select', options:['Yes','No']},
-];
+let packagesDeleted = new Set();
 
-async function renderPackageSettings(){
+async function loadPackages(){
+  const {data,error} = await supa.from('gw_packages').select('*').order('sort_order').order('name');
+  if(error) throw error;
+  S.packages = data || [];
+  // client counts per package, so the grid can show usage and block deleting
+  // a package still assigned to a client
+  const {data:custs} = await supa.from('gw_customers').select('package_id');
+  const counts = {};
+  (custs||[]).forEach(c=>{ if(c.package_id) counts[c.package_id]=(counts[c.package_id]||0)+1; });
+  S.packageClientCounts = counts;
+  return S.packages;
+}
+
+async function renderPackages(){
   const wrap = document.getElementById('packages-table-wrap');
   wrap.innerHTML = '<div style="padding:14px;font-size:12px;color:var(--text-3);">Loading…</div>';
+  packagesDeleted = new Set();
   try{
-    const {data,error} = await supa.from('gw_package_settings').select('*');
-    if(error) throw error;
-    S.packageSettings = {};
-    (data||[]).forEach(r=>{ S.packageSettings[r.setting_key] = r.values || {}; });
+    await loadPackages();
   }catch(e){
-    console.error('renderPackageSettings:',e);
-    wrap.innerHTML = `<div style="padding:14px;font-size:12px;color:var(--red);">⚠ Could not load package settings: ${e.message}</div>`;
+    console.error('renderPackages:',e);
+    wrap.innerHTML = `<div style="padding:14px;font-size:12px;color:var(--red);">⚠ Could not load packages: ${escHtml(e.message)}</div>`;
     return;
   }
-  const head = '<tr><th>Setting</th>' + PACKAGES.map(([,label])=>`<th>${label}</th>`).join('') + '</tr>';
-  const body = PACKAGE_SETTING_DEFS.map(def=>{
-    const vals = S.packageSettings[def.key] || {};
-    const cells = PACKAGES.map(([slug])=>{
-      const v = vals[slug] ?? '';
-      if(def.type === 'select'){
-        const opts = ['', ...(def.options||[])].map(o=>
-          `<option value="${o}"${String(v)===o?' selected':''}>${o===''?'—':o}</option>`).join('');
-        return `<td><select class="form-select" data-setting="${def.key}" data-package="${slug}">${opts}</select></td>`;
-      }
-      return `<td><input class="form-input" type="number" min="0" step="1" value="${v}"
-        data-setting="${def.key}" data-package="${slug}" placeholder="—"></td>`;
-    }).join('');
-    return `<tr>
-      <td><div class="pkg-setting-label">${def.label}</div>${def.hint?`<div class="pkg-setting-hint">${def.hint}</div>`:''}</td>
-      ${cells}
-    </tr>`;
-  }).join('');
-  wrap.innerHTML = `<table class="pkg-table"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+  renderPackagesGrid();
 }
 
-async function savePackageSettings(){
-  const btn = document.getElementById('packages-save-btn');
-  if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
-  // Read the grid back into one values-object per setting_key. A blank cell
-  // means "not set for this package" and is simply left out of the jsonb.
-  // Number settings store a Number; select settings store the chosen string.
-  const defByKey = Object.fromEntries(PACKAGE_SETTING_DEFS.map(d=>[d.key, d]));
-  const bySetting = {};
-  document.querySelectorAll('#packages-table-wrap [data-setting]').forEach(el=>{
-    const key = el.dataset.setting, pkg = el.dataset.package;
-    const raw = (el.value || '').trim();
-    (bySetting[key] = bySetting[key] || {});
-    if(raw === '') return;
-    if((defByKey[key] || {}).type === 'select') bySetting[key][pkg] = raw;
-    else if(Number.isFinite(Number(raw))) bySetting[key][pkg] = Number(raw);
-  });
-  try{
-    const rows = PACKAGE_SETTING_DEFS.map(def=>({
-      setting_key: def.key,
-      label: def.label,
-      values: bySetting[def.key] || {},
-      updated_at: new Date().toISOString(),
-    }));
-    const {error} = await supa.from('gw_package_settings').upsert(rows,{onConflict:'setting_key'});
-    if(error) throw error;
-    rows.forEach(r=>{ S.packageSettings[r.setting_key] = r.values; });
-    toast('Package settings saved');
-  }catch(e){
-    console.error('savePackageSettings:',e);
-    toast('⚠ Could not save package settings: '+e.message);
+function packageCell(field, row){
+  const v = row[field.key];
+  const attrs = `data-id="${row.id}" data-field="${field.key}"`;
+  if(field.type === 'bool')
+    return `<td style="text-align:center;"><input type="checkbox" ${attrs} ${v?'checked':''}></td>`;
+  if(field.type === 'select'){
+    const opts = ['', ...(field.options||[])].map(o=>
+      `<option value="${o}"${String(v??'')===o?' selected':''}>${o===''?'—':o}</option>`).join('');
+    return `<td><select class="form-select" ${attrs}>${opts}</select></td>`;
   }
-  if(btn){ btn.disabled = false; btn.textContent = 'Save changes'; }
+  const numeric = field.type==='int' || field.type==='num';
+  const step = field.type==='num' ? '0.01' : '1';
+  const type = numeric ? 'number' : 'text';
+  const val = (v===null||v===undefined) ? '' : String(v);
+  return `<td><input class="form-input" type="${type}"${numeric?` min="0" step="${step}"`:''} value="${escHtml(val)}" ${attrs}
+    style="${field.w?`width:${field.w};`:''}" placeholder="${field.type==='text'?'':'—'}"></td>`;
 }
+
+function renderPackagesGrid(){
+  const wrap = document.getElementById('packages-table-wrap');
+  if(!S.packages.length){
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">No packages yet</div><div class="empty-sub">Use “Add package” to create one.</div></div>';
+    return;
+  }
+  const head = '<tr>' + PACKAGE_FIELDS.map(f=>`<th${f.hint?` title="${escHtml(f.hint)}"`:''}>${f.label}</th>`).join('')
+    + '<th>Clients</th><th></th></tr>';
+  const body = S.packages.map(row=>{
+    const used = S.packageClientCounts[row.id] || 0;
+    const cells = PACKAGE_FIELDS.map(f=>packageCell(f, row)).join('');
+    const delBtn = used>0
+      ? `<span class="pkg-del-locked" title="Reassign its ${used} client${used>1?'s':''} first">🔒</span>`
+      : `<button class="btn btn-ghost btn-xs" onclick="deletePackageRow('${row.id}')" title="Delete package">✕</button>`;
+    return `<tr data-row="${row.id}">${cells}
+      <td style="text-align:center;font-family:var(--mono);color:${used?'var(--text)':'var(--text-3)'};">${used}</td>
+      <td style="text-align:center;">${delBtn}</td></tr>`;
+  }).join('');
+  wrap.innerHTML = `<table class="pkg-table pkg-crud"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+}
+
+function addPackageRow(){
+  const nextOrder = S.packages.reduce((m,p)=>Math.max(m, p.sort_order||0), -1) + 1;
+  S.packages.push({
+    id: uid(), slug:'', name:'', sort_order: nextOrder, is_active:true,
+    flat_fee:0, price_per_mau:0, included_mau:null, tournaments:null,
+    admin_users:null, allowed_domains:null, user_analytics:null,
+    sso:false, gameweek_logo:false, _new:true,
+  });
+  S.packageClientCounts = S.packageClientCounts || {};
+  renderPackagesGrid();
+}
+
+function deletePackageRow(id){
+  const used = (S.packageClientCounts||{})[id] || 0;
+  if(used>0){ toast(`Reassign this package's ${used} client${used>1?'s':''} before deleting it`); return; }
+  const row = S.packages.find(p=>p.id===id);
+  if(row && !row._new) packagesDeleted.add(id); // existing row → delete on save
+  S.packages = S.packages.filter(p=>p.id!==id);
+  renderPackagesGrid();
+}
+
+function collectPackagesFromGrid(){
+  // Fold the current input values back onto S.packages so nothing typed is
+  // lost across a re-render, then return the rows ready for upsert.
+  const byId = Object.fromEntries(S.packages.map(p=>[p.id, p]));
+  document.querySelectorAll('#packages-table-wrap [data-id]').forEach(el=>{
+    const row = byId[el.dataset.id]; if(!row) return;
+    const f = PACKAGE_FIELDS.find(x=>x.key===el.dataset.field); if(!f) return;
+    if(f.type==='bool') row[f.key] = el.checked;
+    else if(f.type==='select') row[f.key] = el.value || null;
+    else if(f.type==='int' || f.type==='num'){
+      const raw=(el.value||'').trim();
+      row[f.key] = raw==='' ? null : Number(raw);
+    } else row[f.key] = (el.value||'').trim();
+  });
+  return S.packages;
+}
+
+async function savePackages(){
+  const btn = document.getElementById('packages-save-btn');
+  const rows = collectPackagesFromGrid();
+  // validate
+  const slugs = new Set();
+  for(const r of rows){
+    if(!r.name){ toast('Every package needs a name'); return; }
+    if(!/^[a-z0-9_]+$/.test(r.slug||'')){ toast(`“${r.name}”: slug must be lowercase letters, numbers or underscore`); return; }
+    if(slugs.has(r.slug)){ toast(`Duplicate slug “${r.slug}”`); return; }
+    slugs.add(r.slug);
+  }
+  if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
+  try{
+    const payload = rows.map(r=>({
+      id:r.id, slug:r.slug, name:r.name, sort_order:Number(r.sort_order)||0,
+      is_active:!!r.is_active, flat_fee:Number(r.flat_fee)||0, price_per_mau:Number(r.price_per_mau)||0,
+      included_mau:r.included_mau, tournaments:r.tournaments, admin_users:r.admin_users,
+      allowed_domains:r.allowed_domains, user_analytics:r.user_analytics||null,
+      sso:!!r.sso, gameweek_logo:!!r.gameweek_logo, updated_at:new Date().toISOString(),
+    }));
+    const {error} = await supa.from('gw_packages').upsert(payload,{onConflict:'id'});
+    if(error) throw error;
+    if(packagesDeleted.size){
+      const {error:delErr} = await supa.from('gw_packages').delete().in('id', [...packagesDeleted]);
+      if(delErr) throw delErr; // FK RESTRICT surfaces here if a package is still in use
+    }
+    toast('Packages saved');
+    renderPackages();
+  }catch(e){
+    console.error('savePackages:',e);
+    const msg = /foreign key|violates/i.test(e.message||'') ? 'A package is still assigned to a client — reassign them first.' : e.message;
+    toast('⚠ Could not save: '+msg);
+    if(btn){ btn.disabled=false; btn.textContent='Save changes'; }
+  }
+}
+
 
 // ── CLIENTS ───────────────────────────────────────────────────────────────
 // Lists every customer with a dropdown to set their pricing package. The
-// package (gw_customers.plan) drives the limits shown on the client admin's
-// Subscription page; its values live on the Package Settings page. Changing
-// it doesn't touch anything the client has already built.
+// assignment is gw_customers.package_id → gw_packages(id); the package's
+// typed limits drive what the client admin's Subscription page shows.
+// Changing it doesn't touch anything the client has already built.
 let clientsCache = [];
-function clientPackageSlug(c){
-  const p = (c.plan || '').toLowerCase();
-  return PACKAGES.some(([slug])=>slug===p) ? p : 'free';
-}
 async function renderClients(){
   const list = document.getElementById('clients-list');
   list.innerHTML = '<div style="padding:14px;font-size:12px;color:var(--text-3);">Loading…</div>';
   try{
-    const {data,error} = await supa.from('gw_customers').select('client_key,company_name,email,plan').order('company_name');
+    // packages first so the dropdowns have their options
+    if(!S.packages || !S.packages.length) await loadPackages();
+    const {data,error} = await supa.from('gw_customers').select('client_key,company_name,email,package_id').order('company_name');
     if(error) throw error;
     clientsCache = data||[];
   }catch(e){
     console.error('renderClients:',e);
-    list.innerHTML = `<div style="padding:14px;font-size:12px;color:var(--red);">⚠ Could not load clients: ${e.message}</div>`;
+    list.innerHTML = `<div style="padding:14px;font-size:12px;color:var(--red);">⚠ Could not load clients: ${escHtml(e.message)}</div>`;
     return;
   }
   document.getElementById('nav-clients-count').textContent = clientsCache.length;
@@ -2503,13 +2584,14 @@ async function renderClients(){
     list.innerHTML = '<div class="empty"><div class="empty-icon">🏢</div><div class="empty-title">No clients yet</div></div>';
     return;
   }
+  const freeId = (S.packages.find(p=>p.slug==='free') || S.packages[0] || {}).id;
   list.innerHTML = clientsCache.map(c=>{
-    const slug = clientPackageSlug(c);
-    const opts = PACKAGES.map(([s,label])=>`<option value="${s}"${s===slug?' selected':''}>${label}</option>`).join('');
+    const cur = c.package_id || freeId;
+    const opts = S.packages.map(p=>`<option value="${p.id}"${p.id===cur?' selected':''}>${escHtml(p.name)}</option>`).join('');
     return `<div style="display:flex;align-items:center;gap:12px;padding:11px 8px;border-bottom:1px solid var(--border);">
       <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:700;color:var(--text);">${c.company_name||'(no company name)'}</div>
-        <div style="font-size:11.5px;color:var(--text-3);">${c.email||'—'} · ${c.client_key}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text);">${escHtml(c.company_name||'(no company name)')}</div>
+        <div style="font-size:11.5px;color:var(--text-3);">${escHtml(c.email||'—')} · ${escHtml(c.client_key)}</div>
       </div>
       <label style="font-size:11px;color:var(--text-3);flex-shrink:0;">Package</label>
       <select class="form-select" style="width:auto;min-width:130px;flex-shrink:0;" onchange="setClientPackage('${c.client_key}',this.value)">${opts}</select>
@@ -2517,19 +2599,20 @@ async function renderClients(){
   }).join('');
 }
 
-async function setClientPackage(clientKey, slug){
-  if(!PACKAGES.some(([s])=>s===slug)) return;
+async function setClientPackage(clientKey, packageId){
+  const pkg = (S.packages||[]).find(p=>p.id===packageId);
+  if(!pkg) return;
   try{
     // Keep the (currently unused) access gate consistent: Free = open,
     // any paid package = subscription required.
     const {error} = await supa.from('gw_customers')
-      .update({plan:slug, subscription_required: slug !== 'free'})
+      .update({package_id:packageId, subscription_required: pkg.slug !== 'free'})
       .eq('client_key',clientKey);
     if(error) throw error;
     const c = clientsCache.find(x=>x.client_key===clientKey);
-    if(c) c.plan = slug;
-    const label = (PACKAGES.find(([s])=>s===slug)||[,slug])[1];
-    toast(`Moved to ${label} package`);
+    if(c) c.package_id = packageId;
+    S.packageClientCounts = null; // usage counts are now stale
+    toast(`Moved to ${pkg.name} package`);
   }catch(e){
     console.error('setClientPackage:',e);
     toast('⚠ Could not update: '+e.message);

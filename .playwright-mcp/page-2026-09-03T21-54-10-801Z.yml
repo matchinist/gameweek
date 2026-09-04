@@ -1,0 +1,5 @@
+- generic [ref=e5]:
+  - img "WPET" [ref=e7]
+  - generic [ref=e8] [cursor=pointer]:
+    - generic [ref=e9]: "?"
+    - generic [ref=e10]: Sign in
