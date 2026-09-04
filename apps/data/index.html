@@ -259,7 +259,7 @@ window.navTo = function(page, tournamentId){ window.__pendingNav = [page, tourna
             <span class="ni-icon">🎯</span> Coverage
           </button>
           <button class="nav-item" id="nav-clients" onclick="navTo('clients')">
-            <span class="ni-icon">🏢</span> Clients
+            <span class="ni-icon">🏢</span> Customers
             <span class="ni-count" id="nav-clients-count">0</span>
           </button>
           <button class="nav-item" id="nav-scorelog" onclick="navTo('scorelog')">
@@ -335,11 +335,11 @@ window.navTo = function(page, tournamentId){ window.__pendingNav = [page, tourna
           <div class="card" style="margin-bottom:16px;">
             <div class="card-body">
               <div class="form-group" style="margin:0;">
-                <label class="form-label">Client</label>
+                <label class="form-label">Customer</label>
                 <select class="form-select" id="coverage-client-select" onchange="loadCoverageForClient(this.value)" style="max-width:360px;">
-                  <option value="">— choose a client —</option>
+                  <option value="">— choose a customer —</option>
                 </select>
-                <div style="font-size:11.5px;color:var(--text-3);margin-top:6px;">Choosing what a client sees here doesn't affect anything they've already created — it only controls what's offered next time they build a competition or round.</div>
+                <div style="font-size:11.5px;color:var(--text-3);margin-top:6px;">Choosing what a customer sees here doesn't affect anything they've already created — it only controls what's offered next time they build a competition or round.</div>
               </div>
             </div>
           </div>
@@ -2134,8 +2134,8 @@ function navTo(page,tournamentId){
   } else if(page==='clients'){
     document.getElementById('nav-clients').classList.add('active');
     document.getElementById('view-clients').classList.add('active');
-    document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">Clients</div></div>'+
-      '<div id="main-header-actions"><button class="btn btn-ghost" id="backfill-scores-btn" onclick="backfillAllScores()" title="Run server-side scoring for every resulted round of every client (idempotent — Phase 3.4 backfill)">Score all rounds</button></div>';
+    document.getElementById('main-header').innerHTML='<div class="mh-left"><div class="mh-title">Customers</div></div>'+
+      '<div id="main-header-actions"><button class="btn btn-ghost" id="backfill-scores-btn" onclick="backfillAllScores()" title="Run server-side scoring for every resulted round of every customer (idempotent — Phase 3.4 backfill)">Score all rounds</button></div>';
     renderClients();
   } else if(page==='scorelog'){
     document.getElementById('nav-scorelog').classList.add('active');
@@ -2321,12 +2321,12 @@ async function renderCoverage(){
       if(!S.clients.length) console.warn('renderCoverage: gw_customers returned no rows — check RLS allows gw_admins to read all customers.');
     }catch(e){
       console.error('renderCoverage clients:',e);
-      toast('⚠ Could not load clients: '+e.message);
+      toast('⚠ Could not load customers: '+e.message);
     }
   }
   const sel = document.getElementById('coverage-client-select');
   const prevVal = sel.value;
-  sel.innerHTML = (S.clients.length ? '<option value="">— choose a client —</option>' : '<option value="">No clients found — check console</option>') +
+  sel.innerHTML = (S.clients.length ? '<option value="">— choose a customer —</option>' : '<option value="">No customers found — check console</option>') +
     S.clients.map(c=>`<option value="${c.id}">${c.label}</option>`).join('');
   if(prevVal){ sel.value=prevVal; loadCoverageForClient(prevVal); }
   else { document.getElementById('coverage-body').style.display='none'; }
@@ -2471,12 +2471,12 @@ function renderPackagesGrid(){
     return;
   }
   const head = '<tr>' + PACKAGE_FIELDS.map(f=>`<th${f.hint?` title="${escHtml(f.hint)}"`:''}>${f.label}</th>`).join('')
-    + '<th>Clients</th><th></th></tr>';
+    + '<th>Customers</th><th></th></tr>';
   const body = S.packages.map(row=>{
     const used = S.packageClientCounts[row.id] || 0;
     const cells = PACKAGE_FIELDS.map(f=>packageCell(f, row)).join('');
     const delBtn = used>0
-      ? `<span class="pkg-del-locked" title="Reassign its ${used} client${used>1?'s':''} first">🔒</span>`
+      ? `<span class="pkg-del-locked" title="Reassign its ${used} customer${used>1?'s':''} first">🔒</span>`
       : `<button class="btn btn-ghost btn-xs" onclick="deletePackageRow('${row.id}')" title="Delete package">✕</button>`;
     return `<tr data-row="${row.id}">${cells}
       <td style="text-align:center;font-family:var(--mono);color:${used?'var(--text)':'var(--text-3)'};">${used}</td>
@@ -2499,7 +2499,7 @@ function addPackageRow(){
 
 function deletePackageRow(id){
   const used = (S.packageClientCounts||{})[id] || 0;
-  if(used>0){ toast(`Reassign this package's ${used} client${used>1?'s':''} before deleting it`); return; }
+  if(used>0){ toast(`Reassign this package's ${used} customer${used>1?'s':''} before deleting it`); return; }
   const row = S.packages.find(p=>p.id===id);
   if(row && !row._new) packagesDeleted.add(id); // existing row → delete on save
   S.packages = S.packages.filter(p=>p.id!==id);
@@ -2578,12 +2578,12 @@ async function renderClients(){
     clientsCache = data||[];
   }catch(e){
     console.error('renderClients:',e);
-    list.innerHTML = `<div style="padding:14px;font-size:12px;color:var(--red);">⚠ Could not load clients: ${escHtml(e.message)}</div>`;
+    list.innerHTML = `<div style="padding:14px;font-size:12px;color:var(--red);">⚠ Could not load customers: ${escHtml(e.message)}</div>`;
     return;
   }
   document.getElementById('nav-clients-count').textContent = clientsCache.length;
   if(!clientsCache.length){
-    list.innerHTML = '<div class="empty"><div class="empty-icon">🏢</div><div class="empty-title">No clients yet</div></div>';
+    list.innerHTML = '<div class="empty"><div class="empty-icon">🏢</div><div class="empty-title">No customers yet</div></div>';
     return;
   }
   const freeId = (S.packages.find(p=>p.slug==='free') || S.packages[0] || {}).id;
@@ -4230,8 +4230,20 @@ async function loadDMData(){
 
   renderTournamentNav();
   renderTeams();
+  refreshCustomersCount();
   const ctSport=document.getElementById('ct-sport');
   if(ctSport) ctSport.innerHTML=sportOptions('football');
+}
+
+// The Customers nav badge is otherwise only set when the page is opened, so
+// it read 0 until first click. Fetch just the count (head request, no rows)
+// on load so the badge is right immediately.
+async function refreshCustomersCount(){
+  try{
+    const {count} = await supa.from('gw_customers').select('id',{count:'exact',head:true});
+    const el = document.getElementById('nav-clients-count');
+    if(el) el.textContent = count ?? 0;
+  }catch(e){ console.error('refreshCustomersCount:',e); }
 }
 
 // Start
